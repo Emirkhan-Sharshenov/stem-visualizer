@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #090a0f;
+    color: #e2e8f0;
+  }
+  code, pre, .font-mono {
+    font-family: 'Fira Code', monospace;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+/* Technical calibration graticule grid */
+.tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Industrial tactile borders and hardware styling */
+.tech-panel {
+  background: #0e1117;
+  border: 1px solid #1f2430;
+}
+
+.tech-panel-inset {
+  background: #090b0e;
+  border: 1px solid #181d26;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #090b0e;
+}
+::-webkit-scrollbar-thumb {
+  background: #252b38;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #06b6d4;
+}
+
