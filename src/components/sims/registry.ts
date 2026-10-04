@@ -8,6 +8,7 @@ import { blastFurnace, dissociation, kinetics, polymerization, separation, stoic
 import { cellDivision, ecosystem } from './engines/bio';
 import { blood, microbes, plantLife } from './engines/bio2';
 import { bodySystems, development, enzymes, evolution } from './engines/bio3';
+import { chemLinks, everyday, greenhouse, organisms } from './engines/misc';
 import { density, equilibrium, inertia, pressure, relativeMotion, weight, workPower } from './engines/mechanics';
 
 /** All timeline-driven process simulations, by id */
@@ -48,6 +49,10 @@ export const SIMS = {
   enzymes,
   body_systems: bodySystems,
   development,
+  everyday,
+  chem_links: chemLinks,
+  greenhouse,
+  organisms,
 } satisfies Record<string, SimDef>;
 
 export type SimId = keyof typeof SIMS;
