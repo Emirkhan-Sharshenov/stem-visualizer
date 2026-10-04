@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
 import { fitCanvas } from '../../lib/canvas';
 import type { PartInfo } from '../../lib/three/ThreeStage';
 import { InfoCard, Metric, Segmented, Slider } from '../lab/LabUI';
 import { Timeline, useTimeline } from '../lab/Timeline';
-import { alpha, C, Frame, Lang, SimDef, Stage, tag } from './kit';
+import { alpha, C, Frame, Lang, setFontScale, SimDef, Stage, tag } from './kit';
 
 interface Hit {
   info: PartInfo;
@@ -32,6 +33,7 @@ export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = 
   const [selected, setSelected] = useState<PartInfo | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const hitsRef = useRef<Hit[]>([]);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const live = useRef({ p, mode, lang, selected });
@@ -47,6 +49,9 @@ export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = 
       const { w, h } = fitCanvas(canvas, ctx);
       const st = live.current;
       const hits: Hit[] = [];
+      // canvas shown narrower than its 960px drawing size: enlarge labels to stay legible
+      const shown = canvas.clientWidth || W;
+      setFontScale(Math.min(1.9, Math.max(1, (W / shown) * 0.62)));
       const f: Frame = {
         ctx,
         w,
@@ -110,12 +115,12 @@ export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = 
       {sim.modes && sim.modes.length > 1 && (
         <Segmented value={mode} onChange={switchMode} options={sim.modes.map((m) => ({ id: m.id, label: m.label[lang] }))} />
       )}
-      <div className="lab-stage relative rounded-xl overflow-hidden border border-[#1F2126]">
+      <div ref={stageRef} className="lab-stage relative rounded-xl overflow-hidden border border-[#1F2126] flex items-center justify-center">
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
-          className="block w-full h-auto touch-none select-none"
+          className="block w-full h-auto max-h-screen object-contain touch-none select-none"
           onPointerMove={(e) => (hoverRef.current = toLogical(e))}
           onPointerLeave={() => (hoverRef.current = null)}
           onClick={(e) => {
@@ -127,6 +132,19 @@ export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = 
         <span className="pointer-events-none absolute top-3 left-3 px-2 py-1 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[12px] text-[#EDEDED]">
           {sim.title[lang]}
         </span>
+        <button
+          onClick={() => {
+            const el = stageRef.current;
+            if (!el) return;
+            if (document.fullscreenElement) document.exitFullscreen?.();
+            else el.requestFullscreen?.().catch(() => undefined);
+          }}
+          aria-label={lang === 'ru' ? 'Во весь экран' : 'Full screen'}
+          title={lang === 'ru' ? 'Во весь экран' : 'Full screen'}
+          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[#B5B8C0] hover:text-white flex items-center justify-center cursor-pointer"
+        >
+          <Maximize2 className="w-4 h-4" strokeWidth={1.75} />
+        </button>
         <InfoCard lang={lang} info={selected} onClose={() => setSelected(null)} />
       </div>
 

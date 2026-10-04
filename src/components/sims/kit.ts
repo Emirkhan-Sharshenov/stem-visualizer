@@ -132,6 +132,12 @@ export function alpha(hex: string, a: number) {
 
 /* ---------- drawing ---------- */
 
+/** labels grow on small screens so they stay readable when the canvas is scaled down */
+let fontScale = 1;
+export function setFontScale(k: number) {
+  fontScale = k;
+}
+
 export function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -186,7 +192,7 @@ export function text(
   y: number,
   o: { size?: number; color?: string; align?: CanvasTextAlign; baseline?: CanvasTextBaseline; weight?: number; mono?: boolean; serif?: boolean } = {},
 ) {
-  ctx.font = `${o.weight ?? 500} ${o.size ?? 13}px ${o.mono ? '"JetBrains Mono", monospace' : o.serif ? 'Newsreader, Georgia, serif' : 'Inter, system-ui, sans-serif'}`;
+  ctx.font = `${o.weight ?? 500} ${(o.size ?? 13) * fontScale}px ${o.mono ? '"JetBrains Mono", monospace' : o.serif ? 'Newsreader, Georgia, serif' : 'Inter, system-ui, sans-serif'}`;
   ctx.fillStyle = o.color ?? C.text;
   ctx.textAlign = o.align ?? 'center';
   ctx.textBaseline = o.baseline ?? 'middle';
@@ -195,7 +201,7 @@ export function text(
 
 /** label on a rounded dark chip */
 export function tag(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, o: { color?: string; size?: number; align?: 'left' | 'center' | 'right'; bg?: string } = {}) {
-  const size = o.size ?? 12;
+  const size = (o.size ?? 12) * fontScale;
   ctx.font = `500 ${size}px Inter, system-ui, sans-serif`;
   const w = ctx.measureText(s).width + 14;
   const h = size + 10;
@@ -206,7 +212,7 @@ export function tag(ctx: CanvasRenderingContext2D, s: string, x: number, y: numb
   ctx.strokeStyle = o.color ? alpha(o.color, 0.55) : C.line;
   ctx.lineWidth = 1;
   ctx.stroke();
-  text(ctx, s, x0 + w / 2, y + 0.5, { size, color: o.color ?? C.text });
+  text(ctx, s, x0 + w / 2, y + 0.5, { size: size / fontScale, color: o.color ?? C.text });
   return w;
 }
 
