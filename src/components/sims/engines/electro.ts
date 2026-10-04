@@ -93,7 +93,7 @@ export const electrostatics: SimDef = {
       f.hitRect(info('Эбонитовая палочка', 'Ebonite rod', 'Удерживает электроны сильнее шерсти, поэтому при трении забирает их и заряжается отрицательно.', 'Holds electrons more tightly than wool, so rubbing transfers them to it and it becomes negative.'), rx, rodY, 360, 46);
       // wool
       const wx = 300 + rub;
-      const wy = 270;
+      const wy = 196 + ease(t, 7, 8.5) * 90;
       ctx.fillStyle = '#C9B48A';
       ctx.beginPath();
       for (let i = 0; i <= 16; i++) {
@@ -213,40 +213,39 @@ export const electrostatics: SimDef = {
       const cy = 270;
       const R = 110;
       const sep = ease(t, 2, 6);
-      // external field lines bending around the ball
+      // uniform field lines; once the charges separate they end on the ball and the inside is empty
       for (let i = 0; i < 9; i++) {
         const y0 = 70 + i * 50;
-        const pts: [number, number][] = [];
-        for (let x = 40; x <= w - 40; x += 6) {
-          const dy = y0 - cy;
-          const dx = x - cx;
-          const r = Math.hypot(dx, dy);
-          let y = y0;
-          if (r < R + 60) y = y0 + Math.sign(dy || 1) * sep * Math.max(0, R + 60 - r) * 0.5 * (Math.abs(dy) < R ? 1 : 0.4);
-          if (Math.hypot(x - cx, y - cy) < R && sep > 0.5) {
-            pts.push([x, y]);
-            line(ctx, pts.splice(0), alpha(C.sky, 0.45), 1.5);
-            continue;
-          }
-          pts.push([x, y]);
+        const dy = y0 - cy;
+        if (Math.abs(dy) >= R) {
+          line(ctx, [[40, y0], [w - 40, y0]], alpha(C.sky, 0.45), 1.5);
+        } else {
+          const half = Math.sqrt(R * R - dy * dy);
+          line(ctx, [[40, y0], [cx - half, y0]], alpha(C.sky, 0.45), 1.5);
+          line(ctx, [[cx + half, y0], [w - 40, y0]], alpha(C.sky, 0.45), 1.5);
+          line(ctx, [[cx - half, y0], [cx + half, y0]], alpha(C.sky, 0.45 * (1 - sep)), 1.5);
         }
-        line(ctx, pts, alpha(C.sky, 0.45), 1.5);
-        arrow(ctx, 60, y0, 90, y0, { color: alpha(C.sky, 0.7), width: 1.5, head: 7 });
+        arrow(ctx, 60, y0, 92, y0, { color: alpha(C.sky, 0.7), width: 1.5, head: 7 });
+        arrow(ctx, w - 92, y0, w - 60, y0, { color: alpha(C.sky, 0.7), width: 1.5, head: 7 });
       }
-      circle(ctx, cx, cy, R, '#3A3D45', '#8C8F98', 3);
+      circle(ctx, cx, cy, R, alpha('#3A3D45', 0.92), '#8C8F98', 3);
       f.hit(info('Металлический шар', 'Metal ball', 'Свободные электроны внутри металла смещаются под действием поля, пока поле внутри не станет нулевым.', 'Free electrons inside the metal shift under the field until the field inside is zero.'), cx, cy, R);
-      for (let i = 0; i < 14; i++) {
-        const a = Math.PI / 2 + (i / 13 - 0.5) * Math.PI * 0.9;
-        const ix = cx + Math.cos(a) * (R - 18) * 0.25 - 20 + hash(i) * 40;
-        const iy = cy + (hash(i, 2) - 0.5) * 140;
-        // electrons drift to the left side (against the field)
-        const ex = lerp(ix, cx - (R - 14) * Math.cos((i / 13 - 0.5) * Math.PI * 0.9), sep);
-        const ey = lerp(iy, cy + (R - 14) * Math.sin((i / 13 - 0.5) * Math.PI * 0.9), sep);
-        charge(ctx, ex, ey, -1, 6);
-        const px = lerp(ix + 14, cx + (R - 14) * Math.cos((i / 13 - 0.5) * Math.PI * 0.9), sep);
-        charge(ctx, px, ey, 1, 6);
+      const n = 12;
+      for (let i = 0; i < n; i++) {
+        // start: + and − mixed evenly through the ball
+        const ra = Math.sqrt(hash(i, 1)) * (R - 22);
+        const aa = hash(i, 2) * TAU;
+        const sx = cx + Math.cos(aa) * ra;
+        const sy = cy + Math.sin(aa) * ra;
+        // end: electrons on the left surface, positive charge left behind on the right
+        const ea = Math.PI + ((i + 0.5) / n - 0.5) * Math.PI * 0.85;
+        const pa = ((i + 0.5) / n - 0.5) * Math.PI * 0.85;
+        charge(ctx, lerp(sx + 8, cx + Math.cos(pa) * (R - 14), sep), lerp(sy, cy + Math.sin(pa) * (R - 14), sep), 1, 6);
+        charge(ctx, lerp(sx - 8, cx + Math.cos(ea) * (R - 14), sep), lerp(sy + 6, cy + Math.sin(ea) * (R - 14), sep), -1, 6);
       }
-      if (sep > 0.9) tag(ctx, 'E = 0', cx, cy, { color: C.green, size: 15 });
+      f.hit(ELECTRON, cx - R + 14, cy, 10);
+      if (sep > 0.9) tag(ctx, L('внутри E = 0', 'inside E = 0'), cx, cy, { color: C.green, size: 14 });
+      tag(ctx, L('внешнее поле E', 'external field E'), 480, 30, { color: C.sky });
       return;
     }
 

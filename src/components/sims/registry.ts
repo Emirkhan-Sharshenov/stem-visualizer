@@ -1,6 +1,9 @@
 import type { SimDef } from './kit';
 import { heatBalance, heatTransfer } from './engines/heat';
 import { currentMedia, electrostatics, emWaves, magnetism, oscillations } from './engines/electro';
+import { shadows, waveOptics } from './engines/light';
+import { nuclear, nucleusStructure } from './engines/nuclear';
+import { heatEngine, solarSystem, stars } from './engines/space';
 import { density, equilibrium, inertia, pressure, relativeMotion, weight, workPower } from './engines/mechanics';
 
 /** All timeline-driven process simulations, by id */
@@ -19,6 +22,13 @@ export const SIMS = {
   magnetism,
   lc_ac: oscillations,
   em_waves: emWaves,
+  shadows,
+  wave_optics: waveOptics,
+  nuclear,
+  nucleus_structure: nucleusStructure,
+  solar_system: solarSystem,
+  stars,
+  heat_engine: heatEngine,
 } satisfies Record<string, SimDef>;
 
 export type SimId = keyof typeof SIMS;
