@@ -1,0 +1,89 @@
+import type { StemCategory, TextbookLesson } from '../../types/stem';
+import { TEXTBOOK_LESSONS } from '../textbookCurriculum';
+import type { Section, SimRef, Topic } from './types';
+import { PHYSICS_7 } from './physics7';
+import { PHYSICS_8 } from './physics8';
+import { PHYSICS_9 } from './physics9';
+import { PHYSICS_10 } from './physics10';
+import { PHYSICS_11 } from './physics11';
+
+export * from './types';
+
+/** Newly authored curriculum, by subject and grade */
+const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11];
+
+export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
+
+const DEDICATED: string[] = ['orbitals', 'deconstruction', 'physics_gravity', 'math_revolution', 'math_divergence', 'biology_cell', 'break_model'];
+
+function legacyGrade(g: TextbookLesson['grade']): number {
+  const n = parseInt(g.replace('grade_', ''), 10);
+  return Number.isNaN(n) ? 7 : n;
+}
+
+function legacySim(l: TextbookLesson): SimRef {
+  if (DEDICATED.includes(l.viewMode)) return { lab: l.viewMode };
+  if (l.viewMode === 'moment_universal') return { engine: l.simEngineType ?? 'kinematics_velocity' };
+  return { moment: l.viewMode };
+}
+
+/** Older lessons, reshaped as topics, for subjects/grades not yet re-authored */
+function legacySections(): Section[] {
+  // Once a subject is re-authored, its old lessons are retired entirely
+  const authoredSubjects = new Set(AUTHORED.map((s) => s.subject));
+  const bySection = new Map<string, Section>();
+  for (const l of TEXTBOOK_LESSONS) {
+    const grade = legacyGrade(l.grade);
+    if (authoredSubjects.has(l.category)) continue;
+    const chapter = l.chapter ?? { ru: 'Разное', en: 'Other topics' };
+    const id = `${l.category}-${grade}-legacy-${chapter.en}`;
+    if (!bySection.has(id)) bySection.set(id, { id, subject: l.category, grade, title: chapter, topics: [] });
+    const topic: Topic = {
+      id: l.id,
+      subject: l.category,
+      grade,
+      sectionId: id,
+      title: l.title,
+      intro: l.textbookDefinition,
+      points: [
+        { title: { ru: 'Почему трудно представить', en: 'Why it’s hard to picture' }, text: l.studentConfusion },
+        { title: { ru: 'Представь на пальцах', en: 'Picture it' }, text: l.lifeAnalogy },
+        { title: { ru: 'На что смотреть в модели', en: 'What to watch in the model' }, text: l.momentObservation },
+      ],
+      formula: l.formula,
+      sim: legacySim(l),
+      keywords: l.keywords,
+    };
+    bySection.get(id)!.topics.push(topic);
+  }
+  return [...bySection.values()];
+}
+
+// Engine presets the physics canvas engine really implements; others fall back to an unrelated
+// demo, so those topics show no model until a proper engine exists
+const SUPPORTED_ENGINES = new Set<string>([
+  'kinematics_velocity', 'hooke_spring', 'archimedes_buoyancy', 'lenses_ray_tracing', 'mkt_ideal_gas_laws',
+  'thermodynamics_first_law', 'photoelectric_effect', 'friction_dynamometer', 'rutherford_alpha_atom',
+]);
+
+function withValidSim(section: Section): Section {
+  return {
+    ...section,
+    topics: section.topics.map((t) => (t.sim && 'engine' in t.sim && !SUPPORTED_ENGINES.has(t.sim.engine) ? { ...t, sim: undefined } : t)),
+  };
+}
+
+export const SECTIONS: Section[] = [...AUTHORED, ...legacySections()].map(withValidSim);
+export const TOPICS: Topic[] = SECTIONS.flatMap((s) => s.topics);
+
+export function gradesFor(subject: StemCategory): number[] {
+  return [...new Set(SECTIONS.filter((s) => s.subject === subject).map((s) => s.grade))].sort((a, b) => a - b);
+}
+
+export function sectionsFor(subject: StemCategory, grade: number): Section[] {
+  return SECTIONS.filter((s) => s.subject === subject && s.grade === grade);
+}
+
+export function topicById(id: string): Topic | undefined {
+  return TOPICS.find((t) => t.id === id);
+}
