@@ -1,5 +1,6 @@
 import type { SimEngineType, StemCategory, VisualMode } from '../../types/stem';
 import type { ModelId } from '../../lib/three/models';
+import type { SimId } from '../../components/sims/registry';
 
 export type L = { ru: string; en: string };
 
@@ -8,7 +9,8 @@ export type SimRef =
   | { moment: VisualMode } // embeddable lab
   | { engine: SimEngineType } // physics canvas engine preset
   | { lab: VisualMode } // dedicated full-page 3D lab
-  | { model: ModelId; focus?: string[] }; // real 3D model, optionally emphasising parts
+  | { model: ModelId; focus?: string[] } // real 3D model, optionally emphasising parts
+  | { process: SimId; mode?: string }; // timeline-driven process simulation
 
 export interface Point {
   title: L;

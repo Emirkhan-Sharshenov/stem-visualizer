@@ -2,7 +2,8 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Stage3D } from './lab/Stage3D';
 import { Legend, Metric, Panel, PlayControls, Segmented, Slider, Tip, Toggle } from './lab/LabUI';
 import type { PartInfo, ThreeStage } from '../lib/three/ThreeStage';
-import { Base, BASE_COLOR, buildDna, DnaModel, DnaState, HELICASE_INFO, NEW_STRAND, OLD_STRAND, PAIR, POLYMERASE_INFO } from '../lib/three/dnaModel';
+import { Timeline, TimelineMark, useTimeline } from './lab/Timeline';
+import { Base, BASE_COLOR, buildDna, DnaModel, DnaState, FORK_SPEED, HELICASE_INFO, NEW_STRAND, OLD_STRAND, PAIR, POLYMERASE_INFO, REPLICATION_TIME } from '../lib/three/dnaModel';
 
 interface MomentDnaCellProps {
   lang: 'ru' | 'en';
@@ -22,6 +23,16 @@ const STRAND_INFO: Record<'old' | 'new', PartInfo> = {
   new: { title: { ru: 'Новая цепь', en: 'New strand' }, text: { ru: 'Собрана полимеразой по шаблону. Каждая дочерняя ДНК — одна старая цепь плюс одна новая: это и есть полуконсервативная репликация.', en: 'Built by polymerase on the template. Each daughter DNA is one old strand plus one new one: semiconservative replication.' } },
 };
 
+// Key moments of replication, in seconds of fork travel
+const at = (dist: number) => dist / FORK_SPEED;
+const MARKS: TimelineMark[] = [
+  { t: 0, label: { ru: 'Старт', en: 'Start' } },
+  { t: at(1.5), label: { ru: 'Хеликаза расплетает', en: 'Helicase unzips' } },
+  { t: at(2.8), label: { ru: 'Лидирующая цепь', en: 'Leading strand' } },
+  { t: at(5.2), label: { ru: 'Фрагменты Оказаки', en: 'Okazaki fragments' } },
+  { t: REPLICATION_TIME, label: { ru: 'Две дочерние ДНК', en: 'Two daughter DNAs' } },
+];
+
 export const MomentDnaCell: React.FC<MomentDnaCellProps> = ({ lang }) => {
   const [mode, setMode] = useState<Mode>('helix');
   const [running, setRunning] = useState(true);
@@ -29,8 +40,9 @@ export const MomentDnaCell: React.FC<MomentDnaCellProps> = ({ lang }) => {
   const [showBonds, setShowBonds] = useState(true);
   const [selected, setSelected] = useState<PartInfo | null>(null);
   const modelRef = useRef<DnaModel | null>(null);
+  const tl = useTimeline(REPLICATION_TIME + 2, { loop: true });
   const stateRef = useRef<DnaState>({ mode, running, speed, showBonds });
-  stateRef.current = { mode, running, speed, showBonds };
+  stateRef.current = { mode, running: mode === 'replication' ? tl.playing : running, speed, showBonds };
 
   const sequence = useMemo(() => 'ATGCGTACCTAGGCATTCGAGCTA'.split('') as Base[], []);
   const counts = useMemo(() => {
@@ -45,7 +57,10 @@ export const MomentDnaCell: React.FC<MomentDnaCellProps> = ({ lang }) => {
     modelRef.current = model;
     stage.scene.add(model.group);
     stage.setPickable(model.pickables);
-    return stage.onUpdate((dt) => model.update(dt, stateRef.current));
+    return stage.onUpdate((dt) => {
+      const st = stateRef.current;
+      model.update(dt, st.mode === 'replication' ? { ...st, forkTime: tl.timeRef.current } : st);
+    });
   };
 
   const legend = [
@@ -86,6 +101,8 @@ export const MomentDnaCell: React.FC<MomentDnaCellProps> = ({ lang }) => {
           </div>
         </Stage3D>
 
+        {mode === 'replication' && <Timeline lang={lang} tl={tl} marks={MARKS} />}
+
         {/* Sequence strip: what the cell actually reads */}
         <div className="bg-surface border border-line rounded-xl px-4 py-3 overflow-x-auto">
           <div className="flex flex-col gap-1 font-mono text-[13px] min-w-max">
@@ -111,6 +128,8 @@ export const MomentDnaCell: React.FC<MomentDnaCellProps> = ({ lang }) => {
             onChange={(m) => {
               setMode(m);
               modelRef.current?.reset();
+              tl.seek(0);
+              tl.play();
               setSelected(null);
             }}
             options={[
@@ -142,8 +161,12 @@ export const MomentDnaCell: React.FC<MomentDnaCellProps> = ({ lang }) => {
 
         <Panel>
           <div className="flex flex-col gap-4">
-            <PlayControls lang={lang} running={running} onToggle={() => setRunning((r) => !r)} onReset={mode === 'replication' ? () => modelRef.current?.reset() : undefined} />
-            <Slider label={lang === 'ru' ? 'Скорость' : 'Speed'} value={speed} min={0.25} max={2.5} step={0.25} format={(v) => `${v}×`} onChange={setSpeed} />
+            {mode === 'helix' && (
+              <>
+                <PlayControls lang={lang} running={running} onToggle={() => setRunning((r) => !r)} />
+                <Slider label={lang === 'ru' ? 'Скорость' : 'Speed'} value={speed} min={0.25} max={2.5} step={0.25} format={(v) => `${v}×`} onChange={setSpeed} />
+              </>
+            )}
             <Toggle label={lang === 'ru' ? 'Водородные связи' : 'Hydrogen bonds'} checked={showBonds} onChange={setShowBonds} />
           </div>
         </Panel>

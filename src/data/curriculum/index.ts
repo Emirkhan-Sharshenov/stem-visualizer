@@ -1,6 +1,7 @@
 import type { StemCategory, TextbookLesson } from '../../types/stem';
 import { TEXTBOOK_LESSONS } from '../textbookCurriculum';
 import type { Section, SimRef, Topic } from './types';
+import { PROCESS_SIMS } from './processSims';
 import { PHYSICS_7 } from './physics7';
 import { PHYSICS_8 } from './physics8';
 import { PHYSICS_9 } from './physics9';
@@ -113,7 +114,8 @@ function withValidSim(section: Section): Section {
   return {
     ...section,
     topics: section.topics.map((t) => {
-      if (MODEL_SIMS[t.id]) return { ...t, sim: MODEL_SIMS[t.id] };
+      const override = MODEL_SIMS[t.id] ?? PROCESS_SIMS[t.id];
+      if (override) return { ...t, sim: override };
       return t.sim && 'engine' in t.sim && !SUPPORTED_ENGINES.has(t.sim.engine) ? { ...t, sim: undefined } : t;
     }),
   };

@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StemCategory, VisualMode } from '../types/stem';
 import { ArrowLeft, ArrowRight, Box, Check, Search, X } from 'lucide-react';
 import { Formula } from './Formula';
+import { ProcessSim } from './sims/ProcessSim';
+import { SIMS } from './sims/registry';
 import { ModelLab } from './lab/ModelLab';
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
 import { PhysicsLaboratoryEngine } from './PhysicsLaboratoryEngine';
@@ -442,6 +444,9 @@ const TopicSimulation: React.FC<{ sim: SimRef; topic: Topic; lang: Lang; onLaunc
   }
   if ('model' in sim) {
     return <ModelLab key={sim.model + (sim.focus ?? []).join()} lang={lang} model={sim.model} focus={sim.focus} compact />;
+  }
+  if ('process' in sim) {
+    return <ProcessSim key={sim.process + (sim.mode ?? '')} lang={lang} sim={SIMS[sim.process]} mode={sim.mode} />;
   }
   if ('engine' in sim) {
     return <PhysicsLaboratoryEngine engineType={sim.engine} title={topic.title[lang]} formula={topic.formula} lang={lang} />;

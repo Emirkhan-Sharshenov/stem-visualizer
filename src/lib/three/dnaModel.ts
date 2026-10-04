@@ -41,7 +41,13 @@ export interface DnaState {
   running: boolean;
   speed: number;
   showBonds: boolean;
+  /** replication driven by a timeline: seconds since the fork started (overrides the internal clock) */
+  forkTime?: number;
 }
+
+/** Fork speed (units/s) and the time it takes to copy the whole molecule */
+export const FORK_SPEED = 0.9;
+export const REPLICATION_TIME = (N * RISE + 5) / FORK_SPEED;
 
 export interface DnaModel {
   group: THREE.Group;
@@ -188,7 +194,7 @@ export function buildDna(): DnaModel {
 
   const update = (dt: number, state: DnaState) => {
     const replicating = state.mode === 'replication';
-    if (state.running) {
+    if (state.running && state.forkTime === undefined) {
       if (!replicating) spin += dt * 0.6 * state.speed;
       else if (hold > 0) {
         hold -= dt;
@@ -199,6 +205,7 @@ export function buildDna(): DnaModel {
       }
     }
     if (!replicating) forkX = X0 - 1.5;
+    else if (state.forkTime !== undefined) forkX = X0 - 1.5 + Math.min(state.forkTime, REPLICATION_TIME) * FORK_SPEED;
     if (replicating) spin += (0 - spin) * Math.min(1, dt * 3); // settle the twist before unzipping
 
     for (let strand = 0; strand < 2; strand++) {

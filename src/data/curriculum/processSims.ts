@@ -1,0 +1,45 @@
+import type { SimId } from '../../components/sims/registry';
+import type { SimRef } from './types';
+
+const P = (process: SimId, mode?: string): SimRef => ({ process, mode });
+
+/** Topics demonstrated by a timeline-driven process simulation */
+export const PROCESS_SIMS: Record<string, SimRef> = {
+  'p8-internal-energy': P('heat_transfer', 'conduction'),
+  'p8-conduction': P('heat_transfer', 'conduction'),
+  'p8-convection': P('heat_transfer', 'convection'),
+  'p8-radiation': P('heat_transfer', 'radiation'),
+  'p8-heat-quantity': P('heat_balance'),
+  'p8-heat-balance': P('heat_balance'),
+  'p7-inertia': P('inertia'),
+  'p7-density': P('density'),
+  'p7-force': P('weight'),
+  'p7-weight': P('weight'),
+  'p7-pressure': P('pressure', 'solid'),
+  'p7-liquid-pressure': P('pressure', 'liquid'),
+  'p7-atmosphere': P('pressure', 'atmosphere'),
+  'p7-manometer-pump': P('pressure', 'manometer'),
+  'p7-work': P('work_power', 'lift'),
+  'p7-power': P('work_power', 'lift'),
+  'p7-efficiency': P('work_power', 'incline'),
+  'p7-center-mass': P('equilibrium', 'kinds'),
+  'p10-work-power': P('work_power', 'incline'),
+  'p9-relative': P('relative_motion', 'river'),
+  'p10-rigid': P('relative_motion', 'wheel'),
+  'p8-electrification': P('electrostatics', 'rub'),
+  'p10-conductors': P('electrostatics', 'conductor'),
+  'p10-potential': P('electrostatics', 'field'),
+  'p10-capacitors': P('electrostatics', 'capacitor'),
+  'p10-metals': P('current_media', 'metal'),
+  'p10-semiconductors': P('current_media', 'semi'),
+  'p10-vacuum': P('current_media', 'vacuum'),
+  'p10-gases': P('current_media', 'gas'),
+  'p8-permanent-magnets': P('magnetism', 'magnet'),
+  'p11-lorentz': P('magnetism', 'lorentz'),
+  'p11-magnetic-matter': P('magnetism', 'domains'),
+  'p11-self-induction': P('lc_ac', 'self'),
+  'p11-lc': P('lc_ac', 'lc'),
+  'p11-ac': P('lc_ac', 'ac'),
+  'p11-em-waves': P('em_waves', 'wave'),
+  'p11-radio': P('em_waves', 'radio'),
+};
