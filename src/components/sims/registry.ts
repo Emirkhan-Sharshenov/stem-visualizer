@@ -7,6 +7,7 @@ import { heatEngine, solarSystem, stars } from './engines/space';
 import { blastFurnace, dissociation, kinetics, polymerization, separation, stoichiometry } from './engines/chem';
 import { cellDivision, ecosystem } from './engines/bio';
 import { blood, microbes, plantLife } from './engines/bio2';
+import { bodySystems, development, enzymes, evolution } from './engines/bio3';
 import { density, equilibrium, inertia, pressure, relativeMotion, weight, workPower } from './engines/mechanics';
 
 /** All timeline-driven process simulations, by id */
@@ -43,6 +44,10 @@ export const SIMS = {
   blood,
   plant_life: plantLife,
   microbes,
+  evolution,
+  enzymes,
+  body_systems: bodySystems,
+  development,
 } satisfies Record<string, SimDef>;
 
 export type SimId = keyof typeof SIMS;

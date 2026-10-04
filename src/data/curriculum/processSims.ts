@@ -141,8 +141,6 @@ export const PROCESS_SIMS: Record<string, SimRef> = {
   'b9-inorganic': M('water', 'glucose', 'tributyrin'),
   'b10-inorganic': M('water', 'co2', 'ammonia'),
   'b10-carbs-lipids': M('glucose', 'fructose', 'sucrose', 'tributyrin'),
-  'b10-metabolism': M('atp', 'glucose'),
-  'b8-energy': M('atp', 'glucose'),
   // biology: cells and development
   'b9-mitosis': P('cell_division', 'mitosis'),
   'b10-cell-cycle': P('cell_division', 'mitosis'),
@@ -195,4 +193,28 @@ export const PROCESS_SIMS: Record<string, SimRef> = {
   'b7-ciliates': P('microbes', 'paramecium'),
   'b7-zoology': P('microbes', 'paramecium'),
   'b10-cell-types': P('microbes', 'virus'),
+  // biology: evolution
+  'b11-adaptations': P('evolution', 'selection'),
+  'b11-evidence': P('evolution', 'history'),
+  'b11-earth-history': P('evolution', 'history'),
+  'b11-origin-hypotheses': P('evolution', 'origin'),
+  'b11-human-stages': P('evolution', 'humans'),
+  'b9-evolution-results': P('evolution', 'humans'),
+  'b5-human-origin': P('evolution', 'humans'),
+  // biology: enzymes and energy
+  'b10-enzymes': P('enzymes', 'lock'),
+  'b10-metabolism': P('enzymes', 'atp'),
+  'b8-energy': P('enzymes', 'atp'),
+  'b10-chemosynthesis': P('enzymes', 'atp'),
+  // biology: the body
+  'b8-skin': P('body_systems', 'skin'),
+  'b8-skin-care': P('body_systems', 'skin'),
+  'b8-endocrine-disorders': P('body_systems', 'insulin'),
+  'b8-sleep': P('body_systems', 'sleep'),
+  'b8-mind': P('body_systems', 'sleep'),
+  'b8-other-senses': P('body_systems', 'hearing'),
+  // biology: animal development
+  'b7-insects': P('development', 'butterfly'),
+  'b7-amphibians': P('development', 'frog'),
+  'b7-annelids': P('development', 'worm'),
 };
