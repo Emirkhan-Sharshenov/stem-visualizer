@@ -3,6 +3,8 @@ import { StemCategory, VisualMode } from '../types/stem';
 import { ArrowLeft, ArrowRight, Box, Check, Search, X } from 'lucide-react';
 import { Formula } from './Formula';
 import { ProcessSim } from './sims/ProcessSim';
+import { MoleculeLab } from './chem/MoleculeLab';
+import { ReactionLab } from './chem/ReactionLab';
 import { SIMS } from './sims/registry';
 import { ModelLab } from './lab/ModelLab';
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
@@ -70,7 +72,7 @@ function writeStored(key: string, value: unknown) {
   }
 }
 
-const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim || 'model' in sim ? '3d' : 'live');
+const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim || 'model' in sim || 'molecules' in sim || 'reactions' in sim ? '3d' : 'live');
 
 export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSimulation, onAskMentor }) => {
   const [subject, setSubject] = useState<StemCategory>(() => readStored('tbSubject', 'physics'));
@@ -445,6 +447,8 @@ const TopicSimulation: React.FC<{ sim: SimRef; topic: Topic; lang: Lang; onLaunc
   if ('model' in sim) {
     return <ModelLab key={sim.model + (sim.focus ?? []).join()} lang={lang} model={sim.model} focus={sim.focus} compact />;
   }
+  if ('molecules' in sim) return <MoleculeLab key={sim.molecules.join()} lang={lang} ids={sim.molecules} />;
+  if ('reactions' in sim) return <ReactionLab key={sim.reactions.join()} lang={lang} ids={sim.reactions} />;
   if ('process' in sim) {
     return <ProcessSim key={sim.process + (sim.mode ?? '')} lang={lang} sim={SIMS[sim.process]} mode={sim.mode} />;
   }

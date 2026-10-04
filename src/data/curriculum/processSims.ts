@@ -1,7 +1,10 @@
 import type { SimId } from '../../components/sims/registry';
+import type { MolId } from '../../components/chem/MoleculeLab';
 import type { SimRef } from './types';
 
 const P = (process: SimId, mode?: string): SimRef => ({ process, mode });
+const M = (...molecules: MolId[]): SimRef => ({ molecules });
+const R = (...reactions: string[]): SimRef => ({ reactions });
 
 /** Topics demonstrated by a timeline-driven process simulation */
 export const PROCESS_SIMS: Record<string, SimRef> = {
@@ -66,4 +69,54 @@ export const PROCESS_SIMS: Record<string, SimRef> = {
   'p11-galaxies-cosmology': P('stars', 'expansion'),
   'p8-fuel': P('heat_engine', 'ice'),
   'p10-second-law': P('heat_engine', 'cycle'),
+  // chemistry: reactions in 3D
+  'c8-oxygen': R('peroxide_decomposition', 'magnesium_burning'),
+  'c8-combustion': R('methane_combustion', 'iron_rusting', 'magnesium_burning', 'hydrogen_combustion'),
+  'c8-oxides': R('magnesium_burning', 'iron_rusting'),
+  'c8-hydrogen-obtain': R('zinc_acid', 'water_electrolysis'),
+  'c8-hydrogen-props': R('hydrogen_combustion', 'ethene_hydrogenation'),
+  'c8-oxidation-state': R('sodium_chlorine', 'magnesium_burning'),
+  'c8-acids': R('zinc_acid', 'neutralization'),
+  'c8-bases': R('neutralization'),
+  'c8-salts': R('neutralization', 'sodium_chlorine'),
+  'c9-classification': R('magnesium_burning', 'water_electrolysis', 'zinc_acid', 'neutralization'),
+  'c9-catalysis': R('peroxide_decomposition', 'ammonia_synthesis'),
+  'c9-equilibrium': R('ammonia_synthesis'),
+  'c9-nitrogen': R('ammonia_synthesis'),
+  'c9-iron': R('iron_rusting'),
+  'c10-reaction-types': R('methane_chlorination', 'ethene_hydrogenation'),
+  'c11-classification': R('magnesium_burning', 'water_electrolysis', 'zinc_acid', 'neutralization'),
+  'c11-thermochemistry': R('methane_combustion', 'water_electrolysis'),
+  'c11-equilibrium': R('ammonia_synthesis'),
+  'c11-redox': R('zinc_acid', 'sodium_chlorine', 'iron_rusting'),
+  'c11-industry': R('ammonia_synthesis'),
+  // chemistry: real molecules
+  'c8-ozone': M('oxygen', 'ozone'),
+  'c8-masses': M('water', 'co2', 'glucose'),
+  'c8-mole': M('water', 'co2', 'methane'),
+  'c9-sulfur': M('sulfuricAcid'),
+  'c9-carbon': M('co2', 'methane', 'urea'),
+  'c9-alcohols-acids': M('ethanol', 'aceticAcid'),
+  'c10-subject': M('methane', 'ethane', 'urea'),
+  'c10-classification': M('butane', 'ethene', 'ethyne', 'benzene', 'ethanol', 'aceticAcid'),
+  'c10-cycloalkanes': M('cyclopropane', 'cyclohexane'),
+  'c10-alkenes': M('ethene', 'styrene'),
+  'c10-dienes': M('butadiene', 'isoprene'),
+  'c10-alkynes': M('ethyne'),
+  'c10-oil-gas': M('methane', 'propane', 'butane', 'toluene'),
+  'c10-alcohols': M('methanol', 'ethanol', 'ethyleneGlycol', 'glycerol'),
+  'c10-phenol': M('phenol', 'benzene'),
+  'c10-aldehydes': M('formaldehyde', 'acetaldehyde', 'acetone'),
+  'c10-carboxylic': M('formicAcid', 'aceticAcid', 'butyricAcid'),
+  'c10-esters-fats': M('ethylAcetate', 'tributyrin', 'glycerol'),
+  'c10-amines': M('methylamine', 'aniline'),
+  'c10-amino-acids': M('glycine', 'alanine'),
+  'c11-household': M('aceticAcid', 'aspirin', 'caffeine', 'ethanol'),
+  // biology: molecules of life
+  'b5-cell-chemistry': M('water', 'glucose', 'glycine'),
+  'b9-inorganic': M('water', 'glucose', 'tributyrin'),
+  'b10-inorganic': M('water', 'co2', 'ammonia'),
+  'b10-carbs-lipids': M('glucose', 'fructose', 'sucrose', 'tributyrin'),
+  'b10-metabolism': M('atp', 'glucose'),
+  'b8-energy': M('atp', 'glucose'),
 };

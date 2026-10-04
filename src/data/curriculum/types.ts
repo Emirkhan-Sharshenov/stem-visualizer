@@ -1,6 +1,7 @@
 import type { SimEngineType, StemCategory, VisualMode } from '../../types/stem';
 import type { ModelId } from '../../lib/three/models';
 import type { SimId } from '../../components/sims/registry';
+import type { MolId } from '../../components/chem/MoleculeLab';
 
 export type L = { ru: string; en: string };
 
@@ -10,7 +11,9 @@ export type SimRef =
   | { engine: SimEngineType } // physics canvas engine preset
   | { lab: VisualMode } // dedicated full-page 3D lab
   | { model: ModelId; focus?: string[] } // real 3D model, optionally emphasising parts
-  | { process: SimId; mode?: string }; // timeline-driven process simulation
+  | { process: SimId; mode?: string } // timeline-driven process simulation
+  | { molecules: MolId[] } // real 3D molecules
+  | { reactions: string[] }; // 3D reaction mechanisms with a timeline
 
 export interface Point {
   title: L;
