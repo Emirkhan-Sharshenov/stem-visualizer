@@ -346,7 +346,9 @@ export const Landing: React.FC<LandingProps> = ({ lang, onToggleLang, onNavigate
             <Logo size={22} />
             <span className="text-ink-3">— {t.footer.tagline}</span>
           </div>
-          <span className="text-ink-3">© {new Date().getFullYear()} · {t.footer.made}</span>
+          <span className="text-ink-3">
+            <a href="#/credits" className="hover:text-ink mr-3">{lang === 'ru' ? 'Источники моделей' : 'Model sources'}</a>© {new Date().getFullYear()} · {t.footer.made}
+          </span>
         </div>
       </footer>
     </div>

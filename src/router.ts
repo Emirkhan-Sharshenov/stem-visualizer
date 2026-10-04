@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-export type Route = 'landing' | 'login' | 'register' | 'app';
+export type Route = 'landing' | 'login' | 'register' | 'app' | 'credits';
 
-const ROUTES: Route[] = ['login', 'register', 'app'];
+const ROUTES: Route[] = ['login', 'register', 'app', 'credits'];
 
 // Hash routing keeps deep links working without server rewrites: #/login, #/register, #/app
 function parse(hash: string): Route {
