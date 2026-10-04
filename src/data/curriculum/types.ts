@@ -2,6 +2,7 @@ import type { SimEngineType, StemCategory, VisualMode } from '../../types/stem';
 import type { ModelId } from '../../lib/three/models';
 import type { SimId } from '../../components/sims/registry';
 import type { MolId } from '../../components/chem/MoleculeLab';
+import type { LatticeId } from '../../components/chem/LatticeLab';
 
 export type L = { ru: string; en: string };
 
@@ -13,7 +14,8 @@ export type SimRef =
   | { model: ModelId; focus?: string[] } // real 3D model, optionally emphasising parts
   | { process: SimId; mode?: string } // timeline-driven process simulation
   | { molecules: MolId[] } // real 3D molecules
-  | { reactions: string[] }; // 3D reaction mechanisms with a timeline
+  | { reactions: string[] } // 3D reaction mechanisms with a timeline
+  | { lattices: LatticeId[] }; // 3D crystal lattices
 
 export interface Point {
   title: L;

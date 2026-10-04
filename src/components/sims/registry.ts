@@ -4,6 +4,7 @@ import { currentMedia, electrostatics, emWaves, magnetism, oscillations } from '
 import { shadows, waveOptics } from './engines/light';
 import { nuclear, nucleusStructure } from './engines/nuclear';
 import { heatEngine, solarSystem, stars } from './engines/space';
+import { blastFurnace, dissociation, kinetics, polymerization, separation, stoichiometry } from './engines/chem';
 import { density, equilibrium, inertia, pressure, relativeMotion, weight, workPower } from './engines/mechanics';
 
 /** All timeline-driven process simulations, by id */
@@ -29,6 +30,12 @@ export const SIMS = {
   solar_system: solarSystem,
   stars,
   heat_engine: heatEngine,
+  dissociation,
+  kinetics,
+  separation,
+  polymerization,
+  blast_furnace: blastFurnace,
+  stoichiometry,
 } satisfies Record<string, SimDef>;
 
 export type SimId = keyof typeof SIMS;

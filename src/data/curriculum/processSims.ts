@@ -1,10 +1,12 @@
 import type { SimId } from '../../components/sims/registry';
 import type { MolId } from '../../components/chem/MoleculeLab';
+import type { LatticeId } from '../../components/chem/LatticeLab';
 import type { SimRef } from './types';
 
 const P = (process: SimId, mode?: string): SimRef => ({ process, mode });
 const M = (...molecules: MolId[]): SimRef => ({ molecules });
 const R = (...reactions: string[]): SimRef => ({ reactions });
+const X = (...lattices: LatticeId[]): SimRef => ({ lattices });
 
 /** Topics demonstrated by a timeline-driven process simulation */
 export const PROCESS_SIMS: Record<string, SimRef> = {
@@ -80,22 +82,37 @@ export const PROCESS_SIMS: Record<string, SimRef> = {
   'c8-bases': R('neutralization'),
   'c8-salts': R('neutralization', 'sodium_chlorine'),
   'c9-classification': R('magnesium_burning', 'water_electrolysis', 'zinc_acid', 'neutralization'),
-  'c9-catalysis': R('peroxide_decomposition', 'ammonia_synthesis'),
-  'c9-equilibrium': R('ammonia_synthesis'),
+  'c9-catalysis': P('kinetics', 'rate'),
+  'c9-equilibrium': P('kinetics', 'equilibrium'),
   'c9-nitrogen': R('ammonia_synthesis'),
-  'c9-iron': R('iron_rusting'),
+  'c9-iron': P('blast_furnace'),
   'c10-reaction-types': R('methane_chlorination', 'ethene_hydrogenation'),
   'c11-classification': R('magnesium_burning', 'water_electrolysis', 'zinc_acid', 'neutralization'),
   'c11-thermochemistry': R('methane_combustion', 'water_electrolysis'),
-  'c11-equilibrium': R('ammonia_synthesis'),
+  'c11-equilibrium': P('kinetics', 'equilibrium'),
   'c11-redox': R('zinc_acid', 'sodium_chlorine', 'iron_rusting'),
   'c11-industry': R('ammonia_synthesis'),
   // chemistry: real molecules
+  'c9-degree': P('dissociation', 'strength'),
+  'c9-acids-bases-salts': P('dissociation', 'dissolve'),
+  'c9-ted-classes': P('dissociation', 'ph'),
+  'c11-ph': P('dissociation', 'ph'),
+  'c8-separation': P('separation', 'filter'),
+  'c11-dispersions': P('separation', 'distill'),
+  'c10-polymer-basics': P('polymerization', 'addition'),
+  'c10-plastics': P('polymerization', 'addition'),
+  'c10-proteins': P('polymerization', 'peptide'),
+  'b10-proteins': P('polymerization', 'peptide'),
+  'b9-proteins-enzymes': P('polymerization', 'peptide'),
+  'c11-concentration': P('stoichiometry', 'conc'),
   'c8-ozone': M('oxygen', 'ozone'),
   'c8-masses': M('water', 'co2', 'glucose'),
-  'c8-mole': M('water', 'co2', 'methane'),
+  'c8-mole': P('stoichiometry', 'mole'),
   'c9-sulfur': M('sulfuricAcid'),
-  'c9-carbon': M('co2', 'methane', 'urea'),
+  'c9-carbon': X('diamond', 'graphite'),
+  'c8-lattices': X('nacl', 'diamond', 'graphite', 'metal', 'molecular'),
+  'c9-metals-general': X('metal'),
+  'p10-liquids-solids': X('nacl', 'metal', 'diamond'),
   'c9-alcohols-acids': M('ethanol', 'aceticAcid'),
   'c10-subject': M('methane', 'ethane', 'urea'),
   'c10-classification': M('butane', 'ethene', 'ethyne', 'benzene', 'ethanol', 'aceticAcid'),
