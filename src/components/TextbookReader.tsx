@@ -1,14 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { StemCategory, VisualMode } from '../types/stem';
 import { ArrowLeft, ArrowRight, Box, Check, Search, X } from 'lucide-react';
 import { Formula } from './Formula';
-import { ProcessSim } from './sims/ProcessSim';
-import { MoleculeLab } from './chem/MoleculeLab';
-import { ReactionLab } from './chem/ReactionLab';
-import { LatticeLab } from './chem/LatticeLab';
-import { PeriodicTable } from './chem/PeriodicTable';
-import { SIMS } from './sims/registry';
-import { ModelLab } from './lab/ModelLab';
+// Heavy labs load on demand so the textbook opens fast
+const SimById = lazy(() => import('./sims/SimById'));
+const MoleculeLab = lazy(() => import('./chem/MoleculeLab').then((m) => ({ default: m.MoleculeLab })));
+const ReactionLab = lazy(() => import('./chem/ReactionLab').then((m) => ({ default: m.ReactionLab })));
+const LatticeLab = lazy(() => import('./chem/LatticeLab').then((m) => ({ default: m.LatticeLab })));
+const PeriodicTable = lazy(() => import('./chem/PeriodicTable').then((m) => ({ default: m.PeriodicTable })));
+const ModelLab = lazy(() => import('./lab/ModelLab').then((m) => ({ default: m.ModelLab })));
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
 import { PhysicsLaboratoryEngine } from './PhysicsLaboratoryEngine';
 import { MomentCircuit } from './MomentCircuit';
@@ -395,7 +395,11 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
         </div>
       )}
 
-      {topic.sim && <TopicSimulation sim={topic.sim} topic={topic} lang={lang} onLaunchSimulation={onLaunchSimulation} />}
+      {topic.sim && (
+        <Suspense fallback={<div className="lab-stage rounded-xl h-[380px] flex items-center justify-center text-sm text-[#8C8F98]">{lang === 'ru' ? 'Загружаем симуляцию…' : 'Loading the simulation…'}</div>}>
+          <TopicSimulation sim={topic.sim} topic={topic} lang={lang} onLaunchSimulation={onLaunchSimulation} />
+        </Suspense>
+      )}
 
       <section>
         <h2 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Разбираем по шагам' : 'Step by step'}</h2>
@@ -454,7 +458,7 @@ const TopicSimulation: React.FC<{ sim: SimRef; topic: Topic; lang: Lang; onLaunc
   if ('lattices' in sim) return <LatticeLab key={sim.lattices.join()} lang={lang} ids={sim.lattices} />;
   if ('reactions' in sim) return <ReactionLab key={sim.reactions.join()} lang={lang} ids={sim.reactions} />;
   if ('process' in sim) {
-    return <ProcessSim key={sim.process + (sim.mode ?? '')} lang={lang} sim={SIMS[sim.process]} mode={sim.mode} />;
+    return <SimById key={sim.process + (sim.mode ?? '')} lang={lang} id={sim.process} mode={sim.mode} />;
   }
   if ('engine' in sim) {
     return <PhysicsLaboratoryEngine engineType={sim.engine} title={topic.title[lang]} formula={topic.formula} lang={lang} />;
