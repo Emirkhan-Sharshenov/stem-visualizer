@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StemCategory, VisualMode } from '../types/stem';
 import { ArrowLeft, ArrowRight, Box, Check, Search, X } from 'lucide-react';
 import { Formula } from './Formula';
+import { ModelLab } from './lab/ModelLab';
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
 import { PhysicsLaboratoryEngine } from './PhysicsLaboratoryEngine';
 import { MomentCircuit } from './MomentCircuit';
@@ -67,7 +68,7 @@ function writeStored(key: string, value: unknown) {
   }
 }
 
-const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim ? '3d' : 'live');
+const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim || 'model' in sim ? '3d' : 'live');
 
 export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSimulation, onAskMentor }) => {
   const [subject, setSubject] = useState<StemCategory>(() => readStored('tbSubject', 'physics'));
@@ -438,6 +439,9 @@ const TopicSimulation: React.FC<{ sim: SimRef; topic: Topic; lang: Lang; onLaunc
         </button>
       </div>
     );
+  }
+  if ('model' in sim) {
+    return <ModelLab key={sim.model + (sim.focus ?? []).join()} lang={lang} model={sim.model} focus={sim.focus} compact />;
   }
   if ('engine' in sim) {
     return <PhysicsLaboratoryEngine engineType={sim.engine} title={topic.title[lang]} formula={topic.formula} lang={lang} />;

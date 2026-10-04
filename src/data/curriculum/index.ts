@@ -77,10 +77,45 @@ const SUPPORTED_ENGINES = new Set<string>([
   'thermodynamics_first_law', 'photoelectric_effect', 'friction_dynamometer', 'rutherford_alpha_atom',
 ]);
 
+const DIGESTIVE = ['esophagus', 'stomach', 'liver', 'gallbladder', 'pancreas', 'small_intestine', 'large_intestine'];
+
+// Topics whose best demonstration is a real anatomical or animal model
+const MODEL_SIMS: Record<string, SimRef> = {
+  'b8-bones': { model: 'skeleton' },
+  'b8-skeleton-parts': { model: 'skeleton' },
+  'b8-muscles': { model: 'skeleton', focus: ['upper_limbs', 'lower_limbs'] },
+  'b8-skeleton-health': { model: 'skeleton', focus: ['vertebral_column', 'lower_limbs'] },
+  'b8-heart': { model: 'heart' },
+  'b8-vessels-circuits': { model: 'heart', focus: ['aorta', 'pulmonary_trunk', 'veins'] },
+  'b8-blood-flow': { model: 'heart' },
+  'b8-heart-health': { model: 'heart' },
+  'b8-respiratory-organs': { model: 'organs', focus: ['lungs', 'trachea'] },
+  'b8-breathing-movements': { model: 'organs', focus: ['lungs', 'trachea'] },
+  'b8-respiratory-health': { model: 'organs', focus: ['lungs', 'trachea'] },
+  'b8-nutrients': { model: 'organs', focus: DIGESTIVE },
+  'b8-digestive-organs': { model: 'organs', focus: DIGESTIVE },
+  'b8-digestion-regulation': { model: 'organs', focus: DIGESTIVE },
+  'b8-kidneys': { model: 'organs', focus: ['kidneys', 'bladder'] },
+  'b8-nervous-structure': { model: 'organs', focus: ['brain', 'spinal_cord'] },
+  'b8-spinal-cord': { model: 'organs', focus: ['spinal_cord', 'brain'] },
+  'b8-brain': { model: 'brain' },
+  'b8-glands': { model: 'organs', focus: ['brain', 'pancreas', 'kidneys'] },
+  'b8-sciences': { model: 'organs' },
+  'b7-fish': { model: 'fish' },
+  'b7-chordates': { model: 'fish' },
+  'b7-mammals': { model: 'fox' },
+  'b7-evidence': { model: 'skeleton', focus: ['upper_limbs'] },
+  'b5-animals': { model: 'fox' },
+  'b11-human-place': { model: 'skeleton' },
+};
+
 function withValidSim(section: Section): Section {
   return {
     ...section,
-    topics: section.topics.map((t) => (t.sim && 'engine' in t.sim && !SUPPORTED_ENGINES.has(t.sim.engine) ? { ...t, sim: undefined } : t)),
+    topics: section.topics.map((t) => {
+      if (MODEL_SIMS[t.id]) return { ...t, sim: MODEL_SIMS[t.id] };
+      return t.sim && 'engine' in t.sim && !SUPPORTED_ENGINES.has(t.sim.engine) ? { ...t, sim: undefined } : t;
+    }),
   };
 }
 
