@@ -10,11 +10,18 @@ import { CHEMISTRY_8 } from './chemistry8';
 import { CHEMISTRY_9 } from './chemistry9';
 import { CHEMISTRY_10 } from './chemistry10';
 import { CHEMISTRY_11 } from './chemistry11';
+import { BIOLOGY_5 } from './biology5';
+import { BIOLOGY_6 } from './biology6';
+import { BIOLOGY_7 } from './biology7';
+import { BIOLOGY_8 } from './biology8';
+import { BIOLOGY_9 } from './biology9';
+import { BIOLOGY_10 } from './biology10';
+import { BIOLOGY_11 } from './biology11';
 
 export * from './types';
 
 /** Newly authored curriculum, by subject and grade */
-const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11];
+const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11, ...BIOLOGY_5, ...BIOLOGY_6, ...BIOLOGY_7, ...BIOLOGY_8, ...BIOLOGY_9, ...BIOLOGY_10, ...BIOLOGY_11];
 
 export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
 
