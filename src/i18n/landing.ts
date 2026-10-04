@@ -15,8 +15,8 @@ export const landingCopy = {
       nodal: { '2s': 'Узловая сфера r = 2a₀', '2pz': 'Узловая плоскость z = 0', '2px': 'Узловая плоскость x = 0' },
     },
     stats: [
-      { value: '25+', label: 'интерактивных лабораторий' },
-      { value: '4', label: 'предмета школьной программы' },
+      { value: '480+', label: 'тем с живой симуляцией' },
+      { value: '60+', label: '3D- и 2D-лабораторий' },
       { value: '5–11', label: 'классы' },
       { value: 'RU · EN', label: 'кыргызский скоро' },
     ],
@@ -80,8 +80,8 @@ export const landingCopy = {
       nodal: { '2s': 'Nodal sphere r = 2a₀', '2pz': 'Nodal plane z = 0', '2px': 'Nodal plane x = 0' },
     },
     stats: [
-      { value: '25+', label: 'interactive labs' },
-      { value: '4', label: 'school subjects' },
+      { value: '480+', label: 'topics with a live simulation' },
+      { value: '60+', label: '3D and 2D labs' },
       { value: '5–11', label: 'grades' },
       { value: 'RU · EN', label: 'Kyrgyz coming soon' },
     ],
