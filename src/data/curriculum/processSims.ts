@@ -92,6 +92,13 @@ export const PROCESS_SIMS: Record<string, SimRef> = {
   'c11-equilibrium': P('kinetics', 'equilibrium'),
   'c11-redox': R('zinc_acid', 'sodium_chlorine', 'iron_rusting'),
   'c11-industry': R('ammonia_synthesis'),
+  'c8-families': { table: 'category' },
+  'c8-periodic-law': { table: 'category' },
+  'c8-trends': { table: 'trends' },
+  'c11-periodic-law': { table: 'eneg' },
+  'c9-nonmetals-general': { table: 'metal' },
+  'c9-alkali': { table: 'category' },
+  'c11-nonmetals': { table: 'metal' },
   // chemistry: real molecules
   'c9-degree': P('dissociation', 'strength'),
   'c9-acids-bases-salts': P('dissociation', 'dissolve'),

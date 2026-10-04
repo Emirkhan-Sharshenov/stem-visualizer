@@ -6,6 +6,7 @@ import { ProcessSim } from './sims/ProcessSim';
 import { MoleculeLab } from './chem/MoleculeLab';
 import { ReactionLab } from './chem/ReactionLab';
 import { LatticeLab } from './chem/LatticeLab';
+import { PeriodicTable } from './chem/PeriodicTable';
 import { SIMS } from './sims/registry';
 import { ModelLab } from './lab/ModelLab';
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
@@ -449,6 +450,7 @@ const TopicSimulation: React.FC<{ sim: SimRef; topic: Topic; lang: Lang; onLaunc
     return <ModelLab key={sim.model + (sim.focus ?? []).join()} lang={lang} model={sim.model} focus={sim.focus} compact />;
   }
   if ('molecules' in sim) return <MoleculeLab key={sim.molecules.join()} lang={lang} ids={sim.molecules} />;
+  if ('table' in sim) return <PeriodicTable key={sim.table} lang={lang} mode={sim.table} />;
   if ('lattices' in sim) return <LatticeLab key={sim.lattices.join()} lang={lang} ids={sim.lattices} />;
   if ('reactions' in sim) return <ReactionLab key={sim.reactions.join()} lang={lang} ids={sim.reactions} />;
   if ('process' in sim) {

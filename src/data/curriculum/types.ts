@@ -3,6 +3,7 @@ import type { ModelId } from '../../lib/three/models';
 import type { SimId } from '../../components/sims/registry';
 import type { MolId } from '../../components/chem/MoleculeLab';
 import type { LatticeId } from '../../components/chem/LatticeLab';
+import type { TableMode } from '../../components/chem/PeriodicTable';
 
 export type L = { ru: string; en: string };
 
@@ -15,7 +16,8 @@ export type SimRef =
   | { process: SimId; mode?: string } // timeline-driven process simulation
   | { molecules: MolId[] } // real 3D molecules
   | { reactions: string[] } // 3D reaction mechanisms with a timeline
-  | { lattices: LatticeId[] }; // 3D crystal lattices
+  | { lattices: LatticeId[] } // 3D crystal lattices
+  | { table: TableMode }; // interactive periodic table
 
 export interface Point {
   title: L;
