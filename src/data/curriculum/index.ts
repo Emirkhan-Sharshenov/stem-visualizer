@@ -6,11 +6,15 @@ import { PHYSICS_8 } from './physics8';
 import { PHYSICS_9 } from './physics9';
 import { PHYSICS_10 } from './physics10';
 import { PHYSICS_11 } from './physics11';
+import { CHEMISTRY_8 } from './chemistry8';
+import { CHEMISTRY_9 } from './chemistry9';
+import { CHEMISTRY_10 } from './chemistry10';
+import { CHEMISTRY_11 } from './chemistry11';
 
 export * from './types';
 
 /** Newly authored curriculum, by subject and grade */
-const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11];
+const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11];
 
 export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
 
