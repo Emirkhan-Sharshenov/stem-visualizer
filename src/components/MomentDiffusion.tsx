@@ -253,7 +253,7 @@ export const MomentDiffusion: React.FC<MomentDiffusionProps> = ({ lang }) => {
             {[
               { val: 0.1, label: '0.1x (Slow-Mo)' },
               { val: 0.5, label: '0.5x' },
-              { val: 1.0, label: '1.0x (Реал)' },
+              { val: 1.0, label: lang === 'ru' ? '1.0x (Реал)' : '1.0x (Real)' },
               { val: 2.0, label: '2.0x' },
             ].map((ts) => (
               <button

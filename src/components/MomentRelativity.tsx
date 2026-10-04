@@ -182,16 +182,16 @@ export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
           <div className="flex items-center gap-6">
             <span>
               {lang === 'ru' ? 'Земные часы Δt:' : 'Earth Clock Δt:'}{' '}
-              <strong className="text-cyan-400">{earthTime.toFixed(1)} сек</strong>
+              <strong className="text-cyan-400">{earthTime.toFixed(1)} {lang === 'ru' ? 'сек' : 's'}</strong>
             </span>
             <span>
               {lang === 'ru' ? 'Часы космонавта Δt₀:' : 'Rocket Clock Δt₀:'}{' '}
-              <strong className="text-rose-400">{rocketTime.toFixed(1)} сек</strong>
+              <strong className="text-rose-400">{rocketTime.toFixed(1)} {lang === 'ru' ? 'сек' : 's'}</strong>
             </span>
           </div>
 
           <span className="text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-800/40 font-bold">
-            Фактор Лоренца γ = {gamma.toFixed(2)}x
+            {lang === 'ru' ? 'Фактор Лоренца' : 'Lorentz factor'} γ = {gamma.toFixed(2)}x
           </span>
         </div>
 
@@ -220,7 +220,7 @@ export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
         <div className="p-4 bg-slate-950/70 border-t border-slate-800 text-xs">
           <div className="flex justify-between text-slate-300 mb-1">
             <span>{lang === 'ru' ? 'Скорость ракеты v (в долях от скорости света c)' : 'Rocket Speed v (% of c)'}</span>
-            <span className="font-mono text-rose-400 font-bold">{(velocityFraction * 100).toFixed(0)}% c ({(velocityFraction * 299792).toFixed(0)} км/с)</span>
+            <span className="font-mono text-rose-400 font-bold">{(velocityFraction * 100).toFixed(0)}% c ({(velocityFraction * 299792).toFixed(0)} {lang === 'ru' ? 'км/с' : 'km/s'})</span>
           </div>
           <input
             type="range"

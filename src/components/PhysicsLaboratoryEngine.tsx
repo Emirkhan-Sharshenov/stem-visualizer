@@ -55,6 +55,8 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
   }, [engineType]);
 
   // Helper function to draw rounded pill label with shadow
+  const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+
   const drawTag = (
     ctx: CanvasRenderingContext2D,
     text: string,
@@ -163,7 +165,7 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
           ctx.stroke();
           ctx.fillStyle = '#94a3b8';
           ctx.font = '10px monospace';
-          ctx.fillText(`${(m - 60) / 7}м`, m - 8, cy + 70);
+          ctx.fillText(`${(m - 60) / 7}${L('м', 'm')}`, m - 8, cy + 70);
         }
 
         // Car Body
@@ -216,10 +218,10 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
         }
 
         // On-screen Element Tags
-        drawTag(ctx, `Автомобиль m = ${mass} кг`, carPos - 35, cy + 5, 'rgba(2, 132, 199, 0.85)');
-        drawTag(ctx, `Скорость v = ${currentV.toFixed(1)} м/с`, carPos + 35, cy + 20, 'rgba(34, 197, 94, 0.85)');
-        drawTag(ctx, `Ускорение a = ${accel.toFixed(1)} м/с²`, 60, cy - 60, 'rgba(56, 189, 248, 0.85)');
-        drawTag(ctx, `Пройденный путь: s = v₀t + at²/2`, 60, cy - 35, 'rgba(23, 24, 27, 0.9)');
+        drawTag(ctx, `${L('Автомобиль', 'Car')} m = ${mass} ${L('кг', 'kg')}`, carPos - 35, cy + 5, 'rgba(2, 132, 199, 0.85)');
+        drawTag(ctx, `${L('Скорость', 'Velocity')} v = ${currentV.toFixed(1)} ${L('м/с', 'm/s')}`, carPos + 35, cy + 20, 'rgba(34, 197, 94, 0.85)');
+        drawTag(ctx, `${L('Ускорение', 'Acceleration')} a = ${accel.toFixed(1)} ${L('м/с²', 'm/s²')}`, 60, cy - 60, 'rgba(56, 189, 248, 0.85)');
+        drawTag(ctx, `${L('Пройденный путь', 'Distance')}: s = v₀t + at²/2`, 60, cy - 35, 'rgba(23, 24, 27, 0.9)');
       }
 
       // =========================================================================
@@ -294,12 +296,12 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
         }
 
         // On-screen Element Tags
-        drawTag(ctx, 'Неподвижная опора', 50, cy - 75, 'rgba(71, 85, 105, 0.9)');
-        drawTag(ctx, `Пружина k = ${kRigidity} Н/м`, (74 + massX) / 2 - 40, cy - 30, 'rgba(51, 65, 85, 0.9)');
-        drawTag(ctx, `Груз m`, massX + 10, cy - 35, 'rgba(217, 119, 6, 0.9)');
-        drawTag(ctx, `Равновесие (x = 0)`, restX - 45, cy + 95, 'rgba(2, 132, 199, 0.9)');
-        drawTag(ctx, `Сила упругости F_упр = ${Math.abs(restoringForce).toFixed(1)} Н`, cx - 60, cy - 90, 'rgba(239, 68, 68, 0.9)');
-        drawTag(ctx, `Деформация Δx = ${(stretchPx / 2).toFixed(1)} см`, cx - 50, cy + 115, 'rgba(56, 189, 248, 0.9)');
+        drawTag(ctx, L('Неподвижная опора', 'Fixed support'), 50, cy - 75, 'rgba(71, 85, 105, 0.9)');
+        drawTag(ctx, `${L('Пружина', 'Spring')} k = ${kRigidity} ${L('Н/м', 'N/m')}`, (74 + massX) / 2 - 40, cy - 30, 'rgba(51, 65, 85, 0.9)');
+        drawTag(ctx, L('Груз m', 'Mass m'), massX + 10, cy - 35, 'rgba(217, 119, 6, 0.9)');
+        drawTag(ctx, L('Равновесие (x = 0)', 'Equilibrium (x = 0)'), restX - 45, cy + 95, 'rgba(2, 132, 199, 0.9)');
+        drawTag(ctx, `${L('Сила упругости F_упр', 'Restoring force F')} = ${Math.abs(restoringForce).toFixed(1)} ${L('Н', 'N')}`, cx - 60, cy - 90, 'rgba(239, 68, 68, 0.9)');
+        drawTag(ctx, `${L('Деформация', 'Stretch')} Δx = ${(stretchPx / 2).toFixed(1)} ${L('см', 'cm')}`, cx - 50, cy + 115, 'rgba(56, 189, 248, 0.9)');
       }
 
       // =========================================================================
@@ -358,13 +360,13 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
         ctx.stroke();
 
         // On-screen Element Tags
-        drawTag(ctx, `Жидкость (ρ_ж = ${liquidDensity} кг/м³)`, tankX + 15, waterSurfaceY + 20, 'rgba(2, 132, 199, 0.85)');
-        drawTag(ctx, `Тело (ρ = ${bodyDensity} кг/м³)`, cx - 50, blockY - 10, isFloater ? 'rgba(217, 119, 6, 0.9)' : 'rgba(100, 116, 139, 0.9)');
-        drawTag(ctx, `F_арх = ρ_ж·g·V`, cx + 35, blockY + 10, 'rgba(56, 189, 248, 0.9)');
-        drawTag(ctx, `F_тяж = m·g`, cx + 35, blockY + 45, 'rgba(239, 68, 68, 0.9)');
+        drawTag(ctx, `${L('Жидкость', 'Liquid')} (ρ = ${liquidDensity} ${L('кг/м³', 'kg/m³')})`, tankX + 15, waterSurfaceY + 20, 'rgba(2, 132, 199, 0.85)');
+        drawTag(ctx, `${L('Тело', 'Body')} (ρ = ${bodyDensity} ${L('кг/м³', 'kg/m³')})`, cx - 50, blockY - 10, isFloater ? 'rgba(217, 119, 6, 0.9)' : 'rgba(100, 116, 139, 0.9)');
+        drawTag(ctx, L('F_арх = ρ_ж·g·V', 'F_b = ρ_liq·g·V'), cx + 35, blockY + 10, 'rgba(56, 189, 248, 0.9)');
+        drawTag(ctx, L('F_тяж = m·g', 'F_g = m·g'), cx + 35, blockY + 45, 'rgba(239, 68, 68, 0.9)');
         drawTag(
           ctx,
-          isFloater ? 'Тело плавает (F_арх = mg)' : 'Тело тонет на дно (mg > F_арх)',
+          isFloater ? L('Тело плавает (F_арх = mg)', 'Body floats (F_b = mg)') : L('Тело тонет на дно (mg > F_арх)', 'Body sinks (mg > F_b)'),
           cx - 85,
           tankY + tankH + 24,
           isFloater ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)'
@@ -473,14 +475,14 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
           ctx.lineTo(imgX + 5, cy - imgH - 10);
           ctx.fill();
 
-          drawTag(ctx, 'Действительное перевернутое изображение', imgX - 60, cy - imgH + 20, 'rgba(34, 197, 94, 0.9)');
+          drawTag(ctx, L('Действительное перевёрнутое изображение', 'Real inverted image'), imgX - 60, cy - imgH + 20, 'rgba(34, 197, 94, 0.9)');
         }
 
         // On-screen Element Tags
-        drawTag(ctx, `Собирающая линза (F = ${F.toFixed(0)} мм)`, cx - 60, cy - 98, 'rgba(2, 132, 199, 0.9)');
-        drawTag(ctx, `Светящийся предмет`, objX - 45, cy - hObj - 12, 'rgba(239, 68, 68, 0.9)');
-        drawTag(ctx, 'Луч 1: Параллелен оси → через фокус F\'', 40, cy - 90, 'rgba(34, 197, 94, 0.85)');
-        drawTag(ctx, 'Луч 2: Через оптический центр без преломления', 40, cy - 70, 'rgba(234, 179, 8, 0.85)');
+        drawTag(ctx, `${L('Собирающая линза', 'Converging lens')} (F = ${F.toFixed(0)} ${L('мм', 'mm')})`, cx - 60, cy - 98, 'rgba(2, 132, 199, 0.9)');
+        drawTag(ctx, L('Светящийся предмет', 'Luminous object'), objX - 45, cy - hObj - 12, 'rgba(239, 68, 68, 0.9)');
+        drawTag(ctx, L('Луч 1: параллелен оси → через фокус F\'', 'Ray 1: parallel to axis → through focus F\''), 40, cy - 90, 'rgba(34, 197, 94, 0.85)');
+        drawTag(ctx, L('Луч 2: через оптический центр без преломления', 'Ray 2: through the optical centre, undeviated'), 40, cy - 70, 'rgba(234, 179, 8, 0.85)');
       }
 
       // =========================================================================
@@ -521,11 +523,11 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
         const pressureAtm = ((tempK * 0.8) / cylW).toFixed(2);
 
         // On-screen Element Tags
-        drawTag(ctx, `Цилиндр с газом`, cylX + 10, cylY - 12, 'rgba(23, 24, 27, 0.9)');
-        drawTag(ctx, `Подвижный поршень`, cylX + cylW - 10, cylY - 12, 'rgba(100, 116, 139, 0.9)');
-        drawTag(ctx, `Температура T = ${tempK} K (${tempK - 273}°C)`, cylX + 10, cylY + cylH + 24, 'rgba(217, 119, 6, 0.9)');
-        drawTag(ctx, `Давление p = ${pressureAtm} атм`, cylX + 160, cylY + cylH + 24, 'rgba(239, 68, 68, 0.9)');
-        drawTag(ctx, 'Молекулы в хаотическом броуновском движении', cx - 110, cy - 85, 'rgba(56, 189, 248, 0.85)');
+        drawTag(ctx, L('Цилиндр с газом', 'Gas cylinder'), cylX + 10, cylY - 12, 'rgba(23, 24, 27, 0.9)');
+        drawTag(ctx, L('Подвижный поршень', 'Movable piston'), cylX + cylW - 10, cylY - 12, 'rgba(100, 116, 139, 0.9)');
+        drawTag(ctx, `${L('Температура', 'Temperature')} T = ${tempK} K (${tempK - 273}°C)`, cylX + 10, cylY + cylH + 24, 'rgba(217, 119, 6, 0.9)');
+        drawTag(ctx, `${L('Давление', 'Pressure')} p = ${pressureAtm} ${L('атм', 'atm')}`, cylX + 160, cylY + cylH + 24, 'rgba(239, 68, 68, 0.9)');
+        drawTag(ctx, L('Молекулы в хаотическом движении', 'Molecules in random motion'), cx - 110, cy - 85, 'rgba(56, 189, 248, 0.85)');
       }
 
       // =========================================================================
@@ -578,8 +580,8 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
         }
 
         // On-screen Element Tags
-        drawTag(ctx, `Входящие кванты света hν = ${photonEnergyEv.toFixed(2)} эВ`, cx - 110, cy - 110, photonColor);
-        drawTag(ctx, `Металл-катод (Работа выхода А = ${workFunctionEv.toFixed(2)} эВ)`, plateX, plateY + 38, 'rgba(71, 85, 105, 0.9)');
+        drawTag(ctx, `${L('Кванты света', 'Incoming photons')} hν = ${photonEnergyEv.toFixed(2)} ${L('эВ', 'eV')}`, cx - 110, cy - 110, photonColor);
+        drawTag(ctx, `${L('Металл-катод (работа выхода', 'Metal cathode (work function')} A = ${workFunctionEv.toFixed(2)} ${L('эВ', 'eV')})`, plateX, plateY + 38, 'rgba(71, 85, 105, 0.9)');
         drawTag(
           ctx,
           hasEmission
@@ -639,11 +641,11 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
         ctx.stroke();
 
         // On-screen Element Tags
-        drawTag(ctx, `Деревянный брусок`, blockX, cy - 28, 'rgba(217, 119, 6, 0.9)');
-        drawTag(ctx, `Сила реакции опоры N = ${normalForce} Н`, cx - 60, cy - 58, 'rgba(56, 189, 248, 0.9)');
-        drawTag(ctx, `Сила тяжести mg = ${normalForce} Н`, cx - 50, cy + 85, 'rgba(239, 68, 68, 0.9)');
-        drawTag(ctx, `Сила трения F_тр = μN = ${frictionForce.toFixed(1)} Н`, blockX - 110, cy + 10, 'rgba(234, 179, 8, 0.9)');
-        drawTag(ctx, `Коэффициент трения μ = ${mu.toFixed(2)}`, cx - 60, cy + 115, 'rgba(23, 24, 27, 0.9)');
+        drawTag(ctx, L('Деревянный брусок', 'Wooden block'), blockX, cy - 28, 'rgba(217, 119, 6, 0.9)');
+        drawTag(ctx, `${L('Сила реакции опоры', 'Normal force')} N = ${normalForce} ${L('Н', 'N')}`, cx - 60, cy - 58, 'rgba(56, 189, 248, 0.9)');
+        drawTag(ctx, `${L('Сила тяжести', 'Weight')} mg = ${normalForce} ${L('Н', 'N')}`, cx - 50, cy + 85, 'rgba(239, 68, 68, 0.9)');
+        drawTag(ctx, `${L('Сила трения F_тр', 'Friction F')} = μN = ${frictionForce.toFixed(1)} ${L('Н', 'N')}`, blockX - 110, cy + 10, 'rgba(234, 179, 8, 0.9)');
+        drawTag(ctx, `${L('Коэффициент трения', 'Friction coefficient')} μ = ${mu.toFixed(2)}`, cx - 60, cy + 115, 'rgba(23, 24, 27, 0.9)');
       }
 
       // =========================================================================
@@ -678,17 +680,17 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
         }
 
         // On-screen Element Tags
-        drawTag(ctx, `Золотое ядро атома (Заряд +${nucleusZ}e)`, cx - 75, cy - 22, 'rgba(217, 119, 6, 0.95)');
-        drawTag(ctx, `Поток α-частиц (Ядра гелия ⁴He²⁺)`, 60, cy - 70, 'rgba(56, 189, 248, 0.9)');
-        drawTag(ctx, `Кулоновское отталкивание F = k·(q₁q₂)/r²`, cx - 90, cy + 70, 'rgba(239, 68, 68, 0.9)');
-        drawTag(ctx, `99.9% частиц летят насквозь, доказывая пустоту атома!`, cx - 110, cy + 95, 'rgba(34, 197, 94, 0.9)');
+        drawTag(ctx, `${L('Ядро атома золота (заряд', 'Gold nucleus (charge')} +${nucleusZ}e)`, cx - 75, cy - 22, 'rgba(217, 119, 6, 0.95)');
+        drawTag(ctx, L('Поток α-частиц (ядра гелия ⁴He²⁺)', 'α-particle beam (⁴He²⁺ nuclei)'), 60, cy - 70, 'rgba(56, 189, 248, 0.9)');
+        drawTag(ctx, L('Кулоновское отталкивание F = k·q₁q₂/r²', 'Coulomb repulsion F = k·q₁q₂/r²'), cx - 90, cy + 70, 'rgba(239, 68, 68, 0.9)');
+        drawTag(ctx, L('99.9% частиц пролетают насквозь: атом почти пустой', '99.9% of particles pass straight through: the atom is mostly empty'), cx - 110, cy + 95, 'rgba(34, 197, 94, 0.9)');
       }
     };
 
     render();
 
     return () => cancelAnimationFrame(animId);
-  }, [activeExp, slider1, slider2, isPlaying, speed, showLabels]);
+  }, [activeExp, slider1, slider2, isPlaying, speed, showLabels, lang]);
 
   const experimentsList: { id: ExperimentId; labelRu: string; labelEn: string }[] = [
     { id: 'kinematics', labelRu: 'Кинематика и скорость', labelEn: 'Kinematics & Velocity' },
@@ -737,7 +739,7 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
           <button
             onClick={() => setIsPlaying(!isPlaying)}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
-            title={isPlaying ? 'Пауза' : 'Пуск'}
+            title={isPlaying ? L('Пауза', 'Pause') : L('Пуск', 'Play')}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 text-emerald-400" />}
           </button>

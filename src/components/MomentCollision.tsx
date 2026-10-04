@@ -232,7 +232,7 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
           <div className="flex items-center gap-6">
             <span>
               {lang === 'ru' ? 'Суммарный импульс P = m₁v₁ + m₂v₂:' : 'Total Momentum P = m₁v₁ + m₂v₂:'}{' '}
-              <strong className="text-emerald-400">{pTotal.toFixed(2)} кг·м/с</strong>
+              <strong className="text-emerald-400">{pTotal.toFixed(2)} {lang === 'ru' ? 'кг·м/с' : 'kg·m/s'}</strong>
             </span>
           </div>
 

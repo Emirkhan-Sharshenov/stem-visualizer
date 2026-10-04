@@ -177,9 +177,9 @@ export const MomentOptics: React.FC<MomentOpticsProps> = ({ lang }) => {
         {/* Live Gauges Bar */}
         <div className="px-4 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
           <div className="flex items-center gap-4">
-            <span>Угол падения α = <strong className="text-rose-400">{angleDeg}°</strong></span>
+            <span>{lang === 'ru' ? 'Угол падения' : 'Angle of incidence'} α = <strong className="text-rose-400">{angleDeg}°</strong></span>
             <span>
-              Угол преломления β ={' '}
+              {lang === 'ru' ? 'Угол преломления' : 'Angle of refraction'} β ={' '}
               <strong className={isTotalInternalReflection ? 'text-amber-400' : 'text-cyan-400'}>
                 {isTotalInternalReflection ? (lang === 'ru' ? 'НЕТ (Полное отражение!)' : 'None (Total Internal Reflection!)') : `${betaDeg.toFixed(1)}°`}
               </strong>

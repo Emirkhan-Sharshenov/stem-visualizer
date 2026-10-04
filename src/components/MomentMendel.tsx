@@ -116,7 +116,7 @@ export const MomentMendel: React.FC<MomentMendelProps> = ({ lang }) => {
                     ? (lang === 'ru' ? 'Пурпурный (Доминант)' : 'Purple (Dominant)')
                     : (lang === 'ru' ? 'Белый (Рецессив)' : 'White (Recessive)')}
                 </span>
-                <span className="text-[10px] font-mono text-cyan-400">25% шанс</span>
+                <span className="text-[10px] font-mono text-cyan-400">{lang === 'ru' ? '25% шанс' : '25% chance'}</span>
               </div>
             );
           })}

@@ -180,7 +180,7 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
         {/* Live Trigonometric Values */}
         <div className="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
           <div>
-            <span className="text-[10px] text-slate-500 block">УГОЛ θ</span>
+            <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'УГОЛ θ' : 'ANGLE θ'}</span>
             <span className="font-bold text-yellow-400">{angleDeg}°</span>
           </div>
           <div className="h-6 w-px bg-slate-800" />

@@ -253,7 +253,7 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
           <div className="h-6 w-px bg-slate-800" />
           <div>
             <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'ОСАЖДЕНО МЕДИ' : 'DEPOSITED COPPER'}</span>
-            <span className="font-bold text-amber-400 text-sm">{copperMassMg.toFixed(2)} мг</span>
+            <span className="font-bold text-amber-400 text-sm">{copperMassMg.toFixed(2)} {lang === 'ru' ? 'мг' : 'mg'}</span>
           </div>
         </div>
       </div>

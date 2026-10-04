@@ -58,11 +58,11 @@ export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
           <div className="flex items-center gap-6">
             <span>
               {lang === 'ru' ? 'Момент слева M₁:' : 'Left Torque M₁:'}{' '}
-              <strong className="text-cyan-400">{torque1.toFixed(0)} Н·м</strong>
+              <strong className="text-cyan-400">{torque1.toFixed(0)} {lang === 'ru' ? 'Н·м' : 'N·m'}</strong>
             </span>
             <span>
               {lang === 'ru' ? 'Момент справа M₂:' : 'Right Torque M₂:'}{' '}
-              <strong className="text-amber-400">{torque2.toFixed(0)} Н·м</strong>
+              <strong className="text-amber-400">{torque2.toFixed(0)} {lang === 'ru' ? 'Н·м' : 'N·m'}</strong>
             </span>
           </div>
 

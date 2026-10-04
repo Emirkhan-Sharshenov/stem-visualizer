@@ -169,7 +169,7 @@ export const MomentDerivative: React.FC<MomentDerivativeProps> = ({ lang }) => {
         {/* Live Gauges */}
         <div className="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
           <div>
-            <span className="text-[10px] text-slate-500 block">ШАГ Δx</span>
+            <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'ШАГ Δx' : 'STEP Δx'}</span>
             <span className={`font-bold ${deltaX < 0.1 ? 'text-emerald-400' : 'text-yellow-400'}`}>
               {deltaX.toFixed(3)}
             </span>
@@ -211,8 +211,8 @@ export const MomentDerivative: React.FC<MomentDerivativeProps> = ({ lang }) => {
             className="w-full accent-emerald-400 cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-slate-500">
-            <span>Δx → 0 (Мгновенная скорость)</span>
-            <span>Δx = 3.0 (Средняя скорость за отрезок)</span>
+            <span>{lang === 'ru' ? 'Δx → 0 (Мгновенная скорость)' : 'Δx → 0 (instantaneous rate)'}</span>
+            <span>{lang === 'ru' ? 'Δx = 3.0 (Средняя скорость за отрезок)' : 'Δx = 3.0 (average rate over the interval)'}</span>
           </div>
         </div>
 

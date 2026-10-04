@@ -185,17 +185,17 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(lang === 'ru' ? 'МАЛЫЙ ПОРШЕНЬ' : 'SMALL PISTON', c1X + c1W / 2, fluidY1 - 105);
-    ctx.fillText(`S₁ = ${s1Area} см²`, c1X + c1W / 2, fluidY1 - 120);
+    ctx.fillText(`S₁ = ${s1Area} ${lang === 'ru' ? 'см²' : 'cm²'}`, c1X + c1W / 2, fluidY1 - 120);
 
     ctx.fillStyle = '#ef4444';
-    ctx.fillText(`F₁ = ${f1Force} Н`, c1X + c1W / 2, fluidY1 + 35);
+    ctx.fillText(`F₁ = ${f1Force} ${lang === 'ru' ? 'Н' : 'N'}`, c1X + c1W / 2, fluidY1 + 35);
 
     ctx.fillStyle = '#10b981';
     ctx.fillText(lang === 'ru' ? 'БОЛЬШОЙ ПОРШЕНЬ' : 'LARGE PISTON', carX, carY - 60);
-    ctx.fillText(`S₂ = ${s2Area} см² (${areaRatio}x)`, carX, carY - 75);
+    ctx.fillText(`S₂ = ${s2Area} ${lang === 'ru' ? 'см²' : 'cm²'} (${areaRatio}x)`, carX, carY - 75);
 
     ctx.fillStyle = '#22c55e';
-    ctx.fillText(`F₂ = ${f2LiftForce.toFixed(0)} Н`, carX, fluidY2 + 45);
+    ctx.fillText(`F₂ = ${f2LiftForce.toFixed(0)} ${lang === 'ru' ? 'Н' : 'N'}`, carX, fluidY2 + 45);
 
     // Liquid pressure badge
     ctx.fillStyle = '#38bdf8';
@@ -230,12 +230,12 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
         <div className="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
           <div>
             <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'ВЫИГРЫШ В СИЛЕ' : 'FORCE MULTIPLIER'}</span>
-            <span className="font-bold text-emerald-400 text-sm">{areaRatio}× РАЗ</span>
+            <span className="font-bold text-emerald-400 text-sm">{areaRatio}× {lang === 'ru' ? 'РАЗ' : ''}</span>
           </div>
           <div className="h-6 w-px bg-slate-800" />
           <div>
             <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'СИЛА ПОДЪЕМА F₂' : 'LIFT FORCE F₂'}</span>
-            <span className="font-bold text-cyan-400 text-sm">{f2LiftForce.toFixed(0)} Н</span>
+            <span className="font-bold text-cyan-400 text-sm">{f2LiftForce.toFixed(0)} {lang === 'ru' ? 'Н' : 'N'}</span>
           </div>
         </div>
       </div>
@@ -250,7 +250,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between text-xs">
             <span className="text-slate-400">{lang === 'ru' ? 'Сила нажатия рукой (F₁):' : 'Hand Push Force (F₁):'}</span>
-            <span className="font-mono text-amber-400 font-bold">{f1Force} Н</span>
+            <span className="font-mono text-amber-400 font-bold">{f1Force} {lang === 'ru' ? 'Н' : 'N'}</span>
           </div>
           <input
             type="range"
@@ -282,7 +282,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between text-xs">
             <span className="text-slate-400">{lang === 'ru' ? 'Ход малого поршня (h₁):' : 'Piston Stroke (h₁):'}</span>
-            <span className="font-mono text-cyan-400 font-bold">{displacement} мм</span>
+            <span className="font-mono text-cyan-400 font-bold">{displacement} {lang === 'ru' ? 'мм' : 'mm'}</span>
           </div>
           <input
             type="range"

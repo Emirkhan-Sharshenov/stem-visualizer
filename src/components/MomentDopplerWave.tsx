@@ -214,9 +214,9 @@ export const MomentDopplerWave: React.FC<MomentDopplerWaveProps> = ({ lang }) =>
             className="w-full accent-yellow-400 cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-slate-500">
-            <span>0.0 (Стоит на месте)</span>
-            <span>1.0 (Звуковой барьер)</span>
-            <span>1.8 (Сверхзвуковой конус Маха)</span>
+            <span>{lang === 'ru' ? '0.0 (Стоит на месте)' : '0.0 (At rest)'}</span>
+            <span>{lang === 'ru' ? '1.0 (Звуковой барьер)' : '1.0 (Sound barrier)'}</span>
+            <span>{lang === 'ru' ? '1.8 (Сверхзвуковой конус Маха)' : '1.8 (Supersonic Mach cone)'}</span>
           </div>
         </div>
 

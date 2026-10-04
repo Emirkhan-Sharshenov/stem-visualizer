@@ -213,7 +213,7 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
             <span>
               {lang === 'ru' ? 'Индуцированная ЭДС ℰ:' : 'Induced EMF ℰ:'}{' '}
               <strong className={Math.abs(inducedVoltage) > 0.5 ? 'text-amber-400 font-bold' : 'text-slate-400'}>
-                {inducedVoltage.toFixed(2)} В
+                {inducedVoltage.toFixed(2)} {lang === 'ru' ? 'В' : 'V'}
               </strong>
             </span>
             <span>
