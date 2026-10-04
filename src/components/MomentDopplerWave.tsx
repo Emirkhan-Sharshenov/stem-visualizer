@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas, logicalHeight } from '../lib/canvas';
 import { Volume2, Play, Pause, RotateCcw, AlertTriangle } from 'lucide-react';
 
 interface MomentDopplerWaveProps {
@@ -25,17 +26,16 @@ export const MomentDopplerWave: React.FC<MomentDopplerWaveProps> = ({ lang }) =>
 
     let animId: number;
     let sourceX = 100;
-    const sourceY = canvas.height / 2;
+    const sourceY = logicalHeight(canvas) / 2;
     const waveSpeed = 2.0; // speed of sound
     const waves: Wavefront[] = [];
     let tick = 0;
 
     const render = () => {
       animId = requestAnimationFrame(render);
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
 
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       if (isPlaying) {
@@ -115,7 +115,7 @@ export const MomentDopplerWave: React.FC<MomentDopplerWaveProps> = ({ lang }) =>
       ctx.textAlign = 'center';
       ctx.fillText(lang === 'ru' ? 'Слушатель А' : 'Observer A', obsAX, obsAY + 22);
       ctx.fillStyle = '#22c55e';
-      ctx.fillText(lang === 'ru' ? 'Высокий тон 🔊' : 'High Pitch 🔊', obsAX, obsAY + 34);
+      ctx.fillText(lang === 'ru' ? 'Высокий тон ' : 'High Pitch ', obsAX, obsAY + 34);
 
       // Observer B (Left)
       ctx.fillStyle = '#a855f7';
@@ -125,7 +125,7 @@ export const MomentDopplerWave: React.FC<MomentDopplerWaveProps> = ({ lang }) =>
       ctx.fillStyle = '#cbd5e1';
       ctx.fillText(lang === 'ru' ? 'Слушатель Б' : 'Observer B', obsBX, obsBY + 22);
       ctx.fillStyle = '#a855f7';
-      ctx.fillText(lang === 'ru' ? 'Низкий тон 🔉' : 'Low Pitch 🔉', obsBX, obsBY + 34);
+      ctx.fillText(lang === 'ru' ? 'Низкий тон ' : 'Low Pitch ', obsBX, obsBY + 34);
 
       // 4. Moving Sound Source (Ambulance / Siren)
       ctx.fillStyle = '#ef4444';
@@ -191,8 +191,8 @@ export const MomentDopplerWave: React.FC<MomentDopplerWaveProps> = ({ lang }) =>
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-84 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={340} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={340} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Speed Slider */}

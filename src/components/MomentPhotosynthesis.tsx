@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Sun, Droplets, Wind, Sparkles, Play, Pause } from 'lucide-react';
 
 interface MomentPhotosynthesisProps {
@@ -25,10 +26,9 @@ export const MomentPhotosynthesis: React.FC<MomentPhotosynthesisProps> = ({ lang
 
     const render = () => {
       animId = requestAnimationFrame(render);
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
 
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       if (isPlaying) {
@@ -173,8 +173,8 @@ export const MomentPhotosynthesis: React.FC<MomentPhotosynthesisProps> = ({ lang
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={320} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={320} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Interactive Sliders */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, Zap, HelpCircle, Magnet, Lightbulb } from 'lucide-react';
 
 interface MomentInductionProps {
@@ -53,12 +54,11 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
     const coilY = 160;
     const coilCenterX = 280;
 
-    ctx.fillStyle = '#060a18';
+    ctx.fillStyle = '#111214';
     ctx.fillRect(0, 0, w, h);
 
     // Draw Magnetic Field Lines from Magnet
@@ -138,7 +138,7 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
     }
 
     // Bulb glass
-    ctx.fillStyle = brightness > 0.1 ? '#facc15' : '#334155';
+    ctx.fillStyle = brightness > 0.1 ? '#facc15' : '#34363C';
     ctx.beginPath();
     ctx.arc(bulbX, bulbY, 16, 0, Math.PI * 2);
     ctx.fill();
@@ -149,7 +149,7 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
     // Voltmeter Dial at bottom left
     const meterX = 110;
     const meterY = 270;
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#17181B';
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -228,12 +228,12 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
         </div>
 
         {/* Canvas Display */}
-        <div className="relative w-full h-[360px] flex items-center justify-center p-3">
+        <div className="lab-stage relative w-full flex items-center justify-center p-3">
           <canvas
             ref={canvasRef}
             width={600}
             height={340}
-            className="w-full h-full rounded-xl bg-slate-950"
+            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
           />
 
           <div className="absolute bottom-6 right-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">

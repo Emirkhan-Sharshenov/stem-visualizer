@@ -36,11 +36,57 @@ import { PredictFirstModal } from './components/PredictFirstModal';
 import { VisualMentor } from './components/VisualMentor';
 import { MilestonesModal } from './components/MilestonesModal';
 import { SearchModal } from './components/SearchModal';
-import { Sparkles, Brain, Compass, BookOpen, Layers, Award } from 'lucide-react';
 
-export default function App() {
-  const [lang, setLang] = useState<'ru' | 'en'>('ru');
+const SUBJECT_DOT: Record<string, string> = {
+  physics: 'bg-physics',
+  chemistry: 'bg-chemistry',
+  biology: 'bg-biology',
+  mathematics: 'bg-math',
+};
+
+type Crumb = { subject: keyof typeof SUBJECT_DOT; title: { ru: string; en: string } };
+
+const LAB_CRUMBS: Partial<Record<VisualMode, Crumb>> = {
+  orbitals: { subject: 'chemistry', title: { ru: 'Атомные орбитали', en: 'Atomic orbitals' } },
+  deconstruction: { subject: 'chemistry', title: { ru: 'Разбор молекулы H₂O', en: 'Deconstructing H₂O' } },
+  physics_gravity: { subject: 'physics', title: { ru: 'Гравитация и закон Кулона', en: 'Gravity and Coulomb’s law' } },
+  math_revolution: { subject: 'mathematics', title: { ru: 'Интегралы 2D ↔ 3D', en: 'Integrals 2D ↔ 3D' } },
+  math_divergence: { subject: 'mathematics', title: { ru: 'Дивергенция векторного поля', en: 'Divergence of a vector field' } },
+  biology_cell: { subject: 'biology', title: { ru: 'Клетка и синтез АТФ', en: 'The cell and ATP synthesis' } },
+  break_model: { subject: 'physics', title: { ru: 'Сломай модель', en: 'Break the model' } },
+  knowledge_map: { subject: 'mathematics', title: { ru: 'Карта понятий', en: 'Knowledge map' } },
+  moment_diffusion: { subject: 'physics', title: { ru: 'Диффузия', en: 'Diffusion' } },
+  moment_lever: { subject: 'physics', title: { ru: 'Рычаг', en: 'Lever' } },
+  moment_states: { subject: 'physics', title: { ru: 'Агрегатные состояния', en: 'States of matter' } },
+  moment_optics: { subject: 'physics', title: { ru: 'Оптика', en: 'Optics' } },
+  moment_collision: { subject: 'physics', title: { ru: 'Удар Ньютона', en: 'Newton’s collisions' } },
+  moment_induction: { subject: 'physics', title: { ru: 'Индукция Фарадея', en: 'Faraday induction' } },
+  moment_relativity: { subject: 'physics', title: { ru: 'Время Эйнштейна', en: 'Einstein’s time' } },
+  moment_dna: { subject: 'biology', title: { ru: 'ДНК и клетка', en: 'DNA and the cell' } },
+  moment_circuit: { subject: 'physics', title: { ru: 'Электрическая цепь', en: 'Electric circuit' } },
+  moment_chemical_bond: { subject: 'chemistry', title: { ru: 'Химическая связь', en: 'Chemical bonds' } },
+  moment_pendulum: { subject: 'physics', title: { ru: 'Маятник', en: 'Pendulum' } },
+  moment_trig_circle: { subject: 'mathematics', title: { ru: 'Тригонометрический круг', en: 'Unit circle' } },
+  moment_derivative: { subject: 'mathematics', title: { ru: 'Производная', en: 'Derivative' } },
+  moment_photosynthesis: { subject: 'biology', title: { ru: 'Фотосинтез', en: 'Photosynthesis' } },
+  moment_mendel: { subject: 'biology', title: { ru: 'Законы Менделя', en: 'Mendel’s laws' } },
+  moment_pascal: { subject: 'physics', title: { ru: 'Гидравлика Паскаля', en: 'Pascal’s hydraulics' } },
+  moment_doppler: { subject: 'physics', title: { ru: 'Эффект Доплера', en: 'Doppler effect' } },
+  moment_electrolysis: { subject: 'chemistry', title: { ru: 'Электролиз', en: 'Electrolysis' } },
+  moment_neuron: { subject: 'biology', title: { ru: 'Потенциал действия нейрона', en: 'Neuron action potential' } },
+  moment_pythagoras: { subject: 'mathematics', title: { ru: 'Теорема Пифагора', en: 'Pythagorean theorem' } },
+  moment_gauss: { subject: 'mathematics', title: { ru: 'Нормальное распределение', en: 'Normal distribution' } },
+  moment_universal: { subject: 'physics', title: { ru: 'Физическая лаборатория', en: 'Physics lab' } },
+};
+
+interface AppProps {
+  lang: 'ru' | 'en';
+  setLang: (lang: 'ru' | 'en') => void;
+}
+
+export default function App({ lang, setLang }: AppProps) {
   const [currentMode, setCurrentMode] = useState<VisualMode>('textbook');
+  const [textbookKey, setTextbookKey] = useState(0);
   const [milestones, setMilestones] = useState<Milestone[]>(INITIAL_MILESTONES);
 
   // Modals state
@@ -61,6 +107,12 @@ export default function App() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsSearchOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+        setIsMilestonesOpen(false);
+        setIsMentorOpen(false);
+        setActivePredictionChallenge(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -83,12 +135,16 @@ export default function App() {
 
   const unlockedMilestonesCount = milestones.filter((m) => m.unlocked).length;
 
+  const crumb = currentMode !== 'textbook' ? LAB_CRUMBS[currentMode] : undefined;
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
-      {/* Top Global Navigation Bar */}
+    <div className="lab-light page-light min-h-screen flex flex-col font-sans pb-14 lg:pb-0">
       <Navbar
         currentMode={currentMode}
-        onSelectMode={setCurrentMode}
+        onSelectMode={(mode) => {
+          if (mode === 'textbook') setTextbookKey((k) => k + 1);
+          setCurrentMode(mode);
+        }}
         lang={lang}
         onToggleLang={() => setLang(lang === 'ru' ? 'en' : 'ru')}
         onOpenSearch={() => setIsSearchOpen(true)}
@@ -97,63 +153,23 @@ export default function App() {
         unlockedMilestonesCount={unlockedMilestonesCount}
       />
 
-      {/* Main Content Viewport */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-4 flex flex-col gap-6">
-        {/* Welcome & Philosophy Subheader */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90 border border-slate-800/80 shadow-md backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <Brain className="w-5 h-5" />
-            </span>
-            <div>
-              <h1 className="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{lang === 'ru' ? '«Я понимаю определение, но не могу представить, что это значит»' : '"I understand the definition, but cannot picture what it means"'}</span>
-              </h1>
-              <p className="text-xs text-slate-400">
-                {lang === 'ru'
-                  ? 'Интерактивная 3D лаборатория: визуализация + взаимодействие + проверка пространственного понимания'
-                  : 'Interactive 3D laboratory: visualization + tactile manipulation + predictive mental modeling'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActivePredictionChallenge('pred-p-orbital')}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{lang === 'ru' ? 'Тест «Сначала представь»' : 'Predict First Mode'}</span>
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-5">
+        {crumb && (
+          <nav className="flex items-center gap-2 text-sm text-ink-2 min-w-0">
+            <button onClick={() => { setTextbookKey((k) => k + 1); setCurrentMode('textbook'); }} className="hover:text-ink cursor-pointer shrink-0">
+              {lang === 'ru' ? 'Учебник' : 'Textbook'}
             </button>
-            <button
-              onClick={() => setCurrentMode('break_model')}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <span>{lang === 'ru' ? 'Сломай модель' : 'Break the Model'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Back to Textbook Navigation Bar when inside a simulation */}
-        {currentMode !== 'textbook' && (
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
-            <button
-              onClick={() => setCurrentMode('textbook')}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-semibold border border-indigo-500/30 transition-all cursor-pointer"
-            >
-              <span>←</span>
-              <span>{lang === 'ru' ? 'Вернуться к STEM-учебнику (5–11 классы)' : 'Back to STEM Textbook (Grades 5-11)'}</span>
-            </button>
-            <span className="text-[11px] font-mono text-slate-500">
-              {lang === 'ru' ? 'Интерактивная лаборатория момента' : 'Real-time Moment Laboratory'}
-            </span>
-          </div>
+            <span className="text-ink-3">/</span>
+            <span className={`w-2 h-2 rounded-full shrink-0 ${SUBJECT_DOT[crumb.subject]}`} />
+            <span className="text-ink truncate">{crumb.title[lang]}</span>
+          </nav>
         )}
 
         {/* View Routing */}
         <div className="flex-1 w-full">
           {currentMode === 'textbook' && (
             <TextbookReader
+              key={textbookKey}
               lang={lang}
               onLaunchSimulation={(mode) => setCurrentMode(mode)}
               onAskMentor={(topic, question) => {
@@ -316,14 +332,10 @@ export default function App() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-slate-900 bg-slate-950/80 py-4 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>STEM Visualizer • {lang === 'ru' ? 'От абстракции к ментальной модели' : 'From Abstract Definition to Mental Model'}</span>
-          <div className="flex items-center gap-4 text-[11px]">
-            <span className="text-slate-400">Physics • Chemistry • Biology • Mathematics</span>
-            <span className="font-mono text-cyan-500">WebGL 60FPS</span>
-          </div>
+      <footer className="w-full border-t border-line">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-ink-3">
+          <span>STEM Visualizer — {lang === 'ru' ? 'научно-образовательная лаборатория' : 'a science education lab'}</span>
+          <a href="#/" className="hover:text-ink">{lang === 'ru' ? 'О проекте' : 'About'}</a>
         </div>
       </footer>
 

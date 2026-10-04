@@ -108,7 +108,7 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({
           </span>
           <div>
             <h3 className="font-bold text-sm text-slate-100 flex items-center gap-1.5">
-              <span>{lang === 'ru' ? 'AI-Наставник: «Посмотри сюда»' : 'Visual Mentor: "Look Here"'}</span>
+              <span>{lang === 'ru' ? 'Наставник' : 'Mentor'}</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
             </h3>
             <p className="text-[11px] text-slate-400 font-mono">

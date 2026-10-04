@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, FastForward, HelpCircle, Zap } from 'lucide-react';
 
 interface MomentCollisionProps {
@@ -55,23 +56,22 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
 
     const render = () => {
       animId = requestAnimationFrame(render);
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
       const trackY = 240;
 
       // Dark track background
-      ctx.fillStyle = '#060a18';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       // Air track base
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#26282D';
       ctx.fillRect(20, trackY, w - 40, 20);
-      ctx.strokeStyle = '#475569';
+      ctx.strokeStyle = '#4A4D55';
       ctx.lineWidth = 2;
       ctx.strokeRect(20, trackY, w - 40, 20);
 
       // Track millimeter marks
-      ctx.strokeStyle = '#334155';
+      ctx.strokeStyle = '#34363C';
       ctx.lineWidth = 1;
       for (let x = 40; x < w - 40; x += 25) {
         ctx.beginPath();
@@ -248,12 +248,12 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
         </div>
 
         {/* Canvas Display */}
-        <div className="relative w-full h-[360px] flex items-center justify-center p-3">
+        <div className="lab-stage relative w-full flex items-center justify-center p-3">
           <canvas
             ref={canvasRef}
             width={600}
             height={340}
-            className="w-full h-full rounded-xl bg-slate-950"
+            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
           />
 
           <div className="absolute bottom-6 left-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">

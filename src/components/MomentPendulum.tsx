@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, Activity } from 'lucide-react';
 
 interface MomentPendulumProps {
@@ -29,10 +30,9 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
 
     const render = () => {
       animId = requestAnimationFrame(render);
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
 
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       const pivotX = w / 2;
@@ -59,7 +59,7 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
       const kinEnergy = Math.max(0, Math.min(1, 0.5 * Math.pow(state.omega * (length / 100), 2) / 3));
 
       // Draw Pivot Mount & Ceiling
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = '#34363C';
       ctx.fillRect(pivotX - 60, pivotY - 12, 120, 12);
       ctx.beginPath();
       ctx.arc(pivotX, pivotY, 6, 0, Math.PI * 2);
@@ -118,7 +118,7 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
 
       // Potential Energy Bar
       const hPot = Math.min(maxBarH, potEnergy * maxBarH * 1.5);
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#26282D';
       ctx.fillRect(barX, barY, barW, maxBarH);
       ctx.fillStyle = '#38bdf8';
       ctx.fillRect(barX, barY + maxBarH - hPot, barW, hPot);
@@ -128,7 +128,7 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
 
       // Kinetic Energy Bar
       const hKin = Math.min(maxBarH, kinEnergy * maxBarH * 1.5);
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#26282D';
       ctx.fillRect(barX + 35, barY, barW, maxBarH);
       ctx.fillStyle = '#22c55e';
       ctx.fillRect(barX + 35, barY + maxBarH - hKin, barW, hKin);
@@ -187,8 +187,8 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={320} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={320} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Controls */}
@@ -219,19 +219,19 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
               onClick={() => setGravity(9.8)}
               className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${gravity === 9.8 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
             >
-              🌍 {lang === 'ru' ? 'Земля (9.8)' : 'Earth (9.8)'}
+              {lang === 'ru' ? 'Земля (9.8)' : 'Earth (9.8)'}
             </button>
             <button
               onClick={() => setGravity(1.62)}
               className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${gravity === 1.62 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
             >
-              🌑 {lang === 'ru' ? 'Луна (1.62)' : 'Moon (1.62)'}
+              {lang === 'ru' ? 'Луна (1.62)' : 'Moon (1.62)'}
             </button>
             <button
               onClick={() => setGravity(24.79)}
               className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${gravity === 24.79 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
             >
-              🪐 {lang === 'ru' ? 'Юпитер (24.8)' : 'Jupiter (24.8)'}
+              {lang === 'ru' ? 'Юпитер (24.8)' : 'Jupiter (24.8)'}
             </button>
           </div>
         </div>

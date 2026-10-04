@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Layers, ArrowRight, ArrowLeft, RefreshCw, Zap, Sparkles, CheckCircle2, ChevronRight } from 'lucide-react';
 
 interface DeconstructionExplorerProps {
@@ -24,6 +25,7 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
   onSelectConceptForMentor
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<{ position: THREE.Vector3; target: THREE.Vector3 } | null>(null);
   const [molecule, setMolecule] = useState<DeconstructMolecule>('H2O');
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [forcedAngle, setForcedAngle] = useState<number>(104.5); // For testing repulsion
@@ -248,7 +250,7 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
     const height = container.clientHeight || 500;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060919);
+    scene.background = new THREE.Color(0x111214);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.set(0, 2.5, 7.5);
@@ -442,37 +444,20 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
       });
     }
 
-    // Mouse drag interaction
+    // Smooth orbit / zoom / pan with mouse and touch; the view survives scene rebuilds
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 3;
+    controls.maxDistance = 14;
+    if (viewRef.current) {
+      camera.position.copy(viewRef.current.position);
+      controls.target.copy(viewRef.current.target);
+    }
+    renderer.domElement.style.touchAction = 'none';
     let isDragging = false;
-    let prevMousePos = { x: 0, y: 0 };
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMousePos.x;
-      const deltaY = e.clientY - prevMousePos.y;
-
-      molGroup.rotation.y += deltaX * 0.008;
-      molGroup.rotation.x += deltaY * 0.008;
-
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = () => { isDragging = false; };
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      camera.position.z = Math.max(3.5, Math.min(14, camera.position.z + e.deltaY * 0.01));
-    };
-
-    const domElem = renderer.domElement;
-    domElem.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    domElem.addEventListener('wheel', onWheel, { passive: false });
+    controls.addEventListener('start', () => { isDragging = true; });
+    controls.addEventListener('end', () => { isDragging = false; });
 
     let animationFrameId: number;
     const animate = () => {
@@ -480,6 +465,7 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
       if (!isDragging) {
         molGroup.rotation.y += 0.003;
       }
+      controls.update();
       renderer.render(scene, camera);
     };
 
@@ -487,10 +473,8 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      domElem.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      domElem.removeEventListener('wheel', onWheel);
+      viewRef.current = { position: camera.position.clone(), target: controls.target.clone() };
+      controls.dispose();
       renderer.dispose();
       container.innerHTML = '';
     };
@@ -563,7 +547,7 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
         </div>
 
         {/* 3D Canvas */}
-        <div className="relative w-full h-[440px] sm:h-[480px]">
+        <div className="lab-stage relative w-full h-[440px] sm:h-[480px]">
           <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
           {/* Interactive HUD Angle & Overlay */}
@@ -655,7 +639,7 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
             </p>
 
             <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/50 text-xs text-indigo-200 flex items-start gap-2">
-              <span className="text-indigo-400 font-bold">💡</span>
+              <span className="text-indigo-400 font-bold"></span>
               <span className="leading-relaxed">{currentStepData.insight[lang]}</span>
             </div>
           </div>

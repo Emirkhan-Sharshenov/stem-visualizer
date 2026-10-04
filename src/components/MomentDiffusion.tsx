@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, FastForward, Clock, Zap, HelpCircle } from 'lucide-react';
 
 interface MomentDiffusionProps {
@@ -80,15 +81,14 @@ export const MomentDiffusion: React.FC<MomentDiffusionProps> = ({ lang }) => {
       const dt = Math.min(32, time - lastTime);
       lastTime = time;
 
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
 
       // Dark background
-      ctx.fillStyle = '#060a18';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       // Subtle container beaker outline
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = '#26282D';
       ctx.lineWidth = 3;
       ctx.strokeRect(10, 10, w - 20, h - 20);
 
@@ -276,12 +276,12 @@ export const MomentDiffusion: React.FC<MomentDiffusionProps> = ({ lang }) => {
         </div>
 
         {/* 2D Canvas Mount */}
-        <div className="relative w-full h-[400px] flex items-center justify-center p-3">
+        <div className="lab-stage relative w-full flex items-center justify-center p-3">
           <canvas
             ref={canvasRef}
             width={600}
             height={380}
-            className="w-full h-full rounded-xl bg-slate-950"
+            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
           />
 
           {/* Floating live moment prompt */}

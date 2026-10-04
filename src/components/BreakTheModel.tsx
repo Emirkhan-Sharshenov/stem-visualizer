@@ -28,8 +28,8 @@ export const BreakTheModel: React.FC<BreakTheModelProps> = ({ lang, onUnlockMile
     if (electronsIn1s.length >= 2) {
       setPauliError(
         lang === 'ru'
-          ? '💥 НАРУШЕНИЕ ПРИНЦИПА ПАУЛИ! В одной квантовой ячейке (1s) не могут находиться более двух электронов, и они обязаны иметь противоположные спины (↑ и ↓)!'
-          : '💥 PAULI EXCLUSION VIOLATION! An orbital can hold at most 2 electrons with opposing spins (↑ and ↓). Nature strictly forbids a third fermion in this state!'
+          ? 'НАРУШЕНИЕ ПРИНЦИПА ПАУЛИ! В одной квантовой ячейке (1s) не могут находиться более двух электронов, и они обязаны иметь противоположные спины (↑ и ↓)!'
+          : 'PAULI EXCLUSION VIOLATION! An orbital can hold at most 2 electrons with opposing spins (↑ and ↓). Nature strictly forbids a third fermion in this state!'
       );
       onUnlockMilestone('broke_the_model');
       confetti({ particleCount: 50, spread: 70 });
@@ -225,8 +225,8 @@ export const BreakTheModel: React.FC<BreakTheModelProps> = ({ lang, onUnlockMile
                 orbitResult === 'stable' ? 'text-emerald-400' : 'text-rose-400'
               }`}>
                 {orbitResult === 'stable' && (lang === 'ru' ? 'Устойчивая круговая орбита (v = √(GM/r))' : 'Stable circular orbit (v = √(GM/r))')}
-                {orbitResult === 'crashed' && (lang === 'ru' ? '💥 КАТАСТРОФА: Гравитация пересилила, спутник упал на планету!' : '💥 CRASH: Gravity overcame centripetal velocity!')}
-                {orbitResult === 'escaped' && (lang === 'ru' ? '🚀 ВЫБРОС В КОСМОС: Скорость превысила вторую космическую √(2)·v!' : '🚀 ESCAPE: Velocity exceeded parabolic escape speed!')}
+                {orbitResult === 'crashed' && (lang === 'ru' ? 'КАТАСТРОФА: Гравитация пересилила, спутник упал на планету!' : 'CRASH: Gravity overcame centripetal velocity!')}
+                {orbitResult === 'escaped' && (lang === 'ru' ? 'ВЫБРОС В КОСМОС: Скорость превысила вторую космическую √(2)·v!' : 'ESCAPE: Velocity exceeded parabolic escape speed!')}
               </span>
             </div>
           </div>
@@ -275,11 +275,11 @@ export const BreakTheModel: React.FC<BreakTheModelProps> = ({ lang, onUnlockMile
               <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">
                 {isPoisoned
                   ? (lang === 'ru'
-                      ? '⚠️ Электроны застряли в дыхательной цепи. Протоны больше не перекачиваются в межмембранное пространство. Турбина АТФ-синтазы остановилась из-за отсутствия протон-движущей силы!'
-                      : '⚠️ Electron flow is arrested at Complex IV. Proton pumping collapses. The ATP synthase turbine stalls due to zero electrochemical motive force!')
+                      ? 'Электроны застряли в дыхательной цепи. Протоны больше не перекачиваются в межмембранное пространство. Турбина АТФ-синтазы остановилась из-за отсутствия протон-движущей силы!'
+                      : 'Electron flow is arrested at Complex IV. Proton pumping collapses. The ATP synthase turbine stalls due to zero electrochemical motive force!')
                   : (lang === 'ru'
-                      ? '✅ Все комплексы дыхательной цепи работают штатно, непрерывно генерируя протонный градиент.'
-                      : '✅ Normal state: H+ protons are actively pumped, powering steady rotary ATP synthesis.')}
+                      ? 'Все комплексы дыхательной цепи работают штатно, непрерывно генерируя протонный градиент.'
+                      : 'Normal state: H+ protons are actively pumped, powering steady rotary ATP synthesis.')}
               </p>
             </div>
           </div>

@@ -50,7 +50,7 @@ export const MomentMendel: React.FC<MomentMendelProps> = ({ lang }) => {
         <div className="flex items-center gap-3 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
           <div>
             <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'ФЕНОТИП (ВНЕШНИЙ ВИД)' : 'PHENOTYPE RATIO'}</span>
-            <span className="font-bold text-purple-400 font-mono text-sm">{dominantCount} 🌸 : {recessiveCount} ⚪</span>
+            <span className="font-bold text-purple-400 font-mono text-sm">{dominantCount} : {recessiveCount} </span>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@ export const MomentMendel: React.FC<MomentMendelProps> = ({ lang }) => {
                     : 'bg-slate-800/40 border-slate-600/60 text-slate-200'
                 }`}
               >
-                <span className="text-2xl">{dominant ? '🌸' : '⚪'}</span>
+                <span className="text-2xl">{dominant ? '' : ''}</span>
                 <span className="text-base font-mono font-bold tracking-widest">{cellGenotype}</span>
                 <span className="text-[10px] font-mono opacity-80">
                   {dominant
@@ -126,7 +126,7 @@ export const MomentMendel: React.FC<MomentMendelProps> = ({ lang }) => {
       {/* Explanation Box */}
       <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed">
         <span className="font-bold text-cyan-400 block mb-1">
-          {lang === 'ru' ? '🧬 Почему рецессивный признак возвращается через поколение?' : '🧬 Why recessive traits skip a generation:'}
+          {lang === 'ru' ? 'Почему рецессивный признак возвращается через поколение?' : 'Why recessive traits skip a generation:'}
         </span>
         {lang === 'ru'
           ? 'Если оба родителя внешне пурпурные (гетерозиготы Aa), скрытый ген «a» прячется в ДНК. В 25% случаев при мейозе две рецессивные гаметы сливаются (a + a = aa), и рождается чисто белый цветок!'

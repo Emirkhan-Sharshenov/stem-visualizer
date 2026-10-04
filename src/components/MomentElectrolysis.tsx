@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Zap, Play, Pause, RotateCcw } from 'lucide-react';
 
 interface MomentElectrolysisProps {
@@ -27,8 +28,7 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
 
     let animId: number;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
 
     // Beaker dimensions
     const beakerX = 160;
@@ -61,7 +61,7 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
     const render = () => {
       animId = requestAnimationFrame(render);
 
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       // 1. Draw External Circuit Wires & Battery at top
@@ -79,7 +79,7 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
       ctx.stroke();
 
       // Battery in middle top
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#26282D';
       ctx.strokeStyle = '#06b6d4';
       ctx.lineWidth = 2;
       ctx.fillRect(w / 2 - 30, 20, 60, 30);
@@ -109,7 +109,7 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
       ctx.stroke();
 
       // 3. Draw Cathode (-) [Left - Graphite/Carbon rod]
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = '#34363C';
       ctx.fillRect(cathodeX, electrodeTop, electrodeW, electrodeBottom - electrodeTop);
 
       // Copper deposition layer on cathode (reddish metallic layer)
@@ -118,7 +118,7 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
       ctx.fillRect(cathodeX + electrodeW, beakerY + 20, 4, electrodeBottom - (beakerY + 20));
 
       // 4. Draw Anode (+) [Right - Graphite rod]
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = '#34363C';
       ctx.fillRect(anodeX, electrodeTop, electrodeW, electrodeBottom - electrodeTop);
 
       // 5. Physics & Chemistry Update
@@ -259,8 +259,8 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-84 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={340} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={340} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Voltage Slider */}

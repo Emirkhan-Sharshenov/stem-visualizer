@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, Flame, Snowflake, Wind, HelpCircle } from 'lucide-react';
 
 interface MomentStatesOfMatterProps {
@@ -63,15 +64,14 @@ export const MomentStatesOfMatter: React.FC<MomentStatesOfMatterProps> = ({ lang
 
     const render = () => {
       animId = requestAnimationFrame(render);
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
 
       // Clear with dark chamber background
-      ctx.fillStyle = '#050816';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       // Draw container walls
-      ctx.strokeStyle = '#334155';
+      ctx.strokeStyle = '#34363C';
       ctx.lineWidth = 4;
       ctx.strokeRect(15, 15, w - 30, h - 30);
 
@@ -199,9 +199,9 @@ export const MomentStatesOfMatter: React.FC<MomentStatesOfMatterProps> = ({ lang
         <div className="px-4 py-2 bg-slate-950/40 border-b border-slate-800/80 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
             {[
-              { id: -20, label: lang === 'ru' ? '🧊 Лёд (-20°C)' : '🧊 Ice (-20°C)', active: stateType === 'solid' },
-              { id: 25, label: lang === 'ru' ? '💧 Вода (25°C)' : '💧 Water (25°C)', active: stateType === 'liquid' },
-              { id: 115, label: lang === 'ru' ? '💨 Пар (115°C)' : '💨 Steam (115°C)', active: stateType === 'gas' },
+              { id: -20, label: lang === 'ru' ? 'Лёд (-20°C)' : 'Ice (-20°C)', active: stateType === 'solid' },
+              { id: 25, label: lang === 'ru' ? 'Вода (25°C)' : 'Water (25°C)', active: stateType === 'liquid' },
+              { id: 115, label: lang === 'ru' ? 'Пар (115°C)' : 'Steam (115°C)', active: stateType === 'gas' },
             ].map((p, idx) => (
               <button
                 key={idx}
@@ -223,12 +223,12 @@ export const MomentStatesOfMatter: React.FC<MomentStatesOfMatterProps> = ({ lang
         </div>
 
         {/* Canvas Display */}
-        <div className="relative w-full h-[400px] flex items-center justify-center p-3">
+        <div className="lab-stage relative w-full flex items-center justify-center p-3">
           <canvas
             ref={canvasRef}
             width={600}
             height={380}
-            className="w-full h-full rounded-xl bg-slate-950"
+            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
           />
 
           <div className="absolute bottom-6 left-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">

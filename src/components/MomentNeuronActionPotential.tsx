@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Zap, Play, RotateCcw, Activity } from 'lucide-react';
 
 interface MomentNeuronActionPotentialProps {
@@ -43,10 +44,9 @@ export const MomentNeuronActionPotential: React.FC<MomentNeuronActionPotentialPr
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
 
-    ctx.fillStyle = '#050914';
+    ctx.fillStyle = '#111214';
     ctx.fillRect(0, 0, w, h);
 
     const somaX = 130;
@@ -152,14 +152,14 @@ export const MomentNeuronActionPotential: React.FC<MomentNeuronActionPotentialPr
     const graphW = w - 160;
     const graphH = 50;
 
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#17181B';
     ctx.fillRect(graphX, graphY, graphW, graphH);
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = '#34363C';
     ctx.strokeRect(graphX, graphY, graphW, graphH);
 
     // -70 mV baseline
     const baseLineY = graphY + graphH * 0.75;
-    ctx.strokeStyle = '#475569';
+    ctx.strokeStyle = '#4A4D55';
     ctx.setLineDash([2, 2]);
     ctx.beginPath();
     ctx.moveTo(graphX, baseLineY);
@@ -235,8 +235,8 @@ export const MomentNeuronActionPotential: React.FC<MomentNeuronActionPotentialPr
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-84 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={340} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={340} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Trigger Button & Speed */}

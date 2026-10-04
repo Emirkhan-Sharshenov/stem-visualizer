@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Compass, Play, Pause, RotateCcw } from 'lucide-react';
 
 interface MomentDerivativeProps {
@@ -35,10 +36,9 @@ export const MomentDerivative: React.FC<MomentDerivativeProps> = ({ lang }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
 
-    ctx.fillStyle = '#050914';
+    ctx.fillStyle = '#111214';
     ctx.fillRect(0, 0, w, h);
 
     const originX = 120;
@@ -50,7 +50,7 @@ export const MomentDerivative: React.FC<MomentDerivativeProps> = ({ lang }) => {
     const toCanvasY = (y: number) => originY - y * scaleY;
 
     // Draw Coordinate Axes
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = '#26282D';
     ctx.lineWidth = 1;
 
     // X axis
@@ -188,8 +188,8 @@ export const MomentDerivative: React.FC<MomentDerivativeProps> = ({ lang }) => {
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={320} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={320} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Interactive Controls */}

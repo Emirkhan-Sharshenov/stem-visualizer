@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Zap, Play, Pause, RotateCcw, AlertTriangle, Lightbulb } from 'lucide-react';
 
 interface MomentCircuitProps {
@@ -31,10 +32,9 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
 
     const render = () => {
       animId = requestAnimationFrame(render);
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
 
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       const x1 = paddingX;
@@ -44,7 +44,7 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
 
       // Draw Circuit Wires
       ctx.lineWidth = 6;
-      ctx.strokeStyle = '#334155';
+      ctx.strokeStyle = '#34363C';
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
@@ -62,7 +62,7 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
 
       // Battery on Left side (x1, middle)
       const batY = (y1 + y2) / 2;
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#26282D';
       ctx.fillRect(x1 - 20, batY - 35, 40, 70);
       ctx.strokeStyle = '#06b6d4';
       ctx.lineWidth = 2;
@@ -82,7 +82,7 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
 
       // Switch on Top wire
       const switchX = (x1 + x2) * 0.35;
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(switchX - 25, y1 - 10, 50, 20); // clear wire under switch
       ctx.fillStyle = '#64748b';
       ctx.beginPath();
@@ -104,9 +104,9 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
 
       // Resistor on Right wire
       const resY = (y1 + y2) / 2;
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(x2 - 12, resY - 35, 24, 70);
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#26282D';
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 2;
       ctx.fillRect(x2 - 16, resY - 30, 32, 60);
@@ -125,7 +125,7 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
 
       // Light Bulb on Bottom wire
       const bulbX = (x1 + x2) / 2;
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(bulbX - 25, y2 - 10, 50, 20);
 
       // Bulb glow
@@ -255,8 +255,8 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={320} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={320} className="block w-full h-auto max-h-[480px] object-contain" />
         
         {/* Switch toggle overlay button */}
         <button
@@ -267,7 +267,7 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
               : 'bg-rose-500/20 text-rose-400 border-rose-500/40 hover:bg-rose-500/30'
           }`}
         >
-          {switchClosed ? (lang === 'ru' ? '🔘 Ключ замкнут (Ток течет)' : '🔘 Switch Closed') : (lang === 'ru' ? '⚪ Ключ разомкнут (Цепь разорвана)' : '⚪ Switch Open')}
+          {switchClosed ? (lang === 'ru' ? 'Ключ замкнут (Ток течет)' : 'Switch Closed') : (lang === 'ru' ? 'Ключ разомкнут (Цепь разорвана)' : 'Switch Open')}
         </button>
       </div>
 

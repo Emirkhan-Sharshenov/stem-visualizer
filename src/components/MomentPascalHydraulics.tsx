@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { ArrowDown, ArrowUp, RefreshCw, HelpCircle, Info } from 'lucide-react';
 
 interface MomentPascalHydraulicsProps {
@@ -25,10 +26,9 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
 
-    ctx.fillStyle = '#050914';
+    ctx.fillStyle = '#111214';
     ctx.fillRect(0, 0, w, h);
 
     // Vessel dimensions
@@ -78,7 +78,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
     ctx.stroke();
 
     // 2. Draw Vessel Walls
-    ctx.strokeStyle = '#475569';
+    ctx.strokeStyle = '#4A4D55';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -125,7 +125,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
     ctx.fillRect(c2X + 30, fluidY2 - 50, 10, 30);
     ctx.fillRect(c2X + c2W - 40, fluidY2 - 50, 10, 30);
     // Platform
-    ctx.fillStyle = '#334155';
+    ctx.fillStyle = '#34363C';
     ctx.fillRect(c2X - 10, fluidY2 - 60, c2W + 20, 12);
 
     // Car on Platform
@@ -146,7 +146,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
     ctx.fillRect(carX - 28, carY - 44, 24, 16);
     ctx.fillRect(carX + 4, carY - 44, 24, 16);
     // Car wheels
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#17181B';
     ctx.beginPath();
     ctx.arc(carX - 40, carY, 10, 0, Math.PI * 2);
     ctx.arc(carX + 40, carY, 10, 0, Math.PI * 2);
@@ -241,8 +241,8 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-84 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={340} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={340} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Interactive Controls */}

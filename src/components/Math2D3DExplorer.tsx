@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Rotate3d, Compass, Play, Pause, ChevronRight, HelpCircle, Layers, Move } from 'lucide-react';
 
 interface Math2D3DExplorerProps {
@@ -16,6 +18,7 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
   onSelectConceptForMentor
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<{ position: THREE.Vector3; target: THREE.Vector3 } | null>(null);
   const canvas2DRef = useRef<HTMLCanvasElement>(null);
   const [subMode, setSubMode] = useState<MathSubMode>('revolution');
 
@@ -75,12 +78,11 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
     ctx.clearRect(0, 0, w, h);
 
     // Coordinate grid
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = '#26282D';
     ctx.lineWidth = 1;
     for (let x = 0; x < w; x += 30) {
       ctx.beginPath();
@@ -163,7 +165,7 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
     const height = container.clientHeight || 450;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060919);
+    scene.background = new THREE.Color(0x111214);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.set(0, 5, 11);
@@ -292,37 +294,20 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
       mainGroup.add(pCloud);
     }
 
-    // Mouse drag interaction
+    // Smooth orbit / zoom / pan with mouse and touch; the view survives scene rebuilds
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 4;
+    controls.maxDistance = 20;
+    if (viewRef.current) {
+      camera.position.copy(viewRef.current.position);
+      controls.target.copy(viewRef.current.target);
+    }
+    renderer.domElement.style.touchAction = 'none';
     let isDragging = false;
-    let prevMousePos = { x: 0, y: 0 };
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMousePos.x;
-      const deltaY = e.clientY - prevMousePos.y;
-
-      mainGroup.rotation.y += deltaX * 0.008;
-      mainGroup.rotation.x += deltaY * 0.008;
-
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = () => { isDragging = false; };
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      camera.position.z = Math.max(4, Math.min(22, camera.position.z + e.deltaY * 0.01));
-    };
-
-    const domElem = renderer.domElement;
-    domElem.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    domElem.addEventListener('wheel', onWheel, { passive: false });
+    controls.addEventListener('start', () => { isDragging = true; });
+    controls.addEventListener('end', () => { isDragging = false; });
 
     let animationFrameId: number;
     const animate = () => {
@@ -330,6 +315,7 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
       if (!isDragging) {
         mainGroup.rotation.y += 0.003;
       }
+      controls.update();
       renderer.render(scene, camera);
     };
 
@@ -337,10 +323,8 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      domElem.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      domElem.removeEventListener('wheel', onWheel);
+      viewRef.current = { position: camera.position.clone(), target: controls.target.clone() };
+      controls.dispose();
       renderer.dispose();
       container.innerHTML = '';
     };
@@ -400,8 +384,8 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
                 <span>{lang === 'ru' ? '2D ГРАФИК КРИВОЙ y = f(x)' : '2D PROFILE CURVE y = f(x)'}</span>
                 <span className="text-slate-400">dx = {dx.toFixed(2)}</span>
               </div>
-              <div className="bg-slate-950 rounded-xl border border-slate-800/80 p-2 flex items-center justify-center">
-                <canvas ref={canvas2DRef} width={380} height={340} className="w-full h-auto max-h-[340px]" />
+              <div className="lab-stage bg-slate-950 rounded-xl border border-slate-800/80 p-2 flex items-center justify-center">
+                <canvas ref={canvas2DRef} width={380} height={340} className="block w-full h-auto max-h-[340px] object-contain" />
               </div>
 
               {/* Curve Switcher */}
@@ -433,7 +417,7 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
                 <span>{lang === 'ru' ? '3D ОБЪЕМНОЕ ВРАЩЕНИЕ (ИНТЕГРАЛ)' : '3D SOLID OF REVOLUTION'}</span>
                 <span className="text-slate-400 font-mono">θ = {rotationAngle}°</span>
               </div>
-              <div className="relative w-full h-[340px] rounded-xl overflow-hidden border border-slate-800/80">
+              <div className="lab-stage relative w-full rounded-xl overflow-hidden border border-slate-800/80">
                 <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
               </div>
 
@@ -446,7 +430,7 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
           </div>
         ) : (
           /* Divergence 3D Canvas */
-          <div className="relative w-full h-[450px]">
+          <div className="lab-stage relative w-full h-[450px]">
             <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
             {/* Divergence Type Switcher */}

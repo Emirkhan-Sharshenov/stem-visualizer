@@ -2,7 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitalRenderStyle, OrbitalType, ExplanationLevel } from '../types/stem';
 import { CONCEPTS_LIST } from '../data/concepts';
-import { Layers, RotateCcw, Eye, Play, Pause, Compass, HelpCircle, ChevronRight, Sparkles, Sliders } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
+import { Stage3D } from './lab/Stage3D';
+import { Formula } from './Formula';
+import type { PartInfo, ThreeStage } from '../lib/three/ThreeStage';
+import { sampleOrbital } from '../lib/orbitals';
 
 interface OrbitalsExplorerProps {
   lang: 'ru' | 'en';
@@ -11,646 +15,410 @@ interface OrbitalsExplorerProps {
   onSelectConceptForMentor: (topic: string, state: any) => void;
 }
 
-export const OrbitalsExplorer: React.FC<OrbitalsExplorerProps> = ({
-  lang,
-  onUnlockMilestone,
-  onOpenPrediction,
-  onSelectConceptForMentor
-}) => {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const [n, setN] = useState<number>(2);
-  const [l, setL] = useState<number>(1);
-  const [m, setM] = useState<number>(0);
+const ORBITALS: { type: OrbitalType; n: number; l: number; m: number; label: string; tex: string; text: { ru: string; en: string } }[] = [
+  { type: '1s', n: 1, l: 0, m: 0, label: '1s', tex: '\\psi_{1s} \\propto e^{-r}', text: { ru: 'Сфера без узлов. Электрон чаще всего рядом с ядром, а плотность плавно спадает наружу.', en: 'A sphere with no nodes. The electron is most often near the nucleus, and density fades smoothly outward.' } },
+  { type: '2s', n: 2, l: 0, m: 0, label: '2s', tex: '\\psi_{2s} \\propto (2-r)\\,e^{-r/2}', text: { ru: 'Тоже сфера, но внутри неё есть узловая сфера радиусом 2a₀: внутри и снаружи от неё знак ψ разный.', en: 'Also a sphere, but with a nodal sphere at r = 2a₀ inside: ψ has opposite signs on either side of it.' } },
+  { type: '2pz', n: 2, l: 1, m: 0, label: '2p_z', tex: '\\psi_{2p_z} \\propto z\\,e^{-r/2}', text: { ru: 'Две доли вдоль оси z с разными знаками ψ. Между ними плоскость xy, где электрона не бывает никогда.', en: 'Two lobes along z with opposite signs of ψ. Between them lies the xy plane, where the electron is never found.' } },
+  { type: '2px', n: 2, l: 1, m: 1, label: '2p_x', tex: '\\psi_{2p_x} \\propto x\\,e^{-r/2}', text: { ru: 'Та же гантель, но повёрнутая вдоль x. Три p-орбитали смотрят вдоль трёх осей и задают углы химических связей.', en: 'The same dumbbell, turned along x. The three p orbitals point along the three axes and set the angles of chemical bonds.' } },
+  { type: '3dz2', n: 3, l: 2, m: 0, label: '3d_{z²}', tex: '\\psi \\propto (3z^2-r^2)\\,e^{-r/3}', text: { ru: 'Две доли вдоль z и «бублик» вокруг ядра. Узловые поверхности здесь — два конуса.', en: 'Two lobes along z and a doughnut around the nucleus. The nodal surfaces are two cones.' } },
+  { type: '3dxy', n: 3, l: 2, m: -2, label: '3d_{xy}', tex: '\\psi \\propto xy\\,e^{-r/3}', text: { ru: 'Четыре лепестка между осями x и y. Узлы — плоскости xz и yz.', en: 'Four petals between the x and y axes. The nodes are the xz and yz planes.' } },
+  { type: '4f', n: 4, l: 3, m: 0, label: '4f_{z³}', tex: '\\psi \\propto z(5z^2-3r^2)\\,e^{-r/4}', text: { ru: 'Шесть областей вдоль z, разделённых плоскостью и двумя конусами — три узловые поверхности, потому что ℓ = 3.', en: 'Six regions along z, split by a plane and two cones: three nodal surfaces, because ℓ = 3.' } },
+];
+
+const STYLES: { id: OrbitalRenderStyle; label: { ru: string; en: string } }[] = [
+  { id: 'density', label: { ru: 'Плотность', en: 'Density' } },
+  { id: 'phase', label: { ru: 'Фаза ±', en: 'Phase ±' } },
+  { id: 'nodes', label: { ru: 'Узлы', en: 'Nodes' } },
+  { id: 'slice', label: { ru: 'Срез', en: 'Slice' } },
+  { id: 'dots', label: { ru: 'Точки', en: 'Dots' } },
+];
+
+const POS = new THREE.Color('#5B7CFF');
+const NEG = new THREE.Color('#F5A524');
+const LOW = new THREE.Color('#3B4CA8');
+const HIGH = new THREE.Color('#B9C6FF');
+const DIM = new THREE.Color('#3A3F52');
+
+const info = (ru: string, en: string, tRu: string, tEn: string): PartInfo => ({ title: { ru, en }, text: { ru: tRu, en: tEn } });
+
+const NUCLEUS_INFO = info('Ядро (протон)', 'Nucleus (a proton)', 'В 100 000 раз меньше облака. Если бы атом был стадионом, ядро было бы горошиной в центре поля.', 'About 100,000 times smaller than the cloud. If the atom were a stadium, the nucleus would be a pea at the centre spot.');
+const NODE_INFO = info('Узловая поверхность', 'Nodal surface', 'Здесь ψ = 0, значит вероятность найти электрон ровно ноль. Число таких поверхностей равно n − 1.', 'Here ψ = 0, so the chance of finding the electron is exactly zero. There are n − 1 such surfaces.');
+const AXES_INFO = info('Оси координат', 'Coordinate axes', 'Красная — x, зелёная — y (в физике это z), синяя — z. Ориентация орбитали задаётся магнитным числом m.', 'Red is x, green is up (z in physics), blue is the third axis. The magnetic number m sets the orbital’s orientation.');
+
+function nodalSurfaces(type: OrbitalType, scale: number): THREE.Object3D[] {
+  const out: THREE.Object3D[] = [];
+  const material = () => new THREE.MeshStandardMaterial({ color: '#B79CFF', transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false, roughness: 0.6, emissive: '#2a1f55' });
+  const plane = (rotate: (m: THREE.Mesh) => void) => {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(2.9, 64), material());
+    rotate(m);
+    out.push(m);
+  };
+  const cone = (theta: number, up: boolean) => {
+    const h = 2.6;
+    const geo = new THREE.ConeGeometry(h * Math.tan(theta), h, 64, 1, true);
+    const m = new THREE.Mesh(geo, material());
+    m.position.y = up ? h / 2 : -h / 2;
+    if (up) m.rotation.x = Math.PI;
+    out.push(m);
+  };
+  if (type === '2s') out.push(new THREE.Mesh(new THREE.SphereGeometry(2 * scale, 48, 32), material()));
+  if (type === '2pz') plane((m) => (m.rotation.x = Math.PI / 2));
+  if (type === '2px') plane((m) => (m.rotation.y = Math.PI / 2));
+  if (type === '3dz2') {
+    const t = Math.acos(1 / Math.sqrt(3));
+    cone(t, true);
+    cone(t, false);
+  }
+  if (type === '3dxy') {
+    plane((m) => (m.rotation.y = Math.PI / 2));
+    plane(() => undefined);
+  }
+  if (type === '4f') {
+    plane((m) => (m.rotation.x = Math.PI / 2));
+    const t = Math.acos(Math.sqrt(3 / 5));
+    cone(t, true);
+    cone(t, false);
+  }
+  out.forEach((o) => (o.userData.info = NODE_INFO));
+  return out;
+}
+
+export const OrbitalsExplorer: React.FC<OrbitalsExplorerProps> = ({ lang, onUnlockMilestone, onOpenPrediction, onSelectConceptForMentor }) => {
   const [orbitalType, setOrbitalType] = useState<OrbitalType>('2pz');
   const [renderStyle, setRenderStyle] = useState<OrbitalRenderStyle>('density');
-  const [isRotating, setIsRotating] = useState<boolean>(true);
-  const [sliceZ, setSliceZ] = useState<number>(0);
-  const [particleDensity, setParticleDensity] = useState<number>(3500);
+  const [isRotating, setIsRotating] = useState(true);
+  const [sliceZ, setSliceZ] = useState(0);
+  const [particleDensity, setParticleDensity] = useState(9000);
   const [explanationLevel, setExplanationLevel] = useState<ExplanationLevel>(2);
-  const [showNucleus, setShowNucleus] = useState<boolean>(true);
-  const [showAxes, setShowAxes] = useState<boolean>(true);
+  const [showNucleus, setShowNucleus] = useState(true);
+  const [showAxes, setShowAxes] = useState(true);
+  const [selected, setSelected] = useState<PartInfo | null>(null);
 
-  const conceptData = orbitalType.startsWith('1s') || orbitalType.startsWith('2s')
-    ? CONCEPTS_LIST.find(c => c.id === 's-orbital')!
-    : CONCEPTS_LIST.find(c => c.id === 'p-orbital')!;
+  const stageRef = useRef<ThreeStage | null>(null);
+  const rootRef = useRef<THREE.Group | null>(null);
+  const nucleusRef = useRef<THREE.Object3D | null>(null);
+  const axesRef = useRef<THREE.Object3D | null>(null);
+  const contentRef = useRef<THREE.Group | null>(null);
+  const fadeRef = useRef<{ incoming: THREE.Group | null; outgoing: THREE.Group[] }>({ incoming: null, outgoing: [] });
+  const rotatingRef = useRef(isRotating);
+  rotatingRef.current = isRotating;
 
-  // Notify mentor of current state
+  const orbital = ORBITALS.find((o) => o.type === orbitalType)!;
+  const conceptData = orbital.l === 0 ? CONCEPTS_LIST.find((c) => c.id === 's-orbital')! : CONCEPTS_LIST.find((c) => c.id === 'p-orbital')!;
+
   useEffect(() => {
-    onSelectConceptForMentor('orbitals', { n, l, m, orbitalType, renderStyle });
-  }, [n, l, m, orbitalType, renderStyle]);
+    onSelectConceptForMentor('orbitals', { n: orbital.n, l: orbital.l, m: orbital.m, orbitalType, renderStyle });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orbitalType, renderStyle]);
 
-  // Unlock first milestone on mount
   useEffect(() => {
     onUnlockMilestone('first_orbital');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update quantum numbers when orbitalType preset is picked
-  const handleSelectOrbital = (type: OrbitalType) => {
-    setOrbitalType(type);
-    if (type === '1s') { setN(1); setL(0); setM(0); }
-    else if (type === '2s') { setN(2); setL(0); setM(0); }
-    else if (type === '2px') { setN(2); setL(1); setM(1); }
-    else if (type === '2pz') { setN(2); setL(1); setM(0); }
-    else if (type === '3dz2') { setN(3); setL(2); setM(0); }
-    else if (type === '3dxy') { setN(3); setL(2); setM(-2); }
-    else if (type === '4f') { setN(4); setL(3); setM(0); }
-  };
-
-  // Evaluate wavefunctions ψ(x,y,z) for realistic quantum rendering
-  const evaluateWavefunction = (x: number, y: number, z: number, currentType: OrbitalType): { psi: number; prob: number; phase: number } => {
-    const r = Math.sqrt(x * x + y * y + z * z);
-    if (r === 0) return { psi: 1, prob: 1, phase: 1 };
-    const theta = Math.acos(Math.max(-1, Math.min(1, z / r)));
-    const phi = Math.atan2(y, x);
-
-    let psi = 0;
-    const a0 = 1.0; // scaled Bohr radius
-    const rho = (2 * r) / (n * a0);
-
-    if (currentType === '1s') {
-      psi = Math.exp(-rho / 2);
-    } else if (currentType === '2s') {
-      // Has radial node at rho = 2 (r = 2a0)
-      psi = (2 - rho) * Math.exp(-rho / 2);
-    } else if (currentType === '2pz') {
-      // Dumbbell along z-axis, angular node at z=0 (theta = pi/2)
-      psi = rho * Math.exp(-rho / 2) * Math.cos(theta);
-    } else if (currentType === '2px') {
-      // Dumbbell along x-axis
-      psi = rho * Math.exp(-rho / 2) * Math.sin(theta) * Math.cos(phi);
-    } else if (currentType === '3dz2') {
-      // 3z^2 - r^2
-      psi = (rho * rho) * Math.exp(-rho / 3) * (3 * Math.cos(theta) * Math.cos(theta) - 1);
-    } else if (currentType === '3dxy') {
-      // Four cloverleaf lobes
-      psi = (rho * rho) * Math.exp(-rho / 3) * (Math.sin(theta) * Math.sin(theta)) * Math.sin(2 * phi);
-    } else if (currentType === '4f') {
-      // Multi-lobed f-orbital
-      psi = (rho * rho * rho) * Math.exp(-rho / 4) * (5 * Math.pow(Math.cos(theta), 3) - 3 * Math.cos(theta));
-    }
-
-    const prob = psi * psi;
-    const phase = psi >= 0 ? 1 : -1;
-    return { psi, prob, phase };
-  };
-
-  // Three.js Scene Setup & Loop
   useEffect(() => {
-    const container = mountRef.current;
-    if (!container) return;
+    if (renderStyle === 'nodes') onUnlockMilestone('discovered_node');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renderStyle]);
 
-    const width = container.clientWidth || 600;
-    const height = container.clientHeight || 500;
+  const onReady = (stage: ThreeStage) => {
+    stageRef.current = stage;
+    const root = new THREE.Group();
+    stage.scene.add(root);
+    rootRef.current = root;
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050814);
+    const nucleus = new THREE.Mesh(new THREE.SphereGeometry(0.07, 24, 16), new THREE.MeshStandardMaterial({ color: '#FF5A5F', emissive: '#7a1418', roughness: 0.3 }));
+    nucleus.userData.info = NUCLEUS_INFO;
+    root.add(nucleus);
+    nucleusRef.current = nucleus;
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 4, 9);
-    camera.lookAt(0, 0, 0);
+    const axes = new THREE.Group();
+    const axisLine = (to: THREE.Vector3, color: string) => {
+      const geo = new THREE.BufferGeometry().setFromPoints([to.clone().negate(), to]);
+      axes.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.55 })));
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 12), new THREE.MeshStandardMaterial({ color }));
+      tip.position.copy(to);
+      tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().normalize());
+      axes.add(tip);
+    };
+    axisLine(new THREE.Vector3(3.3, 0, 0), '#E5484D');
+    axisLine(new THREE.Vector3(0, 3.3, 0), '#30A46C');
+    axisLine(new THREE.Vector3(0, 0, 3.3), '#5B7CFF');
+    axes.userData.info = AXES_INFO;
+    root.add(axes);
+    axesRef.current = axes;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
-
-    // Coordinate grid & axes helper
-    const axesGroup = new THREE.Group();
-    if (showAxes) {
-      const axes = new THREE.AxesHelper(3.5);
-      axesGroup.add(axes);
-      const grid = new THREE.GridHelper(8, 16, 0x1e293b, 0x0f172a);
-      grid.position.y = -2.5;
-      axesGroup.add(grid);
-    }
-    scene.add(axesGroup);
-
-    // Nucleus representation (clustered glowing core)
-    const nucleusGroup = new THREE.Group();
-    if (showNucleus) {
-      const coreGeo = new THREE.SphereGeometry(0.18, 16, 16);
-      const coreMat = new THREE.MeshBasicMaterial({ color: 0xff3b30 });
-      const core = new THREE.Mesh(coreGeo, coreMat);
-      nucleusGroup.add(core);
-
-      // Glow halo
-      const glowGeo = new THREE.SphereGeometry(0.3, 16, 16);
-      const glowMat = new THREE.MeshBasicMaterial({
-        color: 0xff453a,
-        transparent: true,
-        opacity: 0.35,
-        wireframe: true
-      });
-      const glow = new THREE.Mesh(glowGeo, glowMat);
-      nucleusGroup.add(glow);
-    }
-    scene.add(nucleusGroup);
-
-    // Orbital Visuals Construction
-    const orbitalGroup = new THREE.Group();
-
-    // 1. Particle Cloud (Monte Carlo sampling according to |psi|^2)
-    const count = particleDensity;
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-
-    let placed = 0;
-    const maxRadius = n === 1 ? 3.0 : n === 2 ? 4.2 : 5.5;
-
-    // Monte Carlo rejection / importance sampling
-    for (let i = 0; i < count * 25 && placed < count; i++) {
-      const u = (Math.random() - 0.5) * 2 * maxRadius;
-      const v = (Math.random() - 0.5) * 2 * maxRadius;
-      const w = (Math.random() - 0.5) * 2 * maxRadius;
-
-      // Slice filter if in slice mode
-      if (renderStyle === 'slice' && Math.abs(w - sliceZ) > 0.35) {
-        continue;
+    return stage.onUpdate((dt) => {
+      if (rotatingRef.current) root.rotation.y += dt * 0.22;
+      // Crossfade between orbitals
+      const f = fadeRef.current;
+      const step = dt / 0.45;
+      if (f.incoming) {
+        let done = true;
+        f.incoming.traverse((o) => {
+          const m = (o as THREE.Points).material as THREE.Material & { opacity: number; userData: { target?: number } };
+          if (m && 'opacity' in m && m.userData.target !== undefined) {
+            m.opacity = Math.min(m.userData.target, m.opacity + step * m.userData.target);
+            if (m.opacity < m.userData.target) done = false;
+          }
+        });
+        if (done) f.incoming = null;
       }
-
-      const { psi, prob, phase } = evaluateWavefunction(u, v, w, orbitalType);
-
-      // Rejection threshold
-      const threshold = Math.random() * 0.85;
-      const normalizedProb = Math.min(1.0, prob * (orbitalType === '1s' ? 1.0 : 3.5));
-
-      if (normalizedProb > threshold) {
-        positions[placed * 3] = u;
-        positions[placed * 3 + 1] = w; // map z to three.js y
-        positions[placed * 3 + 2] = v;
-
-        // Color coding depending on render style
-        if (renderStyle === 'phase') {
-          if (phase > 0) {
-            // Neon cyan (+)
-            colors[placed * 3] = 0.05;
-            colors[placed * 3 + 1] = 0.85;
-            colors[placed * 3 + 2] = 0.95;
-          } else {
-            // Warm orange/amber (-)
-            colors[placed * 3] = 1.0;
-            colors[placed * 3 + 1] = 0.45;
-            colors[placed * 3 + 2] = 0.1;
+      f.outgoing = f.outgoing.filter((g) => {
+        let alive = false;
+        g.traverse((o) => {
+          const m = (o as THREE.Points).material as THREE.Material & { opacity: number };
+          if (m && 'opacity' in m) {
+            m.opacity = Math.max(0, m.opacity - step);
+            if (m.opacity > 0) alive = true;
           }
-        } else if (renderStyle === 'nodes') {
-          // Highlight near-zero regions in purple/white
-          if (Math.abs(psi) < 0.15) {
-            colors[placed * 3] = 0.95;
-            colors[placed * 3 + 1] = 0.95;
-            colors[placed * 3 + 2] = 1.0;
-          } else {
-            colors[placed * 3] = 0.2;
-            colors[placed * 3 + 1] = 0.3;
-            colors[placed * 3 + 2] = 0.5;
-          }
-        } else {
-          // Continuous probability density gradient (deep violet to bright electric blue/cyan)
-          const t = Math.min(1.0, normalizedProb * 1.5);
-          colors[placed * 3] = 0.1 + 0.3 * t;
-          colors[placed * 3 + 1] = 0.2 + 0.7 * t;
-          colors[placed * 3 + 2] = 0.7 + 0.3 * t;
+        });
+        if (!alive) {
+          root.remove(g);
+          g.traverse((o) => {
+            const mesh = o as THREE.Mesh;
+            mesh.geometry?.dispose();
+            (mesh.material as THREE.Material | undefined)?.dispose();
+          });
         }
+        return alive;
+      });
+    });
+  };
 
-        placed++;
-      }
+  // Rebuild the cloud when the orbital or how it's drawn changes
+  useEffect(() => {
+    const stage = stageRef.current;
+    const root = rootRef.current;
+    if (!stage || !root) return;
+
+    const sample = sampleOrbital(orbitalType, particleDensity);
+    const group = new THREE.Group();
+    const positions: number[] = [];
+    const colors: number[] = [];
+    const sliceWidth = 0.09;
+    const c = new THREE.Color();
+    for (let i = 0; i < sample.count; i++) {
+      const x = sample.positions[i * 3], y = sample.positions[i * 3 + 1], z = sample.positions[i * 3 + 2];
+      if (renderStyle === 'slice' && Math.abs(y - sliceZ) > sliceWidth) continue;
+      const sign = sample.signs[i];
+      const d = Math.sqrt(sample.density[i]);
+      if (renderStyle === 'phase' || renderStyle === 'slice') c.copy(sign > 0 ? POS : NEG);
+      else if (renderStyle === 'nodes') c.copy(DIM);
+      else if (renderStyle === 'dots') c.set('#DDE3FF');
+      else c.copy(LOW).lerp(HIGH, d);
+      positions.push(x, y, z);
+      colors.push(c.r, c.g, c.b);
     }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions.subarray(0, placed * 3), 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors.subarray(0, placed * 3), 3));
-
-    const pMaterial = new THREE.PointsMaterial({
-      size: renderStyle === 'dots' ? 0.045 : 0.065,
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const additive = renderStyle === 'density';
+    const targetOpacity = renderStyle === 'nodes' ? 0.5 : additive ? 0.85 : 0.9;
+    const material = new THREE.PointsMaterial({
+      size: renderStyle === 'dots' ? 0.024 : renderStyle === 'slice' ? 0.05 : 0.04,
       vertexColors: true,
       transparent: true,
-      opacity: renderStyle === 'slice' ? 0.95 : 0.75,
-      blending: THREE.AdditiveBlending,
+      opacity: 0,
+      depthWrite: false,
+      blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    });
+    material.userData.target = targetOpacity;
+    group.add(new THREE.Points(geo, material));
+
+    // Invisible proxy so the cloud itself can be clicked
+    const proxy = new THREE.Mesh(new THREE.SphereGeometry(2.4, 16, 12), new THREE.MeshBasicMaterial({ visible: false }));
+    proxy.userData.info = { title: { ru: `Орбиталь ${orbital.label.replace(/[_{}]/g, '')}`, en: `${orbital.label.replace(/[_{}]/g, '')} orbital` }, text: orbital.text } satisfies PartInfo;
+    proxy.userData.shell = true;
+    group.add(proxy);
+
+    const nodes = renderStyle === 'nodes' || renderStyle === 'phase' ? nodalSurfaces(orbitalType, sample.scale) : [];
+    nodes.forEach((n) => {
+      const m = n as THREE.Mesh;
+      const mat = m.material as THREE.MeshStandardMaterial;
+      mat.userData.target = renderStyle === 'nodes' ? 0.35 : 0.1;
+      mat.opacity = 0;
+      group.add(n);
     });
 
-    const pointCloud = new THREE.Points(geometry, pMaterial);
-    orbitalGroup.add(pointCloud);
-
-    // 2. Nodal Surfaces visualization when in 'nodes' mode
-    if (renderStyle === 'nodes') {
-      onUnlockMilestone('discovered_node');
-      if (orbitalType === '2s') {
-        // Spherical radial node at r = 2
-        const nodeSphere = new THREE.Mesh(
-          new THREE.SphereGeometry(1.65, 32, 32),
-          new THREE.MeshBasicMaterial({
-            color: 0xa855f7,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.4
-          })
-        );
-        orbitalGroup.add(nodeSphere);
-      } else if (orbitalType === '2pz') {
-        // Planar angular node at y=0 (XZ plane)
-        const planeGeo = new THREE.PlaneGeometry(5, 5);
-        const planeMat = new THREE.MeshBasicMaterial({
-          color: 0xa855f7,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.25,
-          wireframe: true
-        });
-        const nodePlane = new THREE.Mesh(planeGeo, planeMat);
-        nodePlane.rotation.x = Math.PI / 2;
-        orbitalGroup.add(nodePlane);
-      } else if (orbitalType === '2px') {
-        // Planar angular node at x=0 (YZ plane)
-        const planeGeo = new THREE.PlaneGeometry(5, 5);
-        const planeMat = new THREE.MeshBasicMaterial({
-          color: 0xa855f7,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.25,
-          wireframe: true
-        });
-        const nodePlane = new THREE.Mesh(planeGeo, planeMat);
-        nodePlane.rotation.y = Math.PI / 2;
-        orbitalGroup.add(nodePlane);
-      } else if (orbitalType === '3dz2') {
-        // Conical nodes
-        const coneGeo = new THREE.ConeGeometry(2.5, 3.5, 32, 1, true);
-        const coneMat = new THREE.MeshBasicMaterial({
-          color: 0xa855f7,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.35,
-          side: THREE.DoubleSide
-        });
-        const coneTop = new THREE.Mesh(coneGeo, coneMat);
-        coneTop.position.y = 1.7;
-        const coneBottom = new THREE.Mesh(coneGeo, coneMat);
-        coneBottom.rotation.x = Math.PI;
-        coneBottom.position.y = -1.7;
-        orbitalGroup.add(coneTop);
-        orbitalGroup.add(coneBottom);
-      }
-    }
-
-    // 3. Slice indicator plane
     if (renderStyle === 'slice') {
-      const sliceIndicator = new THREE.Mesh(
-        new THREE.PlaneGeometry(6, 6),
-        new THREE.MeshBasicMaterial({
-          color: 0x38bdf8,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.15,
-          wireframe: false
-        })
-      );
-      sliceIndicator.position.y = sliceZ;
-      sliceIndicator.rotation.x = Math.PI / 2;
-      orbitalGroup.add(sliceIndicator);
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshBasicMaterial({ color: '#8fa4ff', transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+      (plane.material as THREE.Material).userData.target = 0.08;
+      plane.rotation.x = Math.PI / 2;
+      plane.position.y = sliceZ;
+      group.add(plane);
     }
 
-    scene.add(orbitalGroup);
+    root.add(group);
+    const fade = fadeRef.current;
+    if (contentRef.current) fade.outgoing.push(contentRef.current);
+    fade.incoming = group;
+    contentRef.current = group;
+    stage.setPickable([group, ...(nucleusRef.current ? [nucleusRef.current] : []), ...(axesRef.current ? [axesRef.current] : [])]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orbitalType, renderStyle, particleDensity, sliceZ, stageRef.current]);
 
-    // Mouse Drag Interaction for Rotation
-    let isDragging = false;
-    let prevMousePos = { x: 0, y: 0 };
+  useEffect(() => {
+    if (nucleusRef.current) nucleusRef.current.visible = showNucleus;
+    if (axesRef.current) axesRef.current.visible = showAxes;
+  }, [showNucleus, showAxes]);
 
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMousePos.x;
-      const deltaY = e.clientY - prevMousePos.y;
-
-      orbitalGroup.rotation.y += deltaX * 0.008;
-      orbitalGroup.rotation.x += deltaY * 0.008;
-
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = () => { isDragging = false; };
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      camera.position.z = Math.max(3.5, Math.min(18, camera.position.z + e.deltaY * 0.01));
-    };
-
-    const domElem = renderer.domElement;
-    domElem.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    domElem.addEventListener('wheel', onWheel, { passive: false });
-
-    // Animation Loop
-    let animationFrameId: number;
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-
-      if (isRotating && !isDragging) {
-        orbitalGroup.rotation.y += 0.004;
-      }
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      if (!container) return;
-      const newW = container.clientWidth;
-      const newH = container.clientHeight;
-      camera.aspect = newW / newH;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newW, newH);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      domElem.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      domElem.removeEventListener('wheel', onWheel);
-      window.removeEventListener('resize', handleResize);
-      renderer.dispose();
-      geometry.dispose();
-      pMaterial.dispose();
-      container.innerHTML = '';
-    };
-  }, [orbitalType, renderStyle, particleDensity, sliceZ, showNucleus, showAxes, isRotating]);
+  const tier = conceptData.tiers.find((t) => t.level === explanationLevel)!;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full max-w-7xl mx-auto py-2">
-      {/* 3D Visualizer Canvas & Overlays */}
-      <div className="flex-1 flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        {/* Top Control Bar */}
-        <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Compass className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                {conceptData.title[lang]}
-                <span className="text-xs px-2 py-0.5 rounded-full font-mono bg-cyan-950 text-cyan-400 border border-cyan-800">
-                  n={n}, ℓ={l}, m={m}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">{conceptData.subtitle[lang]}</p>
-            </div>
+    <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
+            <span className="w-2 h-2 rounded-full bg-chemistry" />
+            {lang === 'ru' ? 'Химия · 10–11 класс' : 'Chemistry · grades 10–11'}
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onOpenPrediction('pred-p-orbital')}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {lang === 'ru' ? 'Сначала представь' : 'Predict First'}
-            </button>
-
-            <button
-              onClick={() => setIsRotating(!isRotating)}
-              className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition-colors cursor-pointer ${
-                isRotating
-                  ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
-              title={lang === 'ru' ? 'Вращение' : 'Rotation'}
-            >
-              {isRotating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            </button>
-          </div>
+          <h1 className="mt-1.5 font-serif text-[28px] sm:text-[32px] leading-tight tracking-[-0.02em] text-ink">
+            {lang === 'ru' ? 'Атомные орбитали и форма облака' : 'Atomic orbitals and the shape of the cloud'}
+          </h1>
         </div>
-
-        {/* Orbitals Quick Selector Badges */}
-        <div className="px-4 py-2.5 bg-slate-950/30 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto text-xs">
-          <span className="text-slate-400 font-medium mr-1 text-[11px] uppercase tracking-wider">
-            {lang === 'ru' ? 'Орбитали:' : 'Orbitals:'}
-          </span>
-          {(['1s', '2s', '2pz', '2px', '3dz2', '3dxy', '4f'] as OrbitalType[]).map((type) => (
+        <div className="flex p-1 rounded-lg bg-muted border border-line overflow-x-auto">
+          {ORBITALS.map((o) => (
             <button
-              key={type}
-              onClick={() => handleSelectOrbital(type)}
-              className={`px-3 py-1 rounded-lg font-mono font-medium transition-all cursor-pointer ${
-                orbitalType === type
-                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold scale-105'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60'
+              key={o.type}
+              onClick={() => setOrbitalType(o.type)}
+              className={`shrink-0 h-9 px-3 rounded-md text-sm transition-colors cursor-pointer ${
+                orbitalType === o.type ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
               }`}
             >
-              {type}
+              <Formula tex={o.label.replace('²', '^2').replace('³', '^3')} />
             </button>
           ))}
         </div>
-
-        {/* Main 3D Canvas Mount */}
-        <div className="relative w-full h-[460px] sm:h-[500px]">
-          <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
-
-          {/* Interactive Canvas HUD */}
-          <div className="absolute bottom-4 left-4 flex flex-col gap-2 pointer-events-none">
-            <div className="bg-slate-950/80 border border-slate-800/80 backdrop-blur-md rounded-xl p-2.5 text-xs text-slate-300 flex flex-col gap-1 shadow-lg max-w-xs pointer-events-auto">
-              <div className="flex items-center justify-between text-slate-400 text-[11px] font-mono">
-                <span>{lang === 'ru' ? 'ИНТЕРАКТИВ' : 'CONTROLS'}</span>
-                <span>🖱️ Drag to Rotate • 🔍 Scroll to Zoom</span>
-              </div>
-              <div className="text-[11px] text-slate-300">
-                {renderStyle === 'phase' && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block shadow-sm"></span>
-                      Phase (+)
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block shadow-sm"></span>
-                      Phase (-)
-                    </span>
-                  </div>
-                )}
-                {renderStyle === 'nodes' && (
-                  <div className="text-purple-400 font-mono pt-1 text-[11px]">
-                    ψ = 0 (Probability = 0 at purple surface)
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* View Mode Switches floating top-right */}
-          <div className="absolute top-4 right-4 bg-slate-950/85 border border-slate-800/90 backdrop-blur-md rounded-xl p-1.5 flex flex-col gap-1 shadow-xl">
-            <div className="text-[10px] uppercase font-bold text-slate-400 px-2 py-1 tracking-wider">
-              {lang === 'ru' ? 'Режим отображения' : 'Render Style'}
-            </div>
-            {(
-              [
-                { id: 'density', label: { en: 'Probability Density', ru: 'Плотность вероятности' } },
-                { id: 'dots', label: { en: 'Dot Cloud (Monte Carlo)', ru: 'Облако точек (|ψ|²)' } },
-                { id: 'phase', label: { en: 'Wavefunction Phase (+/-)', ru: 'Знак / Фаза (+/-)' } },
-                { id: 'nodes', label: { en: 'Nodal Surfaces', ru: 'Узловые поверхности' } },
-                { id: 'slice', label: { en: 'Cross-Section Slice', ru: 'Сечение / Срез' } },
-              ] as { id: OrbitalRenderStyle; label: { en: string; ru: string } }[]
-            ).map((style) => (
-              <button
-                key={style.id}
-                onClick={() => setRenderStyle(style.id)}
-                className={`px-3 py-1.5 text-left rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  renderStyle === style.id
-                    ? 'bg-cyan-500 text-slate-950 font-bold shadow'
-                    : 'text-slate-300 hover:bg-slate-800'
-                }`}
-              >
-                {style.label[lang]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom Interactive Sliders Bar */}
-        <div className="p-4 bg-slate-950/70 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Число точек в облаке' : 'Point Sampling'}</span>
-              <span className="font-mono text-cyan-400">{particleDensity}</span>
-            </div>
-            <input
-              type="range"
-              min="1000"
-              max="6000"
-              step="500"
-              value={particleDensity}
-              onChange={(e) => setParticleDensity(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
-          </div>
-
-          {renderStyle === 'slice' && (
-            <div>
-              <div className="flex justify-between text-slate-300 mb-1">
-                <span>{lang === 'ru' ? 'Высота среза (Z)' : 'Slice Height (Z)'}</span>
-                <span className="font-mono text-cyan-400">{sliceZ.toFixed(2)}</span>
-              </div>
-              <input
-                type="range"
-                min="-2.5"
-                max="2.5"
-                step="0.1"
-                value={sliceZ}
-                onChange={(e) => setSliceZ(Number(e.target.value))}
-                className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-              />
-            </div>
-          )}
-
-          <div className="flex items-center gap-4 pt-4 sm:pt-0">
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-              <input
-                type="checkbox"
-                checked={showNucleus}
-                onChange={(e) => setShowNucleus(e.target.checked)}
-                className="rounded accent-cyan-400"
-              />
-              {lang === 'ru' ? 'Показать ядро' : 'Show Nucleus'}
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-              <input
-                type="checkbox"
-                checked={showAxes}
-                onChange={(e) => setShowAxes(e.target.checked)}
-                className="rounded accent-cyan-400"
-              />
-              {lang === 'ru' ? 'Оси координат' : 'Coordinate Axes'}
-            </label>
-          </div>
-        </div>
       </div>
 
-      {/* Multi-Level "Why?" Explanation Panel (Beginner → School → Advanced → University) */}
-      <div className="w-full xl:w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                <HelpCircle className="w-4 h-4" />
+      <div className="grid lg:grid-cols-[1fr_340px] gap-4">
+        <div className="flex flex-col gap-3">
+          <Stage3D
+            lang={lang}
+            className="h-[440px] sm:h-[540px] rounded-xl"
+            options={{ cameraPosition: [4.6, 3, 6.4], minDistance: 2.5, maxDistance: 16 }}
+            onReady={onReady}
+            onReset={(s) => s.flyTo([4.6, 3, 6.4], [0, 0, 0])}
+            selected={selected}
+            onSelect={setSelected}
+          >
+            <div className="pointer-events-none absolute top-3 left-3 z-10 flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-1 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] font-mono text-[12px] text-[#EDEDED]">
+                n = {orbital.n}, ℓ = {orbital.l}, m = {orbital.m}
               </span>
-              <h3 className="font-bold text-slate-100 text-sm">
-                {lang === 'ru' ? '«Почему?» — Слои понимания' : '"Why?" — Explanatory Depth'}
-              </h3>
+              {renderStyle === 'phase' && (
+                <span className="px-2.5 py-1 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[12px] text-[#B5B8C0] inline-flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#5B7CFF]" />ψ &gt; 0</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F5A524]" />ψ &lt; 0</span>
+                </span>
+              )}
             </div>
-            <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/60">
-              Lvl {explanationLevel}
-            </span>
-          </div>
+          </Stage3D>
 
-          {/* Level Switcher Buttons */}
-          <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
-            {([1, 2, 3, 4] as ExplanationLevel[]).map((lvl) => {
-              const tier = conceptData.tiers.find((t) => t.level === lvl)!;
-              return (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex p-1 rounded-lg bg-muted border border-line overflow-x-auto">
+              {STYLES.map((s) => (
                 <button
-                  key={lvl}
-                  onClick={() => setExplanationLevel(lvl)}
-                  className={`py-1.5 px-1 rounded-lg text-xs font-semibold transition-all cursor-pointer text-center ${
-                    explanationLevel === lvl
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  key={s.id}
+                  onClick={() => setRenderStyle(s.id)}
+                  className={`shrink-0 h-8 px-3 rounded-md text-sm transition-colors cursor-pointer ${
+                    renderStyle === s.id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
                   }`}
                 >
-                  {tier.badge[lang]}
+                  {s.label[lang]}
                 </button>
-              );
-            })}
-          </div>
-
-          {/* Tier Content Display */}
-          {(() => {
-            const currentTier = conceptData.tiers.find((t) => t.level === explanationLevel)!;
-            return (
-              <div className="flex flex-col gap-3 transition-all">
-                <h4 className="text-sm font-semibold text-cyan-300 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                  {currentTier.title[lang]}
-                </h4>
-
-                <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-800/80">
-                  {currentTier.content[lang]}
-                </p>
-
-                {currentTier.visualCue && (
-                  <div className="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/50 text-[11px] text-indigo-200 flex items-start gap-2">
-                    <span className="text-indigo-400 font-bold">💡</span>
-                    <span>{currentTier.visualCue[lang]}</span>
-                  </div>
-                )}
-
-                {currentTier.mathFormula && (
-                  <div className="p-3 rounded-xl bg-slate-950 border border-cyan-900/40 text-xs font-mono text-cyan-300 overflow-x-auto shadow-inner">
-                    <div className="text-[10px] uppercase text-slate-500 font-sans font-bold tracking-wider mb-1">
-                      {lang === 'ru' ? 'МАТЕМАТИЧЕСКАЯ ФОРМУЛА' : 'MATHEMATICAL FORMULATION'}
-                    </div>
-                    <code>{currentTier.mathFormula}</code>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Quick Spatial Prompt */}
-          <div className="mt-2 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-            <span>{lang === 'ru' ? 'Как меняется форма при росте n?' : 'How does n affect size?'}</span>
+              ))}
+            </div>
             <button
-              onClick={() => handleSelectOrbital(orbitalType === '1s' ? '2s' : '1s')}
-              className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer"
+              onClick={() => setIsRotating((r) => !r)}
+              className="h-9 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-sm text-ink inline-flex items-center gap-1.5 cursor-pointer"
             >
-              {orbitalType === '1s' ? 'Try 2s' : 'Try 1s'}
-              <ChevronRight className="w-3.5 h-3.5" />
+              {isRotating ? <Pause className="w-3.5 h-3.5" strokeWidth={1.75} /> : <Play className="w-3.5 h-3.5" strokeWidth={1.75} />}
+              {isRotating ? (lang === 'ru' ? 'Остановить' : 'Stop') : lang === 'ru' ? 'Вращать' : 'Rotate'}
             </button>
           </div>
         </div>
+
+        <aside className="flex flex-col gap-4">
+          <section className="bg-surface border border-line rounded-xl p-5">
+            <h2 className="font-serif text-xl text-ink">
+              {lang === 'ru' ? 'Орбиталь' : 'Orbital'} <Formula tex={orbital.label.replace('²', '^2').replace('³', '^3')} />
+            </h2>
+            <div className="mt-3 px-3 py-2 rounded-lg bg-muted text-ink overflow-x-auto">
+              <Formula tex={orbital.tex} />
+            </div>
+            <p className="mt-3 text-[14.5px] leading-relaxed text-ink-2">{orbital.text[lang]}</p>
+            <button
+              onClick={() => onOpenPrediction('pred-p-orbital')}
+              className="mt-4 w-full h-10 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
+            >
+              {lang === 'ru' ? 'Сначала представь' : 'Predict first'}
+            </button>
+          </section>
+
+          <section className="bg-surface border border-line rounded-xl p-5 flex flex-col gap-4">
+            {renderStyle === 'slice' && (
+              <Slider label={lang === 'ru' ? 'Высота среза' : 'Slice height'} value={sliceZ} min={-2.4} max={2.4} step={0.1} format={(v) => v.toFixed(1)} onChange={setSliceZ} />
+            )}
+            <Slider label={lang === 'ru' ? 'Точек в облаке' : 'Points in the cloud'} value={particleDensity} min={2000} max={16000} step={1000} format={(v) => v.toLocaleString(lang)} onChange={setParticleDensity} />
+            <div className="flex flex-col gap-2">
+              <Toggle label={lang === 'ru' ? 'Ядро' : 'Nucleus'} checked={showNucleus} onChange={setShowNucleus} />
+              <Toggle label={lang === 'ru' ? 'Оси координат' : 'Axes'} checked={showAxes} onChange={setShowAxes} />
+            </div>
+          </section>
+
+          <section className="bg-surface border border-line rounded-xl p-5">
+            <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Объяснение' : 'Explanation'}</h3>
+            <div className="mt-3 grid grid-cols-4 p-1 rounded-lg bg-muted border border-line">
+              {([1, 2, 3, 4] as ExplanationLevel[]).map((lvl) => (
+                <button
+                  key={lvl}
+                  onClick={() => setExplanationLevel(lvl)}
+                  className={`h-8 rounded-md text-[12.5px] truncate px-1 transition-colors cursor-pointer ${
+                    explanationLevel === lvl ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
+                  }`}
+                >
+                  {conceptData.tiers.find((t) => t.level === lvl)!.badge[lang]}
+                </button>
+              ))}
+            </div>
+            <h4 className="mt-4 font-serif text-lg text-ink">{tier.title[lang]}</h4>
+            <p className="mt-1.5 text-[14px] leading-relaxed text-ink-2">{tier.content[lang]}</p>
+            {tier.visualCue && <p className="mt-3 text-[13.5px] leading-relaxed text-ink bg-muted rounded-lg px-3 py-2">{tier.visualCue[lang]}</p>}
+            {tier.mathFormula && (
+              <div className="mt-3 overflow-x-auto py-1 text-ink">
+                <Formula tex={tier.mathFormula} />
+              </div>
+            )}
+          </section>
+        </aside>
       </div>
     </div>
   );
 };
+
+const Slider: React.FC<{ label: string; value: number; min: number; max: number; step: number; format: (v: number) => string; onChange: (v: number) => void }> = ({ label, value, min, max, step, format, onChange }) => (
+  <div>
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-ink">{label}</span>
+      <span className="font-mono text-ink">{format(value)}</span>
+    </div>
+    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-2 w-full accent-[#2F5BFF] cursor-pointer" />
+  </div>
+);
+
+const Toggle: React.FC<{ label: string; checked: boolean; onChange: (v: boolean) => void }> = ({ label, checked, onChange }) => (
+  <label className="flex items-center justify-between text-sm text-ink cursor-pointer">
+    {label}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${checked ? 'bg-accent' : 'bg-line-strong'}`}
+    >
+      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-4' : ''}`} />
+    </button>
+  </label>
+);

@@ -12,7 +12,7 @@ export const MilestonesModal: React.FC<MilestonesModalProps> = ({ milestones, la
   const unlockedCount = milestones.filter((m) => m.unlocked).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[rgba(17,17,17,0.45)] animate-fadeIn">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl flex flex-col gap-5 text-slate-100 relative">
         <button
           onClick={onClose}

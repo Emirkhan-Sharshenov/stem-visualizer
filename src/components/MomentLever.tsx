@@ -69,18 +69,18 @@ export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
           <span className={`px-2.5 py-0.5 rounded font-bold ${
             isBalanced ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'
           }`}>
-            {isBalanced ? (lang === 'ru' ? '⚖️ РАВНОВЕСИЕ!' : '⚖️ BALANCED!') : (lang === 'ru' ? 'НЕТ РАВНОВЕСИЯ' : 'UNBALANCED')}
+            {isBalanced ? (lang === 'ru' ? 'РАВНОВЕСИЕ!' : 'BALANCED!') : (lang === 'ru' ? 'НЕТ РАВНОВЕСИЯ' : 'UNBALANCED')}
           </span>
         </div>
 
         {/* Visual Lever SVG Scene */}
-        <div className="relative w-full h-[380px] bg-slate-950 flex items-center justify-center p-6 overflow-hidden">
+        <div className="lab-stage relative w-full h-[380px] bg-slate-950 flex items-center justify-center p-6 overflow-hidden">
           <svg className="w-full h-full" viewBox="0 0 600 340">
             {/* Ground */}
-            <line x1="40" y1="280" x2="560" y2="280" stroke="#334155" strokeWidth="4" />
+            <line x1="40" y1="280" x2="560" y2="280" stroke="#34363C" strokeWidth="4" />
 
             {/* Fulcrum Pivot Triangle */}
-            <polygon points="300,210 275,280 325,280" fill="#475569" stroke="#64748b" strokeWidth="2" />
+            <polygon points="300,210 275,280 325,280" fill="#4A4D55" stroke="#64748b" strokeWidth="2" />
             <circle cx="300" cy="210" r="5" fill="#f8fafc" />
 
             {/* Tilting Beam Group */}

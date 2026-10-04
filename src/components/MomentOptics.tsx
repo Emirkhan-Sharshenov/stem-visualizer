@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Compass, HelpCircle, RotateCcw, Sparkles } from 'lucide-react';
 
 interface MomentOpticsProps {
@@ -32,21 +33,20 @@ export const MomentOptics: React.FC<MomentOpticsProps> = ({ lang }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
     const midY = h / 2;
     const midX = w / 2;
 
     // Clear
-    ctx.fillStyle = '#060a18';
+    ctx.fillStyle = '#111214';
     ctx.fillRect(0, 0, w, h);
 
     // Medium 1 (Top half)
-    ctx.fillStyle = isReverse ? 'rgba(56, 189, 248, 0.15)' : '#070d1e';
+    ctx.fillStyle = isReverse ? 'rgba(56, 189, 248, 0.15)' : '#17181B';
     ctx.fillRect(0, 0, w, midY);
 
     // Medium 2 (Bottom half - denser)
-    ctx.fillStyle = isReverse ? '#070d1e' : 'rgba(56, 189, 248, 0.18)';
+    ctx.fillStyle = isReverse ? '#17181B' : 'rgba(56, 189, 248, 0.18)';
     ctx.fillRect(0, midY, w, midY);
 
     // Boundary interface line
@@ -194,17 +194,17 @@ export const MomentOptics: React.FC<MomentOpticsProps> = ({ lang }) => {
         </div>
 
         {/* Canvas */}
-        <div className="relative w-full h-[400px] flex items-center justify-center p-3">
+        <div className="lab-stage relative w-full flex items-center justify-center p-3">
           <canvas
             ref={canvasRef}
             width={600}
             height={380}
-            className="w-full h-full rounded-xl bg-slate-950"
+            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
           />
 
           {isTotalInternalReflection && (
             <div className="absolute top-6 right-6 p-3 bg-amber-950/90 border border-amber-500/60 backdrop-blur-md rounded-xl text-xs text-amber-200 max-w-xs shadow-xl animate-pulse">
-              <span className="font-bold font-mono">⚡ {lang === 'ru' ? 'ПОЛНОЕ ВНУТРЕННЕЕ ОТРАЖЕНИЕ!' : 'TOTAL INTERNAL REFLECTION!'}</span>
+              <span className="font-bold font-mono">{lang === 'ru' ? 'ПОЛНОЕ ВНУТРЕННЕЕ ОТРАЖЕНИЕ!' : 'TOTAL INTERNAL REFLECTION!'}</span>
               <p className="text-[11px] mt-1">
                 {lang === 'ru'
                   ? 'Свет не может выйти в воздух, потому что угол падения превысил критический. Луч на 100% отражается обратно! (Так работает оптоволоконный интернет).'

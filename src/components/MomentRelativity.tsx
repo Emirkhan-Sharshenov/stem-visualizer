@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, Rocket, HelpCircle, Clock, Zap } from 'lucide-react';
 
 interface MomentRelativityProps {
@@ -39,10 +40,9 @@ export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
 
     const render = () => {
       animId = requestAnimationFrame(render);
-      const w = canvas.width;
-      const h = canvas.height;
+      const { w, h } = fitCanvas(canvas, ctx);
 
-      ctx.fillStyle = '#050716';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       // Stars
@@ -59,7 +59,7 @@ export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
       // Left Frame: Inside Rocket (Observer moving with rocket)
       // Right Frame: Outside on Earth (Stationary observer watching rocket pass)
       const dividerX = w / 2;
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = '#26282D';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(dividerX, 0);
@@ -196,12 +196,12 @@ export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
         </div>
 
         {/* Canvas Display */}
-        <div className="relative w-full h-[360px] flex items-center justify-center p-3">
+        <div className="lab-stage relative w-full flex items-center justify-center p-3">
           <canvas
             ref={canvasRef}
             width={600}
             height={340}
-            className="w-full h-full rounded-xl bg-slate-950"
+            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
           />
 
           <div className="absolute bottom-6 left-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">

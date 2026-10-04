@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Orbit, Play, Pause, RotateCcw, Sparkles, Check, HelpCircle, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -15,6 +16,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
   onSelectConceptForMentor
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<{ position: THREE.Vector3; target: THREE.Vector3 } | null>(null);
   const [mode, setMode] = useState<'gravity' | 'coulomb'>('gravity');
   const [m1, setM1] = useState<number>(60);
   const [m2, setM2] = useState<number>(25);
@@ -58,7 +60,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
     const height = container.clientHeight || 500;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x040714);
+    scene.background = new THREE.Color(0x111214);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.set(0, 14, 22);
@@ -151,37 +153,20 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
     let orbitAngle = 0;
     const orbitalSpeed = Math.sqrt((G * m1) / Math.max(1, distance)) * 0.015;
 
-    // Mouse drag controls
+    // Smooth orbit / zoom / pan with mouse and touch; the view survives scene rebuilds
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 8;
+    controls.maxDistance = 45;
+    if (viewRef.current) {
+      camera.position.copy(viewRef.current.position);
+      controls.target.copy(viewRef.current.target);
+    }
+    renderer.domElement.style.touchAction = 'none';
     let isDragging = false;
-    let prevMousePos = { x: 0, y: 0 };
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMousePos.x;
-      const deltaY = e.clientY - prevMousePos.y;
-
-      scene.rotation.y += deltaX * 0.006;
-      camera.position.y = Math.max(4, Math.min(30, camera.position.y - deltaY * 0.08));
-
-      prevMousePos = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = () => { isDragging = false; };
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      camera.position.z = Math.max(10, Math.min(35, camera.position.z + e.deltaY * 0.02));
-    };
-
-    const domElem = renderer.domElement;
-    domElem.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    domElem.addEventListener('wheel', onWheel, { passive: false });
+    controls.addEventListener('start', () => { isDragging = true; });
+    controls.addEventListener('end', () => { isDragging = false; });
 
     let animationFrameId: number;
     const animate = () => {
@@ -205,6 +190,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
       arrow2to1.setDirection(dirToBody1);
       arrow2to1.setLength(arrowLen, 0.45, 0.25);
 
+      controls.update();
       renderer.render(scene, camera);
     };
 
@@ -212,10 +198,8 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      domElem.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      domElem.removeEventListener('wheel', onWheel);
+      viewRef.current = { position: camera.position.clone(), target: controls.target.clone() };
+      controls.dispose();
       renderer.dispose();
       starGeo.dispose();
       starMat.dispose();
@@ -280,7 +264,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
         </div>
 
         {/* 3D Canvas Mount */}
-        <div className="relative w-full h-[440px] sm:h-[480px]">
+        <div className="lab-stage relative w-full h-[440px] sm:h-[480px]">
           <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
           {/* Floating Live Force Gauge */}

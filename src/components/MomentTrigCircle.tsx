@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Compass, Play, Pause, RotateCcw } from 'lucide-react';
 
 interface MomentTrigCircleProps {
@@ -33,10 +34,9 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
 
-    ctx.fillStyle = '#050914';
+    ctx.fillStyle = '#111214';
     ctx.fillRect(0, 0, w, h);
 
     const circleCenterX = 180;
@@ -44,7 +44,7 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
     const R = 100; // unit circle radius
 
     // 1. Draw Axes for Unit Circle
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = '#26282D';
     ctx.lineWidth = 1;
 
     // X Axis
@@ -60,7 +60,7 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
     ctx.stroke();
 
     // Circle Body
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = '#34363C';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(circleCenterX, circleCenterY, R, 0, Math.PI * 2);
@@ -115,7 +115,7 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
     const waveW = waveEndX - waveStartX;
 
     // Wave horizontal axis
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = '#26282D';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(waveStartX, circleCenterY);
@@ -202,8 +202,8 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={320} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={320} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Angle Slider & Auto-Spin */}
@@ -235,7 +235,7 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
               : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
           }`}
         >
-          {isAutoSpin ? (lang === 'ru' ? 'Пауза вращения' : 'Pause Spin') : (lang === 'ru' ? '▶ Непрерывное вращение' : '▶ Continuous Spin')}
+          {isAutoSpin ? (lang === 'ru' ? 'Пауза вращения' : 'Pause Spin') : (lang === 'ru' ? 'Непрерывное вращение' : 'Continuous Spin')}
         </button>
       </div>
     </div>

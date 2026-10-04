@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, Activity } from 'lucide-react';
 
 interface MomentNormalDistributionProps {
@@ -32,8 +33,7 @@ export const MomentNormalDistribution: React.FC<MomentNormalDistributionProps> =
     let animId: number;
     let tick = 0;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const { w, h } = fitCanvas(canvas, ctx);
 
     const pegRows = 8;
     const pegSpacingY = 16;
@@ -48,7 +48,7 @@ export const MomentNormalDistribution: React.FC<MomentNormalDistributionProps> =
     const render = () => {
       animId = requestAnimationFrame(render);
 
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, w, h);
 
       // 1. Spawn new balls from funnel
@@ -120,7 +120,7 @@ export const MomentNormalDistribution: React.FC<MomentNormalDistributionProps> =
         ctx.fillRect(bx + 1, binBottom - colHeight, binW - 2, colHeight);
 
         // Bin vertical separator walls
-        ctx.strokeStyle = '#334155';
+        ctx.strokeStyle = '#34363C';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(bx, binBottom - 85);
@@ -208,14 +208,14 @@ export const MomentNormalDistribution: React.FC<MomentNormalDistributionProps> =
       </div>
 
       {/* Main Canvas */}
-      <div className="relative w-full h-84 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={340} className="w-full h-full block" />
+      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <canvas ref={canvasRef} width={800} height={340} className="block w-full h-auto max-h-[480px] object-contain" />
       </div>
 
       {/* Probability Rules Callout */}
       <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 flex flex-col gap-1.5">
         <span className="font-bold text-cyan-400 block">
-          {lang === 'ru' ? '📊 Центральная предельная теорема на пальцах:' : '📊 Central Limit Theorem in action:'}
+          {lang === 'ru' ? 'Центральная предельная теорема на пальцах:' : 'Central Limit Theorem in action:'}
         </span>
         <p className="leading-relaxed">
           {lang === 'ru'
