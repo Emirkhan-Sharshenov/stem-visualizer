@@ -5,6 +5,8 @@ import { shadows, waveOptics } from './engines/light';
 import { nuclear, nucleusStructure } from './engines/nuclear';
 import { heatEngine, solarSystem, stars } from './engines/space';
 import { blastFurnace, dissociation, kinetics, polymerization, separation, stoichiometry } from './engines/chem';
+import { cellDivision, ecosystem } from './engines/bio';
+import { blood, microbes, plantLife } from './engines/bio2';
 import { density, equilibrium, inertia, pressure, relativeMotion, weight, workPower } from './engines/mechanics';
 
 /** All timeline-driven process simulations, by id */
@@ -36,6 +38,11 @@ export const SIMS = {
   polymerization,
   blast_furnace: blastFurnace,
   stoichiometry,
+  cell_division: cellDivision,
+  ecosystem,
+  blood,
+  plant_life: plantLife,
+  microbes,
 } satisfies Record<string, SimDef>;
 
 export type SimId = keyof typeof SIMS;
