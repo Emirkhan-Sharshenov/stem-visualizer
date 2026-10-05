@@ -126,7 +126,7 @@ app.post('/api/billing/freemius', express.raw({ type: '*/*' }), async (req, res)
 });
 
 // AI mentor: answers about the topic the learner has open (Gemini free tier; model is configurable)
-const MODELS = [process.env.GEMINI_MODEL, 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean) as string[];
+const MODELS = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3-flash-preview', 'gemini-3.5-flash-lite'].filter(Boolean) as string[];
 const clip = (v: unknown, n: number) => String(v ?? '').slice(0, n);
 
 app.post('/api/mentor', async (req, res) => {
@@ -171,7 +171,7 @@ ${context}`;
         const response = await ai.models.generateContent({
           model,
           contents,
-          config: { systemInstruction: system, maxOutputTokens: 1200, temperature: 0.4 },
+          config: { systemInstruction: system, maxOutputTokens: 4000, temperature: 0.4 },
         });
         if (response.text) return res.json({ answer: response.text });
       } catch (error: any) {

@@ -61,7 +61,7 @@ function suggestions(t: Topic | undefined, lang: Lang): string[] {
 /* ---------- tiny renderer: paragraphs, lists, **bold** and $formulas$ ---------- */
 
 function Inline({ text }: { text: string }) {
-  const parts = text.split(/(\$\$[^$]+\$\$|\$[^$\n]+\$|\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(\$\$[^$]+\$\$|\$[^$\n]+\$|\*\*[^*]+\*\*|\*[^*\s][^*\n]*\*)/g);
   return (
     <>
       {parts.map((p, i) =>
@@ -73,6 +73,8 @@ function Inline({ text }: { text: string }) {
           <strong key={i} className="font-semibold">
             {p.slice(2, -2)}
           </strong>
+        ) : p.startsWith('*') && p.endsWith('*') && p.length > 2 ? (
+          <em key={i}>{p.slice(1, -1)}</em>
         ) : (
           <React.Fragment key={i}>{p}</React.Fragment>
         ),
@@ -81,36 +83,49 @@ function Inline({ text }: { text: string }) {
   );
 }
 
+const BULLET = /^\s*([-*•]|\d+[.)])\s+/;
+
 function Rich({ text }: { text: string }) {
-  const blocks = text.trim().split(/\n{2,}/);
+  // group consecutive list lines into lists and the rest into paragraphs
+  const blocks: { list: boolean; ordered: boolean; lines: string[] }[] = [];
+  for (const line of text.trim().split('\n')) {
+    if (!line.trim()) {
+      blocks.push({ list: false, ordered: false, lines: [] });
+      continue;
+    }
+    const list = BULLET.test(line);
+    const last = blocks[blocks.length - 1];
+    if (last && last.list === list && last.lines.length) last.lines.push(line);
+    else blocks.push({ list, ordered: list && /^\s*\d/.test(line), lines: [line] });
+  }
   return (
     <div className="flex flex-col gap-2">
-      {blocks.map((b, i) => {
-        const lines = b.split('\n');
-        if (lines.every((l) => /^\s*([-*•]|\d+[.)])\s+/.test(l))) {
-          const ordered = /^\s*\d/.test(lines[0]);
-          const Tag = ordered ? 'ol' : 'ul';
+      {blocks
+        .filter((b) => b.lines.length)
+        .map((b, i) => {
+          if (b.list) {
+            const Tag = b.ordered ? 'ol' : 'ul';
+            return (
+              <Tag key={i} className={`pl-5 flex flex-col gap-1 ${b.ordered ? 'list-decimal' : 'list-disc'}`}>
+                {b.lines.map((l, k) => (
+                  <li key={k}>
+                    <Inline text={l.replace(BULLET, '')} />
+                  </li>
+                ))}
+              </Tag>
+            );
+          }
           return (
-            <Tag key={i} className={`pl-5 flex flex-col gap-1 ${ordered ? 'list-decimal' : 'list-disc'}`}>
-              {lines.map((l, k) => (
-                <li key={k}>
-                  <Inline text={l.replace(/^\s*([-*•]|\d+[.)])\s+/, '')} />
-                </li>
+            <p key={i}>
+              {b.lines.map((l, k) => (
+                <React.Fragment key={k}>
+                  {k > 0 && <br />}
+                  <Inline text={l.replace(/^#+\s*/, '')} />
+                </React.Fragment>
               ))}
-            </Tag>
+            </p>
           );
-        }
-        return (
-          <p key={i}>
-            {lines.map((l, k) => (
-              <React.Fragment key={k}>
-                {k > 0 && <br />}
-                <Inline text={l.replace(/^#+\s*/, '')} />
-              </React.Fragment>
-            ))}
-          </p>
-        );
-      })}
+        })}
     </div>
   );
 }
