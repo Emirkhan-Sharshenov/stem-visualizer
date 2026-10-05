@@ -29,7 +29,7 @@ export const ProGate: React.FC<{ lang: Lang; pro: boolean; onUpgrade: () => void
 };
 
 /** plans, what Pro gives, and promo-code activation */
-export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'progress') => void }> = ({ lang, onNavigate }) => {
+export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'progress' | 'teacher') => void }> = ({ lang, onNavigate }) => {
   const plan = usePlan();
   const { user } = useSession();
   const [code, setCode] = useState('');
@@ -85,7 +85,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
     { icon: <Bot className="w-4 h-4" />, t: L('ИИ-наставник без лимита', 'Unlimited AI mentor'), d: L('Объясняет то, что видно в модели', 'Explains what’s on screen') },
     { icon: <Target className="w-4 h-4" />, t: L('Пробные ОРТ-экзамены', 'ORT-style mock exams'), d: L('Полный вариант на время с разбором', 'Full timed papers with review') },
     { icon: <Route className="w-4 h-4" />, t: L('Персональный план', 'Personal plan'), d: L('Что повторить по твоим ошибкам', 'What to revise based on your mistakes') },
-    { icon: <GraduationCap className="w-4 h-4" />, t: L('Кабинет учителя', 'Teacher dashboard'), d: L('Классы, задания и отчёты — скоро', 'Classes, assignments and reports, soon') },
+    { icon: <GraduationCap className="w-4 h-4" />, t: L('Кабинет учителя', 'Teacher dashboard'), d: L('Классы по коду, задания со сроком, прогресс учеников', 'Classes with join codes, assignments, student progress') },
   ];
   const price = period === 'month' ? PRICES.month : PRICES.year;
 
@@ -110,6 +110,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           <div className="flex gap-2">
             <button onClick={() => onNavigate('practice')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Пробный ОРТ', 'Mock exam')}</button>
             <button onClick={() => onNavigate('progress')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Мой план', 'My plan')}</button>
+            <button onClick={() => onNavigate('teacher')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Кабинет учителя', 'Teacher dashboard')}</button>
           </div>
         </div>
       )}

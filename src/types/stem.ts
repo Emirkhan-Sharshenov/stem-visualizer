@@ -9,6 +9,8 @@ export type VisualMode =
   | 'course_map'
   | 'progress'
   | 'pro'
+  | 'teacher'
+  | 'classes'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 

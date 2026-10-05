@@ -44,6 +44,7 @@ const PracticePage = lazy(() => import('./components/practice/PracticePage'));
 const CourseMap = lazy(() => import('./components/map/CourseMap'));
 const ProgressPage = lazy(() => import('./components/progress/ProgressPage'));
 const ProPage = lazy(() => import('./components/pro/ProPage'));
+const TeacherPage = lazy(() => import('./components/teacher/TeacherPage'));
 const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
@@ -233,6 +234,9 @@ export default function App({ lang, setLang }: AppProps) {
             {currentMode === 'course_map' && <CourseMap lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'progress' && <ProgressPage lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}
+            {(currentMode === 'teacher' || currentMode === 'classes') && (
+              <TeacherPage key={currentMode} lang={lang} onOpenTopic={openTopic} initialTab={currentMode === 'teacher' ? 'teacher' : 'student'} />
+            )}
           </Suspense>
 
           {currentMode === 'moment_diffusion' && (

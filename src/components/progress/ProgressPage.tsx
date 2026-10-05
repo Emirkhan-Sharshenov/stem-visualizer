@@ -4,6 +4,7 @@ import { TOPICS } from '../../data/curriculum';
 import { badges, dayStreak, useProgress } from '../../lib/progress';
 import { useSession } from '../../lib/supabase';
 import { StudyPlan } from './StudyPlan';
+import { StudentClasses } from '../teacher/TeacherPage';
 
 type Lang = 'ru' | 'en';
 const SUBJ = [
@@ -127,6 +128,8 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
           )}
         </div>
       </section>
+
+      <StudentClasses lang={lang} onOpenTopic={onOpenTopic} compact />
 
       <StudyPlan lang={lang} onOpenTopic={onOpenTopic} />
 

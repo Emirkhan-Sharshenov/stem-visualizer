@@ -4,7 +4,7 @@ import { LogoMark } from './brand/Logo';
 import { Search, User, BookOpen, Network, FlaskConical, Target, Flame } from 'lucide-react';
 import { dayStreak, useProgress } from '../lib/progress';
 import { signOut, useSession } from '../lib/supabase';
-import { LogOut, Crown } from 'lucide-react';
+import { LogOut, Crown, Users, GraduationCap } from 'lucide-react';
 import { usePlan } from '../lib/plan';
 
 interface NavbarProps {
@@ -31,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onToggleMentor,
 }) => {
-  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro'];
+  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro', 'teacher', 'classes'];
   const plan = usePlan();
   const isActive = (id: VisualMode) => (id === 'textbook' ? !SECTIONS.includes(currentMode) : currentMode === id);
   const p = useProgress();
@@ -127,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               ))}
             </div>
 
-            <AccountButton lang={lang} onProgress={() => onSelectMode('progress')} onPro={() => onSelectMode('pro')} />
+            <AccountButton lang={lang} onSelect={onSelectMode} />
           </div>
         </div>
       </header>
@@ -157,7 +157,9 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
 );
 
 /** avatar: sign-in link for guests, a small menu for signed-in users */
-const AccountButton: React.FC<{ lang: 'ru' | 'en'; onProgress: () => void; onPro: () => void }> = ({ lang, onProgress, onPro }) => {
+const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => void }> = ({ lang, onSelect }) => {
+  const onProgress = () => onSelect('progress');
+  const onPro = () => onSelect('pro');
   const { user } = useSession();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -187,6 +189,14 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onProgress: () => void; onPro
           </div>
           <button onClick={() => { setOpen(false); onProgress(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted cursor-pointer">
             {lang === 'ru' ? 'Мой прогресс' : 'My progress'}
+          </button>
+          <button onClick={() => { setOpen(false); onSelect('classes'); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
+            <Users className="w-4 h-4 text-ink-2" strokeWidth={1.75} />
+            {lang === 'ru' ? 'Мои классы' : 'My classes'}
+          </button>
+          <button onClick={() => { setOpen(false); onSelect('teacher'); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
+            <GraduationCap className="w-4 h-4 text-ink-2" strokeWidth={1.75} />
+            {lang === 'ru' ? 'Кабинет учителя' : 'Teacher dashboard'}
           </button>
           <button onClick={() => { setOpen(false); onPro(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
             <Crown className="w-4 h-4 text-[#B5651D]" strokeWidth={1.75} />
