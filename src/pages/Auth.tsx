@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { authErrorText, cloudEnabled, resetPassword, signIn, signInWithGoogle, signUp } from '../lib/supabase';
 import { Logo } from '../components/brand/Logo';
@@ -37,6 +37,17 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+
+  // message left by an e-mail confirmation redirect
+  useEffect(() => {
+    const raw = sessionStorage.getItem('authNotice');
+    if (!raw) return;
+    sessionStorage.removeItem('authNotice');
+    const n = JSON.parse(raw);
+    if (n === 'confirmed') setNotice(L('Почта подтверждена! Теперь войди со своим паролем.', 'Email confirmed! Now log in with your password.'));
+    else if (n && typeof n === 'object' && n.error) setFormError(/expired|invalid/i.test(n.error) ? L('Ссылка устарела или уже использована. Войди с паролем или запроси новое письмо.', 'The link has expired or was already used. Log in with your password or request a new email.') : n.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const validate = (): Errors => {
     const next: Errors = {};

@@ -99,6 +99,21 @@ export default function App({ lang, setLang }: AppProps) {
 
   useEffect(() => progress.touch(), []);
 
+  // welcome note after confirming the e-mail or signing in with Google
+  const [welcome, setWelcome] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      if (sessionStorage.getItem('authNotice') === '"welcome"') {
+        sessionStorage.removeItem('authNotice');
+        setWelcome(true);
+        setTimeout(() => setWelcome(false), 6000);
+      }
+    };
+    check();
+    window.addEventListener('hashchange', check);
+    return () => window.removeEventListener('hashchange', check);
+  }, []);
+
   /** jump to a topic from labs, practice, the map or progress */
   const openTopic = (id: string) => {
     setPendingTopic(id);
@@ -377,6 +392,12 @@ export default function App({ lang, setLang }: AppProps) {
           onApplyRevealedParams={() => setCurrentMode('orbitals')}
           onUnlockMilestone={handleUnlockMilestone}
         />
+      )}
+
+      {welcome && (
+        <div className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl bg-[#16171A] shadow-2xl text-sm" style={{ color: '#fff' }}>
+          {lang === 'ru' ? '👋 Добро пожаловать! Почта подтверждена, прогресс теперь сохраняется в аккаунте.' : '👋 Welcome! Your email is confirmed and progress now saves to your account.'}
+        </div>
       )}
 
       {/* Discoveries / Milestones Modal */}

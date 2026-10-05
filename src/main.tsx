@@ -10,8 +10,17 @@ import {navigate, useRoute} from './router';
 import type {Lang} from './i18n/landing';
 import './index.css';
 import {initCloudSync} from './lib/cloudSync';
+import {completeAuthRedirect} from './lib/supabase';
+import {ResetPassword} from './pages/ResetPassword';
 
 initCloudSync();
+
+// returning from an e-mail link or Google: finish sign-in, then route and leave a note for the page
+completeAuthRedirect().then((r) => {
+  if (!r) return;
+  sessionStorage.setItem('authNotice', JSON.stringify(r.notice));
+  window.dispatchEvent(new HashChangeEvent('hashchange'));
+});
 
 function readLang(): Lang {
   try {
@@ -41,6 +50,7 @@ function Root() {
         <App lang={lang} setLang={setLang} />
       </Suspense>
     );
+  if (route === 'reset') return <ResetPassword lang={lang} onNavigate={navigate} />;
   if (route === 'credits') return <Credits lang={lang} onBack={() => window.history.back()} />;
   if (route === 'login' || route === 'register') {
     return <Auth key={route} mode={route} lang={lang} onToggleLang={toggleLang} onNavigate={navigate} />;

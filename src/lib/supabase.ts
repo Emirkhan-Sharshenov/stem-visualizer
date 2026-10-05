@@ -10,7 +10,39 @@ const url = (env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL) as string | 
 // either the new publishable key (sb_publishable_…) or the legacy anon key
 const key = (env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string | undefined;
 
-export const supabase: SupabaseClient | null = url && key ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' } }) : null;
+/** the address the page was opened with: e-mail links and OAuth return tokens here */
+export const landingUrl = typeof window === 'undefined' ? { hash: '', search: '' } : { hash: window.location.hash, search: window.location.search };
+
+// implicit flow: links from e-mails work in any browser, not only the one used to sign up
+export const supabase: SupabaseClient | null = url && key ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' } }) : null;
+
+export type AuthNotice = 'welcome' | 'confirmed' | 'recovery' | { error: string };
+
+/**
+ * Finishes an e-mail confirmation, password-reset or Google sign-in redirect:
+ * waits for the session, cleans the URL and tells the app where to go.
+ */
+export async function completeAuthRedirect(): Promise<{ route: 'app' | 'login' | 'reset'; notice: AuthNotice } | null> {
+  if (!supabase) return null;
+  const { hash, search } = landingUrl;
+  const params = new URLSearchParams(hash.replace(/^#\/?/, '') + '&' + search.replace(/^\?/, ''));
+  const isAuth = params.has('access_token') || params.has('error_description') || params.has('code') || params.has('type');
+  if (!isAuth) return null;
+  const { data } = await supabase.auth.getSession();
+  const type = params.get('type');
+  const error = params.get('error_description');
+  let result: { route: 'app' | 'login' | 'reset'; notice: AuthNotice };
+  if (data.session) result = type === 'recovery' ? { route: 'reset', notice: 'recovery' } : { route: 'app', notice: 'welcome' };
+  else result = { route: 'login', notice: error ? { error: error.replace(/\+/g, ' ') } : 'confirmed' };
+  window.history.replaceState(null, '', `${window.location.pathname}#/${result.route}`);
+  return result;
+}
+
+export async function updatePassword(password: string) {
+  if (!supabase) throw new Error('offline');
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
 
 export const cloudEnabled = !!supabase;
 
@@ -37,7 +69,8 @@ export function useSession() {
   return { session, ready, user: session?.user ?? null };
 }
 
-const appUrl = () => `${window.location.origin}${window.location.pathname}#/app`;
+// no hash here: Supabase appends its tokens after "#", and the app routes once they are read
+const appUrl = () => `${window.location.origin}${window.location.pathname}`;
 
 export async function signUp(email: string, password: string, meta: { name: string; role: string; grade: number | null }) {
   if (!supabase) throw new Error('offline');
