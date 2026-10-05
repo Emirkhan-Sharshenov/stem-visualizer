@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { VisualMode } from '../types/stem';
 import { LogoMark } from './brand/Logo';
 import { Search, User, BookOpen, Network, FlaskConical, Target, Flame } from 'lucide-react';
 import { dayStreak, useProgress } from '../lib/progress';
+import { signOut, useSession } from '../lib/supabase';
+import { LogOut } from 'lucide-react';
 
 interface NavbarProps {
   currentMode: VisualMode;
@@ -112,13 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               ))}
             </div>
 
-            <a
-              href="#/login"
-              aria-label={lang === 'ru' ? 'Аккаунт' : 'Account'}
-              className="w-8 h-8 ml-1 rounded-full bg-accent hover:bg-accent-hover flex items-center justify-center text-white transition-colors"
-            >
-              <User className="w-4 h-4" strokeWidth={1.75} />
-            </a>
+            <AccountButton lang={lang} onProgress={() => onSelectMode('progress')} />
           </div>
         </div>
       </header>
@@ -146,3 +142,45 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
     {label}
   </button>
 );
+
+/** avatar: sign-in link for guests, a small menu for signed-in users */
+const AccountButton: React.FC<{ lang: 'ru' | 'en'; onProgress: () => void }> = ({ lang, onProgress }) => {
+  const { user } = useSession();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const close = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
+  }, []);
+  if (!user)
+    return (
+      <a href="#/login" aria-label={lang === 'ru' ? 'Войти' : 'Log in'} title={lang === 'ru' ? 'Войти' : 'Log in'} className="w-8 h-8 ml-1 rounded-full bg-accent hover:bg-accent-hover flex items-center justify-center text-white transition-colors">
+        <User className="w-4 h-4" strokeWidth={1.75} />
+      </a>
+    );
+  const name = (user.user_metadata?.name as string) || (user.user_metadata?.full_name as string) || user.email || '';
+  return (
+    <div ref={ref} className="relative ml-1">
+      <button onClick={() => setOpen((o) => !o)} aria-label={name} className="w-8 h-8 rounded-full bg-accent hover:bg-accent-hover flex items-center justify-center text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+        {name.slice(0, 1).toUpperCase()}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-10 z-50 w-56 rounded-xl bg-surface border border-line shadow-xl p-1.5">
+          <div className="px-3 py-2">
+            <div className="text-sm font-medium text-ink truncate">{name}</div>
+            <div className="text-xs text-ink-3 truncate">{user.email}</div>
+            <div className="mt-1 text-[11px] text-[#1E7A4C]">{lang === 'ru' ? '✓ прогресс сохраняется в аккаунте' : '✓ progress saved to your account'}</div>
+          </div>
+          <button onClick={() => { setOpen(false); onProgress(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted cursor-pointer">
+            {lang === 'ru' ? 'Мой прогресс' : 'My progress'}
+          </button>
+          <button onClick={() => { setOpen(false); signOut(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
+            <LogOut className="w-4 h-4" strokeWidth={1.75} />
+            {lang === 'ru' ? 'Выйти' : 'Log out'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};

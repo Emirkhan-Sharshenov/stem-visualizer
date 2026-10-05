@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { authErrorText, cloudEnabled, resetPassword, signIn, signInWithGoogle, signUp } from '../lib/supabase';
 import { Logo } from '../components/brand/Logo';
 import { OrbitalStage } from '../components/brand/OrbitalStage';
 import { authCopy } from '../i18n/auth';
@@ -32,6 +33,10 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
   const [role, setRole] = useState<Role>('student');
   const [grade, setGrade] = useState('9');
   const [errors, setErrors] = useState<Errors>({});
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
 
   const validate = (): Errors => {
     const next: Errors = {};
@@ -41,13 +46,50 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
     return next;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next = validate();
     setErrors(next);
+    setFormError(null);
     if (Object.keys(next).length > 0) return;
-    // TODO: replace with Supabase auth (signUp / signInWithPassword)
-    onNavigate('app');
+    // without Supabase keys the app still works, progress just stays in this browser
+    if (!cloudEnabled) return onNavigate('app');
+    setBusy(true);
+    try {
+      if (mode === 'register') {
+        const { needsConfirmation } = await signUp(email.trim(), password, { name: name.trim(), role, grade: role === 'student' ? Number(grade) : null });
+        if (needsConfirmation) {
+          setNotice(L(`Мы отправили письмо на ${email}. Открой его и подтверди почту — потом войди.`, `We sent an email to ${email}. Confirm your address, then log in.`));
+          return;
+        }
+      } else await signIn(email.trim(), password);
+      onNavigate('app');
+    } catch (err) {
+      setFormError(authErrorText(err, lang));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const google = async () => {
+    setFormError(null);
+    if (!cloudEnabled) return onNavigate('app');
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setFormError(authErrorText(err, lang));
+    }
+  };
+
+  const forgot = async () => {
+    setFormError(null);
+    if (!/^\S+@\S+\.\S+$/.test(email)) return setErrors((p) => ({ ...p, email: t.errors.email }));
+    try {
+      await resetPassword(email.trim());
+      setNotice(L('Письмо со ссылкой для сброса пароля отправлено.', 'A password reset link is on its way.'));
+    } catch (err) {
+      setFormError(authErrorText(err, lang));
+    }
   };
 
   const clearError = (field: keyof Errors) => setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -84,6 +126,7 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
 
             <button
               type="button"
+              onClick={google}
               className="mt-8 w-full h-11 rounded-lg bg-surface border border-line hover:bg-muted hover:border-line-strong text-sm font-medium text-ink inline-flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
             >
               <GoogleIcon />
@@ -166,7 +209,7 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                 error={errors.password}
                 hint={mode === 'register' ? t.fields.passwordHint : undefined}
                 aside={mode === 'login' ? (
-                  <button type="button" className="text-sm text-accent hover:text-accent-hover cursor-pointer">{t.login.forgot}</button>
+                  <button type="button" onClick={forgot} className="text-sm text-accent hover:text-accent-hover cursor-pointer">{t.login.forgot}</button>
                 ) : undefined}
               >
                 <div className="relative">
@@ -188,10 +231,15 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                 </div>
               </Field>
 
+              {formError && <p className="rounded-lg bg-[#FDF0EF] border border-[#F2C8C5] px-3 py-2 text-sm text-[#CC2F35]">{formError}</p>}
+              {notice && <p className="rounded-lg bg-[#EAF6EF] border border-[#BFE3CC] px-3 py-2 text-sm text-[#1E7A4C]">{notice}</p>}
+
               <button
                 type="submit"
-                className="w-full h-11 rounded-lg bg-accent hover:bg-accent-hover active:bg-accent-active text-white text-sm font-medium transition-colors cursor-pointer"
+                disabled={busy}
+                className="w-full h-11 rounded-lg bg-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-70 text-white text-sm font-medium transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
               >
+                {busy && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
                 {copy.submit}
               </button>
             </form>

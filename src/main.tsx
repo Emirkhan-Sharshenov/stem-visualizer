@@ -9,6 +9,9 @@ const App = lazy(() => import('./App.tsx'));
 import {navigate, useRoute} from './router';
 import type {Lang} from './i18n/landing';
 import './index.css';
+import {initCloudSync} from './lib/cloudSync';
+
+initCloudSync();
 
 function readLang(): Lang {
   try {
