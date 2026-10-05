@@ -20,7 +20,7 @@ const S = {
   mitosis: [bar(8), bar(10)],
   montage: [bar(10), bar(12)],
   stats: [bar(12), bar(14)],
-  cta: [bar(14), 900],
+  cta: [bar(14), 945],
 } as const;
 const len = (k: keyof typeof S) => S[k][1] - S[k][0];
 /** start frame of each voice line (slightly after the cut, so the music hit lands first) */

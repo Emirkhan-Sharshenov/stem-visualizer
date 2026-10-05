@@ -5,7 +5,8 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts Reel out/reel.mp4",
-    "music": "node scripts/music.mjs"
+    "music": "node scripts/music.mjs",
+    "voice:check": "node scripts/check-voice.mjs"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.532",
