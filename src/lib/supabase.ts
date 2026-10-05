@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
  * Supabase is optional: without VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
  * the site works as before and keeps progress in the browser only.
  */
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const env = import.meta.env;
+const url = (env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL) as string | undefined;
+// either the new publishable key (sb_publishable_…) or the legacy anon key
+const key = (env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string | undefined;
 
 export const supabase: SupabaseClient | null = url && key ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' } }) : null;
 
