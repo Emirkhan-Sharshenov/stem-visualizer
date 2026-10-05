@@ -178,3 +178,9 @@ export function dailyQuestions(date = todayKey()): Question[] {
     return shuffle(questionsForTopic(topic, 10, seed + i), rand)[0];
   });
 }
+
+/** mock exam modelled on the ORT subject test: 40 questions from grades 7–11, about a third are calculations */
+export const ORT = { questions: 40, minutes: 60 };
+export function ortExam(subject: string, seed: number): Question[] {
+  return practiceTest(subject, [7, 11], ORT.questions, seed);
+}

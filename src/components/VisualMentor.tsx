@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Bot, Send, X, Sparkles, HelpCircle, Compass, Check } from 'lucide-react';
+import { Bot, Send, X, Sparkles, HelpCircle, Compass, Check, Crown } from 'lucide-react';
+import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY } from '../lib/plan';
 
 interface VisualMentorProps {
   lang: 'ru' | 'en';
@@ -18,7 +19,7 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({
 }) => {
   const [question, setQuestion] = useState<string>('');
   const [messages, setMessages] = useState<
-    { role: 'user' | 'mentor'; text: string; actionSuggestion?: string }[]
+    { role: 'user' | 'mentor'; text: string; actionSuggestion?: string; upgrade?: boolean }[]
   >([
     {
       role: 'mentor',
@@ -67,9 +68,10 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({
     setIsLoading(true);
 
     try {
+      const auth = await authHeaders();
       const res = await fetch('/api/mentor', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...auth },
         body: JSON.stringify({
           question: textToSend,
           topic: currentTopic,
@@ -77,6 +79,23 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({
           lang
         })
       });
+      if (res.status === 402) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'mentor',
+            upgrade: true,
+            text: !auth.Authorization
+              ? lang === 'ru'
+                ? `Без аккаунта можно задать ${GUEST_MENTOR_DAILY} вопроса в день. Войди — и получишь ${FREE_MENTOR_DAILY} в день бесплатно, а с Pro — без ограничений.`
+                : `Guests get ${GUEST_MENTOR_DAILY} questions a day. Log in for ${FREE_MENTOR_DAILY} a day for free, or get Pro for unlimited questions.`
+              : lang === 'ru'
+                ? `На сегодня бесплатные вопросы закончились (${FREE_MENTOR_DAILY} в день). Завтра лимит обновится — или подключи Pro, и спрашивай сколько угодно.`
+                : `You've used today's free questions (${FREE_MENTOR_DAILY} a day). The limit resets tomorrow, or get Pro for unlimited questions.`
+          }
+        ]);
+        return;
+      }
       const data = await res.json();
       setMessages((prev) => [...prev, { role: 'mentor', text: data.answer }]);
     } catch (err) {
@@ -162,6 +181,18 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({
             >
               {m.text}
             </div>
+            {m.upgrade && (
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new Event('open-pro'));
+                  onClose();
+                }}
+                className="mt-1 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-medium cursor-pointer"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                {lang === 'ru' ? 'Подробнее о Pro' : 'About Pro'}
+              </button>
+            )}
           </div>
         ))}
         {isLoading && (

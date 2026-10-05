@@ -43,6 +43,7 @@ const LabsPage = lazy(() => import('./components/labs/LabsPage'));
 const PracticePage = lazy(() => import('./components/practice/PracticePage'));
 const CourseMap = lazy(() => import('./components/map/CourseMap'));
 const ProgressPage = lazy(() => import('./components/progress/ProgressPage'));
+const ProPage = lazy(() => import('./components/pro/ProPage'));
 const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
@@ -98,6 +99,16 @@ export default function App({ lang, setLang }: AppProps) {
   const [pendingTopic, setPendingTopic] = useState<string | undefined>(undefined);
 
   useEffect(() => progress.touch(), []);
+
+  // "Pro" buttons anywhere (mentor limit, locked blocks) open the plans page
+  useEffect(() => {
+    const open = () => {
+      setCurrentMode('pro');
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('open-pro', open);
+    return () => window.removeEventListener('open-pro', open);
+  }, []);
 
   // welcome note after confirming the e-mail or signing in with Google
   const [welcome, setWelcome] = useState(false);
@@ -221,6 +232,7 @@ export default function App({ lang, setLang }: AppProps) {
             {currentMode === 'practice' && <PracticePage lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'course_map' && <CourseMap lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'progress' && <ProgressPage lang={lang} onOpenTopic={openTopic} />}
+            {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}
           </Suspense>
 
           {currentMode === 'moment_diffusion' && (

@@ -2,10 +2,12 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
+dotenv.config({ path: '.env.local' });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,9 +27,50 @@ if (process.env.GEMINI_API_KEY) {
   }
 }
 
+/* ---------- free mentor limit and Pro check ---------- */
+
+const FREE_DAILY = 5;
+const GUEST_DAILY = 3;
+const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const sbKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+// the service key stays on the server only; it lets us count usage and read subscriptions reliably
+const sbService = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+const sbAdmin = sbUrl && sbService ? createClient(sbUrl, sbService, { auth: { persistSession: false } }) : null;
+const sbPublic = sbUrl && sbKey ? createClient(sbUrl, sbKey, { auth: { persistSession: false } }) : null;
+const memoryUsage = new Map<string, number>(); // fallback when no service key: per process, per day
+
+async function mentorAllowance(req: express.Request): Promise<{ ok: boolean; pro: boolean; left: number }> {
+  const today = new Date().toISOString().slice(0, 10);
+  const token = (req.headers.authorization || '').replace(/^Bearer /, '');
+  let userId: string | null = null;
+  if (token && sbPublic) {
+    const { data } = await sbPublic.auth.getUser(token);
+    userId = data.user?.id ?? null;
+  }
+  if (userId && sbAdmin) {
+    const { data: sub } = await sbAdmin.from('subscriptions').select('status, expires_at').eq('user_id', userId).maybeSingle();
+    const pro = !!sub && sub.status === 'active' && new Date(sub.expires_at) > new Date();
+    if (pro) return { ok: true, pro: true, left: Infinity };
+    const { data: row } = await sbAdmin.from('mentor_usage').select('count').eq('user_id', userId).eq('day', today).maybeSingle();
+    const used = row?.count ?? 0;
+    if (used >= FREE_DAILY) return { ok: false, pro: false, left: 0 };
+    await sbAdmin.from('mentor_usage').upsert({ user_id: userId, day: today, count: used + 1 });
+    return { ok: true, pro: false, left: FREE_DAILY - used - 1 };
+  }
+  const key = `${userId ?? req.ip}:${today}`;
+  const limit = userId ? FREE_DAILY : GUEST_DAILY;
+  const used = memoryUsage.get(key) ?? 0;
+  if (used >= limit) return { ok: false, pro: false, left: 0 };
+  memoryUsage.set(key, used + 1);
+  return { ok: true, pro: false, left: limit - used - 1 };
+}
+
 // AI Visual Mentor endpoint
 app.post('/api/mentor', async (req, res) => {
   const { question, topic, state, lang = 'ru' } = req.body;
+  const allowance = await mentorAllowance(req).catch(() => ({ ok: true, pro: false, left: 0 }));
+  if (!allowance.ok) return res.status(402).json({ error: 'limit', limit: FREE_DAILY });
+  res.setHeader('X-Mentor-Left', String(allowance.left));
 
   const systemPrompt = `You are the Interactive STEM Visual Mentor in "STEM Visualizer" (Mental Model Explorer).
 Your key pedagogical philosophy:

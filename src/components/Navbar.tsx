@@ -4,7 +4,8 @@ import { LogoMark } from './brand/Logo';
 import { Search, User, BookOpen, Network, FlaskConical, Target, Flame } from 'lucide-react';
 import { dayStreak, useProgress } from '../lib/progress';
 import { signOut, useSession } from '../lib/supabase';
-import { LogOut } from 'lucide-react';
+import { LogOut, Crown } from 'lucide-react';
+import { usePlan } from '../lib/plan';
 
 interface NavbarProps {
   currentMode: VisualMode;
@@ -30,7 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onToggleMentor,
 }) => {
-  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress'];
+  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro'];
+  const plan = usePlan();
   const isActive = (id: VisualMode) => (id === 'textbook' ? !SECTIONS.includes(currentMode) : currentMode === id);
   const p = useProgress();
   const streak = dayStreak(p);
@@ -92,6 +94,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
+              onClick={() => onSelectMode('pro')}
+              title={plan.pro ? 'Pro' : lang === 'ru' ? 'Тарифы' : 'Plans'}
+              className={`hidden sm:inline-flex items-center gap-1 h-8 px-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                currentMode === 'pro' ? 'bg-[#FFE7B3] text-[#8A4B0F]' : 'bg-[#FFF4DA] hover:bg-[#FFE7B3] text-[#B5651D]'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5" strokeWidth={2} />
+              {plan.pro ? 'Pro ✓' : 'Pro'}
+            </button>
+
+            <button
               onClick={onToggleMentor}
               className="inline-flex items-center h-8 px-3 rounded-md border border-line bg-surface hover:bg-muted text-sm text-ink transition-colors cursor-pointer"
             >
@@ -114,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               ))}
             </div>
 
-            <AccountButton lang={lang} onProgress={() => onSelectMode('progress')} />
+            <AccountButton lang={lang} onProgress={() => onSelectMode('progress')} onPro={() => onSelectMode('pro')} />
           </div>
         </div>
       </header>
@@ -144,7 +157,7 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
 );
 
 /** avatar: sign-in link for guests, a small menu for signed-in users */
-const AccountButton: React.FC<{ lang: 'ru' | 'en'; onProgress: () => void }> = ({ lang, onProgress }) => {
+const AccountButton: React.FC<{ lang: 'ru' | 'en'; onProgress: () => void; onPro: () => void }> = ({ lang, onProgress, onPro }) => {
   const { user } = useSession();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -174,6 +187,10 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onProgress: () => void }> = (
           </div>
           <button onClick={() => { setOpen(false); onProgress(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted cursor-pointer">
             {lang === 'ru' ? 'Мой прогресс' : 'My progress'}
+          </button>
+          <button onClick={() => { setOpen(false); onPro(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
+            <Crown className="w-4 h-4 text-[#B5651D]" strokeWidth={1.75} />
+            {lang === 'ru' ? 'Подписка Pro' : 'Pro plan'}
           </button>
           <button onClick={() => { setOpen(false); signOut(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
             <LogOut className="w-4 h-4" strokeWidth={1.75} />

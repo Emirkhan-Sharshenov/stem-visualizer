@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { Flame } from 'lucide-react';
 import { TOPICS } from '../../data/curriculum';
 import { badges, dayStreak, useProgress } from '../../lib/progress';
+import { useSession } from '../../lib/supabase';
+import { StudyPlan } from './StudyPlan';
 
 type Lang = 'ru' | 'en';
 const SUBJ = [
@@ -13,6 +15,7 @@ const SUBJ = [
 /** The learner's progress: streak, per-subject completion by grade, quiz stats and badges */
 export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = ({ lang, onOpenTopic }) => {
   const p = useProgress();
+  const { user } = useSession();
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const topics = useMemo(() => TOPICS.filter((t) => t.subject !== 'mathematics'), []);
   const done = topics.filter((t) => p.completed[t.id]).length;
@@ -35,7 +38,9 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
     <div className="flex flex-col gap-6">
       <header>
         <h1 className="font-serif text-[36px] leading-tight text-ink">{L('Мой прогресс', 'My progress')}</h1>
-        <p className="mt-1 text-[15px] text-ink-2">{L('Прогресс хранится в этом браузере. Скоро — в аккаунте, на всех устройствах.', 'Progress is saved in this browser. Soon it will sync to your account on every device.')}</p>
+        <p className="mt-1 text-[15px] text-ink-2">{user
+            ? L('Прогресс сохраняется в аккаунте и доступен на всех устройствах.', 'Progress is saved to your account and available on every device.')
+            : L('Прогресс хранится в этом браузере. Войди в аккаунт, чтобы не потерять его.', 'Progress is saved in this browser. Log in to keep it safe.')}</p>
       </header>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -122,6 +127,8 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
           )}
         </div>
       </section>
+
+      <StudyPlan lang={lang} onOpenTopic={onOpenTopic} />
 
       <section>
         <h2 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">

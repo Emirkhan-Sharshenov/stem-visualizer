@@ -6,11 +6,12 @@ import { practiceTest, Question } from '../../lib/quiz';
 import { Quiz } from './Quiz';
 import { DailyCard, SectionTests, TopicsBrowser } from './PracticeBlocks';
 import { ProblemTrainer } from './ProblemTrainer';
+import { OrtExam } from './OrtExam';
 
 const SimById = lazy(() => import('../sims/SimById'));
 
 type Lang = 'ru' | 'en';
-type Tab = 'predict' | 'problems' | 'topics' | 'sections' | 'test';
+type Tab = 'predict' | 'problems' | 'topics' | 'sections' | 'test' | 'ort';
 
 const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
   all: { ru: 'Все предметы', en: 'All subjects', color: '#2F5BFF' },
@@ -269,6 +270,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
             ['topics', L('По темам', 'By topic')],
             ['sections', L('Тесты по разделам', 'Section tests')],
             ['test', L('Тренировка', 'Practice test')],
+            ['ort', L('Пробный ОРТ ★', 'Mock ORT ★')],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm whitespace-nowrap cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
@@ -283,6 +285,8 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         <TopicsBrowser lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'sections' ? (
         <SectionTests lang={lang} onOpenTopic={onOpenTopic} />
+      ) : tab === 'ort' ? (
+        <OrtExam lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'test' ? (
         <TestRunner lang={lang} onOpenTopic={onOpenTopic} />
       ) : (
