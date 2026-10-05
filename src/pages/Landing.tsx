@@ -293,7 +293,7 @@ export const Landing: React.FC<LandingProps> = ({ lang, onToggleLang, onNavigate
         <section id="subjects" className="bg-surface border-y border-line scroll-mt-14">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-24">
             <h2 className="font-serif text-[32px] sm:text-[40px] leading-tight tracking-[-0.02em]">{t.subjects.title}</h2>
-            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
               {t.subjects.list.map((s) => (
                 <div key={s.key}>
                   <div className="flex items-center gap-2 pb-3 border-b border-line">

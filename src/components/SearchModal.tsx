@@ -1,141 +1,108 @@
-import React, { useState } from 'react';
-import { CONCEPTS_LIST } from '../data/concepts';
-import { TEXTBOOK_LESSONS } from '../data/textbookCurriculum';
-import { VisualMode } from '../types/stem';
-import { Search, X, ArrowRight, Sparkles, Compass, BookOpen } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, Search, X } from 'lucide-react';
+import { SECTIONS, Topic, TOPICS, topicById } from '../data/curriculum';
 
 interface SearchModalProps {
   lang: 'ru' | 'en';
   onClose: () => void;
-  onSelectConcept: (mode: VisualMode, initialParams?: any) => void;
+  onOpenTopic: (id: string) => void;
 }
 
-export const SearchModal: React.FC<SearchModalProps> = ({ lang, onClose, onSelectConcept }) => {
-  const [query, setQuery] = useState<string>('');
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524' };
+const NAME: Record<string, { ru: string; en: string }> = {
+  physics: { ru: 'Физика', en: 'Physics' },
+  chemistry: { ru: 'Химия', en: 'Chemistry' },
+  biology: { ru: 'Биология', en: 'Biology' },
+};
 
-  const filteredLessons = TEXTBOOK_LESSONS.filter((l) => {
-    if (!query.trim()) return true;
-    const q = query.toLowerCase();
-    return (
-      l.title[lang].toLowerCase().includes(q) ||
-      l.subtitle[lang].toLowerCase().includes(q) ||
-      l.keywords.some((k) => k.toLowerCase().includes(q))
-    );
-  });
+const SUGGEST = ['p7-liquid-pressure', 'p8-conduction', 'p11-lorentz', 'c8-combustion', 'c11-redox', 'c8-lattices', 'b9-mitosis', 'b8-bones', 'b8-blood-groups', 'b11-adaptations'];
 
-  const popularQueries = [
-    { text: lang === 'ru' ? '5-6 кл: Диффузия и молекулы' : 'Gr 5-6: Diffusion', mode: 'moment_diffusion' as VisualMode },
-    { text: lang === 'ru' ? '5-6 кл: Рычаг Архимеда' : 'Gr 5-6: Lever Rule', mode: 'moment_lever' as VisualMode },
-    { text: lang === 'ru' ? '6-7 кл: Фотосинтез (Хлоропласт)' : 'Gr 6-7: Photosynthesis', mode: 'moment_photosynthesis' as VisualMode },
-    { text: lang === 'ru' ? '7 кл: Закон Паскаля и пресс' : 'Gr 7: Pascal Press', mode: 'moment_pascal' as VisualMode },
-    { text: lang === 'ru' ? '7-8 кл: Лёд → Вода → Пар' : 'Gr 7-8: States of Matter', mode: 'moment_states' as VisualMode },
-    { text: lang === 'ru' ? '8 кл: Закон Ома и цепь' : 'Gr 8: Ohm Circuit', mode: 'moment_circuit' as VisualMode },
-    { text: lang === 'ru' ? '8 кл: Теорема Пифагора' : 'Gr 8: Pythagoras', mode: 'moment_pythagoras' as VisualMode },
-    { text: lang === 'ru' ? '8-9 кл: Химическая связь' : 'Gr 8-9: Chemical Bond', mode: 'moment_chemical_bond' as VisualMode },
-    { text: lang === 'ru' ? '8-9 кл: Электролиз CuCl₂' : 'Gr 8-9: Electrolysis', mode: 'moment_electrolysis' as VisualMode },
-    { text: lang === 'ru' ? '8-9 кл: Нейрон и синапс' : 'Gr 8-9: Neuron Synapse', mode: 'moment_neuron' as VisualMode },
-    { text: lang === 'ru' ? '9 кл: Маятник и энергия' : 'Gr 9: Pendulum', mode: 'moment_pendulum' as VisualMode },
-    { text: lang === 'ru' ? '9 кл: Эффект Допплера' : 'Gr 9: Doppler Wave', mode: 'moment_doppler' as VisualMode },
-    { text: lang === 'ru' ? '9-10 кл: Тригонометрический круг' : 'Gr 9-10: Trig Circle', mode: 'moment_trig_circle' as VisualMode },
-    { text: lang === 'ru' ? '9-10 кл: Генетика Менделя 3:1' : 'Gr 9-10: Mendel Genetics', mode: 'moment_mendel' as VisualMode },
-    { text: lang === 'ru' ? '9-10 кл: Спираль ДНК' : 'Gr 9-10: DNA Helix', mode: 'moment_dna' as VisualMode },
-    { text: lang === 'ru' ? '10-11 кл: Производная (касательная)' : 'Gr 10-11: Derivative', mode: 'moment_derivative' as VisualMode },
-    { text: lang === 'ru' ? '10-11 кл: Доска Гальтона (Гаусс)' : 'Gr 10-11: Galton Board', mode: 'moment_gauss' as VisualMode },
-    { text: lang === 'ru' ? '10-11 кл: Орбитали (s, p, d, f)' : 'Gr 10-11: Orbitals', mode: 'orbitals' as VisualMode },
-    { text: lang === 'ru' ? '10-11 кл: АТФ-синтаза (9000 об/мин)' : 'Gr 10-11: ATP Synthase', mode: 'biology_cell' as VisualMode },
-    { text: lang === 'ru' ? '10-11 кл: Замедление времени' : 'Gr 10-11: Time Dilation', mode: 'moment_relativity' as VisualMode },
-  ];
+// strip common "I don't understand" phrasing so natural queries still match
+const STOP = ['не понимаю', 'непонятно', 'что такое', 'как работает', 'почему', 'объясни', 'i don’t get', "i don't get", 'what is', 'how does', 'explain'];
+
+function score(t: Topic, words: string[], lang: 'ru' | 'en') {
+  const title = t.title[lang].toLowerCase();
+  const intro = t.intro[lang].toLowerCase();
+  const points = t.points.map((p) => `${p.title[lang]} ${p.text[lang]}`.toLowerCase()).join(' ');
+  let s = 0;
+  for (const w of words) {
+    const stem = w.length > 5 ? w.slice(0, w.length - 2) : w;
+    if (title.includes(stem)) s += 10;
+    else if (intro.includes(stem)) s += 4;
+    else if (points.includes(stem)) s += 2;
+    else return 0;
+  }
+  return s;
+}
+
+/** Search across every topic of the textbook, including its sub-points */
+export const SearchModal: React.FC<SearchModalProps> = ({ lang, onClose, onOpenTopic }) => {
+  const [query, setQuery] = useState('');
+  const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const results = useMemo(() => {
+    let q = query.trim().toLowerCase();
+    STOP.forEach((s) => (q = q.replace(s, ' ')));
+    const words = q.split(/\s+/).filter((w) => w.length >= 2);
+    if (!words.length) return null;
+    return TOPICS.map((t) => ({ t, s: score(t, words, lang) }))
+      .filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 30)
+      .map((x) => x.t);
+  }, [query, lang]);
+
+  const list = results ?? (SUGGEST.map(topicById).filter(Boolean) as Topic[]);
+  const sectionTitle = (t: Topic) => SECTIONS.find((s) => s.id === t.sectionId)?.title[lang];
+  const open = (id: string) => {
+    onOpenTopic(id);
+    onClose();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 p-4 bg-[rgba(17,17,17,0.45)] animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl flex flex-col gap-5 text-slate-100 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        {/* Search Input */}
-        <div className="relative w-full">
-          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] p-4 bg-[rgba(17,17,17,0.45)]" onClick={onClose}>
+      <div className="bg-surface border border-line rounded-2xl max-w-2xl w-full shadow-2xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="relative border-b border-line">
+          <Search className="w-5 h-5 text-ink-3 absolute left-4 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
           <input
-            type="text"
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={
-              lang === 'ru'
-                ? 'Ищи любую тему 5-11 класса: «диффузия», «рычаг», «лед», «оптика», «орбиталь»...'
-                : 'Search any Grade 5-11 topic: "diffusion", "lever", "ice", "optics", "orbital"...'
-            }
-            className="w-full bg-slate-950 border border-slate-700/80 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 shadow-inner"
+            onKeyDown={(e) => e.key === 'Enter' && list[0] && open(list[0].id)}
+            placeholder={L('Что непонятно? Например: «не понимаю электролиз»', 'What’s confusing? E.g. “I don’t get electrolysis”')}
+            className="w-full bg-transparent pl-12 pr-12 py-4 text-[15px] text-ink placeholder:text-ink-3 outline-none"
           />
+          <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md text-ink-3 hover:text-ink hover:bg-muted flex items-center justify-center cursor-pointer">
+            <X className="w-4 h-4" strokeWidth={1.75} />
+          </button>
         </div>
-
-        {/* Quick search inspiration chips */}
-        {!query && (
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-              {lang === 'ru' ? 'ШКОЛЬНАЯ ПРОГРАММА 5-11 КЛАССОВ:' : 'SCHOOL CURRICULUM TOPICS (5-11):'}
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {popularQueries.map((pq, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    onSelectConcept(pq.mode);
-                    onClose();
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs text-cyan-300 hover:text-white border border-slate-700/60 transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3 h-3 text-cyan-400" />
-                  <span>{pq.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Filtered Concept Results */}
-        <div className="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1">
-          {filteredLessons.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => {
-                onSelectConcept(item.viewMode, item.initialParams);
-                onClose();
-              }}
-              className="p-3.5 rounded-2xl bg-slate-950/70 hover:bg-slate-800 border border-slate-800/80 hover:border-cyan-500/50 transition-all cursor-pointer flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 group-hover:bg-cyan-500/20">
-                  <BookOpen className="w-4 h-4" />
+        <div className="px-4 pt-3 pb-1 text-xs font-medium uppercase tracking-[0.05em] text-ink-3">
+          {results ? L(`Найдено: ${results.length}`, `Found: ${results.length}`) : L('Популярные темы', 'Popular topics')}
+        </div>
+        <ul className="max-h-[56vh] overflow-y-auto p-2 pt-1">
+          {list.map((t) => (
+            <li key={t.id}>
+              <button onClick={() => open(t.id)} className="group w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted flex items-center gap-3 cursor-pointer">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: COLOR[t.subject] }} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] text-ink truncate">{t.title[lang]}</span>
+                  <span className="block text-xs text-ink-3 truncate">
+                    {NAME[t.subject]?.[lang]} · {t.grade} {L('класс', 'grade')} · {sectionTitle(t)}
+                  </span>
                 </span>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-900 text-cyan-400 border border-slate-800">
-                      {item.gradeBadge[lang]}
-                    </span>
-                    <h4 className="text-xs font-bold text-slate-100 group-hover:text-cyan-300 transition-colors">
-                      {item.title[lang]}
-                    </h4>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{item.subtitle[lang]}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs text-slate-400 group-hover:text-cyan-400 transition-colors">
-                <span className="hidden sm:inline text-[11px] font-mono">
-                  {lang === 'ru' ? 'Симуляция' : 'Simulate'}
-                </span>
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </div>
+                <ArrowRight className="w-4 h-4 text-ink-3 group-hover:text-accent shrink-0" strokeWidth={1.75} />
+              </button>
+            </li>
           ))}
-        </div>
+          {results && results.length === 0 && <li className="px-3 py-6 text-sm text-ink-2">{L('Ничего не нашлось. Попробуй другое слово.', 'Nothing found. Try another word.')}</li>}
+        </ul>
       </div>
     </div>
   );
 };
-

@@ -62,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="hidden md:flex flex-1 max-w-md mx-auto items-center gap-2.5 h-9 px-3 rounded-lg bg-surface border border-line hover:border-line-strong text-sm text-ink-3 transition-colors cursor-pointer"
           >
             <Search className="w-4 h-4" strokeWidth={1.75} />
-            <span className="truncate">{lang === 'ru' ? 'Что непонятно? Например, дивергенция' : 'What’s confusing? E.g. divergence'}</span>
+            <span className="truncate">{lang === 'ru' ? 'Что непонятно? Например, электролиз' : 'What’s confusing? E.g. electrolysis'}</span>
             <kbd className="ml-auto font-mono text-[11px] px-1.5 py-0.5 rounded bg-muted border border-line text-ink-3">⌘K</kbd>
           </button>
 

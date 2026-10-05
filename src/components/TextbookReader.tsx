@@ -29,8 +29,6 @@ const LABS_3D: { mode: VisualMode; subject: StemCategory; tex: string; title: { 
   { mode: 'orbitals', subject: 'chemistry', tex: '|\\psi_{n\\ell m}(r,\\theta,\\varphi)|^2', title: { ru: 'Атомные орбитали', en: 'Atomic orbitals' }, text: { ru: 'Форма электронного облака при разных n, ℓ, m', en: 'Electron cloud shapes for different n, ℓ, m' } },
   { mode: 'deconstruction', subject: 'chemistry', tex: '\\angle\\mathrm{HOH} = 104.5^\\circ', title: { ru: 'Разбор молекулы H₂O', en: 'Deconstructing H₂O' }, text: { ru: 'От атомов до гибридизации, шаг за шагом', en: 'From atoms to hybridization, step by step' } },
   { mode: 'physics_gravity', subject: 'physics', tex: 'F = G\\frac{m_1 m_2}{r^2}', title: { ru: 'Гравитация и Кулон', en: 'Gravity and Coulomb' }, text: { ru: 'Почему сила падает как 1/r²', en: 'Why force falls off as 1/r²' } },
-  { mode: 'math_revolution', subject: 'mathematics', tex: 'V = \\pi\\int_a^b f(x)^2\\,dx', title: { ru: 'Интегралы 2D ↔ 3D', en: 'Integrals 2D ↔ 3D' }, text: { ru: 'Тело вращения из тонких дисков', en: 'A solid of revolution from thin discs' } },
-  { mode: 'math_divergence', subject: 'mathematics', tex: '\\nabla\\cdot\\vec F', title: { ru: 'Дивергенция', en: 'Divergence' }, text: { ru: 'Источники и стоки векторного поля', en: 'Sources and sinks of a vector field' } },
   { mode: 'biology_cell', subject: 'biology', tex: '\\mathrm{ADP} + P_i \\to \\mathrm{ATP}', title: { ru: 'Клетка и АТФ', en: 'The cell and ATP' }, text: { ru: 'Как работает молекулярная турбина', en: 'How the molecular turbine works' } },
 ];
 
@@ -54,7 +52,10 @@ function writeStored(key: string, value: unknown) {
 const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim || 'model' in sim || 'molecules' in sim || 'reactions' in sim || 'lattices' in sim ? '3d' : 'live');
 
 export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSimulation, onAskMentor, initialTopicId }) => {
-  const [subject, setSubject] = useState<StemCategory>(() => readStored('tbSubject', 'physics'));
+  const [subject, setSubject] = useState<StemCategory>(() => {
+    const stored = readStored<StemCategory>('tbSubject', 'physics');
+    return SUBJECT_IDS.includes(stored) ? stored : 'physics';
+  });
   const [grade, setGrade] = useState<number>(() => readStored('tbGrade', 7));
   const [query, setQuery] = useState('');
   const [openTopicId, setOpenTopicId] = useState<string | null>(initialTopicId ?? null);

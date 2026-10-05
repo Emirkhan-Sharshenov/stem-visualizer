@@ -393,7 +393,7 @@ export default function App({ lang, setLang }: AppProps) {
         <SearchModal
           lang={lang}
           onClose={() => setIsSearchOpen(false)}
-          onSelectConcept={handleSelectFromSearch}
+          onOpenTopic={openTopic}
         />
       )}
 

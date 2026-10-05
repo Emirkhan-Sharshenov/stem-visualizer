@@ -24,7 +24,8 @@ export * from './types';
 /** Newly authored curriculum, by subject and grade */
 const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11, ...BIOLOGY_5, ...BIOLOGY_6, ...BIOLOGY_7, ...BIOLOGY_8, ...BIOLOGY_9, ...BIOLOGY_10, ...BIOLOGY_11];
 
-export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
+// Mathematics is paused until its course is re-authored
+export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology'];
 
 const DEDICATED: string[] = ['orbitals', 'deconstruction', 'physics_gravity', 'math_revolution', 'math_divergence', 'biology_cell', 'break_model'];
 
@@ -121,7 +122,7 @@ function withValidSim(section: Section): Section {
   };
 }
 
-export const SECTIONS: Section[] = [...AUTHORED, ...legacySections()].map(withValidSim);
+export const SECTIONS: Section[] = [...AUTHORED, ...legacySections()].filter((s) => SUBJECTS.includes(s.subject)).map(withValidSim);
 export const TOPICS: Topic[] = SECTIONS.flatMap((s) => s.topics);
 
 export function gradesFor(subject: StemCategory): number[] {
