@@ -1,7 +1,55 @@
 import { useEffect, useState } from 'react';
 import { supabase, useSession } from './supabase';
 
-export const PRICES = { month: 199, year: 1490 };
+/** prices in US dollars (card payments go through Freemius); KGS is only a rough hint */
+export const PRICES = { month: 2.49, year: 17.99 };
+const KGS_PER_USD = 87;
+export const inSom = (usd: number) => Math.round((usd * KGS_PER_USD) / 5) * 5;
+
+const env = import.meta.env;
+export const FREEMIUS = {
+  productId: env.VITE_FREEMIUS_PRODUCT_ID || env.NEXT_PUBLIC_FREEMIUS_PRODUCT_ID,
+  publicKey: env.VITE_FREEMIUS_PUBLIC_KEY || env.NEXT_PUBLIC_FREEMIUS_PUBLIC_KEY,
+  planId: env.VITE_FREEMIUS_PLAN_ID || env.NEXT_PUBLIC_FREEMIUS_PLAN_ID,
+};
+export const paymentsEnabled = !!(FREEMIUS.productId && FREEMIUS.publicKey && FREEMIUS.planId);
+
+declare global {
+  interface Window {
+    FS?: { Checkout: new (o: Record<string, unknown>) => { open: (o: Record<string, unknown>) => void } };
+  }
+}
+
+let script: Promise<void> | null = null;
+const loadCheckout = () =>
+  (script ??= new Promise((resolve, reject) => {
+    const el = document.createElement('script');
+    el.src = 'https://checkout.freemius.com/js/v1/';
+    el.onload = () => resolve();
+    el.onerror = () => {
+      script = null;
+      reject(new Error('checkout_load'));
+    };
+    document.head.appendChild(el);
+  }));
+
+/** opens the Freemius card checkout; Pro is granted by the server webhook, matched by this e-mail */
+export async function openCheckout(period: 'month' | 'year', email: string, onPaid: () => void) {
+  await loadCheckout();
+  const checkout = new window.FS!.Checkout({
+    product_id: FREEMIUS.productId,
+    plan_id: FREEMIUS.planId,
+    public_key: FREEMIUS.publicKey,
+    image: `${location.origin}/favicon.svg`,
+  });
+  checkout.open({
+    name: 'STEM Visualizer Pro',
+    billing_cycle: period === 'month' ? 'monthly' : 'annual',
+    user_email: email,
+    readonly_user: true,
+    success: onPaid,
+  });
+}
 export const FREE_MENTOR_DAILY = 5;
 export const GUEST_MENTOR_DAILY = 3;
 

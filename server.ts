@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -15,7 +16,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.json());
+// payment webhooks need the raw body to check the signature
+const json = express.json();
+app.use((req, res, next) => (req.path.startsWith('/api/billing/') ? next() : json(req, res, next)));
 
 // Initialize Gemini if API key is present
 let ai: GoogleGenAI | null = null;
@@ -64,6 +67,63 @@ async function mentorAllowance(req: express.Request): Promise<{ ok: boolean; pro
   memoryUsage.set(key, used + 1);
   return { ok: true, pro: false, left: limit - used - 1 };
 }
+
+/* ---------- Freemius payment webhook: turns a paid license into Pro ---------- */
+
+const FREEMIUS_SECRET = process.env.FREEMIUS_SECRET_KEY;
+
+app.post('/api/billing/freemius', express.raw({ type: '*/*' }), async (req, res) => {
+  // always answer 200 so Freemius doesn't retry forever; problems are logged
+  res.sendStatus(200);
+  if (!FREEMIUS_SECRET || !sbAdmin) return console.warn('[billing] FREEMIUS_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is missing');
+  const raw: Buffer = req.body;
+  const expected = crypto.createHmac('sha256', FREEMIUS_SECRET).update(raw).digest('hex');
+  const got = String(req.headers['x-signature'] || '');
+  if (got.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected))) return console.warn('[billing] bad signature');
+
+  let ev: any;
+  try {
+    ev = JSON.parse(raw.toString('utf8'));
+  } catch {
+    return;
+  }
+  const type: string = ev.type || '';
+  const license = ev.objects?.license;
+  const licenseId = String(license?.id ?? ev.data?.license_id ?? '');
+  console.log('[billing]', type, licenseId);
+
+  // license gone or revoked: end Pro now
+  if (/^license.(deleted|cancelled)$/.test(type) || /^payment.(refund|dispute.lost)$/.test(type)) {
+    if (licenseId) await sbAdmin.from('subscriptions').update({ status: 'canceled', expires_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('external_id', licenseId);
+    return;
+  }
+  if (!license || !/^(license|subscription|payment)./.test(type)) return;
+
+  const email = ev.objects?.user?.email;
+  let userId: string | null = null;
+  if (email) {
+    const { data } = await sbAdmin.rpc('user_id_by_email', { p_email: email });
+    userId = (data as string) || null;
+  }
+  if (!userId) {
+    const { data } = await sbAdmin.from('subscriptions').select('user_id').eq('external_id', licenseId).maybeSingle();
+    userId = data?.user_id ?? null;
+  }
+  if (!userId) return console.warn('[billing] no account for', email);
+
+  // Freemius dates are UTC "YYYY-MM-DD HH:MM:SS"; null means lifetime
+  const expires = license.expiration ? new Date(String(license.expiration).replace(' ', 'T') + 'Z') : new Date(Date.now() + 100 * 365 * 864e5);
+  const active = !license.is_cancelled && type !== 'license.expired' && expires > new Date();
+  await sbAdmin.from('subscriptions').upsert({
+    user_id: userId,
+    plan: 'pro',
+    status: active ? 'active' : 'expired',
+    expires_at: expires.toISOString(),
+    source: 'freemius',
+    external_id: licenseId,
+    updated_at: new Date().toISOString(),
+  });
+});
 
 // AI Visual Mentor endpoint
 app.post('/api/mentor', async (req, res) => {
