@@ -1,37 +1,12 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StemCategory, VisualMode } from '../types/stem';
 import { ArrowLeft, ArrowRight, Box, Check, Search, X } from 'lucide-react';
 import { Formula } from './Formula';
-// Heavy labs load on demand so the textbook opens fast
-const SimById = lazy(() => import('./sims/SimById'));
-const MoleculeLab = lazy(() => import('./chem/MoleculeLab').then((m) => ({ default: m.MoleculeLab })));
-const ReactionLab = lazy(() => import('./chem/ReactionLab').then((m) => ({ default: m.ReactionLab })));
-const LatticeLab = lazy(() => import('./chem/LatticeLab').then((m) => ({ default: m.LatticeLab })));
-const PeriodicTable = lazy(() => import('./chem/PeriodicTable').then((m) => ({ default: m.PeriodicTable })));
-const ModelLab = lazy(() => import('./lab/ModelLab').then((m) => ({ default: m.ModelLab })));
+import { SimView } from './SimView';
+import { Quiz } from './practice/Quiz';
+import { progress, useProgress } from '../lib/progress';
+import { questionsForTopic } from '../lib/quiz';
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
-import { PhysicsLaboratoryEngine } from './PhysicsLaboratoryEngine';
-import { MomentCircuit } from './MomentCircuit';
-import { MomentChemicalBond } from './MomentChemicalBond';
-import { MomentPendulum } from './MomentPendulum';
-import { MomentTrigCircle } from './MomentTrigCircle';
-import { MomentDerivative } from './MomentDerivative';
-import { MomentPhotosynthesis } from './MomentPhotosynthesis';
-import { MomentMendel } from './MomentMendel';
-import { MomentPascalHydraulics } from './MomentPascalHydraulics';
-import { MomentDopplerWave } from './MomentDopplerWave';
-import { MomentElectrolysis } from './MomentElectrolysis';
-import { MomentNeuronActionPotential } from './MomentNeuronActionPotential';
-import { MomentPythagorasProof } from './MomentPythagorasProof';
-import { MomentNormalDistribution } from './MomentNormalDistribution';
-import { MomentDnaCell } from './MomentDnaCell';
-import { MomentDiffusion } from './MomentDiffusion';
-import { MomentStatesOfMatter } from './MomentStatesOfMatter';
-import { MomentOptics } from './MomentOptics';
-import { MomentLever } from './MomentLever';
-import { MomentCollision } from './MomentCollision';
-import { MomentInduction } from './MomentInduction';
-import { MomentRelativity } from './MomentRelativity';
 
 type Lang = 'ru' | 'en';
 
@@ -39,6 +14,8 @@ interface TextbookReaderProps {
   lang: Lang;
   onLaunchSimulation: (mode: VisualMode) => void;
   onAskMentor?: (topic: string, question: string) => void;
+  /** open this topic straight away (from the map, labs or practice) */
+  initialTopicId?: string;
 }
 
 const SUBJECT_META: Record<StemCategory, { dot: string; label: { ru: string; en: string } }> = {
@@ -76,13 +53,13 @@ function writeStored(key: string, value: unknown) {
 
 const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim || 'model' in sim || 'molecules' in sim || 'reactions' in sim || 'lattices' in sim ? '3d' : 'live');
 
-export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSimulation, onAskMentor }) => {
+export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSimulation, onAskMentor, initialTopicId }) => {
   const [subject, setSubject] = useState<StemCategory>(() => readStored('tbSubject', 'physics'));
   const [grade, setGrade] = useState<number>(() => readStored('tbGrade', 7));
   const [query, setQuery] = useState('');
-  const [openTopicId, setOpenTopicId] = useState<string | null>(null);
+  const [openTopicId, setOpenTopicId] = useState<string | null>(initialTopicId ?? null);
   const [lastTopicId, setLastTopicId] = useState<string | null>(() => readStored('lastTopic', null));
-  const [completed, setCompleted] = useState<Record<string, boolean>>(() => readStored('completedLessons', {}));
+  const { completed } = useProgress();
 
   const grades = gradesFor(subject);
   const activeGrade = grades.includes(grade) ? grade : grades[0];
@@ -104,13 +81,7 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
     window.scrollTo(0, 0);
   };
 
-  const toggleCompleted = (id: string) => {
-    setCompleted((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      writeStored('completedLessons', next);
-      return next;
-    });
-  };
+  const toggleCompleted = (id: string) => progress.setCompleted(id, !completed[id]);
 
   const openTopicData = openTopicId ? topicById(openTopicId) : undefined;
   if (openTopicData) {
@@ -396,9 +367,7 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
       )}
 
       {topic.sim && (
-        <Suspense fallback={<div className="lab-stage rounded-xl h-[380px] flex items-center justify-center text-sm text-[#8C8F98]">{lang === 'ru' ? 'Загружаем симуляцию…' : 'Loading the simulation…'}</div>}>
-          <TopicSimulation sim={topic.sim} topic={topic} lang={lang} onLaunchSimulation={onLaunchSimulation} />
-        </Suspense>
+        <SimView sim={topic.sim} title={topic.title[lang]} formula={topic.formula} lang={lang} onLaunchSimulation={onLaunchSimulation} />
       )}
 
       <section>
@@ -415,6 +384,8 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
           ))}
         </div>
       </section>
+
+      <TopicQuiz key={topic.id} topic={topic} lang={lang} onOpen={onOpen} />
 
       <div className="grid sm:grid-cols-2 gap-4 pt-2">
         {prev ? (
@@ -434,57 +405,45 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
   );
 };
 
-const TopicSimulation: React.FC<{ sim: SimRef; topic: Topic; lang: Lang; onLaunchSimulation: (mode: VisualMode) => void }> = ({ sim, topic, lang, onLaunchSimulation }) => {
-  if ('lab' in sim) {
-    return (
-      <div className="lab-stage relative rounded-xl overflow-hidden px-6 py-14 flex flex-col items-center text-center gap-4">
-        <div className="absolute inset-0 tech-grid opacity-60" />
-        <p className="relative font-serif text-xl text-[#EDEDED]">{lang === 'ru' ? 'Эта тема разбирается в 3D-лаборатории' : 'This topic has a 3D lab'}</p>
-        <button
-          onClick={() => onLaunchSimulation(sim.lab)}
-          className="relative inline-flex items-center gap-2 h-11 px-5 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
-        >
-          {lang === 'ru' ? 'Открыть 3D-лабораторию' : 'Open the 3D lab'}
-          <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-        </button>
+/** "Check yourself": a short quiz built from the topic's own sub-topics; passing marks the topic as understood */
+const TopicQuiz: React.FC<{ topic: Topic; lang: Lang; onOpen: (id: string) => void }> = ({ topic, lang, onOpen }) => {
+  const [attempt, setAttempt] = useState<number | null>(null);
+  const { quiz } = useProgress();
+  const best = quiz[topic.id];
+  if (topic.points.length < 2) return null;
+  return (
+    <section className="bg-surface border border-line rounded-xl p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-xl text-ink">{lang === 'ru' ? 'Проверь себя' : 'Check yourself'}</h2>
+          <p className="text-sm text-ink-2">
+            {best
+              ? lang === 'ru'
+                ? `Лучший результат: ${best.best} из ${best.total}`
+                : `Best score: ${best.best} of ${best.total}`
+              : lang === 'ru'
+                ? 'Несколько вопросов по теме. 3 из 4 верных — тема засчитана.'
+                : 'A few questions on the topic. Get 3 of 4 right to pass.'}
+          </p>
+        </div>
+        {attempt === null && (
+          <button onClick={() => setAttempt(0)} className="h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+            {best ? (lang === 'ru' ? 'Пройти ещё раз' : 'Retake') : lang === 'ru' ? 'Начать тест' : 'Start the quiz'}
+          </button>
+        )}
       </div>
-    );
-  }
-  if ('model' in sim) {
-    return <ModelLab key={sim.model + (sim.focus ?? []).join()} lang={lang} model={sim.model} focus={sim.focus} compact />;
-  }
-  if ('molecules' in sim) return <MoleculeLab key={sim.molecules.join()} lang={lang} ids={sim.molecules} />;
-  if ('table' in sim) return <PeriodicTable key={sim.table} lang={lang} mode={sim.table} />;
-  if ('lattices' in sim) return <LatticeLab key={sim.lattices.join()} lang={lang} ids={sim.lattices} />;
-  if ('reactions' in sim) return <ReactionLab key={sim.reactions.join()} lang={lang} ids={sim.reactions} />;
-  if ('process' in sim) {
-    return <SimById key={sim.process + (sim.mode ?? '')} lang={lang} id={sim.process} mode={sim.mode} />;
-  }
-  if ('engine' in sim) {
-    return <PhysicsLaboratoryEngine engineType={sim.engine} title={topic.title[lang]} formula={topic.formula} lang={lang} />;
-  }
-  switch (sim.moment) {
-    case 'moment_circuit': return <MomentCircuit lang={lang} />;
-    case 'moment_chemical_bond': return <MomentChemicalBond lang={lang} />;
-    case 'moment_photosynthesis': return <MomentPhotosynthesis lang={lang} />;
-    case 'moment_mendel': return <MomentMendel lang={lang} />;
-    case 'moment_pendulum': return <MomentPendulum lang={lang} />;
-    case 'moment_trig_circle': return <MomentTrigCircle lang={lang} />;
-    case 'moment_derivative': return <MomentDerivative lang={lang} />;
-    case 'moment_pascal': return <MomentPascalHydraulics lang={lang} />;
-    case 'moment_doppler': return <MomentDopplerWave lang={lang} />;
-    case 'moment_electrolysis': return <MomentElectrolysis lang={lang} />;
-    case 'moment_neuron': return <MomentNeuronActionPotential lang={lang} />;
-    case 'moment_pythagoras': return <MomentPythagorasProof lang={lang} />;
-    case 'moment_gauss': return <MomentNormalDistribution lang={lang} />;
-    case 'moment_dna': return <MomentDnaCell lang={lang} />;
-    case 'moment_diffusion': return <MomentDiffusion lang={lang} />;
-    case 'moment_states': return <MomentStatesOfMatter lang={lang} />;
-    case 'moment_optics': return <MomentOptics lang={lang} />;
-    case 'moment_lever': return <MomentLever lang={lang} />;
-    case 'moment_collision': return <MomentCollision lang={lang} />;
-    case 'moment_induction': return <MomentInduction lang={lang} />;
-    case 'moment_relativity': return <MomentRelativity lang={lang} />;
-    default: return null;
-  }
+      {attempt !== null && (
+        <div className="mt-5">
+          <Quiz
+            key={attempt}
+            lang={lang}
+            questions={questionsForTopic(topic, Math.min(4, topic.points.length), attempt)}
+            onFinish={(score, total) => progress.recordQuiz(topic.id, score, total)}
+            onRetry={() => setAttempt((a) => (a ?? 0) + 1)}
+            onOpenTopic={(id) => id !== topic.id && onOpen(id)}
+          />
+        </div>
+      )}
+    </section>
+  );
 };

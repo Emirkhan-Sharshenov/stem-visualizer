@@ -1,0 +1,250 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Atom, Bone, Box, FlaskConical, Grid3x3, Hexagon, Play, Search, Table2 } from 'lucide-react';
+import type { StemCategory, VisualMode } from '../../types/stem';
+import { buildCatalog, LabItem } from './catalog';
+import { SIMS, SimId } from '../sims/registry';
+import { ball, Frame } from '../sims/kit';
+import { MOLECULE_DATA } from '../../lib/chem/moleculeData';
+import { element } from '../../lib/chem/elements';
+import { SimView } from '../SimView';
+import { progress } from '../../lib/progress';
+
+type Lang = 'ru' | 'en';
+type Filter = 'all' | StemCategory | '3d';
+
+const SUBJECT: Record<string, { ru: string; en: string; color: string }> = {
+  physics: { ru: 'Физика', en: 'Physics', color: '#E5484D' },
+  chemistry: { ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
+  biology: { ru: 'Биология', en: 'Biology', color: '#F5A524' },
+  mathematics: { ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
+};
+
+/** Live preview: draws a 2D engine frame, animates while hovered */
+const ProcessThumb: React.FC<{ item: LabItem; hover: boolean }> = ({ item, hover }) => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && setVisible(true), { rootMargin: '200px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    const c = ref.current;
+    const ctx = c?.getContext('2d');
+    if (!c || !ctx || !visible || !('process' in item.sim)) return;
+    const sim = SIMS[item.sim.process as SimId];
+    const mode = item.sim.mode ?? sim.modes?.[0]?.id ?? 'default';
+    const defs = typeof sim.params === 'function' ? sim.params(mode) : sim.params ?? [];
+    const p = Object.fromEntries(defs.map((d) => [d.id, d.value]));
+    const dur = typeof sim.duration === 'function' ? sim.duration(mode, p) : sim.duration;
+    const draw = (t: number) => {
+      ctx.setTransform(c.width / 960, 0, 0, c.width / 960, 0, 0);
+      const f: Frame = { ctx, w: 960, h: 540, t, p, mode, lang: 'ru', L: (ru) => ru, hit: () => undefined, hitRect: () => undefined };
+      ctx.save();
+      try {
+        sim.draw(f);
+      } catch {
+        // a preview must never break the gallery
+      }
+      ctx.restore();
+    };
+    let t = dur * 0.55;
+    draw(t);
+    if (!hover) return;
+    let raf = 0;
+    let last = performance.now();
+    const loop = (now: number) => {
+      t = (t + (now - last) / 1000) % dur;
+      last = now;
+      draw(t);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [visible, hover, item]);
+  return <canvas ref={ref} width={480} height={270} className="w-full h-full object-cover" />;
+};
+
+/** Molecule preview: atoms projected and depth-sorted */
+const MoleculeThumb: React.FC<{ id: string }> = ({ id }) => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current;
+    const ctx = c?.getContext('2d');
+    if (!c || !ctx) return;
+    const d = MOLECULE_DATA[id as keyof typeof MOLECULE_DATA];
+    ctx.fillStyle = '#111214';
+    ctx.fillRect(0, 0, c.width, c.height);
+    const a = 0.6;
+    const pts = d.atoms.map(([s, x, y, z]) => ({ s, x: x * Math.cos(a) - z * Math.sin(a), y, z: x * Math.sin(a) + z * Math.cos(a) }));
+    const cx = pts.reduce((m, p) => m + p.x, 0) / pts.length;
+    const cy = pts.reduce((m, p) => m + p.y, 0) / pts.length;
+    const span = Math.max(2, ...pts.map((p) => Math.max(Math.abs(p.x - cx), Math.abs(p.y - cy) * 1.6)));
+    const k = (c.height * 0.38) / span;
+    const X = (p: { x: number }) => c.width / 2 + (p.x - cx) * k;
+    const Y = (p: { y: number }) => c.height / 2 - (p.y - cy) * k;
+    ctx.strokeStyle = '#8C8F98';
+    ctx.lineWidth = Math.max(2, k * 0.12);
+    d.bonds.forEach(([i, j]) => {
+      ctx.beginPath();
+      ctx.moveTo(X(pts[i]), Y(pts[i]));
+      ctx.lineTo(X(pts[j]), Y(pts[j]));
+      ctx.stroke();
+    });
+    [...pts].sort((p, q) => p.z - q.z).forEach((p) => ball(ctx, X(p), Y(p), element(p.s).r * k * 1.1, element(p.s).color));
+  }, [id]);
+  return <canvas ref={ref} width={480} height={270} className="w-full h-full object-cover" />;
+};
+
+const ORDER = ['process', 'molecule', 'reaction', 'model', 'lattice', 'table', 'classic'];
+
+const KIND_ICON: Record<string, React.ReactNode> = {
+  model: <Bone className="w-12 h-12" strokeWidth={1.25} />,
+  reaction: <FlaskConical className="w-12 h-12" strokeWidth={1.25} />,
+  lattice: <Grid3x3 className="w-12 h-12" strokeWidth={1.25} />,
+  table: <Table2 className="w-12 h-12" strokeWidth={1.25} />,
+  classic: <Atom className="w-12 h-12" strokeWidth={1.25} />,
+};
+
+const Thumb: React.FC<{ item: LabItem; hover: boolean; lang: Lang }> = ({ item, hover, lang }) => {
+  if (item.kind === 'process') return <ProcessThumb item={item} hover={hover} />;
+  if (item.kind === 'molecule' && 'molecules' in item.sim) return <MoleculeThumb id={item.sim.molecules[0]} />;
+  const color = SUBJECT[item.subject].color;
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ background: `radial-gradient(circle at 50% 40%, ${color}40, #111214 70%)`, color: '#EDEDED' }}>
+      <span className={`transition-transform duration-500 ${hover ? 'scale-110 rotate-6' : ''}`}>{KIND_ICON[item.kind] ?? <Hexagon className="w-12 h-12" strokeWidth={1.25} />}</span>
+      {item.formula && <span className="px-3 font-mono text-xs text-[#B5B8C0] text-center line-clamp-1">{item.formula}</span>}
+      {!item.formula && item.subtitle && <span className="text-xs text-[#B5B8C0]">{item.subtitle[lang]}</span>}
+    </div>
+  );
+};
+
+const Card: React.FC<{ item: LabItem; lang: Lang; onOpen: () => void }> = ({ item, lang, onOpen }) => {
+  const [hover, setHover] = useState(false);
+  const s = SUBJECT[item.subject];
+  return (
+    <button
+      onClick={onOpen}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="group text-left bg-surface border border-line rounded-xl overflow-hidden hover:border-line-strong hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer"
+    >
+      <div className="relative aspect-video bg-[#111214] overflow-hidden">
+        <Thumb item={item} hover={hover} lang={lang} />
+        {item.is3d && (
+          <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#1A1C21]/90 text-[11px] text-[#EDEDED]">
+            <Box className="w-3 h-3" strokeWidth={2} />
+            3D
+          </span>
+        )}
+        <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="w-11 h-11 rounded-full bg-accent flex items-center justify-center shadow-lg" style={{ color: '#fff' }}>
+            <Play className="w-5 h-5 ml-0.5" strokeWidth={2} />
+          </span>
+        </span>
+      </div>
+      <div className="p-3.5">
+        <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+          {s[lang]}
+          {item.subtitle && item.kind === 'process' && <span className="truncate">· {item.subtitle[lang]}</span>}
+        </div>
+        <h3 className="mt-1 text-[15px] font-medium text-ink leading-snug line-clamp-2">{item.title[lang]}</h3>
+        <p className="mt-1 text-xs text-ink-3">
+          {item.topics.length} {lang === 'ru' ? (item.topics.length === 1 ? 'тема' : item.topics.length < 5 ? 'темы' : 'тем') : item.topics.length === 1 ? 'topic' : 'topics'}
+        </p>
+      </div>
+    </button>
+  );
+};
+
+/** Gallery of every simulation and 3D model in the course */
+export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void; onLaunchSimulation: (m: VisualMode) => void }> = ({ lang, onOpenTopic, onLaunchSimulation }) => {
+  const items = useMemo(() => buildCatalog(), []);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState<LabItem | null>(null);
+  const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+
+  const shown = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return items
+      .filter((it) => (filter === 'all' ? true : filter === '3d' ? it.is3d : it.subject === filter))
+      .filter((it) => !query || it.title[lang].toLowerCase().includes(query) || it.formula?.toLowerCase().includes(query) || it.topics.some((t) => t.title[lang].toLowerCase().includes(query)))
+      .sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || b.topics.length - a.topics.length);
+  }, [items, filter, q, lang]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (open) progress.recordLab(open.key);
+  }, [open]);
+
+  if (open) {
+    const s = SUBJECT[open.subject];
+    return (
+      <div className="flex flex-col gap-5">
+        <button onClick={() => setOpen(null)} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
+          {L('Все лаборатории', 'All labs')}
+        </button>
+        <div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
+            <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+            {s[lang]}
+            {open.subtitle && <span className="normal-case tracking-normal text-ink-3">· {open.subtitle[lang]}</span>}
+          </span>
+          <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{open.title[lang]}</h1>
+        </div>
+        <SimView sim={open.sim} lang={lang} title={open.title[lang]} onLaunchSimulation={onLaunchSimulation} />
+        <section>
+          <h2 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Где это изучают', 'Where it’s taught')}</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {open.topics.map((t) => (
+              <button key={t.id} onClick={() => onOpenTopic(t.id)} className="px-3 py-1.5 rounded-lg bg-surface border border-line hover:border-accent text-sm text-ink cursor-pointer">
+                {t.title[lang]} <span className="text-ink-3">· {t.grade} {L('кл.', 'gr.')}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  const count = (f: Filter) => items.filter((it) => (f === 'all' ? true : f === '3d' ? it.is3d : it.subject === f)).length;
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-[36px] leading-tight text-ink">{L('Лаборатории', 'Labs')}</h1>
+          <p className="mt-1 text-[15px] text-ink-2">{L(`${items.length} симуляций и 3D-моделей. Наведи — оживёт, нажми — открой.`, `${items.length} simulations and 3D models. Hover to animate, click to open.`)}</p>
+        </div>
+        <label className="relative w-full lg:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3" strokeWidth={1.75} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти: ДНК, линза, аммиак…', 'Find: DNA, lens, ammonia…')} className="w-full h-10 pl-9 pr-3 rounded-lg bg-surface border border-line text-sm text-ink outline-none focus:border-accent" />
+        </label>
+      </header>
+      <div className="flex flex-wrap gap-2">
+        {(['all', '3d', 'physics', 'chemistry', 'biology'] as Filter[]).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`h-9 px-3.5 rounded-full text-sm border transition-colors cursor-pointer ${filter === f ? 'bg-ink text-paper border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}
+            style={filter === f ? { color: '#fff', background: '#16171A' } : undefined}
+          >
+            {f === 'all' ? L('Все', 'All') : f === '3d' ? '3D' : SUBJECT[f][lang]} <span className="opacity-60 font-mono text-xs">{count(f)}</span>
+          </button>
+        ))}
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {shown.map((it) => (
+          <Card key={it.key} item={it} lang={lang} onOpen={() => setOpen(it)} />
+        ))}
+      </div>
+      {shown.length === 0 && <p className="text-ink-2">{L('Ничего не нашлось.', 'Nothing found.')}</p>}
+    </div>
+  );
+};
+
+export default LabsPage;

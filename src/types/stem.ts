@@ -4,6 +4,10 @@ export type SchoolGrade = 'all' | 'grade_7' | 'grade_8' | 'grade_9' | 'grade_10'
 
 export type VisualMode = 
   | 'textbook'
+  | 'labs'
+  | 'practice'
+  | 'course_map'
+  | 'progress'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 

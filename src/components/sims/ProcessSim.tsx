@@ -22,14 +22,26 @@ const H = 540;
  * Host for a timeline-driven 2D process: canvas stage, play/pause/rewind with stage marks,
  * mode switch, parameter sliders, live metrics and clickable parts with info cards.
  */
-export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = ({ lang, sim, mode: initialMode }) => {
+export const ProcessSim: React.FC<{
+  lang: Lang;
+  sim: SimDef;
+  mode?: string;
+  /** start paused (used by predict-then-check challenges) */
+  autoplay?: boolean;
+  /** initial parameter values */
+  initialParams?: Record<string, number>;
+  /** hide mode switch and sliders */
+  locked?: boolean;
+}> = ({ lang, sim, mode: initialMode, autoplay = true, initialParams, locked = false }) => {
   const [mode, setMode] = useState(initialMode ?? sim.modes?.[0]?.id ?? 'default');
   const paramDefs = useMemo(() => (typeof sim.params === 'function' ? sim.params(mode) : sim.params ?? []), [sim, mode]);
-  const [values, setValues] = useState<Record<string, number>>({});
+  const [values, setValues] = useState<Record<string, number>>(() =>
+    Object.fromEntries(Object.entries(initialParams ?? {}).map(([k, v]) => [`${initialMode ?? sim.modes?.[0]?.id ?? 'default'}:${k}`, v])),
+  );
   const p = useMemo(() => Object.fromEntries(paramDefs.map((d) => [d.id, values[`${mode}:${d.id}`] ?? d.value])), [paramDefs, values, mode]);
   const duration = typeof sim.duration === 'function' ? sim.duration(mode, p) : sim.duration;
   const stages: Stage[] = useMemo(() => (typeof sim.stages === 'function' ? sim.stages(mode, p) : sim.stages ?? []), [sim, mode, p]);
-  const tl = useTimeline(duration, { loop: sim.loop ?? true });
+  const tl = useTimeline(duration, { loop: sim.loop ?? true, autoplay });
   const [selected, setSelected] = useState<PartInfo | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -112,7 +124,7 @@ export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = 
 
   return (
     <div className="flex flex-col gap-3 w-full">
-      {sim.modes && sim.modes.length > 1 && (
+      {!locked && sim.modes && sim.modes.length > 1 && (
         <Segmented value={mode} onChange={switchMode} options={sim.modes.map((m) => ({ id: m.id, label: m.label[lang] }))} />
       )}
       <div ref={stageRef} className="lab-stage relative rounded-xl overflow-hidden border border-[#1F2126] flex items-center justify-center">
@@ -148,16 +160,16 @@ export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = 
         <InfoCard lang={lang} info={selected} onClose={() => setSelected(null)} />
       </div>
 
-      <Timeline lang={lang} tl={tl} marks={stages} />
+      <Timeline lang={lang} tl={tl} marks={locked ? [] : stages} />
 
-      {active?.text && (
+      {!locked && active?.text && (
         <p className="text-[14.5px] leading-relaxed text-ink bg-surface border border-line rounded-xl px-4 py-3">
           <span className="font-medium text-accent">{active.label[lang]}. </span>
           {active.text[lang]}
         </p>
       )}
 
-      {(paramDefs.length > 0 || metrics.length > 0) && (
+      {!locked && (paramDefs.length > 0 || metrics.length > 0) && (
         <div className="grid md:grid-cols-2 gap-3">
           {paramDefs.length > 0 && (
             <div className="bg-surface border border-line rounded-xl p-4 flex flex-col gap-4">
@@ -185,7 +197,7 @@ export const ProcessSim: React.FC<{ lang: Lang; sim: SimDef; mode?: string }> = 
         </div>
       )}
 
-      {tip && (
+      {!locked && tip && (
         <p className="text-[13.5px] leading-relaxed text-ink bg-muted rounded-lg px-3 py-2">
           <span className="text-accent font-medium">{lang === 'ru' ? 'Обрати внимание: ' : 'Notice: '}</span>
           {tip[lang]}

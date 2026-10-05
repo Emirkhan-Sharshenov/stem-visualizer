@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { VisualMode, Milestone } from './types/stem';
 import { INITIAL_MILESTONES } from './data/concepts';
 import { Navbar } from './components/Navbar';
@@ -36,6 +36,14 @@ import { PredictFirstModal } from './components/PredictFirstModal';
 import { VisualMentor } from './components/VisualMentor';
 import { MilestonesModal } from './components/MilestonesModal';
 import { SearchModal } from './components/SearchModal';
+import { progress } from './lib/progress';
+
+// New sections load on demand
+const LabsPage = lazy(() => import('./components/labs/LabsPage'));
+const PracticePage = lazy(() => import('./components/practice/PracticePage'));
+const CourseMap = lazy(() => import('./components/map/CourseMap'));
+const ProgressPage = lazy(() => import('./components/progress/ProgressPage'));
+const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
   physics: 'bg-physics',
@@ -87,6 +95,17 @@ interface AppProps {
 export default function App({ lang, setLang }: AppProps) {
   const [currentMode, setCurrentMode] = useState<VisualMode>('textbook');
   const [textbookKey, setTextbookKey] = useState(0);
+  const [pendingTopic, setPendingTopic] = useState<string | undefined>(undefined);
+
+  useEffect(() => progress.touch(), []);
+
+  /** jump to a topic from labs, practice, the map or progress */
+  const openTopic = (id: string) => {
+    setPendingTopic(id);
+    setTextbookKey((k) => k + 1);
+    setCurrentMode('textbook');
+    window.scrollTo(0, 0);
+  };
   const [milestones, setMilestones] = useState<Milestone[]>(INITIAL_MILESTONES);
 
   // Modals state
@@ -142,15 +161,17 @@ export default function App({ lang, setLang }: AppProps) {
       <Navbar
         currentMode={currentMode}
         onSelectMode={(mode) => {
-          if (mode === 'textbook') setTextbookKey((k) => k + 1);
+          if (mode === 'textbook') {
+            setPendingTopic(undefined);
+            setTextbookKey((k) => k + 1);
+          }
           setCurrentMode(mode);
+          window.scrollTo(0, 0);
         }}
         lang={lang}
         onToggleLang={() => setLang(lang === 'ru' ? 'en' : 'ru')}
         onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenMilestones={() => setIsMilestonesOpen(true)}
         onToggleMentor={() => setIsMentorOpen(!isMentorOpen)}
-        unlockedMilestonesCount={unlockedMilestonesCount}
       />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-5">
@@ -171,6 +192,7 @@ export default function App({ lang, setLang }: AppProps) {
             <TextbookReader
               key={textbookKey}
               lang={lang}
+              initialTopicId={pendingTopic}
               onLaunchSimulation={(mode) => setCurrentMode(mode)}
               onAskMentor={(topic, question) => {
                 setMentorContext({ topic, state: { question } });
@@ -178,6 +200,13 @@ export default function App({ lang, setLang }: AppProps) {
               }}
             />
           )}
+
+          <Suspense fallback={<PageFallback />}>
+            {currentMode === 'labs' && <LabsPage lang={lang} onOpenTopic={openTopic} onLaunchSimulation={(mode) => setCurrentMode(mode)} />}
+            {currentMode === 'practice' && <PracticePage lang={lang} onOpenTopic={openTopic} />}
+            {currentMode === 'course_map' && <CourseMap lang={lang} onOpenTopic={openTopic} />}
+            {currentMode === 'progress' && <ProgressPage lang={lang} onOpenTopic={openTopic} />}
+          </Suspense>
 
           {currentMode === 'moment_diffusion' && (
             <MomentDiffusion

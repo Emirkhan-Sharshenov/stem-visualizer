@@ -1,7 +1,8 @@
 import React from 'react';
 import { VisualMode } from '../types/stem';
 import { LogoMark } from './brand/Logo';
-import { Search, User, BookOpen, Network, Award } from 'lucide-react';
+import { Search, User, BookOpen, Network, FlaskConical, Target, Flame } from 'lucide-react';
+import { dayStreak, useProgress } from '../lib/progress';
 
 interface NavbarProps {
   currentMode: VisualMode;
@@ -9,15 +10,14 @@ interface NavbarProps {
   lang: 'ru' | 'en';
   onToggleLang: () => void;
   onOpenSearch: () => void;
-  onOpenMilestones: () => void;
   onToggleMentor: () => void;
-  unlockedMilestonesCount: number;
 }
 
 const NAV_ITEMS: { id: VisualMode; label: { en: string; ru: string } }[] = [
   { id: 'textbook', label: { en: 'Textbook', ru: 'Учебник' } },
-  { id: 'knowledge_map', label: { en: 'Knowledge map', ru: 'Карта понятий' } },
-  { id: 'break_model', label: { en: 'Break the model', ru: 'Сломай модель' } },
+  { id: 'labs', label: { en: 'Labs', ru: 'Лаборатории' } },
+  { id: 'practice', label: { en: 'Practice', ru: 'Практикум' } },
+  { id: 'course_map', label: { en: 'Map', ru: 'Карта' } },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -26,12 +26,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   lang,
   onToggleLang,
   onOpenSearch,
-  onOpenMilestones,
   onToggleMentor,
-  unlockedMilestonesCount,
 }) => {
-  const isActive = (id: VisualMode) =>
-    id === 'textbook' ? !['knowledge_map', 'break_model'].includes(currentMode) : currentMode === id;
+  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress'];
+  const isActive = (id: VisualMode) => (id === 'textbook' ? !SECTIONS.includes(currentMode) : currentMode === id);
+  const p = useProgress();
+  const streak = dayStreak(p);
+  const done = Object.values(p.completed).filter(Boolean).length;
 
   return (
     <>
@@ -75,11 +76,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
-              onClick={onOpenMilestones}
-              className="hidden sm:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-line bg-surface hover:bg-muted text-sm text-ink-2 hover:text-ink transition-colors cursor-pointer"
+              onClick={() => onSelectMode('progress')}
+              title={lang === 'ru' ? 'Мой прогресс' : 'My progress'}
+              className={`hidden sm:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-sm transition-colors cursor-pointer ${
+                currentMode === 'progress' ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface hover:bg-muted text-ink-2 hover:text-ink'
+              }`}
             >
-              {lang === 'ru' ? 'Открытия' : 'Discoveries'}
-              <span className="font-mono text-xs px-1.5 rounded bg-accent-soft text-accent">{unlockedMilestonesCount}</span>
+              <Flame className={`w-4 h-4 ${streak ? 'text-[#F76B15]' : ''}`} strokeWidth={1.75} />
+              <span className="font-mono text-xs">{streak}</span>
+              <span className="w-px h-3.5 bg-line" />
+              <span className="font-mono text-xs">{done}</span>
+              <span className="text-xs">{lang === 'ru' ? 'тем' : 'topics'}</span>
             </button>
 
             <button
@@ -118,25 +125,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile bottom tab bar */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 border-t border-line pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-4 h-14">
+        <div className="grid grid-cols-5 h-14">
           <TabButton active={isActive('textbook')} onClick={() => onSelectMode('textbook')} icon={<BookOpen className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Учебник' : 'Textbook'} />
-          <TabButton active={false} onClick={onOpenSearch} icon={<Search className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Поиск' : 'Search'} />
-          <TabButton active={isActive('knowledge_map')} onClick={() => onSelectMode('knowledge_map')} icon={<Network className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Карта' : 'Map'} />
-          <TabButton
-            active={false}
-            onClick={onOpenMilestones}
-            icon={
-              <span className="relative">
-                <Award className="w-5 h-5" strokeWidth={1.5} />
-                {unlockedMilestonesCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-accent text-white text-[10px] font-mono leading-4 text-center">
-                    {unlockedMilestonesCount}
-                  </span>
-                )}
-              </span>
-            }
-            label={lang === 'ru' ? 'Открытия' : 'Discoveries'}
-          />
+          <TabButton active={isActive('labs')} onClick={() => onSelectMode('labs')} icon={<FlaskConical className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Лаборатории' : 'Labs'} />
+          <TabButton active={isActive('practice')} onClick={() => onSelectMode('practice')} icon={<Target className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Практикум' : 'Practice'} />
+          <TabButton active={isActive('course_map')} onClick={() => onSelectMode('course_map')} icon={<Network className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Карта' : 'Map'} />
+          <TabButton active={isActive('progress')} onClick={() => onSelectMode('progress')} icon={<Flame className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Прогресс' : 'Progress'} />
         </div>
       </nav>
     </>
