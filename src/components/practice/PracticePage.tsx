@@ -4,11 +4,12 @@ import { PREDICTIONS, Prediction } from '../../data/practice/predictions';
 import { progress, useProgress } from '../../lib/progress';
 import { practiceTest, Question } from '../../lib/quiz';
 import { Quiz } from './Quiz';
+import { DailyCard, SectionTests, TopicsBrowser } from './PracticeBlocks';
 
 const SimById = lazy(() => import('../sims/SimById'));
 
 type Lang = 'ru' | 'en';
-type Tab = 'predict' | 'test';
+type Tab = 'predict' | 'topics' | 'sections' | 'test';
 
 const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
   all: { ru: 'Все предметы', en: 'All subjects', color: '#2F5BFF' },
@@ -257,20 +258,28 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         </div>
       </header>
 
-      <div className="flex p-1 rounded-lg bg-muted border border-line self-start">
+      <DailyCard lang={lang} onOpenTopic={onOpenTopic} />
+
+      <div className="flex p-1 rounded-lg bg-muted border border-line self-start max-w-full overflow-x-auto">
         {(
           [
             ['predict', L('Предскажи, потом проверь', 'Predict, then check')],
-            ['test', L('Тренировочный тест', 'Practice test')],
+            ['topics', L('По темам', 'By topic')],
+            ['sections', L('Тесты по разделам', 'Section tests')],
+            ['test', L('Тренировка', 'Practice test')],
           ] as [Tab, string][]
         ).map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
+          <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm whitespace-nowrap cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
             {label}
           </button>
         ))}
       </div>
 
-      {tab === 'test' ? (
+      {tab === 'topics' ? (
+        <TopicsBrowser lang={lang} onOpenTopic={onOpenTopic} />
+      ) : tab === 'sections' ? (
+        <SectionTests lang={lang} onOpenTopic={onOpenTopic} />
+      ) : tab === 'test' ? (
         <TestRunner lang={lang} onOpenTopic={onOpenTopic} />
       ) : (
         <>

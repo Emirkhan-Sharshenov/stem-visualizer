@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Check, Clock, RotateCcw, X } from 'lucide-react';
 import type { Question } from '../../lib/quiz';
 import { topicById } from '../../data/curriculum';
+import { Formula } from '../Formula';
 
 type Lang = 'ru' | 'en';
 
@@ -73,7 +74,7 @@ export const Quiz: React.FC<{
                   </span>
                   <div className="min-w-0">
                     <p className="text-[14.5px] text-ink">{q.prompt[lang]}</p>
-                    <p className="mt-1 text-[13.5px] text-[#1E7A4C]">{q.options[q.correct][lang]}</p>
+                    <p className="mt-1 text-[13.5px] text-[#1E7A4C]">{q.options[q.correct].tex ? <Formula tex={q.options[q.correct].ru} /> : q.options[q.correct][lang]}</p>
                     {topic && onOpenTopic && (
                       <button onClick={() => onOpenTopic(topic.id)} className="mt-1 text-xs text-accent hover:underline cursor-pointer">
                         {L('Тема:', 'Topic:')} {topic.title[lang]} →
@@ -129,7 +130,7 @@ export const Quiz: React.FC<{
               }`}
             >
               <span className="font-mono text-xs text-ink-3 mr-2">{String.fromCharCode(65 + k)}</span>
-              {o[lang]}
+              {o.tex ? <Formula tex={o.ru} /> : o[lang]}
             </button>
           );
         })}

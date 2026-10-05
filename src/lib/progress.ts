@@ -8,6 +8,8 @@ export interface TestRecord {
   score: number;
   total: number;
   secs: number;
+  /** section id for thematic tests */
+  section?: string;
 }
 
 export interface Progress {
@@ -25,10 +27,14 @@ export interface Progress {
   /** days with activity, yyyy-mm-dd */
   days: string[];
   tests: TestRecord[];
+  /** questions of the day by date */
+  daily: Record<string, { score: number; total: number }>;
+  /** last change, used to merge with the cloud copy */
+  updatedAt: number;
 }
 
 const KEY = 'stemProgress';
-const EMPTY: Progress = { completed: {}, quiz: {}, predictions: {}, bestStreak: 0, currentStreak: 0, labs: {}, days: [], tests: [] };
+const EMPTY: Progress = { completed: {}, quiz: {}, predictions: {}, bestStreak: 0, currentStreak: 0, labs: {}, days: [], tests: [], daily: {}, updatedAt: 0 };
 
 function load(): Progress {
   try {
@@ -46,8 +52,8 @@ function load(): Progress {
 let state: Progress = typeof window === 'undefined' ? EMPTY : load();
 const listeners = new Set<() => void>();
 
-function commit(next: Progress) {
-  state = next;
+function commit(next: Progress, touch = true) {
+  state = touch ? { ...next, updatedAt: Date.now() } : next;
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
     localStorage.setItem('completedLessons', JSON.stringify(state.completed));
@@ -91,6 +97,17 @@ export const progress = {
   },
   recordTest(t: TestRecord) {
     commit(withDay({ ...state, tests: [...state.tests, t].slice(-100) }));
+  },
+  recordDaily(date: string, score: number, total: number) {
+    commit(withDay({ ...state, daily: { ...state.daily, [date]: { score, total } } }));
+  },
+  /** replace the whole state (after merging with the cloud copy) */
+  replace(next: Progress) {
+    commit({ ...EMPTY, ...next }, false);
+  },
+  subscribe(fn: () => void) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
   },
   touch() {
     if (!state.days.includes(today())) commit(withDay(state));
@@ -142,7 +159,42 @@ export function badges(p: Progress, totals: Record<string, number>): Badge[] {
     b('explorer', '🔭', 'Исследователь', 'Explorer', 'Открой 15 разных лабораторий', 'Open 15 different labs', labs, 15),
     b('days3', '🔥', 'Три дня подряд', 'Three-day streak', 'Занимайся 3 дня подряд', 'Study 3 days in a row', streak, 3),
     b('days7', '🏆', 'Неделя без пропусков', 'Perfect week', 'Занимайся 7 дней подряд', 'Study 7 days in a row', streak, 7),
+    b('daily', '☀️', 'Утренняя зарядка', 'Daily warm-up', 'Ответь на вопросы дня 5 раз', 'Do the questions of the day 5 times', Object.keys(p.daily).length, 5),
     b('tester', '⏱️', 'Тренировка', 'Practice run', 'Пройди 3 тренировочных теста', 'Finish 3 practice tests', p.tests.length, 3),
     b('all', '🌌', 'Вся программа', 'Whole course', 'Пройди все темы', 'Complete every topic', done, totals.all ?? 486),
   ];
+}
+
+/** merge two copies of progress (this device and the cloud) without losing anything */
+export function mergeProgress(a: Progress, b: Progress): Progress {
+  const quiz = { ...a.quiz };
+  Object.entries(b.quiz).forEach(([k, v]) => {
+    const x = quiz[k];
+    quiz[k] = !x || v.best > x.best ? v : x;
+  });
+  const predictions = { ...a.predictions };
+  Object.entries(b.predictions).forEach(([k, v]) => {
+    if (!predictions[k] || v.at > predictions[k].at) predictions[k] = v;
+  });
+  const labs = { ...a.labs };
+  Object.entries(b.labs).forEach(([k, v]) => (labs[k] = Math.max(labs[k] ?? 0, v)));
+  const daily = { ...a.daily };
+  Object.entries(b.daily ?? {}).forEach(([k, v]) => {
+    if (!daily[k] || v.score > daily[k].score) daily[k] = v;
+  });
+  const tests = [...a.tests, ...b.tests.filter((t) => !a.tests.some((x) => x.at === t.at))].sort((x, y) => x.at - y.at).slice(-100);
+  const completed = { ...a.completed };
+  Object.entries(b.completed).forEach(([k, v]) => v && (completed[k] = true));
+  return {
+    completed,
+    quiz,
+    predictions,
+    labs,
+    daily,
+    tests,
+    days: [...new Set([...a.days, ...b.days])].sort().slice(-400),
+    bestStreak: Math.max(a.bestStreak, b.bestStreak),
+    currentStreak: a.updatedAt >= b.updatedAt ? a.currentStreak : b.currentStreak,
+    updatedAt: Math.max(a.updatedAt, b.updatedAt),
+  };
 }

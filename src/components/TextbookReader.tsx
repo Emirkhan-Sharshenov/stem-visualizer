@@ -423,8 +423,8 @@ const TopicQuiz: React.FC<{ topic: Topic; lang: Lang; onOpen: (id: string) => vo
                 ? `Лучший результат: ${best.best} из ${best.total}`
                 : `Best score: ${best.best} of ${best.total}`
               : lang === 'ru'
-                ? 'Несколько вопросов по теме. 3 из 4 верных — тема засчитана.'
-                : 'A few questions on the topic. Get 3 of 4 right to pass.'}
+                ? `${questionsForTopic(topic, 10, 0).length} вопросов на закрепление. 75% верных — тема засчитана.`
+                : `${questionsForTopic(topic, 10, 0).length} questions to lock it in. 75% correct passes the topic.`}
           </p>
         </div>
         {attempt === null && (
@@ -438,7 +438,7 @@ const TopicQuiz: React.FC<{ topic: Topic; lang: Lang; onOpen: (id: string) => vo
           <Quiz
             key={attempt}
             lang={lang}
-            questions={questionsForTopic(topic, Math.min(4, topic.points.length), attempt)}
+            questions={questionsForTopic(topic, 10, attempt)}
             onFinish={(score, total) => progress.recordQuiz(topic.id, score, total)}
             onRetry={() => setAttempt((a) => (a ?? 0) + 1)}
             onOpenTopic={(id) => id !== topic.id && onOpen(id)}
