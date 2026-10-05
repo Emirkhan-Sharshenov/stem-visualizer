@@ -225,6 +225,34 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти: ДНК, линза, аммиак…', 'Find: DNA, lens, ammonia…')} className="w-full h-10 pl-9 pr-3 rounded-lg bg-surface border border-line text-sm text-ink outline-none focus:border-accent" />
         </label>
       </header>
+      <button
+        onClick={() => onLaunchSimulation('sandbox')}
+        className="group text-left rounded-xl overflow-hidden border border-[#1F2126] bg-[#111214] hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer grid sm:grid-cols-[1fr_auto] items-center"
+      >
+        <div className="p-5 sm:p-6">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#2F5BFF] text-[11px] font-medium" style={{ color: '#fff' }}>
+            {L('Новое', 'New')}
+          </span>
+          <h2 className="mt-2 font-serif text-[26px] leading-tight" style={{ color: '#EDEDED' }}>
+            {L('Конструктор опытов по механике', 'Mechanics experiment builder')}
+          </h2>
+          <p className="mt-1 text-[14.5px] max-w-2xl" style={{ color: '#8C8F98' }}>
+            {L('Собери свой опыт из брусков, наклонных плоскостей, блоков, нитей и пружин. Тяготение, трение, закон Гука и сохранение энергии работают вместе — смотри силы и энергию в реальном времени.', 'Build experiments from blocks, inclines, pulleys, ropes and springs. Gravity, friction, Hooke’s law and energy conservation all act together, with live forces and energy.')}
+          </p>
+        </div>
+        <svg viewBox="0 0 220 120" className="hidden sm:block w-64 h-36 mr-6" aria-hidden>
+          <path d="M10 110 L150 110 L150 40 Z" fill="#23262C" stroke="#4A4D55" />
+          <g transform="translate(92 66) rotate(-26.6)">
+            <rect x="-14" y="-14" width="28" height="28" rx="3" fill="#5B8CFF" />
+          </g>
+          <line x1="104" y1="60" x2="170" y2="27" stroke="#D9C9A3" strokeWidth="2" />
+          <circle cx="175" cy="30" r="8" fill="#2C2F36" stroke="#B5B8C0" strokeWidth="2" />
+          <line x1="183" y1="30" x2="183" y2="72" stroke="#D9C9A3" strokeWidth="2" />
+          <rect x="172" y="72" width="22" height="22" rx="3" fill="#F5A524" />
+          <line x1="92" y1="66" x2="92" y2="100" stroke="#E5484D" strokeWidth="3" className="group-hover:opacity-100 opacity-70" />
+          <line x1="92" y1="66" x2="78" y2="38" stroke="#30A46C" strokeWidth="3" className="group-hover:opacity-100 opacity-70" />
+        </svg>
+      </button>
       <div className="flex flex-wrap gap-2">
         {(['all', '3d', 'physics', 'chemistry', 'biology'] as Filter[]).map((f) => (
           <button

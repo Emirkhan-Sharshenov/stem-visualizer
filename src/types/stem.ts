@@ -11,6 +11,7 @@ export type VisualMode =
   | 'pro'
   | 'teacher'
   | 'classes'
+  | 'sandbox'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 
