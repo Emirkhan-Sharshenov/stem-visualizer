@@ -225,6 +225,7 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти: ДНК, линза, аммиак…', 'Find: DNA, lens, ammonia…')} className="w-full h-10 pl-9 pr-3 rounded-lg bg-surface border border-line text-sm text-ink outline-none focus:border-accent" />
         </label>
       </header>
+      <div className="grid lg:grid-cols-2 gap-4">
       <button
         onClick={() => onLaunchSimulation('sandbox')}
         className="group text-left rounded-xl overflow-hidden border border-[#1F2126] bg-[#111214] hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer grid sm:grid-cols-[1fr_auto] items-center"
@@ -240,7 +241,7 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
             {L('Собери свой опыт из брусков, наклонных плоскостей, блоков, нитей и пружин. Тяготение, трение, закон Гука и сохранение энергии работают вместе — смотри силы и энергию в реальном времени.', 'Build experiments from blocks, inclines, pulleys, ropes and springs. Gravity, friction, Hooke’s law and energy conservation all act together, with live forces and energy.')}
           </p>
         </div>
-        <svg viewBox="0 0 220 120" className="hidden sm:block w-64 h-36 mr-6" aria-hidden>
+        <svg viewBox="0 0 220 120" className="hidden xl:block w-44 h-28 mr-5 shrink-0" aria-hidden>
           <path d="M10 110 L150 110 L150 40 Z" fill="#23262C" stroke="#4A4D55" />
           <g transform="translate(92 66) rotate(-26.6)">
             <rect x="-14" y="-14" width="28" height="28" rx="3" fill="#5B8CFF" />
@@ -253,6 +254,36 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
           <line x1="92" y1="66" x2="78" y2="38" stroke="#30A46C" strokeWidth="3" className="group-hover:opacity-100 opacity-70" />
         </svg>
       </button>
+      <button
+        onClick={() => onLaunchSimulation('circuits')}
+        className="group text-left rounded-xl overflow-hidden border border-[#1F2126] bg-[#111214] hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer grid sm:grid-cols-[1fr_auto] items-center"
+      >
+        <div className="p-5 sm:p-6">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#2F5BFF] text-[11px] font-medium" style={{ color: '#fff' }}>
+            {L('Новое', 'New')}
+          </span>
+          <h2 className="mt-2 font-serif text-[26px] leading-tight" style={{ color: '#EDEDED' }}>
+            {L('Конструктор электрических цепей', 'Circuit builder')}
+          </h2>
+          <p className="mt-1 text-[14.5px] max-w-2xl" style={{ color: '#8C8F98' }}>
+            {L('Батарейки, резисторы, лампы, реостаты, ключи, амперметры и вольтметры. Закон Ома, правила Кирхгофа и закон Джоуля–Ленца — лампы светятся, а резисторы греются по-настоящему.', 'Batteries, resistors, lamps, rheostats, switches and meters. Ohm’s law, Kirchhoff’s rules and Joule heating, with lamps that really glow.')}
+          </p>
+        </div>
+        <svg viewBox="0 0 220 120" className="hidden xl:block w-44 h-28 mr-5 shrink-0" aria-hidden>
+          <path d="M30 30 H190 V95 H30 Z" fill="none" stroke="#B5B8C0" strokeWidth="2.5" />
+          <rect x="18" y="52" width="24" height="10" fill="#111214" />
+          <line x1="22" y1="50" x2="38" y2="50" stroke="#EDEDED" strokeWidth="2" />
+          <line x1="25" y1="62" x2="35" y2="62" stroke="#EDEDED" strokeWidth="5" />
+          <circle cx="190" cy="62" r="22" fill="rgba(255,214,10,0.25)" className="group-hover:opacity-100 opacity-70" />
+          <circle cx="190" cy="62" r="11" fill="#FFE47A" stroke="#B5B8C0" strokeWidth="2.5" />
+          <rect x="88" y="88" width="36" height="14" fill="#1A1C21" stroke="#B5B8C0" strokeWidth="2.5" />
+          <circle cx="110" cy="30" r="11" fill="#1A1C21" stroke="#5B8CFF" strokeWidth="2.5" />
+          <text x="110" y="35" textAnchor="middle" fontSize="13" fontWeight="700" fill="#5B8CFF">A</text>
+          <circle cx="60" cy="30" r="3.5" fill="#FFD60A" />
+          <circle cx="150" cy="95" r="3.5" fill="#FFD60A" />
+        </svg>
+      </button>
+      </div>
       <div className="flex flex-wrap gap-2">
         {(['all', '3d', 'physics', 'chemistry', 'biology'] as Filter[]).map((f) => (
           <button

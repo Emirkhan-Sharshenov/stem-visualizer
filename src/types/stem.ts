@@ -12,6 +12,7 @@ export type VisualMode =
   | 'teacher'
   | 'classes'
   | 'sandbox'
+  | 'circuits'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 
