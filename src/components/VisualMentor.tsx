@@ -1,227 +1,301 @@
-import React, { useState } from 'react';
-import { Bot, Send, X, Sparkles, HelpCircle, Compass, Check, Crown } from 'lucide-react';
-import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY } from '../lib/plan';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUp, Bot, Crown, RotateCcw, X } from 'lucide-react';
+import { topicById } from '../data/curriculum';
+import type { Topic } from '../data/curriculum/types';
+import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, usePlan } from '../lib/plan';
+import { useMentorTopic } from '../lib/mentorTopic';
+import { Formula } from './Formula';
+
+type Lang = 'ru' | 'en';
+interface Msg {
+  role: 'user' | 'mentor';
+  text: string;
+  upgrade?: boolean;
+}
 
 interface VisualMentorProps {
-  lang: 'ru' | 'en';
+  lang: Lang;
+  /** legacy lab id or a textbook topic id from the "Ask the mentor" button */
   currentTopic: string;
   currentState: any;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const VisualMentor: React.FC<VisualMentorProps> = ({
-  lang,
-  currentTopic,
-  currentState,
-  isOpen,
-  onClose
-}) => {
-  const [question, setQuestion] = useState<string>('');
-  const [messages, setMessages] = useState<
-    { role: 'user' | 'mentor'; text: string; actionSuggestion?: string; upgrade?: boolean }[]
-  >([
-    {
-      role: 'mentor',
-      text:
-        lang === 'ru'
-          ? 'Привет! Я твой визуальный наставник. Вместо длинных лекций я подсказываю, на какие параметры модели обратить внимание прямо сейчас. Задавай любой вопрос!'
-          : 'Hi! I am your visual STEM mentor. Instead of long textbook lectures, I direct your attention to the on-screen visual parameters. Ask me anything!'
-    }
-  ]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+const SUBJECT: Record<string, { ru: string; en: string; color: string }> = {
+  physics: { ru: 'Физика', en: 'Physics', color: '#E5484D' },
+  chemistry: { ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
+  biology: { ru: 'Биология', en: 'Biology', color: '#F5A524' },
+  mathematics: { ru: 'Математика', en: 'Maths', color: '#2F5BFF' },
+};
 
-  // Pre-cooked topic-specific quick prompts
-  const suggestedQuestions: Record<string, { en: string; ru: string }[]> = {
-    orbitals: [
-      { en: 'Why is the s-orbital spherical while p has two lobes?', ru: 'Почему s-орбиталь сферическая, а p имеет две доли?' },
-      { en: 'What does the nodal plane ψ = 0 mean physically?', ru: 'Что физически означает узловая плоскость ψ = 0?' },
-      { en: 'What changes when I increase principal number n?', ru: 'Что происходит при увеличении главного квантового числа n?' }
-    ],
-    deconstruct_h2o: [
-      { en: 'Why does water bend to 104.5° instead of 180°?', ru: 'Почему вода сгибается до 104.5°, а не остаётся прямой?' },
-      { en: 'Where are the lone pairs located in 3D space?', ru: 'Где в пространстве находятся неподелённые электронные пары?' }
-    ],
-    gravity: [
-      { en: 'Why does force drop by 4x when distance doubles?', ru: 'Почему сила падает в 4 раза при удвоении расстояния?' },
-      { en: 'How does circular orbital speed depend on mass?', ru: 'Как круговая скорость зависит от массы центрального тела?' }
-    ],
-    revolution: [
-      { en: 'How do flat 2D discs dx sum up to a 3D solid volume?', ru: 'Как плоские 2D диски dx складываются в 3D объём?' }
-    ],
-    divergence: [
-      { en: 'What is the visual difference between source and sink?', ru: 'В чем визуальная разница между истоком и стоком?' }
-    ],
-    mitochondria: [
-      { en: 'How does the proton turbine physically spin?', ru: 'Как ток протонов физически вращает нано-турбину АТФ?' }
-    ]
+/** compact topic description sent to the server so answers stay on the page's content */
+function topicContext(t: Topic, lang: Lang) {
+  return {
+    title: t.title[lang],
+    subject: t.subject,
+    grade: t.grade,
+    intro: t.intro[lang],
+    points: t.points.map((p) => `${p.title[lang]}: ${p.text[lang]}`).join('\n').slice(0, 3500),
+    formula: t.formula,
   };
+}
 
-  const currentSuggestions = suggestedQuestions[currentTopic] || suggestedQuestions.orbitals;
+function suggestions(t: Topic | undefined, lang: Lang): string[] {
+  const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+  if (!t)
+    return [
+      L('Как лучше готовиться к ОРТ по физике?', 'How should I prepare for the physics exam?'),
+      L('Объясни закон сохранения энергии на примере', 'Explain conservation of energy with an example'),
+      L('Чем ион отличается от атома?', 'How is an ion different from an atom?'),
+    ];
+  const p = t.points[0]?.title[lang];
+  return [
+    p ? L(`Объясни «${p}» простыми словами`, `Explain “${p}” in simple words`) : L('Объясни эту тему простыми словами', 'Explain this topic simply'),
+    L('Где это встречается в жизни?', 'Where do I meet this in real life?'),
+    L('Дай задачу по теме и разбери решение', 'Give me a problem on this and walk through it'),
+    L('Проверь меня: задай 3 вопроса', 'Quiz me with 3 questions'),
+  ];
+}
 
-  const handleSend = async (queryText?: string) => {
-    const textToSend = queryText || question;
-    if (!textToSend.trim() || isLoading) return;
+/* ---------- tiny renderer: paragraphs, lists, **bold** and $formulas$ ---------- */
 
-    setMessages((prev) => [...prev, { role: 'user', text: textToSend }]);
+function Inline({ text }: { text: string }) {
+  const parts = text.split(/(\$\$[^$]+\$\$|\$[^$\n]+\$|\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith('$$') ? (
+          <Formula key={i} tex={p.slice(2, -2)} display />
+        ) : p.startsWith('$') && p.length > 2 ? (
+          <Formula key={i} tex={p.slice(1, -1)} />
+        ) : p.startsWith('**') ? (
+          <strong key={i} className="font-semibold">
+            {p.slice(2, -2)}
+          </strong>
+        ) : (
+          <React.Fragment key={i}>{p}</React.Fragment>
+        ),
+      )}
+    </>
+  );
+}
+
+function Rich({ text }: { text: string }) {
+  const blocks = text.trim().split(/\n{2,}/);
+  return (
+    <div className="flex flex-col gap-2">
+      {blocks.map((b, i) => {
+        const lines = b.split('\n');
+        if (lines.every((l) => /^\s*([-*•]|\d+[.)])\s+/.test(l))) {
+          const ordered = /^\s*\d/.test(lines[0]);
+          const Tag = ordered ? 'ol' : 'ul';
+          return (
+            <Tag key={i} className={`pl-5 flex flex-col gap-1 ${ordered ? 'list-decimal' : 'list-disc'}`}>
+              {lines.map((l, k) => (
+                <li key={k}>
+                  <Inline text={l.replace(/^\s*([-*•]|\d+[.)])\s+/, '')} />
+                </li>
+              ))}
+            </Tag>
+          );
+        }
+        return (
+          <p key={i}>
+            {lines.map((l, k) => (
+              <React.Fragment key={k}>
+                {k > 0 && <br />}
+                <Inline text={l.replace(/^#+\s*/, '')} />
+              </React.Fragment>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- panel ---------- */
+
+export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, isOpen, onClose }) => {
+  const openId = useMentorTopic();
+  const topic = topicById(openId ?? '') ?? topicById(currentTopic);
+  const plan = usePlan();
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [question, setQuestion] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [left, setLeft] = useState<number | null>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
+  const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+  const chips = useMemo(() => suggestions(topic, lang), [topic, lang]);
+
+  // a new topic starts a new conversation
+  useEffect(() => setMessages([]), [topic?.id]);
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' });
+  }, [messages, loading]);
+  useEffect(() => {
+    if (isOpen) setTimeout(() => input.current?.focus(), 50);
+  }, [isOpen]);
+
+  const send = async (text?: string) => {
+    const q = (text ?? question).trim();
+    if (!q || loading) return;
+    const history = messages.filter((m) => !m.upgrade).slice(-6);
+    setMessages((m) => [...m, { role: 'user', text: q }]);
     setQuestion('');
-    setIsLoading(true);
-
+    setLoading(true);
     try {
       const auth = await authHeaders();
       const res = await fetch('/api/mentor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({
-          question: textToSend,
-          topic: currentTopic,
-          state: currentState,
-          lang
-        })
+        body: JSON.stringify({ question: q, lang, topic: topic ? topicContext(topic, lang) : null, history }),
       });
+      const leftHeader = res.headers.get('X-Mentor-Left');
+      if (leftHeader !== null) setLeft(leftHeader === 'Infinity' ? null : Number(leftHeader));
       if (res.status === 402) {
-        setMessages((prev) => [
-          ...prev,
+        setLeft(0);
+        setMessages((m) => [
+          ...m,
           {
             role: 'mentor',
             upgrade: true,
             text: !auth.Authorization
-              ? lang === 'ru'
-                ? `Без аккаунта можно задать ${GUEST_MENTOR_DAILY} вопроса в день. Войди — и получишь ${FREE_MENTOR_DAILY} в день бесплатно, а с Pro — без ограничений.`
-                : `Guests get ${GUEST_MENTOR_DAILY} questions a day. Log in for ${FREE_MENTOR_DAILY} a day for free, or get Pro for unlimited questions.`
-              : lang === 'ru'
-                ? `На сегодня бесплатные вопросы закончились (${FREE_MENTOR_DAILY} в день). Завтра лимит обновится — или подключи Pro, и спрашивай сколько угодно.`
-                : `You've used today's free questions (${FREE_MENTOR_DAILY} a day). The limit resets tomorrow, or get Pro for unlimited questions.`
-          }
+              ? L(
+                  `Без аккаунта можно задать ${GUEST_MENTOR_DAILY} вопроса в день. Войди — и получишь ${FREE_MENTOR_DAILY} в день бесплатно, а с Pro — без ограничений.`,
+                  `Guests get ${GUEST_MENTOR_DAILY} questions a day. Log in for ${FREE_MENTOR_DAILY} a day for free, or get Pro for unlimited questions.`,
+                )
+              : L(
+                  `На сегодня бесплатные вопросы закончились (${FREE_MENTOR_DAILY} в день). Завтра лимит обновится — или подключи Pro и спрашивай сколько угодно.`,
+                  `You've used today's free questions (${FREE_MENTOR_DAILY} a day). The limit resets tomorrow, or get Pro for unlimited questions.`,
+                ),
+          },
         ]);
         return;
       }
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: 'mentor', text: data.answer }]);
-    } catch (err) {
-      console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'mentor',
-          text:
-            lang === 'ru'
-              ? 'Посмотри на панель параметров справа: изменение квантового числа или геометрии сразу отражается в модели.'
-              : 'Take a look at the parameter sliders on the panel: adjusting values immediately updates the spatial model.'
-        }
-      ]);
+      setMessages((m) => [...m, { role: 'mentor', text: data.answer || L('Не получилось ответить. Попробуй ещё раз.', 'Could not answer. Try again.') }]);
+    } catch {
+      setMessages((m) => [...m, { role: 'mentor', text: L('Нет связи с сервером. Проверь интернет и попробуй ещё раз.', 'Cannot reach the server. Check your connection and try again.') }]);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   if (!isOpen) return null;
+  const subj = topic ? SUBJECT[topic.subject] : undefined;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-slate-900/95 border-l border-slate-800 shadow-2xl backdrop-blur-xl flex flex-col animate-slideLeft">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
-        <div className="flex items-center gap-2.5">
-          <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <Bot className="w-5 h-5" />
-          </span>
-          <div>
-            <h3 className="font-bold text-sm text-slate-100 flex items-center gap-1.5">
-              <span>{lang === 'ru' ? 'Наставник' : 'Mentor'}</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            </h3>
-            <p className="text-[11px] text-slate-400 font-mono">
-              {lang === 'ru' ? 'Фокус на интерактивных параметрах' : 'Context-aware visual guidance'}
-            </p>
+    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-paper border-l border-line shadow-2xl flex flex-col animate-slideLeft">
+      <div className="px-4 h-14 border-b border-line flex items-center gap-3 shrink-0">
+        <span className="w-8 h-8 rounded-lg bg-accent-soft text-accent flex items-center justify-center">
+          <Bot className="w-[18px] h-[18px]" strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-medium text-ink leading-tight">{L('Наставник', 'Mentor')}</div>
+          <div className="text-[11px] text-ink-3 leading-tight">
+            {plan.pro ? L('Pro · без ограничений', 'Pro · unlimited') : left !== null ? L(`осталось сегодня: ${left}`, `left today: ${left}`) : L('объясняет темы учебника', 'explains textbook topics')}
           </div>
         </div>
-
-        <button
-          onClick={onClose}
-          className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-        >
-          <X className="w-4 h-4" />
+        {messages.length > 0 && (
+          <button onClick={() => setMessages([])} title={L('Новый разговор', 'New conversation')} className="w-8 h-8 rounded-md flex items-center justify-center text-ink-2 hover:text-ink hover:bg-hover cursor-pointer">
+            <RotateCcw className="w-4 h-4" strokeWidth={1.75} />
+          </button>
+        )}
+        <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="w-8 h-8 rounded-md flex items-center justify-center text-ink-2 hover:text-ink hover:bg-hover cursor-pointer">
+          <X className="w-[18px] h-[18px]" strokeWidth={1.75} />
         </button>
       </div>
 
-      {/* Suggested quick chips */}
-      <div className="p-3 bg-slate-950/40 border-b border-slate-800/80 flex flex-col gap-1.5">
-        <span className="text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider">
-          {lang === 'ru' ? 'БЫСТРЫЕ ВОПРОСЫ ПО ЭТОЙ МОДЕЛИ:' : 'QUICK QUESTIONS FOR THIS MODEL:'}
-        </span>
-        <div className="flex flex-col gap-1">
-          {currentSuggestions.slice(0, 2).map((s, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSend(s[lang])}
-              className="text-left text-xs p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 border border-slate-700/60 transition-all cursor-pointer flex items-center justify-between"
-            >
-              <span className="line-clamp-1">{s[lang]}</span>
-              <Sparkles className="w-3 h-3 text-cyan-400 shrink-0 ml-1" />
-            </button>
-          ))}
+      {topic && subj && (
+        <div className="px-4 py-2.5 border-b border-line bg-surface text-xs text-ink-2 flex items-center gap-2 shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: subj.color }} />
+          <span className="truncate">
+            {L('Тема', 'Topic')}: <span className="text-ink">{topic.title[lang]}</span> · {subj[lang]}, {topic.grade} {L('кл.', 'gr.')}
+          </span>
         </div>
-      </div>
+      )}
 
-      {/* Chat scroll area */}
-      <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3.5">
-        {messages.map((m, idx) => (
-          <div
-            key={idx}
-            className={`flex flex-col gap-1 text-xs max-w-[90%] ${
-              m.role === 'user' ? 'ml-auto items-end' : 'mr-auto items-start'
-            }`}
-          >
-            <div
-              className={`p-3.5 rounded-2xl leading-relaxed ${
-                m.role === 'user'
-                  ? 'bg-indigo-600 text-white shadow-md rounded-br-none'
-                  : 'bg-slate-950 border border-slate-800 text-slate-200 shadow-md rounded-bl-none'
-              }`}
-            >
+      <div ref={scroller} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+        {messages.length === 0 && (
+          <div className="flex flex-col gap-3">
+            <div className="rounded-2xl rounded-tl-sm bg-surface border border-line px-4 py-3 text-[14.5px] leading-relaxed text-ink">
+              {topic
+                ? L(`Привет! Спрашивай что угодно по теме «${topic.title.ru}» — объясню проще, приведу пример или дам задачу.`, `Hi! Ask me anything about “${topic.title.en}”: I can explain it more simply, give examples or set a problem.`)
+                : L('Привет! Я помогу разобраться в физике, химии и биологии. Открой тему в учебнике — и я буду отвечать именно по ней.', 'Hi! I help with physics, chemistry and biology. Open a textbook topic and I will answer about it.')}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {chips.map((c) => (
+                <button key={c} onClick={() => send(c)} className="self-start text-left text-sm px-3 py-2 rounded-xl border border-line bg-surface hover:border-accent hover:bg-accent-soft text-ink-2 hover:text-ink transition-colors cursor-pointer">
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {messages.map((m, i) =>
+          m.role === 'user' ? (
+            <div key={i} className="self-end max-w-[85%] rounded-2xl rounded-tr-sm bg-accent px-4 py-2.5 text-[14.5px] leading-relaxed" style={{ color: '#fff' }}>
               {m.text}
             </div>
-            {m.upgrade && (
-              <button
-                onClick={() => {
-                  window.dispatchEvent(new Event('open-pro'));
-                  onClose();
-                }}
-                className="mt-1 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-medium cursor-pointer"
-              >
-                <Crown className="w-3.5 h-3.5" />
-                {lang === 'ru' ? 'Подробнее о Pro' : 'About Pro'}
-              </button>
-            )}
-          </div>
-        ))}
-        {isLoading && (
-          <div className="mr-auto p-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-            <span>{lang === 'ru' ? 'Анализирую параметры модели...' : 'Analyzing 3D model parameters...'}</span>
+          ) : (
+            <div key={i} className="self-start max-w-[92%] flex flex-col gap-2">
+              <div className={`rounded-2xl rounded-tl-sm border px-4 py-3 text-[14.5px] leading-relaxed text-ink ${m.upgrade ? 'bg-[#FFF8E8] border-[#F3D9A4]' : 'bg-surface border-line'}`}>
+                <Rich text={m.text} />
+              </div>
+              {m.upgrade && (
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new Event('open-pro'));
+                    onClose();
+                  }}
+                  className="self-start inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[#FFE7B3] hover:bg-[#FFDB8F] text-[#8A4B0F] text-sm font-medium cursor-pointer"
+                >
+                  <Crown className="w-4 h-4" strokeWidth={1.75} />
+                  {L('Подробнее о Pro', 'About Pro')}
+                </button>
+              )}
+            </div>
+          ),
+        )}
+        {loading && (
+          <div className="self-start rounded-2xl rounded-tl-sm bg-surface border border-line px-4 py-3 flex gap-1">
+            {[0, 1, 2].map((k) => (
+              <span key={k} className="w-1.5 h-1.5 rounded-full bg-ink-3 animate-bounce" style={{ animationDelay: `${k * 120}ms` }} />
+            ))}
           </div>
         )}
       </div>
 
-      {/* Input bar */}
-      <div className="p-3 border-t border-slate-800 bg-slate-950 flex items-center gap-2">
-        <input
-          type="text"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder={
-            lang === 'ru' ? 'Спроси: «Почему p-орбиталь такой формы?»' : 'Ask: "Why does p-orbital have this shape?"'
-          }
-          className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-        />
-        <button
-          onClick={() => handleSend()}
-          disabled={!question.trim() || isLoading}
-          className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shadow-md"
-        >
-          <Send className="w-4 h-4" />
-        </button>
+      <div className="p-3 border-t border-line bg-surface shrink-0">
+        <div className="flex items-end gap-2 rounded-xl border border-line bg-paper focus-within:border-accent px-3 py-2">
+          <textarea
+            ref={input}
+            rows={1}
+            value={question}
+            onChange={(e) => setQuestion(e.target.value.slice(0, 600))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            placeholder={topic ? L('Спроси про эту тему…', 'Ask about this topic…') : L('Задай вопрос…', 'Ask a question…')}
+            className="flex-1 resize-none bg-transparent text-[14.5px] text-ink placeholder:text-ink-3 outline-none max-h-32 py-1"
+          />
+          <button
+            onClick={() => send()}
+            disabled={!question.trim() || loading}
+            aria-label={L('Отправить', 'Send')}
+            className="w-8 h-8 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-40 flex items-center justify-center shrink-0 cursor-pointer disabled:cursor-not-allowed"
+            style={{ color: '#fff' }}
+          >
+            <ArrowUp className="w-4 h-4" strokeWidth={2} />
+          </button>
+        </div>
+        <p className="mt-1.5 text-[11px] text-ink-3 text-center">{L('ИИ может ошибаться — сверяйся с учебником.', 'AI can make mistakes; check with the textbook.')}</p>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { Quiz } from './practice/Quiz';
 import { progress, useProgress } from '../lib/progress';
 import { questionsForTopic } from '../lib/quiz';
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
+import { setMentorTopic } from '../lib/mentorTopic';
 
 type Lang = 'ru' | 'en';
 
@@ -85,6 +86,11 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
   const toggleCompleted = (id: string) => progress.setCompleted(id, !completed[id]);
 
   const openTopicData = openTopicId ? topicById(openTopicId) : undefined;
+  // let the mentor know which topic is on screen
+  useEffect(() => {
+    setMentorTopic(openTopicData?.id ?? null);
+    return () => setMentorTopic(null);
+  }, [openTopicData?.id]);
   if (openTopicData) {
     // Prev/next run through the whole grade course of that subject
     const course = sectionsFor(openTopicData.subject, openTopicData.grade).flatMap((s) => s.topics);
