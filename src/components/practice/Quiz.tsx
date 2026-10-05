@@ -135,6 +135,12 @@ export const Quiz: React.FC<{
           );
         })}
       </div>
+      {answer !== null && q.explain && (
+        <div className="rounded-xl bg-muted px-4 py-3 text-[14px] leading-relaxed text-ink">
+          <span className="font-medium text-accent">{lang === 'ru' ? 'Решение: ' : 'Solution: '}</span>
+          {q.explain[lang]}
+        </div>
+      )}
       {answer !== null && (
         <div className="flex justify-end">
           <button

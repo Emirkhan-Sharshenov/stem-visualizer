@@ -5,11 +5,12 @@ import { progress, useProgress } from '../../lib/progress';
 import { practiceTest, Question } from '../../lib/quiz';
 import { Quiz } from './Quiz';
 import { DailyCard, SectionTests, TopicsBrowser } from './PracticeBlocks';
+import { ProblemTrainer } from './ProblemTrainer';
 
 const SimById = lazy(() => import('../sims/SimById'));
 
 type Lang = 'ru' | 'en';
-type Tab = 'predict' | 'topics' | 'sections' | 'test';
+type Tab = 'predict' | 'problems' | 'topics' | 'sections' | 'test';
 
 const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
   all: { ru: 'Все предметы', en: 'All subjects', color: '#2F5BFF' },
@@ -264,6 +265,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         {(
           [
             ['predict', L('Предскажи, потом проверь', 'Predict, then check')],
+            ['problems', L('Задачи', 'Problems')],
             ['topics', L('По темам', 'By topic')],
             ['sections', L('Тесты по разделам', 'Section tests')],
             ['test', L('Тренировка', 'Practice test')],
@@ -275,7 +277,9 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         ))}
       </div>
 
-      {tab === 'topics' ? (
+      {tab === 'problems' ? (
+        <ProblemTrainer lang={lang} />
+      ) : tab === 'topics' ? (
         <TopicsBrowser lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'sections' ? (
         <SectionTests lang={lang} onOpenTopic={onOpenTopic} />

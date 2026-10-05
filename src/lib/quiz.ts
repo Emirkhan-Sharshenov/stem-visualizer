@@ -1,4 +1,5 @@
 import { Section, sectionsFor, Topic, TOPICS } from '../data/curriculum';
+import { problemQuestion, problemsForTopic } from './problems';
 
 type T2 = { ru: string; en: string };
 
@@ -13,6 +14,8 @@ export interface Question {
   prompt: T2;
   options: Option[];
   correct: number;
+  /** worked solution shown after answering */
+  explain?: T2;
 }
 
 /** small deterministic RNG so a quiz is stable between renders */
@@ -130,8 +133,13 @@ export function questionsForTopic(topic: Topic, max = 10, salt = 0): Question[] 
     } else add({ ru: `Верно ли: «${pt.title.ru}» — ${pt.text.ru}`, en: `True or false: “${pt.title.en}” — ${pt.text.en}` }, TRUE, [FALSE]);
   }
 
+  // calculation problems with fresh numbers for topics that have them (up to 2 per quiz)
+  const probs = problemsForTopic(topic.id).flatMap((g, i) => [problemQuestion(g, hashStr(topic.id) + salt * 31 + i), problemQuestion(g, hashStr(topic.id) + salt * 31 + i + 101)]);
+  const chosen = shuffle(probs, rand).slice(0, 2);
+
   // mix the types but keep the count between 4 and the limit
-  return shuffle(qs, rand).slice(0, Math.max(4, Math.min(max, qs.length)));
+  const text = shuffle(qs, rand).slice(0, Math.max(4 - chosen.length, Math.min(max - chosen.length, qs.length)));
+  return shuffle([...text, ...chosen], rand);
 }
 
 /** mixed practice test across topics of a subject and grade range */
@@ -139,7 +147,14 @@ export function practiceTest(subject: string | 'all', grades: [number, number], 
   const rand = rng(seed);
   const topics = TOPICS.filter((t) => (subject === 'all' || t.subject === subject) && t.grade >= grades[0] && t.grade <= grades[1] && t.points.length >= 2);
   const picked = shuffle(topics, rand).slice(0, count);
-  return picked.map((t, i) => shuffle(questionsForTopic(t, 10, seed + i), rand)[0]).filter(Boolean);
+  return picked
+    .map((t, i) => {
+      // every third question is a calculation problem when the topic has one
+      const gens = problemsForTopic(t.id);
+      if (i % 3 === 2 && gens.length) return problemQuestion(gens[i % gens.length], seed + i);
+      return shuffle(questionsForTopic(t, 10, seed + i), rand)[0];
+    })
+    .filter(Boolean);
 }
 
 /** a test over one section: two questions from each of its topics */

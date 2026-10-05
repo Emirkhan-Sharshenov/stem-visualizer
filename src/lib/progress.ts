@@ -29,12 +29,14 @@ export interface Progress {
   tests: TestRecord[];
   /** questions of the day by date */
   daily: Record<string, { score: number; total: number }>;
+  /** calculation problems solved, by generator */
+  problems: Record<string, { ok: number; total: number }>;
   /** last change, used to merge with the cloud copy */
   updatedAt: number;
 }
 
 const KEY = 'stemProgress';
-const EMPTY: Progress = { completed: {}, quiz: {}, predictions: {}, bestStreak: 0, currentStreak: 0, labs: {}, days: [], tests: [], daily: {}, updatedAt: 0 };
+const EMPTY: Progress = { completed: {}, quiz: {}, predictions: {}, bestStreak: 0, currentStreak: 0, labs: {}, days: [], tests: [], daily: {}, problems: {}, updatedAt: 0 };
 
 function load(): Progress {
   try {
@@ -98,6 +100,10 @@ export const progress = {
   recordTest(t: TestRecord) {
     commit(withDay({ ...state, tests: [...state.tests, t].slice(-100) }));
   },
+  recordProblem(id: string, ok: boolean) {
+    const cur = state.problems?.[id] ?? { ok: 0, total: 0 };
+    commit(withDay({ ...state, problems: { ...state.problems, [id]: { ok: cur.ok + (ok ? 1 : 0), total: cur.total + 1 } } }));
+  },
   recordDaily(date: string, score: number, total: number) {
     commit(withDay({ ...state, daily: { ...state.daily, [date]: { score, total } } }));
   },
@@ -160,6 +166,7 @@ export function badges(p: Progress, totals: Record<string, number>): Badge[] {
     b('days3', '🔥', 'Три дня подряд', 'Three-day streak', 'Занимайся 3 дня подряд', 'Study 3 days in a row', streak, 3),
     b('days7', '🏆', 'Неделя без пропусков', 'Perfect week', 'Занимайся 7 дней подряд', 'Study 7 days in a row', streak, 7),
     b('daily', '☀️', 'Утренняя зарядка', 'Daily warm-up', 'Ответь на вопросы дня 5 раз', 'Do the questions of the day 5 times', Object.keys(p.daily).length, 5),
+    b('solver', '🧮', 'Решатель', 'Problem solver', 'Реши правильно 50 задач', 'Solve 50 problems correctly', Object.values(p.problems ?? {}).reduce((s, x) => s + x.ok, 0), 50),
     b('tester', '⏱️', 'Тренировка', 'Practice run', 'Пройди 3 тренировочных теста', 'Finish 3 practice tests', p.tests.length, 3),
     b('all', '🌌', 'Вся программа', 'Whole course', 'Пройди все темы', 'Complete every topic', done, totals.all ?? 486),
   ];
@@ -182,6 +189,11 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
   Object.entries(b.daily ?? {}).forEach(([k, v]) => {
     if (!daily[k] || v.score > daily[k].score) daily[k] = v;
   });
+  const problems = { ...(a.problems ?? {}) };
+  Object.entries(b.problems ?? {}).forEach(([k, v]) => {
+    const x = problems[k];
+    problems[k] = !x || v.total > x.total ? v : x;
+  });
   const tests = [...a.tests, ...b.tests.filter((t) => !a.tests.some((x) => x.at === t.at))].sort((x, y) => x.at - y.at).slice(-100);
   const completed = { ...a.completed };
   Object.entries(b.completed).forEach(([k, v]) => v && (completed[k] = true));
@@ -191,6 +203,7 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     predictions,
     labs,
     daily,
+    problems,
     tests,
     days: [...new Set([...a.days, ...b.days])].sort().slice(-400),
     bestStreak: Math.max(a.bestStreak, b.bestStreak),
