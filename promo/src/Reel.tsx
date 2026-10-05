@@ -24,6 +24,7 @@ const S = {
 } as const;
 const len = (k: keyof typeof S) => S[k][1] - S[k][0];
 /** start frame of each voice line (slightly after the cut, so the music hit lands first) */
+const MUSIC_UNDER_VOICE = 0.1;
 const VOICE_AT = [S.hook[0] + 8, S.logo[0] + 10, S.reaction[0] + 8, S.skeleton[0] + 6, S.mitosis[0] + 6, S.montage[0] + 4, S.stats[0] + 4, S.cta[0] + 6];
 
 export const Reel: React.FC = () => {
@@ -34,7 +35,8 @@ export const Reel: React.FC = () => {
   const hasVoice = lines.length > 0;
   return (
     <AbsoluteFill style={{ background: COL.bg }}>
-      <Audio src={staticFile('music.wav')} volume={(f) => (hasVoice ? interpolate(f, [0, 10], [0, 0.45], { extrapolateRight: 'clamp' }) : 0.9)} />
+      {/* with a voiceover the music sits far below it */}
+      <Audio src={staticFile('music.wav')} volume={(f) => (hasVoice ? interpolate(f, [0, 10], [0, MUSIC_UNDER_VOICE], { extrapolateRight: 'clamp' }) : 0.9)} />
       {lines.map((l) => (
         <Sequence key={l.file} from={l.at}>
           <Audio src={staticFile(l.file)} />
