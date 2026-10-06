@@ -41,7 +41,7 @@ export async function openCheckout(period: 'month' | 'year', email: string, onPa
     product_id: FREEMIUS.productId,
     plan_id: tier === 'teacher' && FREEMIUS.teacherPlanId ? FREEMIUS.teacherPlanId : FREEMIUS.planId,
     public_key: FREEMIUS.publicKey,
-    image: `${location.origin}/favicon.svg`,
+    image: `${location.origin}/icon-512.png`,
   });
   checkout.open({
     name: tier === 'teacher' ? 'STEM Visualizer — Учитель' : 'STEM Visualizer Pro',
