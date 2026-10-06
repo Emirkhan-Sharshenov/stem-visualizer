@@ -31,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onToggleMentor,
 }) => {
-  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro', 'teacher', 'classes', 'sandbox', 'circuits', 'optics'];
+  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro', 'teacher', 'classes', 'sandbox', 'circuits', 'optics', 'chemlab'];
   const plan = usePlan();
   const isActive = (id: VisualMode) => (id === 'textbook' ? !SECTIONS.includes(currentMode) : currentMode === id);
   const p = useProgress();

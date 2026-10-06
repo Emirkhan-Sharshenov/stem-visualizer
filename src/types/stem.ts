@@ -14,6 +14,7 @@ export type VisualMode =
   | 'sandbox'
   | 'circuits'
   | 'optics'
+  | 'chemlab'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 

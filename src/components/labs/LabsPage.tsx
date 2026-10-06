@@ -219,6 +219,27 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
       </svg>
     ),
   },
+  {
+    mode: 'chemlab',
+    color: '#30A46C',
+    subject: { ru: 'Химия', en: 'Chemistry' },
+    title: { ru: 'Химическая лаборатория', en: 'Chemistry lab' },
+    text: { ru: '35 реактивов: кислоты, щёлочи, соли, металлы, индикаторы. Осадки, газы, pH и уравнения реакций.', en: '35 reagents: acids, alkalis, salts, metals, indicators. Precipitates, gases, pH and equations.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <path d="M78 14 H142 M84 14 V96 Q84 102 90 102 H130 Q136 102 136 96 V14" fill="none" stroke="rgba(220,230,240,0.8)" strokeWidth="3" />
+        <rect x="86" y="50" width="48" height="50" fill="#3E9BE0" opacity="0.55" />
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <circle key={i} cx={92 + i * 5} cy={96 - (i % 3)} r="2.2" fill="#3F86D6" />
+        ))}
+        <circle cx="100" cy="70" r="2.5" fill="none" stroke="#fff" />
+        <circle cx="116" cy="60" r="2" fill="none" stroke="#fff" />
+        <circle cx="122" cy="78" r="3" fill="none" stroke="#fff" />
+        <path d="M150 30 L178 30 L178 22 L188 22 L188 30" fill="none" stroke="#8C8F98" strokeWidth="2" />
+        <text x="182" y="58" textAnchor="middle" fontSize="16" fontWeight="700" fill="#5DD39E">pH 7</text>
+      </svg>
+    ),
+  },
 ];
 
 export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void; onLaunchSimulation: (m: VisualMode) => void }> = ({ lang, onOpenTopic, onLaunchSimulation }) => {
