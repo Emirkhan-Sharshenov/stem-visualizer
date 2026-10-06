@@ -282,6 +282,25 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
       </svg>
     ),
   },
+  {
+    mode: 'ecosystem',
+    color: '#F5A524',
+    subject: { ru: 'Биология', en: 'Biology' },
+    title: { ru: 'Экосистема', en: 'Ecosystem' },
+    text: { ru: 'Трава, зайцы и лисы живут сами по себе. Колебания численности, цепи питания, пирамида биомассы.', en: 'Grass, rabbits and foxes living on their own: population cycles, food chains, biomass pyramid.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect x="10" y="10" width="200" height="90" rx="6" fill="#2F5A2E" />
+        {[[30, 30], [60, 70], [90, 40], [120, 80], [150, 30], [175, 60], [45, 50], [135, 55]].map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r="4" fill="#E8ECF2" />
+        ))}
+        {[[80, 60], [160, 45]].map(([x, y], i) => (
+          <polygon key={i} points={`${x + 9},${y} ${x - 6},${y - 6} ${x - 6},${y + 6}`} fill="#F76B15" />
+        ))}
+        <path d="M14 92 Q40 60 66 88 T118 80 T170 70 T206 76" fill="none" stroke="#5B8CFF" strokeWidth="2.5" />
+      </svg>
+    ),
+  },
 ];
 
 export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void; onLaunchSimulation: (m: VisualMode) => void }> = ({ lang, onOpenTopic, onLaunchSimulation }) => {

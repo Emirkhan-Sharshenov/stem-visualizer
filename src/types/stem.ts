@@ -17,6 +17,7 @@ export type VisualMode =
   | 'chemlab'
   | 'genetics'
   | 'heat'
+  | 'ecosystem'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 
