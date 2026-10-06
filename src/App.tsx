@@ -49,6 +49,7 @@ const MechanicsSandbox = lazy(() => import('./components/sandbox/MechanicsSandbo
 const CircuitLab = lazy(() => import('./components/circuit/CircuitLab'));
 const OpticsLab = lazy(() => import('./components/optics/OpticsLab'));
 const ChemLab = lazy(() => import('./components/chemlab/ChemLab'));
+const GeneticsLab = lazy(() => import('./components/genetics/GeneticsLab'));
 const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
@@ -283,6 +284,18 @@ export default function App({ lang, setLang }: AppProps) {
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Химическая лаборатория' : 'Chemistry lab'}</h1>
                 </div>
                 <ChemLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'genetics' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Биология · конструктор опытов' : 'Biology · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Генетика: скрещивания' : 'Genetics: crosses'}</h1>
+                </div>
+                <GeneticsLab lang={lang} />
               </div>
             )}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}

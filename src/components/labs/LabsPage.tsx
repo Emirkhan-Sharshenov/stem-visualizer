@@ -240,6 +240,30 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
       </svg>
     ),
   },
+  {
+    mode: 'genetics',
+    color: '#F5A524',
+    subject: { ru: 'Биология', en: 'Biology' },
+    title: { ru: 'Генетика', en: 'Genetics' },
+    text: { ru: 'Скрещивания Менделя, неполное доминирование, дальтонизм и группы крови. Решётка Пеннета и расщепление.', en: 'Mendel’s crosses, incomplete dominance, colour blindness and blood groups, with Punnett squares.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        {[0, 1].map((i) =>
+          [0, 1].map((j) => (
+            <g key={i + '' + j}>
+              <rect x={70 + j * 42} y={14 + i * 42} width="38" height="38" rx="6" fill="#1A1C21" stroke="#2C2F36" />
+              <circle cx={89 + j * 42} cy={33 + i * 42} r="11" fill={i === 1 && j === 1 ? '#6FBF5A' : '#F2C94C'} />
+            </g>
+          )),
+        )}
+        <text x="50" y="38" fontSize="13" fill="#F28CB4" fontFamily="monospace">A</text>
+        <text x="50" y="80" fontSize="13" fill="#F28CB4" fontFamily="monospace">a</text>
+        <text x="84" y="10" fontSize="13" fill="#8FA4FF" fontFamily="monospace">A</text>
+        <text x="126" y="10" fontSize="13" fill="#8FA4FF" fontFamily="monospace">a</text>
+        <text x="170" y="62" fontSize="16" fontWeight="700" fill="#EDEDED">3 : 1</text>
+      </svg>
+    ),
+  },
 ];
 
 export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void; onLaunchSimulation: (m: VisualMode) => void }> = ({ lang, onOpenTopic, onLaunchSimulation }) => {
