@@ -13,6 +13,7 @@ export type VisualMode =
   | 'classes'
   | 'sandbox'
   | 'circuits'
+  | 'optics'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 
