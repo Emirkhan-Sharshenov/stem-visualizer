@@ -14,6 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// behind the hosting proxy: real client IPs (for the guest mentor limit) and https
+app.set('trust proxy', 1);
 const port = process.env.PORT || 3000;
 
 // payment webhooks need the raw body to check the signature
@@ -128,6 +130,8 @@ app.post('/api/billing/freemius', express.raw({ type: '*/*' }), async (req, res)
   });
 });
 
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
 // AI mentor: answers about the topic the learner has open (Gemini free tier; model is configurable)
 const MODELS = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3-flash-preview', 'gemini-3.5-flash-lite'].filter(Boolean) as string[];
 const clip = (v: unknown, n: number) => String(v ?? '').slice(0, n);
@@ -221,7 +225,9 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+    // hashed build assets can be cached for a year; html must always be fresh
+    app.use('/assets', express.static(path.resolve(__dirname, 'dist', 'assets'), { maxAge: '365d', immutable: true }));
+    app.use(express.static(path.resolve(__dirname, 'dist'), { maxAge: '1h' }));
     app.get('*', (_req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
     });

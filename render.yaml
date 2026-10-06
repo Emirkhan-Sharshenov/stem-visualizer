@@ -1,0 +1,35 @@
+# Render blueprint: one Node web service that serves the site and the API.
+# Public values are filled in here; secrets (sync: false) are entered in the Render dashboard.
+services:
+  - type: web
+    name: stem-visualizer
+    runtime: node
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # public (safe to commit)
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: https://bhkvpppmixxxorqumxvg.supabase.co
+      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_gm4rukl6jTZwTh18CW6_2g_xkpc29yq
+      - key: VITE_FREEMIUS_PRODUCT_ID
+        value: "40823"
+      - key: VITE_FREEMIUS_PUBLIC_KEY
+        value: pk_576392ab98f24307cd190379ef822
+      - key: VITE_FREEMIUS_PLAN_ID
+        value: "70941"
+      - key: VITE_FREEMIUS_TEACHER_PLAN_ID
+        value: "70942"
+      # secrets: enter them in Render → Environment
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FREEMIUS_SECRET_KEY
+        sync: false
