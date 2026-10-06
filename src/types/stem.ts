@@ -18,6 +18,7 @@ export type VisualMode =
   | 'genetics'
   | 'heat'
   | 'ecosystem'
+  | 'molbuilder'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 

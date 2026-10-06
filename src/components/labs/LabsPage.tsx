@@ -259,6 +259,25 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
     ),
   },
   {
+    mode: 'molbuilder',
+    color: '#30A46C',
+    subject: { ru: 'Химия · 3D', en: 'Chemistry · 3D' },
+    title: { ru: 'Конструктор молекул', en: 'Molecule builder' },
+    text: { ru: 'Собери молекулу из атомов — она сама примет форму по теории VSEPR. Углы, гибридизация, полярность.', en: 'Build a molecule from atoms and watch VSEPR shape it: angles, hybridisation, polarity.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <ellipse cx="96" cy="30" rx="12" ry="20" fill="#AB8AFF" opacity="0.35" transform="rotate(-25 96 30)" />
+        <ellipse cx="124" cy="30" rx="12" ry="20" fill="#AB8AFF" opacity="0.35" transform="rotate(25 124 30)" />
+        <line x1="110" y1="58" x2="72" y2="86" stroke="#C9CDD3" strokeWidth="5" />
+        <line x1="110" y1="58" x2="148" y2="86" stroke="#C9CDD3" strokeWidth="5" />
+        <circle cx="110" cy="58" r="17" fill="#E5484D" />
+        <circle cx="70" cy="88" r="11" fill="#F2F4F7" />
+        <circle cx="150" cy="88" r="11" fill="#F2F4F7" />
+        <text x="110" y="104" textAnchor="middle" fontSize="11" fill="#8C8F98">104,5°</text>
+      </svg>
+    ),
+  },
+  {
     mode: 'genetics',
     color: '#F5A524',
     subject: { ru: 'Биология', en: 'Biology' },

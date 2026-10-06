@@ -27,6 +27,12 @@ export const ELEMENTS: Record<string, ElementInfo> = {
   Al: e('Алюминий', 'Aluminium', '#B7BCC6', 0.48, 1.84, 'Лёгкий металл, защищён плотной оксидной плёнкой.', 'A light metal protected by a tough oxide film.'),
   Si: e('Кремний', 'Silicon', '#E0C49A', 0.45, 2.1, 'Полупроводник, основа песка (SiO₂) и микросхем.', 'A semiconductor, the basis of sand (SiO₂) and microchips.'),
   K: e('Калий', 'Potassium', '#8F40D4', 0.6, 2.75, 'Щелочной металл, ещё активнее натрия.', 'An alkali metal, even more reactive than sodium.'),
+  F: e('Фтор', 'Fluorine', '#9BE36B', 0.32, 1.47, 'Самый электроотрицательный элемент, всегда одна связь.', 'The most electronegative element; always one bond.'),
+  Br: e('Бром', 'Bromine', '#A33A2A', 0.5, 1.85, 'Галоген, при комнатной температуре — бурая жидкость.', 'A halogen; a brown liquid at room temperature.'),
+  I: e('Иод', 'Iodine', '#8E3BB0', 0.58, 1.98, 'Галоген, фиолетовые кристаллы.', 'A halogen forming violet crystals.'),
+  B: e('Бор', 'Boron', '#F2A4A4', 0.36, 1.92, 'Три валентных электрона: часто не добирает октет.', 'Three valence electrons, often short of an octet.'),
+  Be: e('Бериллий', 'Beryllium', '#C7E85C', 0.4, 1.53, 'Два валентных электрона, образует линейные молекулы.', 'Two valence electrons; forms linear molecules.'),
+  Xe: e('Ксенон', 'Xenon', '#4AA3B8', 0.6, 2.16, 'Благородный газ, но с фтором образует соединения.', 'A noble gas that still bonds with fluorine.'),
   Cu: e('Медь', 'Copper', '#C8804A', 0.48, 1.4, 'Малоактивный металл, отличный проводник.', 'A fairly unreactive metal and an excellent conductor.'),
 };
 
