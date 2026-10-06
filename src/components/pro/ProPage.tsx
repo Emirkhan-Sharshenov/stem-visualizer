@@ -4,6 +4,8 @@ import { PRICES, FREE_MENTOR_DAILY, inSom, openCheckout, paymentsEnabled, redeem
 import { cloudEnabled, useSession } from '../../lib/supabase';
 
 type Lang = 'ru' | 'en';
+/** public launch code (created by 0005_teacher_plan.sql) */
+const LAUNCH_CODE = 'START2026';
 const YEAR_OFF = Math.round((1 - PRICES.year / (PRICES.month * 12)) * 100);
 
 /** small lock overlay for Pro-only blocks */
@@ -38,7 +40,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
   const [period, setPeriod] = useState<'month' | 'year'>('month');
   const [paying, setPaying] = useState(false);
 
-  const pay = async () => {
+  const pay = async (tier: 'pro' | 'teacher' = 'pro') => {
     if (!user?.email) {
       window.location.hash = '#/login';
       return;
@@ -46,11 +48,16 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
     setPaying(true);
     setMsg(null);
     try {
-      await openCheckout(period, user.email, () => {
-        setMsg({ ok: true, text: L('Оплата прошла! Pro включится в течение минуты.', 'Payment received! Pro turns on within a minute.') });
-        // the webhook lands a moment later
-        [3000, 8000, 20000, 45000].forEach((ms) => setTimeout(plan.refresh, ms));
-      });
+      await openCheckout(
+        tier === 'teacher' ? 'month' : period,
+        user.email,
+        () => {
+          setMsg({ ok: true, text: L('Оплата прошла! Тариф включится в течение минуты.', 'Payment received! Your plan turns on within a minute.') });
+          // the webhook lands a moment later
+          [3000, 8000, 20000, 45000].forEach((ms) => setTimeout(plan.refresh, ms));
+        },
+        tier,
+      );
     } catch {
       setMsg({ ok: false, text: L('Не удалось открыть оплату. Проверь интернет и попробуй ещё раз.', 'Could not open the checkout. Check your connection and try again.') });
     } finally {
@@ -85,7 +92,13 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
     { icon: <Bot className="w-4 h-4" />, t: L('ИИ-наставник без лимита', 'Unlimited AI mentor'), d: L('Объясняет то, что видно в модели', 'Explains what’s on screen') },
     { icon: <Target className="w-4 h-4" />, t: L('Пробные ОРТ-экзамены', 'ORT-style mock exams'), d: L('Полный вариант на время с разбором', 'Full timed papers with review') },
     { icon: <Route className="w-4 h-4" />, t: L('Персональный план', 'Personal plan'), d: L('Что повторить по твоим ошибкам', 'What to revise based on your mistakes') },
-    { icon: <GraduationCap className="w-4 h-4" />, t: L('Кабинет учителя', 'Teacher dashboard'), d: L('Классы по коду, задания со сроком, прогресс учеников', 'Classes with join codes, assignments, student progress') },
+  ];
+  const TEACHER = [
+    L('Всё из Pro', 'Everything in Pro'),
+    L('Классы: ученики входят по коду', 'Classes that students join with a code'),
+    L('Задания по темам и разделам со сроком', 'Topic and section assignments with due dates'),
+    L('Таблица прогресса и ошибок учеников', 'Progress and mistakes of every student'),
+    L('Сложные темы всего класса', 'The class’s trouble spots'),
   ];
   const price = period === 'month' ? PRICES.month : PRICES.year;
 
@@ -105,17 +118,17 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
       {plan.pro && plan.expiresAt && (
         <div className="max-w-3xl mx-auto w-full rounded-xl bg-[#EAF6EF] border border-[#BFE3CC] px-5 py-4 flex flex-wrap items-center justify-between gap-3">
           <span className="text-[15px] text-[#1E7A4C]">
-            ✓ {L(`Pro активен до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Pro is active until ${plan.expiresAt.toLocaleDateString('en-GB')}`)}
+            ✓ {plan.plan === 'teacher' ? L('Тариф «Учитель»', 'Teacher plan') + ' · ' : ''}{L(`Pro активен до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Pro is active until ${plan.expiresAt.toLocaleDateString('en-GB')}`)}
           </span>
           <div className="flex gap-2">
             <button onClick={() => onNavigate('practice')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Пробный ОРТ', 'Mock exam')}</button>
             <button onClick={() => onNavigate('progress')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Мой план', 'My plan')}</button>
-            <button onClick={() => onNavigate('teacher')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Кабинет учителя', 'Teacher dashboard')}</button>
+            {plan.plan === 'teacher' && <button onClick={() => onNavigate('teacher')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Кабинет учителя', 'Teacher dashboard')}</button>}
           </div>
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto w-full">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 max-w-6xl mx-auto w-full items-start">
         <div className="bg-surface border border-line rounded-2xl p-6">
           <h2 className="font-serif text-2xl text-ink">{L('Бесплатно', 'Free')}</h2>
           <div className="mt-2 font-serif text-4xl text-ink">
@@ -150,7 +163,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           </div>
           <p className="text-sm text-ink-3">
             {L(`≈ ${inSom(price)} сом`, `≈ ${inSom(price)} KGS`)}
-            {period === 'year' ? L(` · ${(PRICES.year / 12).toFixed(2)} в месяц`, ` · ${(PRICES.year / 12).toFixed(2)} a month`) : L(' · отменить можно в любой момент', ' · cancel any time')}
+            {period === 'year' ? L(` · $${(PRICES.year / 12).toFixed(2)} в месяц`, ` · $${(PRICES.year / 12).toFixed(2)} a month`) : L(' · отменить можно в любой момент', ' · cancel any time')}
           </p>
           <p className="mt-4 text-sm text-ink-2">{L('Всё из бесплатного, плюс:', 'Everything in Free, plus:')}</p>
           <ul className="mt-2 flex flex-col gap-3">
@@ -166,7 +179,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           </ul>
           {paymentsEnabled ? (
             <>
-              <button onClick={pay} disabled={paying || plan.pro} className="mt-6 w-full h-11 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-60 text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+              <button onClick={() => pay('pro')} disabled={paying || plan.pro} className="mt-6 w-full h-11 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-60 text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
                 {paying && <Loader2 className="w-4 h-4 animate-spin" />}
                 {plan.pro ? L('Pro уже подключён', 'You have Pro') : user ? L(`Оплатить картой — ${price}`, `Pay by card — ${price}`) : L('Войти и оплатить', 'Log in to pay')}
               </button>
@@ -181,6 +194,32 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             </>
           )}
         </div>
+        <div className="bg-surface border border-line rounded-2xl p-6">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-6 h-6 text-accent" strokeWidth={1.75} />
+            <h2 className="font-serif text-2xl text-ink">{L('Учитель', 'Teacher')}</h2>
+          </div>
+          <div className="mt-2 font-serif text-4xl text-ink">
+            ${PRICES.teacher} <span className="text-lg text-ink-2">{L('в месяц', 'a month')}</span>
+          </div>
+          <p className="text-sm text-ink-3">{L(`≈ ${inSom(PRICES.teacher)} сом · для учителей и репетиторов`, `≈ ${inSom(PRICES.teacher)} KGS · for teachers and tutors`)}</p>
+          <ul className="mt-5 flex flex-col gap-2.5">
+            {TEACHER.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-[15px] text-ink">
+                <Check className="mt-0.5 w-4 h-4 text-accent shrink-0" strokeWidth={2.5} />
+                {f}
+              </li>
+            ))}
+          </ul>
+          <button
+            onClick={() => pay('teacher')}
+            disabled={!paymentsEnabled || paying || plan.plan === 'teacher'}
+            className="mt-6 w-full h-11 rounded-lg border-2 border-accent text-accent hover:bg-accent-soft disabled:opacity-60 text-sm font-medium cursor-pointer disabled:cursor-not-allowed"
+          >
+            {plan.plan === 'teacher' ? L('Тариф подключён', 'You have it') : paymentsEnabled ? (user ? L(`Оплатить — ${PRICES.teacher}`, `Pay — ${PRICES.teacher}`) : L('Войти и оплатить', 'Log in to pay')) : L('Оплата картой — скоро', 'Card payment — coming soon')}
+          </button>
+          <p className="mt-2 text-xs text-center text-ink-3">{L('Для школ — промокоды на весь класс: напишите нам.', 'For schools: promo codes for a whole class, just ask.')}</p>
+        </div>
       </div>
 
       <div className="max-w-xl mx-auto w-full bg-surface border border-line rounded-2xl p-6">
@@ -189,6 +228,14 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           {L('Есть промокод?', 'Have a promo code?')}
         </h2>
         <p className="mt-1 text-sm text-ink-3">{L('Для школ, подарков и оплаты без карты Visa/Mastercard.', 'For schools, gifts and paying without a Visa/Mastercard.')}</p>
+        <button onClick={() => setCode(LAUNCH_CODE)} className="mt-3 w-full text-left rounded-xl border border-dashed border-accent bg-accent-soft px-4 py-3 cursor-pointer">
+          <span className="block text-sm text-ink">
+            {L('Подарок к запуску: ', 'Launch gift: ')}
+            <b className="font-mono">{LAUNCH_CODE}</b>
+            {L(' — 14 дней Pro бесплатно', ': 14 days of Pro free')}
+          </span>
+          <span className="block text-xs text-ink-2">{L('Нажми, чтобы вставить код', 'Tap to fill in the code')}</span>
+        </button>
         {!cloudEnabled ? (
           <p className="mt-2 text-sm text-ink-2">{L('Аккаунты ещё не подключены.', 'Accounts are not connected yet.')}</p>
         ) : !user ? (

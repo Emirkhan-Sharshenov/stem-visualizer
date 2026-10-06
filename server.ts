@@ -114,9 +114,12 @@ app.post('/api/billing/freemius', express.raw({ type: '*/*' }), async (req, res)
   // Freemius dates are UTC "YYYY-MM-DD HH:MM:SS"; null means lifetime
   const expires = license.expiration ? new Date(String(license.expiration).replace(' ', 'T') + 'Z') : new Date(Date.now() + 100 * 365 * 864e5);
   const active = !license.is_cancelled && type !== 'license.expired' && expires > new Date();
+  // the Teacher plan has its own Freemius plan id
+  const teacherPlan = process.env.FREEMIUS_TEACHER_PLAN_ID || process.env.VITE_FREEMIUS_TEACHER_PLAN_ID;
+  const plan = teacherPlan && String(license.plan_id) === String(teacherPlan) ? 'teacher' : 'pro';
   await sbAdmin.from('subscriptions').upsert({
     user_id: userId,
-    plan: 'pro',
+    plan,
     status: active ? 'active' : 'expired',
     expires_at: expires.toISOString(),
     source: 'freemius',

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase, useSession } from './supabase';
 
 /** prices in US dollars (card payments go through Freemius); KGS is only a rough hint */
-export const PRICES = { month: 2.49, year: 17.99 };
+export const PRICES = { month: 3.99, year: 29.99, teacher: 7.99 };
 const KGS_PER_USD = 87;
 export const inSom = (usd: number) => Math.round((usd * KGS_PER_USD) / 5) * 5;
 
@@ -11,6 +11,7 @@ export const FREEMIUS = {
   productId: env.VITE_FREEMIUS_PRODUCT_ID || env.NEXT_PUBLIC_FREEMIUS_PRODUCT_ID,
   publicKey: env.VITE_FREEMIUS_PUBLIC_KEY || env.NEXT_PUBLIC_FREEMIUS_PUBLIC_KEY,
   planId: env.VITE_FREEMIUS_PLAN_ID || env.NEXT_PUBLIC_FREEMIUS_PLAN_ID,
+  teacherPlanId: env.VITE_FREEMIUS_TEACHER_PLAN_ID || env.NEXT_PUBLIC_FREEMIUS_TEACHER_PLAN_ID,
 };
 export const paymentsEnabled = !!(FREEMIUS.productId && FREEMIUS.publicKey && FREEMIUS.planId);
 
@@ -34,16 +35,16 @@ const loadCheckout = () =>
   }));
 
 /** opens the Freemius card checkout; Pro is granted by the server webhook, matched by this e-mail */
-export async function openCheckout(period: 'month' | 'year', email: string, onPaid: () => void) {
+export async function openCheckout(period: 'month' | 'year', email: string, onPaid: () => void, tier: 'pro' | 'teacher' = 'pro') {
   await loadCheckout();
   const checkout = new window.FS!.Checkout({
     product_id: FREEMIUS.productId,
-    plan_id: FREEMIUS.planId,
+    plan_id: tier === 'teacher' && FREEMIUS.teacherPlanId ? FREEMIUS.teacherPlanId : FREEMIUS.planId,
     public_key: FREEMIUS.publicKey,
     image: `${location.origin}/favicon.svg`,
   });
   checkout.open({
-    name: 'STEM Visualizer Pro',
+    name: tier === 'teacher' ? 'STEM Visualizer — Учитель' : 'STEM Visualizer Pro',
     billing_cycle: period === 'month' ? 'monthly' : 'annual',
     user_email: email,
     readonly_user: true,

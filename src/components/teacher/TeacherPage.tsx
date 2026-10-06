@@ -402,9 +402,9 @@ const TeacherHome: React.FC<{ lang: Lang; uid: string }> = ({ lang, uid }) => {
   return (
     <ProGate
       lang={lang}
-      pro={plan.pro || plan.loading}
+      pro={plan.plan === 'teacher' || plan.loading}
       onUpgrade={() => window.dispatchEvent(new Event('open-pro'))}
-      title={L('Кабинет учителя — в Pro', 'The teacher dashboard is part of Pro')}
+      title={L('Кабинет учителя — тариф «Учитель»', 'The teacher dashboard needs the Teacher plan')}
       text={L('Создавай классы, задавай темы и тесты и смотри, кто что прошёл и где ошибается.', 'Create classes, assign topics and tests, and see who did what and where they struggle.')}
     >
       <div className="flex flex-col gap-4">
@@ -422,7 +422,7 @@ const TeacherHome: React.FC<{ lang: Lang; uid: string }> = ({ lang, uid }) => {
           </button>
         </div>
         {err && <p className="text-sm text-[#CC2F35]">{err}</p>}
-        {!plan.pro
+        {plan.plan !== 'teacher'
           ? list(PREVIEW)
           : classes === null
             ? <Loader2 className="w-5 h-5 animate-spin text-ink-3" />
