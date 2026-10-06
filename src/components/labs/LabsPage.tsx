@@ -220,6 +220,24 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
     ),
   },
   {
+    mode: 'heat',
+    color: '#E5484D',
+    subject: { ru: 'Физика', en: 'Physics' },
+    title: { ru: 'Тепловые процессы', en: 'Heat processes' },
+    text: { ru: 'Горелка, лёд, вода и металлы. График нагревания, плавление и кипение, калориметр и тепловой баланс.', en: 'Burner, ice, water and metals: heating curves, melting and boiling, calorimetry and heat balance.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <path d="M70 10 V80 H140 V10" fill="none" stroke="rgba(220,230,240,0.8)" strokeWidth="3" />
+        <rect x="72" y="40" width="66" height="38" fill="#5BA4E6" opacity="0.45" />
+        <rect x="80" y="32" width="16" height="16" rx="3" fill="#DCEFFF" />
+        <rect x="104" y="35" width="13" height="13" rx="3" fill="#DCEFFF" />
+        <ellipse cx="105" cy="96" rx="12" ry="10" fill="#F08A24" opacity="0.9" />
+        <ellipse cx="105" cy="99" rx="6" ry="6" fill="#7AA8FF" />
+        <path d="M160 92 L172 70 L184 70 L190 40 L200 40" fill="none" stroke="#E5484D" strokeWidth="3" />
+      </svg>
+    ),
+  },
+  {
     mode: 'chemlab',
     color: '#30A46C',
     subject: { ru: 'Химия', en: 'Chemistry' },
