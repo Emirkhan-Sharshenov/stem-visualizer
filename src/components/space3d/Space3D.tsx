@@ -38,6 +38,53 @@ function glowTexture() {
   return glowTex;
 }
 
+/** procedural planet surfaces: continents for Earth-like planets, cloud bands for giants */
+const texCache = new Map<string, THREE.Texture>();
+function planetTexture(kind: 'earth' | 'bands' | 'rock', color: string) {
+  const key = kind + color;
+  const hit = texCache.get(key);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 256;
+  const ctx = c.getContext('2d')!;
+  const noise = (x: number, y: number, seed: number) =>
+    Math.sin(x * 3.1 + seed) * Math.cos(y * 2.3 + seed * 1.7) + 0.5 * Math.sin(x * 7.3 + y * 5.1 + seed * 2.3) + 0.25 * Math.sin(x * 15.7 - y * 11.3 + seed);
+  const img = ctx.createImageData(512, 256);
+  const base = new THREE.Color(color);
+  for (let y = 0; y < 256; y++)
+    for (let x = 0; x < 512; x++) {
+      const u = (x / 512) * Math.PI * 2;
+      const v = (y / 256) * Math.PI;
+      let r = base.r;
+      let g = base.g;
+      let b = base.b;
+      if (kind === 'earth') {
+        const n = noise(Math.cos(u) * 1.3, v * 1.2 + Math.sin(u), 3) + 0.4 * noise(u * 2, v * 2, 9);
+        const polar = Math.abs(v - Math.PI / 2) > 1.25;
+        if (polar) [r, g, b] = [0.92, 0.95, 0.98];
+        else if (n > 0.55) [r, g, b] = n > 1.1 ? [0.55, 0.47, 0.35] : [0.22, 0.52, 0.25];
+        else [r, g, b] = [0.12, 0.33 + n * 0.05, 0.68];
+      } else if (kind === 'bands') {
+        const k = 0.75 + 0.25 * Math.sin(v * 14 + 0.6 * Math.sin(u * 3 + v * 6));
+        [r, g, b] = [r * k, g * k, b * k];
+      } else {
+        const k = 0.8 + 0.2 * noise(u * 1.5, v * 1.5, 5);
+        [r, g, b] = [r * k, g * k, b * k];
+      }
+      const i = (y * 512 + x) * 4;
+      img.data[i] = r * 255;
+      img.data[i + 1] = g * 255;
+      img.data[i + 2] = b * 255;
+      img.data[i + 3] = 255;
+    }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  texCache.set(key, tex);
+  return tex;
+}
+
 export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const [sceneId, setSceneId] = useState('cosmic');
@@ -71,7 +118,8 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
   const makeVisual = (b: Body): Visual => {
     const s = live.current.scene.units.scale;
     const r = Math.max(0.04, b.drawR / s);
-    const mat = b.star ? new THREE.MeshBasicMaterial({ color: b.color }) : new THREE.MeshStandardMaterial({ color: b.color, roughness: 0.75, metalness: 0.05 });
+    const kind = /Земля|Earth/.test(b.name) ? 'earth' : /Юпитер|Jupiter/.test(b.name) || b.drawR / s > 0.4 ? 'bands' : 'rock';
+    const mat = b.star ? new THREE.MeshBasicMaterial({ color: b.color }) : new THREE.MeshStandardMaterial({ map: planetTexture(kind, b.color), roughness: 0.8, metalness: 0.02 });
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), mat);
     root.current.add(mesh);
     let glow: THREE.Sprite | undefined;
@@ -110,7 +158,11 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
   const rebuild = (s: SpaceScene) => {
     for (const id of [...visuals.current.keys()]) dropVisual(id);
     sim.current = new Sim(s.make());
-    setSelected(s.launch ? null : sim.current.bodies.find((b) => !b.fixed && !b.star)?.id ?? null);
+    // follow something that orbits: the Moon, Earth in the Solar System, else the lightest body
+    const bs = sim.current.bodies;
+    const heaviest = bs.reduce((m, b) => (b.mu > m.mu ? b : m), bs[0]);
+    const pick = bs.find((b) => b.id === 'moon') ?? bs.find((b) => b.id === 'earth' && b !== heaviest) ?? [...bs].filter((b) => !b.star && b !== heaviest).sort((x, y) => x.mu - y.mu)[0];
+    setSelected(s.launch ? null : pick?.id ?? null);
     setLog([]);
     const st = stageRef.current;
     if (st) st.flyTo(s.camera, [0, 0, 0], 0.8);
@@ -162,6 +214,7 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
       v.glow?.position.copy(p);
       v.light?.position.copy(p);
       v.mesh.scale.setScalar(S.selected === b.id ? 1.15 : 1);
+      if (!b.star) v.mesh.rotation.y += dt * 0.3;
       // trail
       if (S.running) {
         const last = v.count ? new THREE.Vector3(v.trailPos[(v.count - 1) * 3], v.trailPos[(v.count - 1) * 3 + 1], v.trailPos[(v.count - 1) * 3 + 2]) : null;
