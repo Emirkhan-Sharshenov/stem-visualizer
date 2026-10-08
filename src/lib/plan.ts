@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, useSession } from './supabase';
+import { supabase, SUPABASE_KEY, SUPABASE_URL, useSession } from './supabase';
 
 /** prices in US dollars (card payments go through Freemius); KGS is only a rough hint */
 export const PRICES = { month: 3.99, year: 29.99, teacher: 7.99 };
@@ -115,5 +115,11 @@ export function redeemErrorText(e: unknown, lang: 'ru' | 'en') {
 /** headers for calls to our own API, so the server knows who is asking */
 export async function authHeaders(): Promise<Record<string, string>> {
   const token = (await supabase?.auth.getSession())?.data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const h: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  // Supabase Edge Functions also want the public key
+  if (SUPABASE_KEY && !import.meta.env.DEV) h.apikey = SUPABASE_KEY;
+  return h;
 }
+
+/** the mentor: the local Express server in development, a Supabase Edge Function in production */
+export const MENTOR_URL = import.meta.env.DEV || !SUPABASE_URL ? '/api/mentor' : `${SUPABASE_URL}/functions/v1/mentor`;

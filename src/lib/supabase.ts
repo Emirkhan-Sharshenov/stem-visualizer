@@ -14,6 +14,10 @@ const key = (env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_
 export const landingUrl = typeof window === 'undefined' ? { hash: '', search: '' } : { hash: window.location.hash, search: window.location.search };
 
 // implicit flow: links from e-mails work in any browser, not only the one used to sign up
+/** public project URL and key, for calling Edge Functions */
+export const SUPABASE_URL = url;
+export const SUPABASE_KEY = key;
+
 export const supabase: SupabaseClient | null = url && key ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' } }) : null;
 
 export type AuthNotice = 'welcome' | 'confirmed' | 'recovery' | { error: string };

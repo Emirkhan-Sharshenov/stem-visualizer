@@ -1,0 +1,9 @@
+# Supabase CLI settings (only what we use)
+project_id = "bhkvpppmixxxorqumxvg"
+
+# the mentor is open to guests and the webhook is called by Freemius, so neither requires a user JWT
+[functions.mentor]
+verify_jwt = false
+
+[functions.freemius-webhook]
+verify_jwt = false

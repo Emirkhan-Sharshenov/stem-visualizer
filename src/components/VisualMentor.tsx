@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, Bot, Crown, RotateCcw, X } from 'lucide-react';
 import { topicById } from '../data/curriculum';
 import type { Topic } from '../data/curriculum/types';
-import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, usePlan } from '../lib/plan';
+import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, MENTOR_URL, usePlan } from '../lib/plan';
 import { useMentorTopic } from '../lib/mentorTopic';
 import { Formula } from './Formula';
 
@@ -163,7 +163,7 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
     setLoading(true);
     try {
       const auth = await authHeaders();
-      const res = await fetch('/api/mentor', {
+      const res = await fetch(MENTOR_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...auth },
         body: JSON.stringify({ question: q, lang, topic: topic ? topicContext(topic, lang) : null, history }),
