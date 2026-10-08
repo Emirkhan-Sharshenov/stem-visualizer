@@ -347,6 +347,8 @@ export const Landing: React.FC<LandingProps> = ({ lang, onToggleLang, onNavigate
             <span className="text-ink-3">— {t.footer.tagline}</span>
           </div>
           <span className="text-ink-3">
+            <a href="/privacy.html" className="hover:text-ink mr-3">{lang === 'ru' ? 'Конфиденциальность' : 'Privacy'}</a>
+            <a href="/terms.html" className="hover:text-ink mr-3">{lang === 'ru' ? 'Условия' : 'Terms'}</a>
             <a href="#/credits" className="hover:text-ink mr-3">{lang === 'ru' ? 'Источники моделей' : 'Model sources'}</a>© {new Date().getFullYear()} · {t.footer.made}
           </span>
         </div>
