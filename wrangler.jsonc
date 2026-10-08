@@ -1,9 +1,0 @@
-// Cloudflare Workers static site: serves the Vite build from ./dist
-{
-  "name": "stem-visualizer",
-  "compatibility_date": "2026-10-01",
-  "assets": {
-    "directory": "./dist",
-    "not_found_handling": "single-page-application"
-  }
-}
