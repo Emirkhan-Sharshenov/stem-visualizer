@@ -53,6 +53,7 @@ const GeneticsLab = lazy(() => import('./components/genetics/GeneticsLab'));
 const HeatLab = lazy(() => import('./components/heat/HeatLab'));
 const EcoLab = lazy(() => import('./components/eco/EcoLab'));
 const MoleculeBuilder = lazy(() => import('./components/molbuilder/MoleculeBuilder'));
+const Space3D = lazy(() => import('./components/space3d/Space3D'));
 const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
@@ -335,6 +336,18 @@ export default function App({ lang, setLang }: AppProps) {
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Конструктор молекул в 3D' : '3D molecule builder'}</h1>
                 </div>
                 <MoleculeBuilder lang={lang} />
+              </div>
+            )}
+            {currentMode === 'space3d' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · 3D-песочница' : 'Physics · 3D sandbox'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Космос: гравитация в 3D' : 'Space: gravity in 3D'}</h1>
+                </div>
+                <Space3D lang={lang} />
               </div>
             )}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}

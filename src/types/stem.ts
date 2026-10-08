@@ -19,6 +19,7 @@ export type VisualMode =
   | 'heat'
   | 'ecosystem'
   | 'molbuilder'
+  | 'space3d'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 

@@ -163,6 +163,27 @@ const Card: React.FC<{ item: LabItem; lang: Lang; onOpen: () => void }> = ({ ite
 /** Gallery of every simulation and 3D model in the course */
 const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: string }; title: { ru: string; en: string }; text: { ru: string; en: string }; art: React.ReactNode }[] = [
   {
+    mode: 'space3d',
+    color: '#E5484D',
+    subject: { ru: 'Физика · 3D', en: 'Physics · 3D' },
+    title: { ru: 'Космос: гравитация', en: 'Space: gravity' },
+    text: { ru: 'Запускай спутники, строй солнечные системы и сталкивай планеты. Космические скорости, законы Кеплера и задача трёх тел.', en: 'Launch satellites, build solar systems and crash planets: cosmic velocities, Kepler’s laws and the three-body problem.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect width="220" height="110" fill="#05060A" />
+        {[[20, 15], [60, 90], [190, 20], [170, 95], [100, 8], [205, 60], [12, 70]].map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r="1" fill="#C9D3FF" />
+        ))}
+        <ellipse cx="110" cy="58" rx="80" ry="26" fill="none" stroke="#5FD39A" strokeWidth="1.5" opacity="0.7" />
+        <ellipse cx="110" cy="58" rx="46" ry="15" fill="none" stroke="#FFD27A" strokeWidth="1.5" opacity="0.7" />
+        <circle cx="110" cy="58" r="14" fill="#FFC94A" />
+        <circle cx="110" cy="58" r="22" fill="#FFC94A" opacity="0.18" />
+        <circle cx="190" cy="58" r="6" fill="#3E7BD6" />
+        <circle cx="74" cy="47" r="4" fill="#D2603A" />
+      </svg>
+    ),
+  },
+  {
     mode: 'sandbox',
     color: '#E5484D',
     subject: { ru: 'Физика', en: 'Physics' },
