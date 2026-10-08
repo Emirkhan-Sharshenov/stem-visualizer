@@ -7,3 +7,24 @@ verify_jwt = false
 
 [functions.freemius-webhook]
 verify_jwt = false
+
+[auth]
+site_url = "https://stem-visualizer.pages.dev"
+additional_redirect_urls = ["https://stem-visualizer.pages.dev/**", "http://localhost:3000/**"]
+
+[auth.rate_limit]
+email_sent = 60
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+otp_length = 6
+otp_expiry = 3600
+
+[auth.email.template.confirmation]
+subject = "Ваш код STEM Visualizer: {{ .Token }}"
+content_path = "./supabase/email-templates/confirm-signup.html"
+
+[auth.email.template.recovery]
+subject = "Код для сброса пароля: {{ .Token }}"
+content_path = "./supabase/email-templates/reset-password.html"
