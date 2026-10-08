@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { authErrorText, cloudEnabled, resetPassword, signIn, signInWithGoogle, signUp } from '../lib/supabase';
+import { authErrorText, cloudEnabled, resendSignupCode, resetPassword, signIn, signInWithGoogle, signUp, updatePassword, verifyEmailCode } from '../lib/supabase';
 import { Logo } from '../components/brand/Logo';
 import { OrbitalStage } from '../components/brand/OrbitalStage';
 import { authCopy } from '../i18n/auth';
@@ -36,6 +36,10 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  /** waiting for the code from the e-mail */
+  const [codeFor, setCodeFor] = useState<{ email: string; kind: 'signup' | 'recovery' } | null>(null);
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
 
   // message left by an e-mail confirmation redirect
@@ -70,12 +74,24 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
       if (mode === 'register') {
         const { needsConfirmation } = await signUp(email.trim(), password, { name: name.trim(), role, grade: role === 'student' ? Number(grade) : null });
         if (needsConfirmation) {
-          setNotice(L(`Мы отправили письмо на ${email}. Открой его и подтверди почту — потом войди.`, `We sent an email to ${email}. Confirm your address, then log in.`));
+          setCodeFor({ email: email.trim(), kind: 'signup' });
+          setNotice(L(`Мы отправили код на ${email}. Введи его ниже.`, `We sent a code to ${email}. Enter it below.`));
           return;
         }
       } else await signIn(email.trim(), password);
       onNavigate('app');
     } catch (err) {
+      // signed up earlier but never confirmed: send a fresh code
+      if (/not confirmed/i.test(String((err as { message?: string })?.message))) {
+        try {
+          await resendSignupCode(email.trim());
+        } catch {
+          // the old code may still be valid
+        }
+        setCodeFor({ email: email.trim(), kind: 'signup' });
+        setNotice(L(`Почта ещё не подтверждена. Мы отправили новый код на ${email}.`, `Your email isn’t confirmed yet. We sent a new code to ${email}.`));
+        return;
+      }
       setFormError(authErrorText(err, lang));
     } finally {
       setBusy(false);
@@ -97,13 +113,45 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
     if (!/^\S+@\S+\.\S+$/.test(email)) return setErrors((p) => ({ ...p, email: t.errors.email }));
     try {
       await resetPassword(email.trim());
-      setNotice(L('Письмо со ссылкой для сброса пароля отправлено.', 'A password reset link is on its way.'));
+      setCodeFor({ email: email.trim(), kind: 'recovery' });
+      setNotice(L(`Код для сброса пароля отправлен на ${email}.`, `A password reset code was sent to ${email}.`));
     } catch (err) {
       setFormError(authErrorText(err, lang));
     }
   };
 
   const clearError = (field: keyof Errors) => setErrors((prev) => ({ ...prev, [field]: undefined }));
+
+  const confirmCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!codeFor) return;
+    setFormError(null);
+    const token = code.replace(/\D/g, '');
+    if (token.length < 6) return setFormError(L('Введи код из письма целиком.', 'Enter the whole code from the email.'));
+    if (codeFor.kind === 'recovery' && newPassword.length < 8) return setFormError(t.errors.password);
+    setBusy(true);
+    try {
+      await verifyEmailCode(codeFor.email, token, codeFor.kind);
+      if (codeFor.kind === 'recovery') await updatePassword(newPassword);
+      sessionStorage.setItem('authNotice', '"welcome"');
+      onNavigate('app');
+    } catch (err) {
+      setFormError(/expired|invalid/i.test(String((err as { message?: string })?.message)) ? L('Код неверный или устарел. Проверь письмо или запроси новый код.', 'The code is wrong or expired. Check the email or request a new one.') : authErrorText(err, lang));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const resend = async () => {
+    if (!codeFor) return;
+    setFormError(null);
+    try {
+      if (codeFor.kind === 'signup') await resendSignupCode(codeFor.email);
+      else await resetPassword(codeFor.email);
+      setNotice(L('Новый код отправлен. Проверь также папку «Спам».', 'A new code is on its way. Check the spam folder too.'));
+    } catch (err) {
+      setFormError(authErrorText(err, lang));
+    }
+  };
 
   return (
     <div className="page-light min-h-screen font-sans grid lg:grid-cols-2">
@@ -150,6 +198,44 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
               <span className="flex-1 h-px bg-line" />
             </div>
 
+            {codeFor ? (
+              <form onSubmit={confirmCode} noValidate className="space-y-4">
+                <p className="text-[15px] text-ink">
+                  {codeFor.kind === 'signup' ? L('Подтверждение почты', 'Confirm your email') : L('Новый пароль', 'New password')}: <b>{codeFor.email}</b>
+                </p>
+                <Field label={L('Код из письма', 'Code from the email')}>
+                  <input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/[^\d]/g, '').slice(0, 8))}
+                    placeholder="123456"
+                    className={`${inputBase} border-line font-mono text-xl tracking-[0.4em] text-center`}
+                  />
+                </Field>
+                {codeFor.kind === 'recovery' && (
+                  <Field label={L('Новый пароль', 'New password')} hint={t.fields.passwordHint}>
+                    <input type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={`${inputBase} border-line`} />
+                  </Field>
+                )}
+                {formError && <p className="rounded-lg bg-[#FDF0EF] border border-[#F2C8C5] px-3 py-2 text-sm text-[#CC2F35]">{formError}</p>}
+                {notice && <p className="rounded-lg bg-[#EAF6EF] border border-[#BFE3CC] px-3 py-2 text-sm text-[#1E7A4C]">{notice}</p>}
+                <button type="submit" disabled={busy} className="w-full h-11 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-70 text-white text-sm font-medium cursor-pointer inline-flex items-center justify-center gap-2">
+                  {busy && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
+                  {codeFor.kind === 'signup' ? L('Подтвердить', 'Confirm') : L('Сменить пароль', 'Change password')}
+                </button>
+                <div className="flex justify-between text-sm">
+                  <button type="button" onClick={resend} className="text-accent hover:text-accent-hover cursor-pointer">
+                    {L('Отправить код ещё раз', 'Send the code again')}
+                  </button>
+                  <button type="button" onClick={() => { setCodeFor(null); setNotice(null); setFormError(null); setCode(''); }} className="text-ink-2 hover:text-ink cursor-pointer">
+                    {L('Назад', 'Back')}
+                  </button>
+                </div>
+                <p className="text-xs text-ink-3">{L('Письмо не пришло? Подожди минуту и проверь папку «Спам» или «Промоакции».', 'No email? Wait a minute and check Spam or Promotions.')}</p>
+              </form>
+            ) : (
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
               {mode === 'register' && (
                 <>
@@ -254,6 +340,7 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                 {copy.submit}
               </button>
             </form>
+            )}
 
             {mode === 'register' && <p className="mt-4 text-xs leading-relaxed text-ink-3">{t.register.terms}</p>}
 

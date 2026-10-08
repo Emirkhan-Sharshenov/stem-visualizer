@@ -95,6 +95,19 @@ export async function signInWithGoogle() {
   if (error) throw error;
 }
 
+/** confirm an e-mail or a password reset with the code from the letter */
+export async function verifyEmailCode(email: string, token: string, type: 'signup' | 'recovery') {
+  if (!supabase) throw new Error('offline');
+  const { error } = await supabase.auth.verifyOtp({ email, token, type });
+  if (error) throw error;
+}
+
+export async function resendSignupCode(email: string) {
+  if (!supabase) throw new Error('offline');
+  const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: appUrl() } });
+  if (error) throw error;
+}
+
 export async function resetPassword(email: string) {
   if (!supabase) throw new Error('offline');
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: appUrl() });
