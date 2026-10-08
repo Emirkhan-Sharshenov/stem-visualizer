@@ -6,7 +6,8 @@ const ROUTES: Route[] = ['login', 'register', 'app', 'credits', 'reset'];
 
 // Hash routing keeps deep links working without server rewrites: #/login, #/register, #/app
 function parse(hash: string): Route {
-  const path = hash.replace(/^#\/?/, '');
+  // #/app?lab=space3d: the query only picks a section inside the app
+  const path = hash.replace(/^#\/?/, '').split('?')[0];
   return (ROUTES as string[]).includes(path) ? (path as Route) : 'landing';
 }
 

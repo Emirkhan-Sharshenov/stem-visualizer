@@ -104,7 +104,19 @@ interface AppProps {
 }
 
 export default function App({ lang, setLang }: AppProps) {
-  const [currentMode, setCurrentMode] = useState<VisualMode>('textbook');
+  // deep links like #/app?lab=chemlab open a section directly (handy for social posts)
+  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'classes', 'teacher'];
+  const [currentMode, setCurrentMode] = useState<VisualMode>(() => {
+    const lab = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('lab') as VisualMode | null;
+    return lab && LINKABLE.includes(lab) ? lab : 'textbook';
+  });
+  // keep the address in sync so the current section can be shared
+  useEffect(() => {
+    if (!LINKABLE.includes(currentMode)) return;
+    const next = currentMode === 'textbook' ? '#/app' : `#/app?lab=${currentMode}`;
+    if (window.location.hash !== next) history.replaceState(null, '', next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMode]);
   const [textbookKey, setTextbookKey] = useState(0);
   const [pendingTopic, setPendingTopic] = useState<string | undefined>(undefined);
 
