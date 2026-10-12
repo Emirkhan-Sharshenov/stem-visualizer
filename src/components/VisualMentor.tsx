@@ -58,77 +58,136 @@ function suggestions(t: Topic | undefined, lang: Lang): string[] {
   ];
 }
 
-/* ---------- tiny renderer: paragraphs, lists, **bold** and $formulas$ ---------- */
+/* ---------- renderer: headings, paragraphs, lists, **bold**, *italic*, $inline$ and $$display$$ math ---------- */
+
+// formulas first-class: $...$ must not start/end with a space, so "5 $ and 6 $" is not treated as math
+const INLINE = /(\*\*[^\n]+?\*\*|\$(?=[^\s$])[^$\n]*?[^\s$]\$|\*(?=[^\s*])[^*\n]*?[^\s*]\*)/g;
 
 function Inline({ text }: { text: string }) {
-  const parts = text.split(/(\$\$[^$]+\$\$|\$[^$\n]+\$|\*\*[^*]+\*\*|\*[^*\s][^*\n]*\*)/g);
+  const parts = text.split(INLINE);
   return (
     <>
-      {parts.map((p, i) =>
-        p.startsWith('$$') ? (
-          <Formula key={i} tex={p.slice(2, -2)} display />
-        ) : p.startsWith('$') && p.length > 2 ? (
-          <Formula key={i} tex={p.slice(1, -1)} />
-        ) : p.startsWith('**') ? (
-          <strong key={i} className="font-semibold">
-            {p.slice(2, -2)}
-          </strong>
-        ) : p.startsWith('*') && p.endsWith('*') && p.length > 2 ? (
-          <em key={i}>{p.slice(1, -1)}</em>
-        ) : (
-          <React.Fragment key={i}>{p}</React.Fragment>
-        ),
-      )}
+      {parts.map((p, i) => {
+        if (p.length > 4 && p.startsWith('**') && p.endsWith('**'))
+          return (
+            <strong key={i} className="font-semibold">
+              <Inline text={p.slice(2, -2)} />
+            </strong>
+          );
+        if (p.length > 2 && p.startsWith('$') && p.endsWith('$')) return <Formula key={i} tex={p.slice(1, -1)} />;
+        if (p.length > 2 && p.startsWith('*') && p.endsWith('*'))
+          return (
+            <em key={i}>
+              <Inline text={p.slice(1, -1)} />
+            </em>
+          );
+        return <React.Fragment key={i}>{p}</React.Fragment>;
+      })}
     </>
   );
 }
 
-const BULLET = /^\s*([-*•]|\d+[.)])\s+/;
+type Block =
+  | { kind: 'math'; tex: string }
+  | { kind: 'h'; text: string }
+  | { kind: 'list'; ordered: boolean; start: number; items: string[] }
+  | { kind: 'p'; lines: string[] };
 
-function Rich({ text }: { text: string }) {
-  // group consecutive list lines into lists and the rest into paragraphs
-  const blocks: { list: boolean; ordered: boolean; lines: string[] }[] = [];
-  for (const line of text.trim().split('\n')) {
-    if (!line.trim()) {
-      blocks.push({ list: false, ordered: false, lines: [] });
-      continue;
-    }
-    const list = BULLET.test(line);
-    const last = blocks[blocks.length - 1];
-    if (last && last.list === list && last.lines.length) last.lines.push(line);
-    else blocks.push({ list, ordered: list && /^\s*\d/.test(line), lines: [line] });
-  }
+const BULLET = /^\s*([-*•]|\d+[.)])\s+/;
+const HEAD = /^\s*#{1,6}\s+/;
+
+function parseBlocks(src: string): Block[] {
+  const out: Block[] = [];
+  // odd pieces are the insides of $$...$$ (may span several lines)
+  src
+    .trim()
+    .split(/\$\$([\s\S]+?)\$\$/g)
+    .forEach((piece, idx) => {
+      if (idx % 2 === 1) {
+        const tex = piece.trim();
+        if (tex) out.push({ kind: 'math', tex });
+        return;
+      }
+      let open: Block | null = null;
+      for (const raw of piece.split('\n')) {
+        const line = raw.trimEnd();
+        if (!line.trim()) {
+          open = null;
+          continue;
+        }
+        if (HEAD.test(line)) {
+          out.push({ kind: 'h', text: line.replace(HEAD, '') });
+          open = null;
+          continue;
+        }
+        if (BULLET.test(line)) {
+          const ordered = /^\s*\d/.test(line);
+          const item = line.replace(BULLET, '');
+          if (open && open.kind === 'list' && open.ordered === ordered) {
+            open.items.push(item);
+          } else {
+            open = { kind: 'list', ordered, start: ordered ? parseInt(line.trim(), 10) || 1 : 1, items: [item] };
+            out.push(open);
+          }
+          continue;
+        }
+        if (open && open.kind === 'p') {
+          open.lines.push(line);
+        } else {
+          open = { kind: 'p', lines: [line] };
+          out.push(open);
+        }
+      }
+    });
+  return out;
+}
+
+const Rich = React.memo(function Rich({ text }: { text: string }) {
+  const blocks = useMemo(() => parseBlocks(text), [text]);
   return (
-    <div className="flex flex-col gap-2">
-      {blocks
-        .filter((b) => b.lines.length)
-        .map((b, i) => {
-          if (b.list) {
+    <div className="flex flex-col gap-2.5 min-w-0 break-words">
+      {blocks.map((b, i) => {
+        switch (b.kind) {
+          case 'math':
+            return (
+              <div key={i} className="max-w-full overflow-x-auto overflow-y-hidden py-1.5 px-1 text-center [scrollbar-width:thin]">
+                <Formula tex={b.tex} display />
+              </div>
+            );
+          case 'h':
+            return (
+              <p key={i} className="font-semibold text-ink">
+                <Inline text={b.text} />
+              </p>
+            );
+          case 'list': {
             const Tag = b.ordered ? 'ol' : 'ul';
             return (
-              <Tag key={i} className={`pl-5 flex flex-col gap-1 ${b.ordered ? 'list-decimal' : 'list-disc'}`}>
-                {b.lines.map((l, k) => (
-                  <li key={k}>
-                    <Inline text={l.replace(BULLET, '')} />
+              <Tag key={i} {...(b.ordered ? { start: b.start } : {})} className={`pl-5 flex flex-col gap-1.5 ${b.ordered ? 'list-decimal' : 'list-disc'} marker:text-ink-3`}>
+                {b.items.map((l, k) => (
+                  <li key={k} className="pl-0.5">
+                    <Inline text={l} />
                   </li>
                 ))}
               </Tag>
             );
           }
-          return (
-            <p key={i}>
-              {b.lines.map((l, k) => (
-                <React.Fragment key={k}>
-                  {k > 0 && <br />}
-                  <Inline text={l.replace(/^#+\s*/, '')} />
-                </React.Fragment>
-              ))}
-            </p>
-          );
-        })}
+          default:
+            return (
+              <p key={i}>
+                {b.lines.map((l, k) => (
+                  <React.Fragment key={k}>
+                    {k > 0 && <br />}
+                    <Inline text={l} />
+                  </React.Fragment>
+                ))}
+              </p>
+            );
+        }
+      })}
     </div>
   );
-}
+});
 
 /* ---------- panel ---------- */
 
@@ -252,12 +311,12 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
         )}
         {messages.map((m, i) =>
           m.role === 'user' ? (
-            <div key={i} className="self-end max-w-[85%] rounded-2xl rounded-tr-sm bg-accent px-4 py-2.5 text-[14.5px] leading-relaxed" style={{ color: '#fff' }}>
+            <div key={i} className="self-end max-w-[85%] min-w-0 rounded-2xl rounded-tr-sm bg-accent px-4 py-2.5 text-[14.5px] leading-relaxed whitespace-pre-wrap break-words" style={{ color: '#fff' }}>
               {m.text}
             </div>
           ) : (
-            <div key={i} className="self-start max-w-[92%] flex flex-col gap-2">
-              <div className={`rounded-2xl rounded-tl-sm border px-4 py-3 text-[14.5px] leading-relaxed text-ink ${m.upgrade ? 'bg-[#FFF8E8] border-[#F3D9A4]' : 'bg-surface border-line'}`}>
+            <div key={i} className="self-start max-w-[94%] min-w-0 flex flex-col gap-2">
+              <div className={`min-w-0 rounded-2xl rounded-tl-sm border px-4 py-3 text-[14.5px] leading-[1.65] text-ink ${m.upgrade ? 'bg-[#FFF8E8] border-[#F3D9A4]' : 'bg-surface border-line'}`}>
                 <Rich text={m.text} />
               </div>
               {m.upgrade && (
