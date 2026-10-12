@@ -5,7 +5,6 @@ import { cloudEnabled, useSession } from '../../lib/supabase';
 
 type Lang = 'ru' | 'en';
 /** public launch code (created by 0005_teacher_plan.sql) */
-const LAUNCH_CODE = 'START2026';
 const YEAR_OFF = Math.round((1 - PRICES.year / (PRICES.month * 12)) * 100);
 
 /** small lock overlay for Pro-only blocks */
@@ -228,14 +227,6 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           {L('Есть промокод?', 'Have a promo code?')}
         </h2>
         <p className="mt-1 text-sm text-ink-3">{L('Для школ, подарков и оплаты без карты Visa/Mastercard.', 'For schools, gifts and paying without a Visa/Mastercard.')}</p>
-        <button onClick={() => setCode(LAUNCH_CODE)} className="mt-3 w-full text-left rounded-xl border border-dashed border-accent bg-accent-soft px-4 py-3 cursor-pointer">
-          <span className="block text-sm text-ink">
-            {L('Подарок к запуску: ', 'Launch gift: ')}
-            <b className="font-mono">{LAUNCH_CODE}</b>
-            {L(' — 14 дней Pro бесплатно', ': 14 days of Pro free')}
-          </span>
-          <span className="block text-xs text-ink-2">{L('Нажми, чтобы вставить код', 'Tap to fill in the code')}</span>
-        </button>
         {!cloudEnabled ? (
           <p className="mt-2 text-sm text-ink-2">{L('Аккаунты ещё не подключены.', 'Accounts are not connected yet.')}</p>
         ) : !user ? (
