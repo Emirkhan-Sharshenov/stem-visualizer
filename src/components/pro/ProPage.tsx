@@ -32,7 +32,7 @@ export const ProGate: React.FC<{ lang: Lang; pro: boolean; onUpgrade: () => void
 /** plans, what Pro gives, and promo-code activation */
 export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'progress' | 'teacher') => void }> = ({ lang, onNavigate }) => {
   const plan = usePlan();
-  const { user } = useSession();
+  const { user, ready } = useSession();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -40,6 +40,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
   const [paying, setPaying] = useState(false);
 
   const pay = async (tier: 'pro' | 'teacher' = 'pro') => {
+    if (!ready) return;
     if (!user?.email) {
       window.location.hash = '#/login';
       return;
@@ -229,6 +230,8 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
         <p className="mt-1 text-sm text-ink-3">{L('Для школ, подарков и оплаты без карты Visa/Mastercard.', 'For schools, gifts and paying without a Visa/Mastercard.')}</p>
         {!cloudEnabled ? (
           <p className="mt-2 text-sm text-ink-2">{L('Аккаунты ещё не подключены.', 'Accounts are not connected yet.')}</p>
+        ) : !ready ? (
+          <p className="mt-2 text-sm text-ink-2">{L('Проверяем вход…', 'Checking your session…')}</p>
         ) : !user ? (
           <p className="mt-2 text-sm text-ink-2">
             {L('Чтобы активировать код, ', 'To use a code, ')}

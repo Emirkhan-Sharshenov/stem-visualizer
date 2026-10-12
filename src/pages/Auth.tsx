@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { authErrorText, cloudEnabled, resendSignupCode, resetPassword, signIn, signInWithGoogle, signUp, updatePassword, verifyEmailCode } from '../lib/supabase';
+import { authErrorText, cloudEnabled, resendSignupCode, resetPassword, signIn, signInWithGoogle, signUp, updatePassword, useSession, verifyEmailCode } from '../lib/supabase';
 import { Logo } from '../components/brand/Logo';
 import { OrbitalStage } from '../components/brand/OrbitalStage';
 import { authCopy } from '../i18n/auth';
@@ -25,6 +25,7 @@ const inputBase =
 export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate }) => {
   const t = authCopy[lang];
   const copy = mode === 'login' ? t.login : t.register;
+  const { user, ready } = useSession();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -52,6 +53,10 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
     else if (n && typeof n === 'object' && n.error) setFormError(/expired|invalid/i.test(n.error) ? L('Ссылка устарела или уже использована. Войди с паролем или запроси новое письмо.', 'The link has expired or was already used. Log in with your password or request a new email.') : n.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (ready && user) onNavigate('app');
+  }, [ready, user, onNavigate]);
 
   const validate = (): Errors => {
     const next: Errors = {};

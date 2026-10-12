@@ -160,7 +160,7 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
 const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => void }> = ({ lang, onSelect }) => {
   const onProgress = () => onSelect('progress');
   const onPro = () => onSelect('pro');
-  const { user } = useSession();
+  const { user, ready } = useSession();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -168,6 +168,8 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => 
     window.addEventListener('mousedown', close);
     return () => window.removeEventListener('mousedown', close);
   }, []);
+  if (!ready)
+    return <span aria-hidden="true" className="w-8 h-8 ml-1 rounded-full bg-muted animate-pulse" />;
   if (!user)
     return (
       <a href="#/login" aria-label={lang === 'ru' ? 'Войти' : 'Log in'} title={lang === 'ru' ? 'Войти' : 'Log in'} className="w-8 h-8 ml-1 rounded-full bg-accent hover:bg-accent-hover flex items-center justify-center text-white transition-colors">

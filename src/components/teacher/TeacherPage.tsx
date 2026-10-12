@@ -438,7 +438,7 @@ const TeacherHome: React.FC<{ lang: Lang; uid: string }> = ({ lang, uid }) => {
 
 export const StudentClasses: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; compact?: boolean }> = ({ lang, onOpenTopic, compact }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
-  const { user } = useSession();
+  const { user, ready } = useSession();
   const p = useProgress();
   const [classes, setClasses] = useState<(ClassRow & { teacher: string })[] | null>(null);
   const [tasks, setTasks] = useState<Assignment[]>([]);
@@ -480,6 +480,7 @@ export const StudentClasses: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; comp
     if (s?.topics[0]) onOpenTopic(s.topics[0].id);
   };
 
+  if (!ready) return null;
   if (!user) {
     if (compact) return null;
     return (
@@ -573,7 +574,7 @@ export const StudentClasses: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; comp
 
 export const TeacherPage: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; initialTab?: 'teacher' | 'student' }> = ({ lang, onOpenTopic, initialTab = 'teacher' }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
-  const { user } = useSession();
+  const { user, ready } = useSession();
   const [tab, setTab] = useState(initialTab);
   return (
     <div className="flex flex-col gap-6">
@@ -604,6 +605,8 @@ export const TeacherPage: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; initial
       </header>
       {tab === 'student' ? (
         <StudentClasses lang={lang} onOpenTopic={onOpenTopic} />
+      ) : !ready ? (
+        <div className={`${card} p-6 text-sm text-ink-2`}>{L('Проверяем вход…', 'Checking your session…')}</div>
       ) : !user ? (
         <div className={`${card} p-6 text-sm text-ink-2`}>
           <a href="#/login" className="text-accent hover:underline">{L('Войди в аккаунт', 'Log in')}</a>

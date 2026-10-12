@@ -63,12 +63,23 @@ export function useSession() {
   const [ready, setReady] = useState(!supabase);
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+    let mounted = true;
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (!mounted) return;
+      setSession(s);
       setReady(true);
     });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => data.subscription.unsubscribe();
+    supabase.auth.getSession().then(({ data: result }) => {
+      if (!mounted) return;
+      setSession(result.session);
+      setReady(true);
+    }).catch(() => {
+      if (mounted) setReady(true);
+    });
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
   }, []);
   return { session, ready, user: session?.user ?? null };
 }
