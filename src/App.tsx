@@ -58,6 +58,10 @@ const FieldLab = lazy(() => import('./components/efield/FieldLab'));
 const WaveLab = lazy(() => import('./components/waves/WaveLab'));
 const TitrationLab = lazy(() => import('./components/titration/TitrationLab'));
 const FormulasPage = lazy(() => import('./components/formulas/FormulasPage'));
+const AtomLab = lazy(() => import('./components/atom/AtomLab'));
+const KineticsLab = lazy(() => import('./components/kinetics/KineticsLab'));
+const SelectionLab = lazy(() => import('./components/selection/SelectionLab'));
+const PhotoLab = lazy(() => import('./components/photosynthesis/PhotoLab'));
 const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
@@ -109,7 +113,7 @@ interface AppProps {
 
 export default function App({ lang, setLang }: AppProps) {
   // deep links like #/app?lab=chemlab open a section directly (handy for social posts)
-  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'classes', 'teacher'];
+  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher'];
   const [currentMode, setCurrentMode] = useState<VisualMode>(() => {
     const lab = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('lab') as VisualMode | null;
     return lab && LINKABLE.includes(lab) ? lab : 'textbook';
@@ -409,6 +413,54 @@ export default function App({ lang, setLang }: AppProps) {
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Титрование' : 'Titration'}</h1>
                 </div>
                 <TitrationLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'atom' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · конструктор опытов' : 'Chemistry · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Собери атом' : 'Build an atom'}</h1>
+                </div>
+                <AtomLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'kinetics' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · конструктор опытов' : 'Chemistry · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Скорость реакции и равновесие' : 'Reaction rate and equilibrium'}</h1>
+                </div>
+                <KineticsLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'selection' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Биология · конструктор опытов' : 'Biology · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Естественный отбор' : 'Natural selection'}</h1>
+                </div>
+                <SelectionLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'photosynthesis' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Биология · конструктор опытов' : 'Biology · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Фотосинтез' : 'Photosynthesis'}</h1>
+                </div>
+                <PhotoLab lang={lang} />
               </div>
             )}
             {currentMode === 'formulas' && <FormulasPage lang={lang} onOpenTopic={openTopic} />}

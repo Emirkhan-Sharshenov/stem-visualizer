@@ -59,7 +59,7 @@ export const landingCopy = {
     pricing: {
       title: 'Учиться бесплатно',
       subtitle: 'Учебник, лаборатории и конструкторы опытов открыты всем школьникам. Pro — для тех, кто готовится к ОРТ.',
-      free: { name: 'Бесплатно', price: '$0', period: 'навсегда', cta: 'Начать бесплатно', items: ['Все 486 тем и 60+ лабораторий', '12 конструкторов опытов', 'Практикум, задачи и тесты', 'Карта курса, прогресс и значки', '5 вопросов наставнику в день'] },
+      free: { name: 'Бесплатно', price: '$0', period: 'навсегда', cta: 'Начать бесплатно', items: ['Все 486 тем и 60+ лабораторий', '16 конструкторов опытов', 'Практикум, задачи и тесты', 'Карта курса, прогресс и значки', '5 вопросов наставнику в день'] },
       pro: { name: 'Pro', price: '$3.99', period: 'в месяц · $29.99 в год', cta: 'Попробовать Pro', items: ['Всё из бесплатного', 'ИИ-наставник без лимита', 'Пробные ОРТ-экзамены', 'Персональный план повторения', 'Учителям — кабинет с классами за $7.99'] },
     },
     cta: { title: 'Попробуй первый опыт за минуту', text: 'Регистрация нужна только чтобы сохранять прогресс.', button: 'Начать бесплатно' },
@@ -123,7 +123,7 @@ export const landingCopy = {
     pricing: {
       title: 'Learn for free',
       subtitle: 'The textbook, labs and experiment builders are open to every student. Pro is for exam prep.',
-      free: { name: 'Free', price: '$0', period: 'forever', cta: 'Start for free', items: ['All 486 topics and 60+ labs', '12 experiment builders', 'Practice, problems and quizzes', 'Course map, progress and badges', '5 mentor questions a day'] },
+      free: { name: 'Free', price: '$0', period: 'forever', cta: 'Start for free', items: ['All 486 topics and 60+ labs', '16 experiment builders', 'Practice, problems and quizzes', 'Course map, progress and badges', '5 mentor questions a day'] },
       pro: { name: 'Pro', price: '$3.99', period: 'a month · $29.99 a year', cta: 'Try Pro', items: ['Everything in Free', 'Unlimited AI mentor', 'Mock ORT exams', 'Personal revision plan', 'Teachers: class dashboard for $7.99'] },
     },
     cta: { title: 'Run your first experiment in a minute', text: 'You only need an account to save progress.', button: 'Start for free' },

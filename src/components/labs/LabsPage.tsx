@@ -226,25 +226,6 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
     ),
   },
   {
-    mode: 'titration',
-    color: '#30A46C',
-    subject: { ru: 'Химия', en: 'Chemistry' },
-    title: { ru: 'Титрование', en: 'Titration' },
-    text: { ru: 'Бюретка, индикаторы и кривая pH. Найди точку эквивалентности и неизвестную концентрацию кислоты.', en: 'Burette, indicators and the pH curve. Find the equivalence point and an unknown acid concentration.' },
-    art: (
-      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
-        <rect x="56" y="4" width="8" height="54" rx="2" fill="none" stroke="#B5B8C0" />
-        <rect x="57" y="20" width="6" height="37" fill="#9CC7FF" opacity="0.6" />
-        <circle cx="60" cy="66" r="2.5" fill="#9CC7FF" />
-        <path d="M52 72 V80 L36 102 H84 L68 80 V72 Z" fill="#E0218A" fillOpacity="0.55" stroke="#B5B8C0" />
-        <path d="M110 96 C140 94 146 88 150 70 C152 50 156 20 196 16" fill="none" stroke="#5B8CFF" strokeWidth="2.5" />
-        <line x1="104" y1="100" x2="204" y2="100" stroke="#4A4D55" />
-        <line x1="104" y1="10" x2="104" y2="100" stroke="#4A4D55" />
-        <circle cx="151" cy="58" r="3.5" fill="#30A46C" />
-      </svg>
-    ),
-  },
-  {
     mode: 'sandbox',
     color: '#E5484D',
     subject: { ru: 'Физика', en: 'Physics' },
@@ -360,6 +341,64 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
     ),
   },
   {
+    mode: 'titration',
+    color: '#30A46C',
+    subject: { ru: 'Химия', en: 'Chemistry' },
+    title: { ru: 'Титрование', en: 'Titration' },
+    text: { ru: 'Бюретка, индикаторы и кривая pH. Найди точку эквивалентности и неизвестную концентрацию кислоты.', en: 'Burette, indicators and the pH curve. Find the equivalence point and an unknown acid concentration.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect x="56" y="4" width="8" height="54" rx="2" fill="none" stroke="#B5B8C0" />
+        <rect x="57" y="20" width="6" height="37" fill="#9CC7FF" opacity="0.6" />
+        <circle cx="60" cy="66" r="2.5" fill="#9CC7FF" />
+        <path d="M52 72 V80 L36 102 H84 L68 80 V72 Z" fill="#E0218A" fillOpacity="0.55" stroke="#B5B8C0" />
+        <path d="M110 96 C140 94 146 88 150 70 C152 50 156 20 196 16" fill="none" stroke="#5B8CFF" strokeWidth="2.5" />
+        <line x1="104" y1="100" x2="204" y2="100" stroke="#4A4D55" />
+        <line x1="104" y1="10" x2="104" y2="100" stroke="#4A4D55" />
+        <circle cx="151" cy="58" r="3.5" fill="#30A46C" />
+      </svg>
+    ),
+  },
+  {
+    mode: 'atom',
+    color: '#30A46C',
+    subject: { ru: 'Химия', en: 'Chemistry' },
+    title: { ru: 'Собери атом', en: 'Build an atom' },
+    text: { ru: 'Протоны, нейтроны и электроны: элементы, изотопы и ионы, электронные слои и формулы. С заданиями.', en: 'Protons, neutrons and electrons: elements, isotopes and ions, shells and configurations. With tasks.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <circle cx="110" cy="55" r="26" fill="none" stroke="#5B8CFF" strokeOpacity="0.5" />
+        <circle cx="110" cy="55" r="46" fill="none" stroke="#5B8CFF" strokeOpacity="0.5" />
+        {[[-4, -3, '#E5484D'], [4, -2, '#9AA0AA'], [0, 5, '#E5484D'], [-5, 5, '#9AA0AA'], [6, 5, '#9AA0AA'], [1, -8, '#E5484D']].map(([x, y, c], i) => (
+          <circle key={i} cx={110 + (x as number)} cy={55 + (y as number)} r="5" fill={c as string} />
+        ))}
+        {[0, 3.14].map((a) => <circle key={a} cx={110 + Math.cos(a) * 26} cy={55 + Math.sin(a) * 26} r="4" fill="#5B8CFF" />)}
+        {[0.5, 1.6, 2.6, 3.7, 4.7, 5.7].map((a) => <circle key={a} cx={110 + Math.cos(a) * 46} cy={55 + Math.sin(a) * 46} r="4" fill="#5B8CFF" />)}
+      </svg>
+    ),
+  },
+  {
+    mode: 'kinetics',
+    color: '#30A46C',
+    subject: { ru: 'Химия', en: 'Chemistry' },
+    title: { ru: 'Скорость и равновесие', en: 'Rate and equilibrium' },
+    text: { ru: 'Молекулы сталкиваются и реагируют. Температура, давление и катализатор, принцип Ле Шателье вживую.', en: 'Molecules collide and react. Temperature, pressure and a catalyst: Le Chatelier’s principle, live.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect x="20" y="10" width="180" height="90" rx="6" fill="#0B0D12" stroke="#2C2F36" />
+        {[[40, 30], [70, 70], [150, 40], [120, 80], [180, 70]].map(([x, y], i) => <circle key={'a' + i} cx={x} cy={y} r="5" fill="#E5484D" />)}
+        {[[55, 50], [100, 25], [170, 25], [90, 60]].map(([x, y], i) => <circle key={'b' + i} cx={x} cy={y} r="5" fill="#3B6BFF" />)}
+        {[[130, 60], [60, 88]].map(([x, y], i) => (
+          <g key={'ab' + i}>
+            <circle cx={x - 4} cy={y} r="5" fill="#E5484D" />
+            <circle cx={x + 4} cy={y} r="5" fill="#3B6BFF" />
+            <circle cx={x} cy={y} r="10" fill="none" stroke="#A35BE0" strokeWidth="1.5" />
+          </g>
+        ))}
+      </svg>
+    ),
+  },
+  {
     mode: 'genetics',
     color: '#F5A524',
     subject: { ru: 'Биология', en: 'Biology' },
@@ -399,6 +438,42 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
           <polygon key={i} points={`${x + 9},${y} ${x - 6},${y - 6} ${x - 6},${y + 6}`} fill="#F76B15" />
         ))}
         <path d="M14 92 Q40 60 66 88 T118 80 T170 70 T206 76" fill="none" stroke="#5B8CFF" strokeWidth="2.5" />
+      </svg>
+    ),
+  },
+  {
+    mode: 'selection',
+    color: '#F5A524',
+    subject: { ru: 'Биология', en: 'Biology' },
+    title: { ru: 'Естественный отбор', en: 'Natural selection' },
+    text: { ru: 'Березовая пяденица и заводская копоть: смена поколений, частоты аллелей и игра «ты — птица».', en: 'Peppered moths and factory soot: generations, allele frequencies and a “you are the bird” game.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect x="40" y="0" width="140" height="110" fill="#3A3633" />
+        {[60, 85, 120, 150, 168].map((x, i) => <line key={i} x1={x} y1="0" x2={x + 4} y2="110" stroke="#1E1B19" strokeWidth="3" />)}
+        {[[80, 35, '#2B2926'], [140, 70, '#2B2926'], [110, 52, '#E6E0CF'], [70, 85, '#2B2926']].map(([x, y, c], i) => (
+          <g key={i} transform={`translate(${x} ${y})`} fill={c as string}>
+            <path d="M0 0 Q-12 -8 -11 4 Q-5 6 0 3 Z" />
+            <path d="M0 0 Q12 -8 11 4 Q5 6 0 3 Z" />
+          </g>
+        ))}
+      </svg>
+    ),
+  },
+  {
+    mode: 'photosynthesis',
+    color: '#F5A524',
+    subject: { ru: 'Биология', en: 'Biology' },
+    title: { ru: 'Фотосинтез', en: 'Photosynthesis' },
+    text: { ru: 'Элодея под лампой: свет, CO₂, температура и светофильтры. Считай пузырьки кислорода и строй графики.', en: 'Pondweed under a lamp: light, CO₂, temperature and filters. Count oxygen bubbles and plot graphs.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <polygon points="62,45 130,20 130,100 62,65" fill="#FFF6D6" opacity="0.18" />
+        <ellipse cx="60" cy="55" rx="4" ry="16" fill="#FFF6D6" />
+        <rect x="120" y="15" width="60" height="90" rx="5" fill="#3E7BB6" fillOpacity="0.35" stroke="#9AA3B2" />
+        <path d="M150 100 C148 85 152 75 150 60" stroke="#2E8B57" strokeWidth="3" fill="none" />
+        {[95, 85, 75].map((y) => <ellipse key={y} cx="150" cy={y} rx="10" ry="3" fill="#3DAA6A" />)}
+        {[50, 40, 28].map((y, i) => <circle key={y} cx={150 + i} cy={y} r={2.5 + i * 0.5} fill="#E6F4FF" />)}
       </svg>
     ),
   },
