@@ -331,8 +331,6 @@ export const Reel2: React.FC<{ id: string }> = ({ id }) => {
               </>
             )
           )}
-          {/* white flash on the cut */}
-          {i > 0 && <AbsoluteFill style={{ background: '#fff', opacity: interpolate(f - s.from, [0, 1, 5], [0.35, 0.25, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }), pointerEvents: 'none' }} />}
           {s.beat.badge && <Badge text={s.beat.badge} color={spec.color} index={i} />}
           {s.beat.countdown && <Countdown color={spec.color} />}
           {s.beat.countdown && [20, 46, 72].map((t) => (
@@ -346,11 +344,6 @@ export const Reel2: React.FC<{ id: string }> = ({ id }) => {
             </Sequence>
           )}
           {s.vo && !s.beat.cta && <Captions beat={s.beat} vo={s.vo} color={spec.color} />}
-          {i > 0 && (
-            <Sequence from={-2} durationInFrames={14} layout="none">
-              <Audio src={staticFile('sfx/whoosh.wav')} volume={0.45} />
-            </Sequence>
-          )}
           {s.beat.badge && (
             <Sequence from={10} durationInFrames={8} layout="none">
               <Audio src={staticFile('sfx/pop.wav')} volume={0.5} />
