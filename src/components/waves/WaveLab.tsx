@@ -423,7 +423,8 @@ function drawDoppler(ctx: CanvasRenderingContext2D, cv: HTMLCanvasElement, s: nu
   ctx.fillRect(0, 0, cv.width, cv.height);
   const T = lambda / SPEED;
   const v = beta * SPEED;
-  const span = 5 + W / Math.max(v, 1);
+  // one pass of the source across the tank, then start over
+  const span = v > 0.2 ? (W - 2) / v + 1.5 : 12;
   const tt = t % span;
   const sx = (when: number) => 4 + v * when;
   const y = H / 2;

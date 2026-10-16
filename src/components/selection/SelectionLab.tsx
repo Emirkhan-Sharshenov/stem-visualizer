@@ -171,7 +171,7 @@ export const SelectionLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     const r = canvas.current!.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width;
     const y = (e.clientY - r.top) / r.height;
-    const hitR = 0.03;
+    const hitR = 0.05; // a fingertip, not a mouse pointer
     const idx = moths.findIndex((m) => !m.eaten && Math.hypot(m.x - x, (m.y - y) * ASPECT) < hitR);
     if (idx < 0) return;
     const m = moths[idx];

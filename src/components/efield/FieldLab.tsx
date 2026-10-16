@@ -84,10 +84,13 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
   useEffect(() => {
     const cv = canvas.current;
     if (!cv) return;
+    // resizing clears the canvas, so only touch the size when it really changed (the loop restarts on every edit)
     const ro = new ResizeObserver(() => {
       const dpr = window.devicePixelRatio || 1;
-      cv.width = Math.round(cv.clientWidth * dpr);
-      cv.height = Math.round((cv.clientWidth * H * dpr) / W);
+      const w = Math.round(cv.clientWidth * dpr);
+      const h = Math.round((cv.clientWidth * H * dpr) / W);
+      if (cv.width !== w) cv.width = w;
+      if (cv.height !== h) cv.height = h;
     });
     ro.observe(cv);
     let raf = 0;
