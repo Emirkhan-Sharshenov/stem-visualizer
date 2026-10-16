@@ -54,6 +54,10 @@ const HeatLab = lazy(() => import('./components/heat/HeatLab'));
 const EcoLab = lazy(() => import('./components/eco/EcoLab'));
 const MoleculeBuilder = lazy(() => import('./components/molbuilder/MoleculeBuilder'));
 const Space3D = lazy(() => import('./components/space3d/Space3D'));
+const FieldLab = lazy(() => import('./components/efield/FieldLab'));
+const WaveLab = lazy(() => import('./components/waves/WaveLab'));
+const TitrationLab = lazy(() => import('./components/titration/TitrationLab'));
+const FormulasPage = lazy(() => import('./components/formulas/FormulasPage'));
 const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
@@ -105,7 +109,7 @@ interface AppProps {
 
 export default function App({ lang, setLang }: AppProps) {
   // deep links like #/app?lab=chemlab open a section directly (handy for social posts)
-  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'classes', 'teacher'];
+  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'classes', 'teacher'];
   const [currentMode, setCurrentMode] = useState<VisualMode>(() => {
     const lab = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('lab') as VisualMode | null;
     return lab && LINKABLE.includes(lab) ? lab : 'textbook';
@@ -129,7 +133,16 @@ export default function App({ lang, setLang }: AppProps) {
       window.scrollTo(0, 0);
     };
     window.addEventListener('open-pro', open);
-    return () => window.removeEventListener('open-pro', open);
+    // other pages can ask for a section, e.g. the formula sheet from Practice
+    const openMode = (e: Event) => {
+      setCurrentMode((e as CustomEvent<VisualMode>).detail);
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('open-mode', openMode);
+    return () => {
+      window.removeEventListener('open-pro', open);
+      window.removeEventListener('open-mode', openMode);
+    };
   }, []);
 
   // welcome note after confirming the e-mail or signing in with Google
@@ -362,6 +375,43 @@ export default function App({ lang, setLang }: AppProps) {
                 <Space3D lang={lang} />
               </div>
             )}
+            {currentMode === 'efield' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Электрическое поле' : 'Electric field'}</h1>
+                </div>
+                <FieldLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'waves' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Волны: интерференция и дифракция' : 'Waves: interference and diffraction'}</h1>
+                </div>
+                <WaveLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'titration' && (
+              <div className="flex flex-col gap-5">
+                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                </button>
+                <div>
+                  <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · конструктор опытов' : 'Chemistry · experiment builder'}</span>
+                  <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Титрование' : 'Titration'}</h1>
+                </div>
+                <TitrationLab lang={lang} />
+              </div>
+            )}
+            {currentMode === 'formulas' && <FormulasPage lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}
             {(currentMode === 'teacher' || currentMode === 'classes') && (
               <TeacherPage key={currentMode} lang={lang} onOpenTopic={openTopic} initialTab={currentMode === 'teacher' ? 'teacher' : 'student'} />

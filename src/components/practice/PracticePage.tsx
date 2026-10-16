@@ -243,6 +243,10 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         <div>
           <h1 className="font-serif text-[36px] leading-tight text-ink">{L('Практикум', 'Practice')}</h1>
           <p className="mt-1 text-[15px] text-ink-2 max-w-2xl">{L('Проверь, понимаешь ли ты, а не просто помнишь. Сначала предскажи результат — потом опыт покажет правду.', 'Check that you understand, not just remember. Predict the result first, then the experiment shows the truth.')}</p>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: 'formulas' }))} className="mt-3 h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:border-accent hover:text-accent cursor-pointer">
+            <span className="font-serif italic">ƒ</span>
+            {L('Шпаргалка формул для ОРТ', 'Formula sheet for exams')}
+          </button>
         </div>
         <div className="flex gap-3">
           <div className="rounded-xl bg-surface border border-line px-4 py-2">

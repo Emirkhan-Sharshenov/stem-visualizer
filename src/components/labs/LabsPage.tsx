@@ -184,6 +184,67 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
     ),
   },
   {
+    mode: 'efield',
+    color: '#E5484D',
+    subject: { ru: 'Физика', en: 'Physics' },
+    title: { ru: 'Электрическое поле', en: 'Electric field' },
+    text: { ru: 'Ставь заряды и смотри на силовые линии и потенциал. Пробный заряд летит по полю. Закон Кулона в живую.', en: 'Place charges and watch field lines and potential. A test charge flies along the field: Coulomb’s law, live.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect width="220" height="110" fill="#0B0D12" />
+        <circle cx="70" cy="55" r="34" fill="#E5484D" opacity="0.18" />
+        <circle cx="150" cy="55" r="34" fill="#3B6BFF" opacity="0.18" />
+        {[-34, -20, -8, 8, 20, 34].map((k) => (
+          <path key={k} d={`M80 ${55 + k * 0.35} Q110 ${55 + k * 1.6} 140 ${55 + k * 0.35}`} fill="none" stroke="#EBF0FF" strokeOpacity="0.7" strokeWidth="1.2" />
+        ))}
+        <line x1="80" y1="55" x2="140" y2="55" stroke="#EBF0FF" strokeOpacity="0.7" strokeWidth="1.2" />
+        <circle cx="70" cy="55" r="11" fill="#E5484D" />
+        <circle cx="150" cy="55" r="11" fill="#3B6BFF" />
+        <text x="70" y="60" fontSize="15" fill="#fff" textAnchor="middle" fontWeight="600">+</text>
+        <text x="150" y="60" fontSize="15" fill="#fff" textAnchor="middle" fontWeight="600">−</text>
+      </svg>
+    ),
+  },
+  {
+    mode: 'waves',
+    color: '#E5484D',
+    subject: { ru: 'Физика', en: 'Physics' },
+    title: { ru: 'Волны', en: 'Waves' },
+    text: { ru: 'Интерференция двух источников, дифракция, опыт Юнга и эффект Доплера с конусом Маха.', en: 'Two-source interference, diffraction, Young’s double slit and the Doppler effect with a Mach cone.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect width="220" height="110" fill="#081426" />
+        {[12, 24, 36, 48, 60, 72, 84].map((r) => (
+          <g key={r} fill="none" stroke="#8CC8FF" strokeOpacity={0.85 - r / 110} strokeWidth="1.5">
+            <circle cx="50" cy="38" r={r} />
+            <circle cx="50" cy="72" r={r} />
+          </g>
+        ))}
+        <circle cx="50" cy="38" r="4" fill="#FFD60A" />
+        <circle cx="50" cy="72" r="4" fill="#FFD60A" />
+      </svg>
+    ),
+  },
+  {
+    mode: 'titration',
+    color: '#30A46C',
+    subject: { ru: 'Химия', en: 'Chemistry' },
+    title: { ru: 'Титрование', en: 'Titration' },
+    text: { ru: 'Бюретка, индикаторы и кривая pH. Найди точку эквивалентности и неизвестную концентрацию кислоты.', en: 'Burette, indicators and the pH curve. Find the equivalence point and an unknown acid concentration.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect x="56" y="4" width="8" height="54" rx="2" fill="none" stroke="#B5B8C0" />
+        <rect x="57" y="20" width="6" height="37" fill="#9CC7FF" opacity="0.6" />
+        <circle cx="60" cy="66" r="2.5" fill="#9CC7FF" />
+        <path d="M52 72 V80 L36 102 H84 L68 80 V72 Z" fill="#E0218A" fillOpacity="0.55" stroke="#B5B8C0" />
+        <path d="M110 96 C140 94 146 88 150 70 C152 50 156 20 196 16" fill="none" stroke="#5B8CFF" strokeWidth="2.5" />
+        <line x1="104" y1="100" x2="204" y2="100" stroke="#4A4D55" />
+        <line x1="104" y1="10" x2="104" y2="100" stroke="#4A4D55" />
+        <circle cx="151" cy="58" r="3.5" fill="#30A46C" />
+      </svg>
+    ),
+  },
+  {
     mode: 'sandbox',
     color: '#E5484D',
     subject: { ru: 'Физика', en: 'Physics' },

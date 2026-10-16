@@ -132,7 +132,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
         <div className="bg-surface border border-line rounded-2xl p-6">
           <h2 className="font-serif text-2xl text-ink">{L('Бесплатно', 'Free')}</h2>
           <div className="mt-2 font-serif text-4xl text-ink">
-            0 <span className="text-lg text-ink-2">{L('сом', 'KGS')}</span>
+            $0
           </div>
           <p className="text-sm text-ink-3">{L('навсегда', 'forever')}</p>
           <ul className="mt-5 flex flex-col gap-2.5">
@@ -181,7 +181,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             <>
               <button onClick={() => pay('pro')} disabled={paying || plan.pro} className="mt-6 w-full h-11 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-60 text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
                 {paying && <Loader2 className="w-4 h-4 animate-spin" />}
-                {plan.pro ? L('Pro уже подключён', 'You have Pro') : user ? L(`Оплатить картой — ${price}`, `Pay by card — ${price}`) : L('Войти и оплатить', 'Log in to pay')}
+                {plan.pro ? L('Pro уже подключён', 'You have Pro') : user ? L(`Оплатить картой — $${price}`, `Pay by card — $${price}`) : L('Войти и оплатить', 'Log in to pay')}
               </button>
               <p className="mt-2 text-xs text-center text-ink-3">{L('Visa и Mastercard любого банка. Оплата через Freemius — безопасно, данные карты к нам не попадают.', 'Any Visa or Mastercard. Paid via Freemius, so your card details never reach us.')}</p>
             </>
@@ -216,7 +216,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             disabled={!paymentsEnabled || paying || plan.plan === 'teacher'}
             className="mt-6 w-full h-11 rounded-lg border-2 border-accent text-accent hover:bg-accent-soft disabled:opacity-60 text-sm font-medium cursor-pointer disabled:cursor-not-allowed"
           >
-            {plan.plan === 'teacher' ? L('Тариф подключён', 'You have it') : paymentsEnabled ? (user ? L(`Оплатить — ${PRICES.teacher}`, `Pay — ${PRICES.teacher}`) : L('Войти и оплатить', 'Log in to pay')) : L('Оплата картой — скоро', 'Card payment — coming soon')}
+            {plan.plan === 'teacher' ? L('Тариф подключён', 'You have it') : paymentsEnabled ? (user ? L(`Оплатить — $${PRICES.teacher}`, `Pay — $${PRICES.teacher}`) : L('Войти и оплатить', 'Log in to pay')) : L('Оплата картой — скоро', 'Card payment — coming soon')}
           </button>
           <p className="mt-2 text-xs text-center text-ink-3">{L('Для школ — промокоды на весь класс: напишите нам.', 'For schools: promo codes for a whole class, just ask.')}</p>
         </div>

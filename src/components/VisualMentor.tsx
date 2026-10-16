@@ -5,6 +5,7 @@ import type { Topic } from '../data/curriculum/types';
 import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, MENTOR_URL, usePlan } from '../lib/plan';
 import { useMentorTopic } from '../lib/mentorTopic';
 import { Formula } from './Formula';
+import { inlineTex, prepareAnswer, tidyTex } from '../lib/mathText';
 
 type Lang = 'ru' | 'en';
 interface Msg {
@@ -74,14 +75,19 @@ function Inline({ text }: { text: string }) {
               <Inline text={p.slice(2, -2)} />
             </strong>
           );
-        if (p.length > 2 && p.startsWith('$') && p.endsWith('$')) return <Formula key={i} tex={p.slice(1, -1)} />;
+        if (p.length > 2 && p.startsWith('$') && p.endsWith('$')) {
+          const tex = inlineTex(p.slice(1, -1));
+          // full-size fractions need room above and below the line
+          return <Formula key={i} tex={tex} className={tex.startsWith('\\displaystyle') ? 'inline-block mx-px my-1 align-middle' : 'mx-px'} />;
+        }
         if (p.length > 2 && p.startsWith('*') && p.endsWith('*'))
           return (
             <em key={i}>
               <Inline text={p.slice(1, -1)} />
             </em>
           );
-        return <React.Fragment key={i}>{p}</React.Fragment>;
+        // plain text: a lone * between words is multiplication
+        return <React.Fragment key={i}>{p.replace(/(\S) \* (?=\S)/g, '$1 · ')}</React.Fragment>;
       })}
     </>
   );
@@ -91,10 +97,12 @@ type Block =
   | { kind: 'math'; tex: string }
   | { kind: 'h'; text: string }
   | { kind: 'list'; ordered: boolean; start: number; items: string[] }
-  | { kind: 'p'; lines: string[] };
+  | { kind: 'p'; lines: string[] }
+  | { kind: 'answer'; text: string };
 
 const BULLET = /^\s*([-*•]|\d+[.)])\s+/;
 const HEAD = /^\s*#{1,6}\s+/;
+const ANSWER = /^\s*\**\s*(Ответ|Answer)\s*:?\s*\**\s*:?\s*/i;
 
 function parseBlocks(src: string): Block[] {
   const out: Block[] = [];
@@ -112,6 +120,12 @@ function parseBlocks(src: string): Block[] {
       for (const raw of piece.split('\n')) {
         const line = raw.trimEnd();
         if (!line.trim()) {
+          // a blank line between list items does not end the list
+          if (open?.kind !== 'list') open = null;
+          continue;
+        }
+        if (ANSWER.test(line) && !BULLET.test(line)) {
+          out.push({ kind: 'answer', text: line.replace(ANSWER, '') });
           open = null;
           continue;
         }
@@ -131,6 +145,12 @@ function parseBlocks(src: string): Block[] {
           }
           continue;
         }
+        // an indented line under a list item belongs to that item
+        if (open && open.kind === 'list' && /^\s{2,}/.test(raw)) {
+          open.items[open.items.length - 1] += `\n${line.trim()}`;
+          continue;
+        }
+        if (open && open.kind === 'list') open = null;
         if (open && open.kind === 'p') {
           open.lines.push(line);
         } else {
@@ -142,16 +162,23 @@ function parseBlocks(src: string): Block[] {
   return out;
 }
 
-const Rich = React.memo(function Rich({ text }: { text: string }) {
-  const blocks = useMemo(() => parseBlocks(text), [text]);
+const Rich = React.memo(function Rich({ text, lang }: { text: string; lang: Lang }) {
+  const blocks = useMemo(() => parseBlocks(prepareAnswer(text)), [text]);
   return (
     <div className="flex flex-col gap-2.5 min-w-0 break-words">
       {blocks.map((b, i) => {
         switch (b.kind) {
           case 'math':
             return (
-              <div key={i} className="max-w-full overflow-x-auto overflow-y-hidden py-1.5 px-1 text-center [scrollbar-width:thin]">
-                <Formula tex={b.tex} display />
+              <div key={i} className="max-w-full overflow-x-auto overflow-y-hidden rounded-xl bg-paper border border-line px-3 py-2.5 text-center text-[1.08em] [scrollbar-width:thin]">
+                <Formula tex={tidyTex(b.tex)} display />
+              </div>
+            );
+          case 'answer':
+            return (
+              <div key={i} className="rounded-xl border border-[#BFE3CF] bg-[#EEF8F2] px-3 py-2 text-ink">
+                <span className="font-semibold text-[#1E7A4C]">{lang === 'en' ? 'Answer: ' : 'Ответ: '}</span>
+                <Inline text={b.text} />
               </div>
             );
           case 'h':
@@ -166,7 +193,20 @@ const Rich = React.memo(function Rich({ text }: { text: string }) {
               <Tag key={i} {...(b.ordered ? { start: b.start } : {})} className={`pl-5 flex flex-col gap-1.5 ${b.ordered ? 'list-decimal' : 'list-disc'} marker:text-ink-3`}>
                 {b.items.map((l, k) => (
                   <li key={k} className="pl-0.5">
-                    <Inline text={l} />
+                    {l.split('\n').map((part, j) => {
+                      // a formula on its own line inside an item is shown as a display formula
+                      const only = part.match(/^\$\$?([^$]+)\$?\$$/);
+                      return only ? (
+                        <div key={j} className="my-1.5 max-w-full overflow-x-auto overflow-y-hidden rounded-xl bg-paper border border-line px-3 py-2 text-center [scrollbar-width:thin]">
+                          <Formula tex={tidyTex(only[1])} display />
+                        </div>
+                      ) : (
+                        <React.Fragment key={j}>
+                          {j > 0 && <br />}
+                          <Inline text={part} />
+                        </React.Fragment>
+                      );
+                    })}
                   </li>
                 ))}
               </Tag>
@@ -317,7 +357,7 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
           ) : (
             <div key={i} className="self-start max-w-[94%] min-w-0 flex flex-col gap-2">
               <div className={`min-w-0 rounded-2xl rounded-tl-sm border px-4 py-3 text-[14.5px] leading-[1.65] text-ink ${m.upgrade ? 'bg-[#FFF8E8] border-[#F3D9A4]' : 'bg-surface border-line'}`}>
-                <Rich text={m.text} />
+                <Rich text={m.text} lang={lang} />
               </div>
               {m.upgrade && (
                 <button

@@ -21,6 +21,7 @@ const NAV_ITEMS: { id: VisualMode; label: { en: string; ru: string } }[] = [
   { id: 'labs', label: { en: 'Labs', ru: 'Лаборатории' } },
   { id: 'practice', label: { en: 'Practice', ru: 'Практикум' } },
   { id: 'course_map', label: { en: 'Map', ru: 'Карта' } },
+  { id: 'formulas', label: { en: 'Formulas', ru: 'Формулы' } },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onToggleMentor,
 }) => {
-  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro', 'teacher', 'classes', 'sandbox', 'circuits', 'optics', 'chemlab', 'genetics', 'heat', 'ecosystem', 'molbuilder', 'space3d'];
+  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro', 'teacher', 'classes', 'sandbox', 'circuits', 'optics', 'chemlab', 'genetics', 'heat', 'ecosystem', 'molbuilder', 'space3d', 'efield', 'waves', 'titration', 'formulas'];
   const plan = usePlan();
   const isActive = (id: VisualMode) => (id === 'textbook' ? !SECTIONS.includes(currentMode) : currentMode === id);
   const p = useProgress();
@@ -40,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-paper/95 border-b border-line">
+      <header className="print:hidden sticky top-0 z-40 w-full bg-paper/95 border-b border-line">
         <div className="max-w-7xl mx-auto h-14 px-4 sm:px-6 flex items-center gap-4">
           <a href="#/" className="flex items-center gap-2.5 shrink-0" aria-label="STEM Visualizer">
             <LogoMark size={26} />
@@ -52,7 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectMode(item.id)}
-                className={`h-8 px-3 rounded-md text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                className={`${item.id === 'formulas' ? 'hidden xl:block ' : ''}h-8 px-3 rounded-md text-sm whitespace-nowrap transition-colors cursor-pointer ${
                   isActive(item.id) ? 'text-accent font-medium' : 'text-ink-2 hover:text-ink hover:bg-hover'
                 }`}
               >
@@ -63,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onOpenSearch}
-            className="hidden md:flex flex-1 max-w-md mx-auto items-center gap-2.5 h-9 px-3 rounded-lg bg-surface border border-line hover:border-line-strong text-sm text-ink-3 transition-colors cursor-pointer"
+            className="hidden md:flex lg:hidden xl:flex flex-1 min-w-0 max-w-md mx-auto items-center gap-2.5 h-9 px-3 rounded-lg bg-surface border border-line hover:border-line-strong text-sm text-ink-3 transition-colors cursor-pointer"
           >
             <Search className="w-4 h-4" strokeWidth={1.75} />
             <span className="truncate">{lang === 'ru' ? 'Что непонятно? Например, электролиз' : 'What’s confusing? E.g. electrolysis'}</span>
@@ -74,7 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenSearch}
               aria-label={lang === 'ru' ? 'Поиск' : 'Search'}
-              className="md:hidden w-9 h-9 rounded-md flex items-center justify-center text-ink-2 hover:text-ink hover:bg-hover cursor-pointer"
+              className="md:hidden lg:flex xl:hidden w-9 h-9 rounded-md flex items-center justify-center text-ink-2 hover:text-ink hover:bg-hover cursor-pointer"
             >
               <Search className="w-[18px] h-[18px]" strokeWidth={1.75} />
             </button>
@@ -133,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </header>
 
       {/* Mobile bottom tab bar */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 border-t border-line pb-[env(safe-area-inset-bottom)]">
+      <nav className="print:hidden lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="grid grid-cols-5 h-14">
           <TabButton active={isActive('textbook')} onClick={() => onSelectMode('textbook')} icon={<BookOpen className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Учебник' : 'Textbook'} />
           <TabButton active={isActive('labs')} onClick={() => onSelectMode('labs')} icon={<FlaskConical className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Лаборатории' : 'Labs'} />
