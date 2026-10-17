@@ -288,7 +288,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
       </div>
 
       {tab === 'problems' ? (
-        <ProblemTrainer lang={lang} />
+        <ProblemTrainer lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'mistakes' ? (
         <MistakesReview lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'topics' ? (

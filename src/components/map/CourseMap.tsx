@@ -3,6 +3,7 @@ import { ArrowRight, Check, Link2, Search, Trophy, X } from 'lucide-react';
 import { gradesFor, Section, SECTIONS, topicById, TOPICS } from '../../data/curriculum';
 import type { StemCategory } from '../../types/stem';
 import { useProgress } from '../../lib/progress';
+import { sectionIcon } from './sectionIcons';
 
 /* The course as a game path: one winding road per subject, a stop for every section, grade by grade.
    Finished sections are filled in, the first unfinished one is "you are here". */
@@ -50,16 +51,40 @@ const NODE = 72;
 const TOP = 30; // room above the first stop for the "you are here" tag
 
 /** progress ring around a stop */
-const Ring: React.FC<{ share: number; color: string }> = ({ share, color }) => {
+const Ring: React.FC<{ share: number; color: string; fill?: boolean }> = ({ share, color, fill }) => {
   const r = NODE / 2 - 4;
   const c = 2 * Math.PI * r;
   return (
     <svg width={NODE} height={NODE} className="absolute inset-0 -rotate-90" aria-hidden>
       <circle cx={NODE / 2} cy={NODE / 2} r={r} fill="none" stroke="#E5E5E0" strokeWidth="6" />
-      {share > 0 && <circle cx={NODE / 2} cy={NODE / 2} r={r} fill="none" stroke={color} strokeWidth="6" strokeLinecap="round" strokeDasharray={`${c * share} ${c}`} />}
+      {share > 0 &&
+        (fill ? (
+          // just finished: the ring closes up
+          <circle cx={NODE / 2} cy={NODE / 2} r={r} fill="none" stroke={color} strokeWidth="6" strokeLinecap="round" pathLength={1} strokeDasharray="1 1" className="map-ring-fill" />
+        ) : (
+          <circle cx={NODE / 2} cy={NODE / 2} r={r} fill="none" stroke={color} strokeWidth="6" strokeLinecap="round" strokeDasharray={`${c * share} ${c}`} />
+        ))}
     </svg>
   );
 };
+
+/** confetti burst around a stop */
+const Burst: React.FC<{ color: string }> = ({ color }) => (
+  <span className="absolute left-1/2 top-1/2 pointer-events-none" aria-hidden>
+    {Array.from({ length: 14 }, (_, i) => {
+      const a = (i / 14) * Math.PI * 2;
+      const d = 56 + (i % 3) * 18;
+      const style = { width: i % 2 ? 11 : 8, height: i % 2 ? 11 : 8, marginLeft: -5, marginTop: -5, background: [color, '#FFD60A', '#5B8CFF'][i % 3], '--dx': `${Math.cos(a) * d}px`, '--dy': `${Math.sin(a) * d}px` } as React.CSSProperties;
+      return <span key={i} className="map-burst absolute rounded-full" style={style} />;
+    })}
+  </span>
+);
+
+// timings of the "section done" animation, ms
+const T_POP = 350;
+const T_DRAW = 1000;
+const T_HOP = 1700;
+const T_END = 2800;
 
 export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = ({ lang, onOpenTopic }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
@@ -73,6 +98,44 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
   });
   const sections = useMemo(() => gradesFor(subject).flatMap((g) => SECTIONS.filter((s) => s.subject === subject && s.grade === g)), [subject]);
   const here = sections.find((s) => shareOf(s) < 1);
+
+  // sections finished since the last visit get a little celebration
+  const [party, setParty] = useState<string | null>(null);
+  useEffect(() => {
+    const done = SECTIONS.filter((s) => s.topics.every((t) => completed[t.id])).map((s) => s.id);
+    let seen: string[] | null = null;
+    try {
+      seen = JSON.parse(localStorage.getItem('mapSeenDone') ?? 'null');
+    } catch {
+      seen = null;
+    }
+    const save = (ids: string[]) => {
+      try {
+        localStorage.setItem('mapSeenDone', JSON.stringify(ids));
+      } catch {
+        // storage unavailable: the celebration simply repeats next time
+      }
+    };
+    // first visit: everything already done counts as seen
+    if (!seen) {
+      save(done);
+      return;
+    }
+    const before = seen;
+    const fresh = done.filter((id) => !before.includes(id));
+    if (!fresh.length) return;
+    const last = SECTIONS.filter((s) => fresh.includes(s.id)).pop()!;
+    setSubject(last.subject);
+    setParty(last.id);
+    setTimeout(() => nodes.current[last.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    const id = setTimeout(() => {
+      setParty(null);
+      save([...before, ...fresh]);
+    }, T_END);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const partySection = party ? SECTIONS.find((s) => s.id === party) : null;
   const [openId, setOpenId] = useState<string | null>(null);
   const open = sections.find((s) => s.id === openId) ?? null;
   const [q, setQ] = useState('');
@@ -175,7 +238,7 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
         {/* the road */}
-        <div ref={road} className="rounded-2xl border border-line py-6 overflow-hidden" style={{ background: `radial-gradient(circle at 50% 0%, ${SOFT[subject]}, #FAFAF7 60%)` }}>
+        <div ref={road} className="relative rounded-2xl border border-line py-6 overflow-hidden" style={{ background: `radial-gradient(circle at 50% 0%, ${SOFT[subject]}, #FAFAF7 60%)` }}>
           {gradesFor(subject).map((g) => {
             const secs = sections.filter((s) => s.grade === g);
             const start = sections.indexOf(secs[0]);
@@ -186,7 +249,7 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
                 <div className="mx-auto max-w-[360px] px-4 mb-2">
                   <div className="flex items-center gap-3">
                     <span className="h-px flex-1 bg-line" />
-                    <span className="inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-sm font-medium" style={gradeDone ? { background: COLOR[subject], color: '#fff' } : { background: '#fff', border: '1px solid #E5E5E0', color: '#16171A' }}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-sm font-medium ${gradeDone && secs.some((s) => s.id === party) ? 'map-pop' : ''}`} style={{ ...(gradeDone ? { background: COLOR[subject], color: '#fff' } : { background: '#fff', border: '1px solid #E5E5E0', color: '#16171A' }), animationDelay: `${T_HOP}ms` }}>
                       {gradeDone && <Trophy className="w-4 h-4" />}
                       {g} {L('класс', 'grade')}
                     </span>
@@ -198,18 +261,28 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
                     {pts.slice(1).map((b, i) => {
                       const a = pts[i];
                       const done = shareOf(secs[i]) === 1;
-                      return <path key={i} d={`M${a.x},${a.y} C${a.x},${a.y + ROW / 2} ${b.x},${b.y - ROW / 2} ${b.x},${b.y}`} fill="none" stroke={done ? COLOR[subject] : '#D9D9D3'} strokeWidth={done ? 6 : 4} strokeDasharray={done ? undefined : '2 10'} strokeLinecap="round" />;
+                      const d = `M${a.x},${a.y} C${a.x},${a.y + ROW / 2} ${b.x},${b.y - ROW / 2} ${b.x},${b.y}`;
+                      // the road after a just-finished stop draws itself
+                      if (done && secs[i].id === party)
+                        return (
+                          <g key={i}>
+                            <path d={d} fill="none" stroke="#D9D9D3" strokeWidth={4} strokeDasharray="2 10" strokeLinecap="round" />
+                            <path d={d} fill="none" stroke={COLOR[subject]} strokeWidth={6} strokeLinecap="round" pathLength={1} strokeDasharray="1 1" className="map-draw" style={{ animationDelay: `${T_DRAW}ms` }} />
+                          </g>
+                        );
+                      return <path key={i} d={d} fill="none" stroke={done ? COLOR[subject] : '#D9D9D3'} strokeWidth={done ? 6 : 4} strokeDasharray={done ? undefined : '2 10'} strokeLinecap="round" />;
                     })}
                   </svg>
                   {secs.map((s, i) => {
                     const share = shareOf(s);
                     const isHere = here?.id === s.id;
+                    const celebrating = party === s.id;
                     const isOpen = openId === s.id;
                     const p = pts[i];
                     return (
                       <div key={s.id} className="absolute flex flex-col items-center" style={{ left: p.x - LW / 2, top: p.y - NODE / 2, width: LW }}>
                         {isHere && (
-                          <span className="absolute -top-9 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-md animate-bounce" style={{ background: '#16171A', color: '#fff' }}>
+                          <span className={`absolute -top-9 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-md ${party ? 'map-hop' : 'animate-bounce'}`} style={{ background: '#16171A', color: '#fff', animationDelay: party ? `${T_HOP}ms` : undefined }}>
                             {Object.keys(completed).length ? L('Ты здесь', 'You are here') : L('Начни отсюда', 'Start here')}
                           </span>
                         )}
@@ -219,15 +292,21 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
                           }}
                           onClick={() => setOpenId(isOpen ? null : s.id)}
                           aria-label={s.title[lang]}
-                          className="relative rounded-full transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                          style={{ width: NODE, height: NODE, boxShadow: isOpen ? `0 0 0 6px ${COLOR[subject]}40` : isHere ? `0 0 0 6px ${COLOR[subject]}26` : undefined }}
+                          className={`relative rounded-full transition-transform hover:scale-105 active:scale-95 cursor-pointer ${celebrating ? 'map-pop' : ''}`}
+                          style={{ width: NODE, height: NODE, animationDelay: celebrating ? `${T_POP}ms` : undefined, boxShadow: isOpen ? `0 0 0 6px ${COLOR[subject]}40` : isHere ? `0 0 0 6px ${COLOR[subject]}26` : undefined }}
                         >
-                          <Ring share={share} color={COLOR[subject]} />
+                          <Ring share={share} color={COLOR[subject]} fill={celebrating} />
+                          {celebrating && <Burst color={COLOR[subject]} />}
                           <span
                             className="absolute inset-[9px] rounded-full flex items-center justify-center font-semibold text-lg"
                             style={share === 1 ? { background: COLOR[subject], color: '#fff', boxShadow: `inset 0 -4px 0 rgba(0,0,0,0.15)` } : share > 0 || isHere ? { background: '#fff', color: COLOR[subject], boxShadow: 'inset 0 -4px 0 #EDEDE8' } : { background: '#F1F1EC', color: '#A3A6AD', boxShadow: 'inset 0 -4px 0 #E2E2DC' }}
                           >
-                            {share === 1 ? <Check className="w-7 h-7" strokeWidth={3} /> : sections.indexOf(s) + 1}
+                            {React.createElement(sectionIcon(s), { className: 'w-7 h-7', strokeWidth: 2 })}
+                            {share === 1 && (
+                              <span className="absolute -right-1.5 -bottom-1.5 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white" style={{ background: '#16171A' }}>
+                                <Check className="w-3.5 h-3.5" style={{ color: '#fff' }} strokeWidth={3.5} />
+                              </span>
+                            )}
                           </span>
                         </button>
                         <span className={`mt-1.5 text-center text-[12.5px] leading-tight line-clamp-2 ${share > 0 || isHere ? 'text-ink font-medium' : 'text-ink-2'}`}>{s.title[lang]}</span>
@@ -239,6 +318,26 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
             );
           })}
           <div className="text-center text-sm text-ink-3 pt-2">{L('Финиш — готов к ОРТ 🎓', 'Finish line: exam ready 🎓')}</div>
+          {partySection && (
+            <div className="map-toast sticky bottom-4 mx-auto w-max max-w-[90%] mt-2 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2" style={{ background: '#16171A', color: '#fff' }}>
+              <Trophy className="w-4 h-4 text-[#FFD60A]" />
+              {L(`Раздел «${partySection.title.ru}» пройден!`, `Section “${partySection.title.en}” done!`)}
+            </div>
+          )}
+          <style>{`
+            .map-pop { animation: mapPop 0.6s cubic-bezier(.3,1.6,.5,1) both; }
+            @keyframes mapPop { 0% { transform: scale(.7) } 60% { transform: scale(1.18) } 100% { transform: scale(1) } }
+            .map-ring-fill { stroke-dashoffset: 1; animation: mapFill .7s ease-out 350ms forwards; }
+            @keyframes mapFill { to { stroke-dashoffset: 0 } }
+            .map-burst { opacity: 0; animation: mapBurst .9s ease-out 600ms forwards; }
+            @keyframes mapBurst { 0% { opacity: 1; transform: translate(0, 0) scale(1) } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3) } }
+            .map-draw { stroke-dashoffset: 1; animation: mapFill .8s ease-in-out both; }
+            .map-hop { animation: mapHop .7s cubic-bezier(.3,1.5,.5,1) both; }
+            @keyframes mapHop { 0% { opacity: 0; transform: translateY(-40px) } 100% { opacity: 1; transform: none } }
+            .map-toast { animation: mapToast 2800ms ease both; }
+            @keyframes mapToast { 0%, 100% { opacity: 0; transform: translateY(10px) } 12%, 85% { opacity: 1; transform: none } }
+            @media (prefers-reduced-motion: reduce) { .map-pop, .map-ring-fill, .map-burst, .map-draw, .map-hop, .map-toast { animation: none !important; stroke-dashoffset: 0; } }
+          `}</style>
         </div>
 
         {/* section details: a side panel on desktop, a bottom sheet on phones */}
