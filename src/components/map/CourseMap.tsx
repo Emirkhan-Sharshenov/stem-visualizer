@@ -4,6 +4,7 @@ import { gradesFor, Section, SECTIONS, topicById, TOPICS } from '../../data/curr
 import type { StemCategory } from '../../types/stem';
 import { useProgress } from '../../lib/progress';
 import { sectionIcon } from './sectionIcons';
+import { useScreenDetail } from '../../lib/pageContext';
 
 /* The course as a game path: one winding road per subject, a stop for every section, grade by grade.
    Finished sections are filled in, the first unfinished one is "you are here". */
@@ -138,6 +139,14 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
   const partySection = party ? SECTIONS.find((s) => s.id === party) : null;
   const [openId, setOpenId] = useState<string | null>(null);
   const open = sections.find((s) => s.id === openId) ?? null;
+  useScreenDetail(
+    'map',
+    open
+      ? `Открыт раздел «${open.title.ru}» (${NAME[open.subject].ru}, ${open.grade} класс). Темы: ${open.topics.map((tp) => `${completed[tp.id] ? '✓' : '○'} ${tp.title.ru}`).join('; ')}.`
+      : here
+        ? `Предмет: ${NAME[subject].ru}. Следующий непройденный раздел ученика: «${here.title.ru}», ${here.grade} класс.`
+        : `Предмет ${NAME[subject].ru} пройден полностью.`,
+  );
   const [q, setQ] = useState('');
   const nodes = useRef<Record<string, HTMLButtonElement | null>>({});
   // the road narrows on phones: the wiggle shrinks so the labels always fit

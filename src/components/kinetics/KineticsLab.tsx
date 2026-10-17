@@ -3,6 +3,7 @@ import { Pause, Play, Plus, RotateCcw } from 'lucide-react';
 import { BOX_H, count, EA, EA_CAT, makeWorld, Params, Q, R_BIG, R_SMALL, spawn, step, World } from './kinetics';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 const COL = { a: '#E5484D', b: '#3B6BFF', ab: '#A35BE0' };
@@ -78,6 +79,10 @@ export const KineticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
   const kelvin = Math.round(params.T * 150);
   const r = rates.current;
 
+  useScreenDetail(
+    'lab',
+    `Температура ${kelvin} K, объём сосуда ${Math.round((params.width / MAX_W) * 100)}%, катализатор ${params.catalyst ? 'добавлен' : 'нет'}. Сейчас молекул: A ${c.a}, B ${c.b}, AB ${c.ab}. Скорость прямой реакции ${r.fwd.toFixed(1)}/с, обратной ${r.back.toFixed(1)}/с. Реакция экзотермическая.`,
+  );
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-surface border border-line rounded-xl px-4 py-3">

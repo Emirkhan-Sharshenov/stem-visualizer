@@ -3,6 +3,7 @@ import { Timer, Trash2 } from 'lucide-react';
 import { COLOR_HEX, Conditions, factors, illuminance, LightColor, limiting, MAX_BUBBLES, rate } from './photo';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 type Axis = 'd' | 'co2' | 't';
@@ -103,6 +104,10 @@ export const PhotoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     </label>
   );
 
+  useScreenDetail(
+    'lab',
+    `Условия: лампа на ${c.d} см, свет ${c.color}, NaHCO₃ ${c.co2}%, вода ${c.t} °C. Скорость ≈ ${Math.round(r * MAX_BUBBLES)} пузырьков/мин. Факторы (доля от максимума): свет ${Math.round(f.light * 100)}%, CO₂ ${Math.round(f.co2 * 100)}%, температура ${Math.round(f.temp * 100)}%; ограничивает: ${lim ?? 'ничего'}. Измерений в журнале: ${rows.length}.`,
+  );
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-surface border border-line rounded-xl px-4 py-3">

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { useScreenDetail } from '../../lib/pageContext';
 
 /* Ripple tank. Every scene is a sum of circular waves from point sources (Huygens), so each pixel
    stores the complex amplitude C + iS once, and a frame is just h = C·cos ωt + S·sin ωt. */
@@ -248,6 +249,10 @@ export const WaveLab: React.FC<{ lang: Lang }> = ({ lang }) => {
   const fFront = 1 / (1 - beta);
   const fBack = 1 / (1 + beta);
 
+  useScreenDetail(
+    'lab',
+    `Сцена: ${SCENES.find((x) => x.id === scene)?.ru}. λ = ${lambda} см${scene === 'two' || scene === 'double' ? `, расстояние между ${scene === 'two' ? 'источниками' : 'щелями'} d = ${d} см` : ''}${scene === 'slit' || scene === 'double' ? `, ширина щели ${a} см` : ''}${scene === 'two' && anti ? ', источники в противофазе' : ''}${scene === 'doppler' ? `, скорость источника = ${beta} скорости волны${beta >= 1 ? ' (быстрее волны — конус Маха)' : ''}` : ''}. Режим показа: ${intensity ? 'интенсивность' : 'волны'}.`,
+  );
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-surface border border-line rounded-xl px-4 py-3">

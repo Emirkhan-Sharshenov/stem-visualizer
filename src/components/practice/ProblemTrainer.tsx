@@ -4,6 +4,7 @@ import { PROBLEMS, ProblemGen, problemQuestion } from '../../lib/problems';
 import { progress, useProgress } from '../../lib/progress';
 import { Formula } from '../Formula';
 import { Marathon } from './Marathon';
+import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 import { TopicDrill } from './TopicDrill';
 import { TOPICS } from '../../data/curriculum';
 
@@ -24,6 +25,7 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const gen = gens[seed % gens.length];
   const q = useMemo(() => problemQuestion(gen, seed), [gen, seed]);
+  useScreenDetail('question-problem', `Расчётная задача «${gen.title.ru}», ${gen.grade} класс.\n${questionDetail(q, answer)}`);
   const choose = (k: number) => {
     if (answer !== null) return;
     setAnswer(k);

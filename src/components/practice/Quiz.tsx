@@ -4,6 +4,7 @@ import type { Question } from '../../lib/quiz';
 import { topicById } from '../../data/curriculum';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 
@@ -40,6 +41,14 @@ export const Quiz: React.FC<{
     progress.recordMistakes(questions.filter((q, k) => picked[k] !== null && picked[k] !== q.correct));
     onFinish(score, questions.length, Math.floor((Date.now() - start) / 1000));
   };
+
+  const missed = done ? questions.filter((q, k) => picked[k] !== q.correct) : [];
+  useScreenDetail(
+    'question-quiz',
+    done
+      ? `Ученик закончил тест: ${score} из ${questions.length}.${missed.length ? ` Ошибки в вопросах: ${missed.slice(0, 6).map((q) => `«${q.prompt.ru}» (верно: ${q.options[q.correct].ru})`).join('; ')}` : ''}`
+      : `Тест, вопрос ${i + 1} из ${questions.length}${timeLimit ? ' (идёт на время — это экзамен, готовые ответы не подсказывай)' : ''}.\n${questionDetail(questions[i], picked[i] ?? null)}`,
+  );
 
   useEffect(() => {
     if (timeLimit && left === 0 && !done) finish();

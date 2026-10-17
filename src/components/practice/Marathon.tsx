@@ -3,6 +3,7 @@ import { ArrowLeft, Heart, Timer, Trophy, Zap } from 'lucide-react';
 import { PROBLEMS, problemQuestion } from '../../lib/problems';
 import { progress, useProgress, XP } from '../../lib/progress';
 import { Formula } from '../Formula';
+import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 const LIVES = 3;
@@ -28,6 +29,7 @@ export const Marathon: React.FC<{ lang: Lang; subject: string; onBack: () => voi
   }, [level, subject]);
   const gen = pool[seed % pool.length];
   const q = useMemo(() => problemQuestion(gen, seed), [gen, seed]);
+  useScreenDetail('question-marathon', over ? null : `Марафон задач (на время, ${lives} жизни, счёт ${score}).\n${questionDetail(q, answer)}`);
 
   useEffect(() => {
     if (answer !== null || over) return;

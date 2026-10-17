@@ -1,6 +1,6 @@
 import type { Question } from './quiz';
 import { hashStr, rng, shuffle } from './quiz';
-import { LAW_PROBLEMS } from './laws';
+import { LAW_PROBLEMS, SUM_LAW_PROBLEMS } from './laws';
 
 /*
  * Calculation problems generated with fresh numbers every time.
@@ -849,7 +849,7 @@ export const PROBLEMS: ProblemGen[] = [
 ];
 
 // procedural problems from the textbook's formulas (src/lib/laws.ts)
-PROBLEMS.push(...LAW_PROBLEMS);
+PROBLEMS.push(...LAW_PROBLEMS, ...SUM_LAW_PROBLEMS);
 
 /* ---------- to quiz questions ---------- */
 

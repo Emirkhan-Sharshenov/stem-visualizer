@@ -3,6 +3,7 @@ import { Check, Droplet, Pause, Play, RotateCcw, Target } from 'lucide-react';
 import { AnalyteId, ANALYTES, INDICATORS, IndicatorId, pH, solutionColor } from './titration';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 
@@ -106,6 +107,10 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
 
   const sel = 'h-9 rounded-lg border border-line bg-surface px-2.5 text-sm text-ink cursor-pointer max-w-full';
 
+  useScreenDetail(
+    'lab',
+    `Состояние опыта: в колбе ${VA} мл — ${an.name.ru}${task !== null ? ' НЕИЗВЕСТНОЙ концентрации (ученик решает задачу «найди c» — саму концентрацию и объём эквивалентности не называй, помогай методом)' : `, c = ${ca} моль/л`}. Титрант: 0,1 М ${an.titrant.name.ru}. Индикатор: ${ind.name.ru} (переход при pH ${ind.range[0]}–${ind.range[1]}). Добавлено ${vt.toFixed(2)} мл, pH = ${ph.toFixed(2)}.${task === null ? (passed ? ` Точка эквивалентности пройдена (${veq.toFixed(1)} мл).` : ' До точки эквивалентности ещё не дошли.') : ''}`,
+  );
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-surface border border-line rounded-xl px-4 py-3">

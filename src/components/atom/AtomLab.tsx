@@ -3,6 +3,7 @@ import { Check, Minus, Plus, RotateCcw } from 'lucide-react';
 import { chargeLabel, commonA, configTex, ELEMENTS, shells, TASKS } from './atom';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 const P = '#E5484D';
@@ -83,6 +84,10 @@ export const AtomLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     setE(z);
   };
 
+  useScreenDetail(
+    'lab',
+    `Собрано: ${p} протонов, ${n} нейтронов, ${e} электронов. ${el ? `Элемент ${el.ru} (${el.sym}), A = ${A}, заряд ${q === 0 ? '0' : q > 0 ? '+' + q : q}, ${stable ? 'стабильный' : 'нестабильный'} изотоп, электроны по слоям: ${sh.join(', ')}.` : 'Протонов нет — это не элемент.'}`,
+  );
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-surface border border-line rounded-xl px-4 py-3">

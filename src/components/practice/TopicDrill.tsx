@@ -5,6 +5,7 @@ import { problemQuestion, problemsForTopic } from '../../lib/problems';
 import { questionsForTopic, Question } from '../../lib/quiz';
 import { progress } from '../../lib/progress';
 import { Formula } from '../Formula';
+import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 
@@ -27,6 +28,8 @@ export const TopicDrill: React.FC<{ lang: Lang; topicId: string; onBack: () => v
     const pool = questionsForTopic(topic, 10, seed + Math.floor(k / 6));
     return pool[k % pool.length];
   }, [gens, k, seed, topic]);
+
+  useScreenDetail('question-drill', q ? `Тренировка по теме «${topic.title.ru}» (${topic.grade} класс).\n${questionDetail(q, answer)}` : null);
 
   if (!q) {
     return (

@@ -3,6 +3,7 @@ import { Bird, Factory, Pause, Play, RotateCcw, SkipForward, Trees } from 'lucid
 import { eatChance, Env, firstGeneration, isDark, Moth, nextGeneration, place, rng, stats } from './selection';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 const ASPECT = 0.62;
@@ -199,6 +200,10 @@ export const SelectionLab: React.FC<{ lang: Lang }> = ({ lang }) => {
   const X = (i: number) => 30 + (i / Math.max(1, history.length - 1)) * (GW - 40);
   const Y = (v: number) => 10 + (1 - v) * (GH - 30);
 
+  useScreenDetail(
+    'lab',
+    `Среда: ${env === 'soot' ? 'закопчённые тёмные стволы' : 'чистый лес, светлые стволы'}. Поколение ${gen}. Генотипы: CC ${cur.CC}, Cc ${cur.het}, cc ${cur.cc}; доля тёмных ${Math.round(cur.dark * 100)}%, p(C) = ${cur.p.toFixed(2)}, q(c) = ${cur.q.toFixed(2)}. Охотятся ${Math.round(strength * 100)}% птиц, мутации ${(mu * 100).toFixed(1)}%.${player ? ' Сейчас ученик играет за птицу и ловит бабочек.' : ''}`,
+  );
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-surface border border-line rounded-xl px-4 py-3">

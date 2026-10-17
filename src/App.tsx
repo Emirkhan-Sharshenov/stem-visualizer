@@ -36,6 +36,8 @@ import { PredictFirstModal } from './components/PredictFirstModal';
 import { VisualMentor } from './components/VisualMentor';
 import { XpToast } from './components/XpToast';
 import './lib/xp';
+import { setPageBase } from './lib/pageContext';
+import { MODE_INFO } from './lib/modeInfo';
 import { MilestonesModal } from './components/MilestonesModal';
 import { SearchModal } from './components/SearchModal';
 import { progress } from './lib/progress';
@@ -132,6 +134,11 @@ export default function App({ lang, setLang }: AppProps) {
   const [pendingTopic, setPendingTopic] = useState<string | undefined>(undefined);
 
   useEffect(() => progress.touch(), []);
+  // tell the mentor which section is on screen
+  useEffect(() => {
+    const info = MODE_INFO[currentMode];
+    setPageBase(info?.[0] ?? 'Интерактивная лаборатория', info?.[1], info?.[2] ?? !info);
+  }, [currentMode]);
 
   // "Pro" buttons anywhere (mentor limit, locked blocks) open the plans page
   useEffect(() => {

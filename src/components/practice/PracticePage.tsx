@@ -8,6 +8,7 @@ import { DailyCard, SectionTests, TopicsBrowser } from './PracticeBlocks';
 import { ProblemTrainer } from './ProblemTrainer';
 import { OrtExam } from './OrtExam';
 import { MistakesReview } from './MistakesReview';
+import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 
 const SimById = lazy(() => import('../sims/SimById'));
 
@@ -27,6 +28,7 @@ const Challenge: React.FC<{ lang: Lang; p: Prediction; onNext?: () => void; onBa
   const [answer, setAnswer] = useState<number | null>(null);
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const ok = answer === p.correct;
+  useScreenDetail('question-predict', `«Предскажи, потом проверь»: ученик должен угадать исход опыта, затем модель его покажет.\n${questionDetail({ id: p.id, topicId: p.topicId, prompt: p.question, options: p.options, correct: p.correct, explain: p.explain }, answer)}`);
   const choose = (k: number) => {
     if (answer !== null) return;
     setAnswer(k);

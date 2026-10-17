@@ -3,6 +3,7 @@ import { Hand, Minus, Plus, RotateCcw, Trash2, Zap } from 'lucide-react';
 import { Charge, coulomb, fieldAt, fieldLines, H, preset, PresetId, W } from './field';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
+import { useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 type Tool = 'move' | 'plus' | 'minus' | 'probe' | 'erase';
@@ -329,6 +330,10 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     { id: 'erase', icon: <Trash2 className="w-4 h-4" />, ru: 'Удалить', en: 'Delete' },
   ];
 
+  useScreenDetail(
+    'lab',
+    `Сцена: ${info ? info.ru : 'своя расстановка'}. Заряды (координаты в см, поле 40×25 см): ${charges.length ? charges.map((c) => `${c.q > 0 ? '+' : ''}${c.q} нКл в (${c.x.toFixed(1)}; ${c.y.toFixed(1)})`).join(', ') : 'нет'}. Инструмент: ${tool}. Показаны: ${[show.lines && 'силовые линии', show.potential && 'потенциал', show.vectors && 'векторы E'].filter(Boolean).join(', ') || 'ничего'}.`,
+  );
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-surface border border-line rounded-xl px-4 py-3">

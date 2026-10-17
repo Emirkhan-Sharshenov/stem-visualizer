@@ -6,6 +6,8 @@ import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, MENTOR_URL, usePlan
 import { useMentorTopic } from '../lib/mentorTopic';
 import { Formula } from './Formula';
 import { inlineTex, prepareAnswer, tidyTex } from '../lib/mathText';
+import { usePageContext } from '../lib/pageContext';
+import { Eye } from 'lucide-react';
 
 type Lang = 'ru' | 'en';
 interface Msg {
@@ -242,7 +244,16 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
-  const chips = useMemo(() => suggestions(topic, lang), [topic, lang]);
+  // what is on screen right now: the section, a problem, the state of a lab
+  const page = usePageContext();
+  const chips = useMemo(() => {
+    const L2 = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+    if (page.kind === 'question')
+      return [L2('Объясни эту задачу', 'Explain this problem'), L2('Дай подсказку, но не решай', 'Give me a hint, not the answer'), L2('Какая формула здесь нужна?', 'Which formula do I need here?')];
+    if (page.kind === 'lab')
+      return [L2('Что здесь сейчас происходит?', 'What is happening here?'), L2('Почему получилось именно так?', 'Why did it turn out like this?'), L2('Какой опыт мне тут попробовать?', 'What experiment should I try here?')];
+    return suggestions(topic, lang);
+  }, [page.kind, topic, lang]);
 
   // a new topic starts a new conversation
   useEffect(() => setMessages([]), [topic?.id]);
@@ -265,7 +276,7 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
       const res = await fetch(MENTOR_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ question: q, lang, topic: topic ? topicContext(topic, lang) : null, history }),
+        body: JSON.stringify({ question: q, lang, topic: topic ? topicContext(topic, lang) : null, history, page: { where: page.where, details: page.details.slice(0, 1800) } }),
       });
       const leftHeader = res.headers.get('X-Mentor-Left');
       if (leftHeader !== null) setLeft(leftHeader === 'Infinity' ? null : Number(leftHeader));
@@ -323,11 +334,19 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
         </button>
       </div>
 
-      {topic && subj && (
+      {topic && subj ? (
         <div className="px-4 py-2.5 border-b border-line bg-surface text-xs text-ink-2 flex items-center gap-2 shrink-0">
           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: subj.color }} />
           <span className="truncate">
             {L('Тема', 'Topic')}: <span className="text-ink">{topic.title[lang]}</span> · {subj[lang]}, {topic.grade} {L('кл.', 'gr.')}
+          </span>
+        </div>
+      ) : (
+        <div className="px-4 py-2.5 border-b border-line bg-surface text-xs text-ink-2 flex items-center gap-2 shrink-0" title={page.details}>
+          <Eye className="w-3.5 h-3.5 shrink-0 text-accent" strokeWidth={2} />
+          <span className="truncate">
+            {L('Вижу', 'I can see')}: <span className="text-ink">{page.where}</span>
+            {page.kind === 'question' && <span> · {L('задача на экране', 'a problem on screen')}</span>}
           </span>
         </div>
       )}
@@ -336,9 +355,13 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
         {messages.length === 0 && (
           <div className="flex flex-col gap-3">
             <div className="rounded-2xl rounded-tl-sm bg-surface border border-line px-4 py-3 text-[14.5px] leading-relaxed text-ink">
-              {topic
-                ? L(`Привет! Спрашивай что угодно по теме «${topic.title.ru}» — объясню проще, приведу пример или дам задачу.`, `Hi! Ask me anything about “${topic.title.en}”: I can explain it more simply, give examples or set a problem.`)
-                : L('Привет! Я помогу разобраться в физике, химии и биологии. Открой тему в учебнике — и я буду отвечать именно по ней.', 'Hi! I help with physics, chemistry and biology. Open a textbook topic and I will answer about it.')}
+              {page.kind === 'question'
+                ? L('Вижу задачу на твоём экране. Могу объяснить её, подсказать ход решения или формулу — спрашивай.', 'I can see the problem on your screen. I can explain it, hint at the method or the formula: just ask.')
+                : page.kind === 'lab'
+                  ? L(`Вижу, где ты: ${page.where}, — и что у тебя сейчас на экране. Спроси, что происходит и почему.`, `I can see where you are (${page.where}) and what is on your screen. Ask what is happening and why.`)
+                  : topic
+                    ? L(`Привет! Спрашивай что угодно по теме «${topic.title.ru}» — объясню проще, приведу пример или дам задачу.`, `Hi! Ask me anything about “${topic.title.en}”: I can explain it more simply, give examples or set a problem.`)
+                    : L('Привет! Я помогу разобраться в физике, химии и биологии. Я вижу, в каком ты разделе, — спрашивай про то, что у тебя на экране.', 'Hi! I help with physics, chemistry and biology. I can see which section you are in, so ask about what is on your screen.')}
             </div>
             <div className="flex flex-col gap-1.5">
               {chips.map((c) => (

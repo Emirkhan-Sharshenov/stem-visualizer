@@ -5,6 +5,7 @@ import { usePlan } from '../../lib/plan';
 import { topicById } from '../../data/curriculum';
 import { ProGate } from '../pro/ProPage';
 import { Formula } from '../Formula';
+import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 
 type Lang = 'ru' | 'en';
 
@@ -22,6 +23,7 @@ export const MistakesReview: React.FC<{ lang: Lang; onOpenTopic: (id: string) =>
   // cards come from a snapshot so an answered (or just learnt) card stays on screen until "Next"
   const [snapshot] = useState(() => ({ ...(mistakes ?? {}) }));
   const card = snapshot[queue[i]];
+  useScreenDetail('question-review', card ? `Работа над ошибками: ученик уже ошибался в этом вопросе ${card.misses} раз.\n${questionDetail(card.q, answer)}` : null);
   const nextDue = useMemo(() => all.filter((m) => m.due > Date.now()).sort((a, b) => a.due - b.due)[0]?.due, [all]);
   const byBox = [0, 1, 2, 3].map((b) => all.filter((m) => m.box === b).length);
 
