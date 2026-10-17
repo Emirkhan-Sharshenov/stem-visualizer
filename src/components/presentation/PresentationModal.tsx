@@ -6,11 +6,10 @@ import { sectionsFor } from '../../data/curriculum';
 import { usePlan } from '../../lib/plan';
 import { useSession } from '../../lib/supabase';
 import {
-  accentFor, bodySize, buildSlides, listSize, optSize, downloadPptx, fileName, fit, FONT_BODY, FONT_HEAD, Img, Part, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
+  accentFor, buildSlides, downloadPptx, fileName, Images, Img, layoutSlide, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
 } from '../../lib/presentation';
 
 type Lang = 'ru' | 'en';
-type Images = { formula: Record<string, Img>; model: Record<string, Img> };
 
 /* ---------- capturing the formula and the model from the page ---------- */
 
@@ -53,180 +52,65 @@ async function snap(el: HTMLElement | null, bg: string, skipFonts = false, style
   }
 }
 
-/* ---------- the slide preview, drawn with the same layout as the file ---------- */
+/* ---------- the slide preview: draws the same shapes that go into the file ---------- */
 
 const hex = (c: string) => `#${c}`;
+// what the browser shows when Calibri is not installed: metrically compatible Carlito, then system sans
+const CSS_FONT: Record<string, string> = {
+  head: 'Georgia, "Times New Roman", serif',
+  body: 'Calibri, Carlito, "Segoe UI", Arial, sans-serif',
+  math: '"Cambria Math", Cambria, Georgia, serif',
+};
 
-export const SlideView: React.FC<{ slide: SlideWithNotes; theme: Theme; accent: string; images: Images; width: number; index: number; total: number }> = ({ slide: sl, theme, accent, images, width, index, total }) => {
+export const SlideView: React.FC<{ slide: SlideWithNotes; theme: Theme; accent: string; images: Images; width: number; index: number; total: number; deck: string }> = ({ slide, theme, accent, images, width, index, total, deck }) => {
   const k = width / SLIDE_W;
   const pt = (n: number) => (n / 72) * k;
-  const hero = sl.k === 'title' || sl.k === 'end';
-  const onAccent = hero && theme.heroBg === accent;
-  const ink = hex(hero ? theme.heroInk : theme.ink);
-  const A = hex(accent);
-  const box = (x: number, y: number, w: number, h: number, extra: React.CSSProperties = {}): React.CSSProperties => ({ position: 'absolute', left: x * k, top: y * k, width: w * k, height: h * k, overflow: 'hidden', ...extra });
-  const txt = (size: number, color: string, head = false, extra: React.CSSProperties = {}): React.CSSProperties => ({ fontSize: pt(size), color, fontFamily: head ? FONT_HEAD : FONT_BODY, lineHeight: 1.2, ...extra });
-  const head = (label: string) => (
-    <>
-      <div style={{ ...box(0.6, 0.3, 10, 0.4), ...txt(12, A, false, { fontWeight: 700, letterSpacing: pt(1.5) }) }}>{label}</div>
-      <div style={box(0.6, 0.78, 0.7, 0.06, { background: A })} />
-    </>
-  );
-  let body: React.ReactNode = null;
-  switch (sl.k) {
-    case 'title':
-    case 'end':
-      body = (
-        <>
-          {!onAccent && <div style={box(0, 0, 0.35, SLIDE_H, { background: A })} />}
-          <div style={box(9.4, -1.2, 5.2, 5.2, { borderRadius: '50%', background: onAccent ? '#fff' : A, opacity: onAccent ? 0.15 : 0.12 })} />
-          <div style={box(10.9, 4.3, 3, 3, { borderRadius: '50%', background: onAccent ? '#fff' : A, opacity: onAccent ? 0.2 : 0.18 })} />
-          {sl.k === 'title' ? (
-            <>
-              <div style={{ ...box(1, 1.6, 10, 0.5), ...txt(16, onAccent ? '#fff' : A, false, { fontWeight: 700, letterSpacing: pt(2), textTransform: 'uppercase' }) }}>{sl.label}</div>
-              <div style={{ ...box(1, 2.15, 10.5, 2.4), ...txt(sl.title.length > 50 ? 36 : 44, ink, true) }}>{sl.title}</div>
-              {sl.subtitle && <div style={{ ...box(1, 4.7, 10, 1.4), ...txt(18, onAccent ? '#fff' : hex(theme.muted)) }}>{sl.subtitle}</div>}
-            </>
-          ) : (
-            <>
-              <div style={{ ...box(1, 2.6, 10.5, 1.3), ...txt(48, ink, true) }}>{sl.title}</div>
-              <div style={{ ...box(1, 3.9, 10, 0.8), ...txt(24, onAccent ? '#fff' : A) }}>{sl.subtitle}</div>
-            </>
-          )}
-        </>
-      );
-      break;
-    case 'agenda':
-      body = (
-        <>
-          {head('')}
-          <div style={{ ...box(0.6, 1.0, 12, 0.9), ...txt(34, ink, true) }}>{sl.title}</div>
-          <div style={{ ...box(0.6, 2.1, 12, 4.8), ...txt(sl.items.length > 8 ? 18 : 24, ink), columnCount: sl.items.length > 6 ? 2 : 1 }}>
-            {sl.items.map((t, i) => (
-              <div key={i} style={{ marginBottom: pt(12) }}>
-                <span style={{ color: A, fontFamily: 'monospace' }}>{String(i + 1).padStart(2, '0')}</span>&nbsp;&nbsp;{t}
-              </div>
-            ))}
-          </div>
-        </>
-      );
-      break;
-    case 'divider':
-      body = (
-        <>
-          <div style={{ ...box(0.9, 1.9, 3, 1.4), ...txt(80, A, true) }}>{String(sl.n).padStart(2, '0')}</div>
-          <div style={{ ...box(0.9, 3.4, 11.5, 2), ...txt(40, ink, true) }}>{sl.title}</div>
-        </>
-      );
-      break;
-    case 'text':
-      body = (
-        <>
-          {head(sl.label)}
-          <div style={{ ...box(0.6, 1.0, 12, 0.9), ...txt(32, ink, true) }}>{sl.title}</div>
-          <div style={box(0.6, 2.25, 0.08, 3.9, { background: A })} />
-          <div style={{ ...box(0.95, 2.2, 11.6, 4.2), ...txt(bodySize(sl.text, 2), ink, true, { lineHeight: 1.35 }) }}>{sl.text}</div>
-        </>
-      );
-      break;
-    case 'point':
-      body = (
-        <>
-          <div style={box(10.6, 4.6, 4.2, 4.2, { borderRadius: '50%', background: A, opacity: 0.1 })} />
-          {head(sl.label)}
-          <div style={{ ...box(0.6, 1.0, 2, 1), ...txt(48, A, true) }}>{String(sl.n).padStart(2, '0')}</div>
-          <div style={{ ...box(0.6, 2.0, 12, 1.1), ...txt(sl.title.length > 45 ? 28 : 34, ink, true) }}>{sl.title}</div>
-          <div style={{ ...box(0.6, 3.25, 11.2, 3.6), ...txt(bodySize(sl.text), ink, false, { lineHeight: 1.4 }) }}>{sl.text}</div>
-        </>
-      );
-      break;
-    case 'formula': {
-      const img = images.formula[sl.topicId];
-      const f = img && fit(img, 1.0, 2.5, 11.3, 3.6);
-      body = (
-        <>
-          {head(sl.label)}
-          <div style={{ ...box(0.6, 1.0, 12, 0.9), ...txt(32, ink, true) }}>{sl.title}</div>
-          <div style={box(0.6, 2.1, 12.1, 4.4, { background: hex(theme.card), borderRadius: 0.15 * k })} />
-          {f ? (
-            <>
-              {theme.id === 'dark' && <div style={box(f.x - 0.25, f.y - 0.2, f.w + 0.5, f.h + 0.4, { background: '#fff', borderRadius: 0.1 * k })} />}
-              <img src={img.data} alt="" style={box(f.x, f.y, f.w, f.h)} />
-            </>
-          ) : (
-            <div style={{ ...box(1, 2.5, 11.3, 3.6), ...txt(sl.plain.length > 40 ? 30 : 40, ink, false, { display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }) }}>{sl.plain}</div>
-          )}
-        </>
-      );
-      break;
-    }
-    case 'model': {
-      const img = images.model[sl.topicId];
-      const f = img && fit(img, 0.6, 1.9, 12.1, 4.9);
-      body = (
-        <>
-          {head(sl.label)}
-          <div style={{ ...box(0.6, 1.0, 12, 0.8), ...txt(30, ink, true) }}>{sl.title}</div>
-          {f && <img src={img.data} alt="" style={box(f.x, f.y, f.w, f.h)} />}
-          <div style={{ ...box(0.6, SLIDE_H - 0.6, 9, 0.35), ...txt(11, hex(theme.muted)) }}>{sl.caption}</div>
-        </>
-      );
-      break;
-    }
-    case 'summary': {
-      body = (
-        <>
-          {head(sl.label)}
-          <div style={{ ...box(0.6, 1.0, 12, 0.9), ...txt(32, ink, true) }}>{sl.title}</div>
-          <div style={{ ...box(0.6, 2.1, 12, 4.8), ...txt(listSize(sl.items), ink) }}>
-            {sl.items.map((t, i) => (
-              <div key={i} style={{ marginBottom: pt(10), paddingLeft: pt(22), position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 0, color: A }}>●</span>
-                {t}
-              </div>
-            ))}
-          </div>
-        </>
-      );
-      break;
-    }
-    case 'quiz':
-      body = (
-        <>
-          {head(sl.label)}
-          <div style={{ ...box(0.6, 1.1, 12.1, 2.0), ...txt(sl.q.length > 140 ? 22 : 28, ink, true) }}>{sl.q}</div>
-          {sl.options.map((o, i) => {
-            const x = 0.6 + (i % 2) * 6.15;
-            const y = 3.35 + Math.floor(i / 2) * 1.75;
-            return (
-              <React.Fragment key={i}>
-                <div style={box(x, y, 5.95, 1.5, { background: hex(theme.card), borderRadius: 0.12 * k })} />
-                <div style={{ ...box(x + 0.3, y + 0.45, 0.6, 0.6, { background: A, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }), ...txt(16, '#fff', false, { fontWeight: 700 }) }}>{'ABCD'[i]}</div>
-                <div style={{ ...box(x + 1.1, y, 4.7, 1.5, { display: 'flex', alignItems: 'center' }), ...txt(optSize(o), ink) }}>{o}</div>
-              </React.Fragment>
-            );
-          })}
-        </>
-      );
-      break;
-    case 'answers':
-      body = (
-        <>
-          {head('')}
-          <div style={{ ...box(0.6, 1.0, 12, 0.9), ...txt(32, ink, true) }}>{sl.title}</div>
-          <div style={{ ...box(0.6, 2.1, 12, 4.8), ...txt(sl.items.length > 6 ? 18 : 24, ink) }}>
-            {sl.items.map((t, i) => (
-              <div key={i} style={{ marginBottom: pt(10) }}>{t}</div>
-            ))}
-          </div>
-        </>
-      );
-      break;
-  }
+  const { bg, prims } = layoutSlide(slide, { theme, accent, images, deck, index, total });
   return (
-    <div style={{ position: 'relative', width, height: SLIDE_H * k, background: hex(hero ? theme.heroBg : sl.k === 'divider' ? theme.card : theme.bg), overflow: 'hidden' }}>
-      {body}
-      {!hero && <div style={{ ...box(SLIDE_W - 1.8, SLIDE_H - 0.55, 1.3, 0.3), ...txt(10, hex(theme.muted), false, { textAlign: 'right' }) }}>{index + 1} / {total}</div>}
+    <div style={{ position: 'relative', width, height: SLIDE_H * k, background: hex(bg), overflow: 'hidden' }}>
+      {prims.map((p, i) => {
+        const box: React.CSSProperties = { position: 'absolute', left: p.x * k, top: p.y * k, width: p.w * k, height: p.h * k };
+        if (p.t === 'rect') return <div key={i} style={{ ...box, background: hex(p.fill), opacity: p.alpha ?? 1, borderRadius: p.r ? p.r * k : 0 }} />;
+        if (p.t === 'ellipse') return <div key={i} style={{ ...box, background: hex(p.fill), opacity: p.alpha ?? 1, borderRadius: '50%' }} />;
+        if (p.t === 'img') return <img key={i} src={p.data} alt="" style={{ ...box, objectFit: p.cover ? 'cover' : 'fill' }} />;
+        // runs split into paragraphs at each break
+        const paras: Run[][] = [[]];
+        p.runs.forEach((r) => {
+          paras[paras.length - 1].push(r);
+          if (r.br) paras.push([]);
+        });
+        return (
+          <div
+            key={i}
+            style={{
+              ...box,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: p.valign === 'middle' ? 'center' : p.valign === 'bottom' ? 'flex-end' : 'flex-start',
+              overflow: 'hidden',
+              opacity: p.alpha ?? 1,
+              textAlign: p.align ?? 'left',
+              fontFamily: CSS_FONT[p.font],
+              fontSize: pt(p.size),
+              fontWeight: p.bold ? 700 : 400,
+              fontStyle: p.italic ? 'italic' : 'normal',
+              color: hex(p.color),
+              lineHeight: 1.2 * (p.lh ?? 1),
+              letterSpacing: p.spacing ? pt(p.spacing) : undefined,
+            }}
+          >
+            {paras.filter((q) => q.length).map((q, j) => (
+              <div key={j} style={{ marginBottom: p.para ? pt(p.para) : 0 }}>
+                {q.map((r, m) => (
+                  <span key={m} style={{ fontWeight: r.bold ? 700 : undefined, color: r.color ? hex(r.color) : undefined, fontSize: r.size ? pt(r.size) : undefined }}>
+                    {r.text}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -289,6 +173,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   }, [onClose]);
 
   const theme = themeFor(themeId, topic.subject);
+  const deck = whole && teacher && section ? section.title[lang] : topic.title[lang];
   const useSection = whole && teacher && !!section;
   const slides = useMemo(
     () =>
@@ -312,7 +197,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     if (capturing || !slides.length) return;
     setBusy(true);
     try {
-      await downloadPptx(slides, theme, accent, images, fileName(useSection ? section!.title[lang] : topic.title[lang]), user?.email ?? undefined);
+      await downloadPptx(slides, theme, accent, images, fileName(deck), deck, user?.email ?? undefined);
       setDone(true);
       setTimeout(() => setDone(false), 2500);
     } finally {
@@ -367,7 +252,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                   const t = themeFor(id, topic.subject);
                   return (
                     <button key={id} onClick={() => setThemeId(id)} className={`rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${themeId === id ? 'border-accent scale-[1.03] shadow-md' : 'border-transparent hover:border-line-strong'}`}>
-                      <SlideView slide={{ k: 'title', label: '', title: topic.title[lang], subtitle: '' }} theme={t} accent={accent} images={{ formula: {}, model: {} }} width={84} index={0} total={1} />
+                      <SlideView slide={{ k: 'title', label: '', title: topic.title[lang], subtitle: '', grade: topic.grade, topicId: topic.id }} theme={t} accent={accent} images={{ formula: {}, model: {} }} width={84} index={0} total={1} deck="" />
                       <span className="block text-[11px] py-1 text-ink-2 bg-surface">{t.name[lang]}</span>
                     </button>
                   );
@@ -410,7 +295,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
               <div className="flex-1 min-h-[300px] flex items-center justify-center text-sm text-ink-2">{L('Выбери хотя бы один слайд.', 'Pick at least one slide.')}</div>
             ) : (
               <>
-                <PreviewMain slides={slides} theme={theme} accent={accent} images={images} current={current} />
+                <PreviewMain slides={slides} theme={theme} accent={accent} images={images} current={current} deck={deck} />
                 <div className="flex items-center justify-between text-xs text-ink-2">
                   <span>
                     {L('Слайд', 'Slide')} {current + 1} {L('из', 'of')} {slides.length}
@@ -420,7 +305,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                 <div className="shrink-0 flex gap-2 overflow-x-auto pb-2">
                   {slides.map((s, i) => (
                     <button key={i} onClick={() => setCurrent(i)} className={`shrink-0 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${i === current ? 'border-accent' : 'border-transparent opacity-80 hover:opacity-100'}`}>
-                      <SlideView slide={s} theme={theme} accent={accent} images={images} width={128} index={i} total={slides.length} />
+                      <SlideView slide={s} theme={theme} accent={accent} images={images} width={128} index={i} total={slides.length} deck={deck} />
                     </button>
                   ))}
                 </div>
@@ -448,7 +333,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
 };
 
 /** the big preview fills the available width */
-const PreviewMain: React.FC<{ slides: SlideWithNotes[]; theme: Theme; accent: string; images: Images; current: number }> = ({ slides, theme, accent, images, current }) => {
+const PreviewMain: React.FC<{ slides: SlideWithNotes[]; theme: Theme; accent: string; images: Images; current: number; deck: string }> = ({ slides, theme, accent, images, current, deck }) => {
   const [w, setW] = useState(640);
   const ref = React.useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -462,7 +347,7 @@ const PreviewMain: React.FC<{ slides: SlideWithNotes[]; theme: Theme; accent: st
   return (
     <div ref={ref} className="w-full shrink-0">
       <div key={current} className="rounded-xl overflow-hidden shadow-lg border border-line mx-auto anim-page" style={{ width: w }}>
-        <SlideView slide={slides[current]} theme={theme} accent={accent} images={images} width={w} index={current} total={slides.length} />
+        <SlideView slide={slides[current]} theme={theme} accent={accent} images={images} width={w} index={current} total={slides.length} deck={deck} />
       </div>
     </div>
   );

@@ -4,7 +4,8 @@ import { problemQuestion, problemsForTopic } from './problems';
 
 /*
  * Presentations for a topic (Pro) or a whole section (Teacher).
- * Slides are described once as data; the preview and the .pptx file are both drawn from it.
+ * Slides are described as data, then laid out once as shapes (layoutSlide);
+ * the preview and the .pptx file both draw those same shapes, so they always match.
  */
 
 type Lang = 'ru' | 'en';
@@ -12,19 +13,18 @@ type T2 = { ru: string; en: string };
 
 export type ThemeId = 'light' | 'dark' | 'bright';
 export type Part = 'title' | 'intro' | 'points' | 'formula' | 'model' | 'summary' | 'quiz' | 'answers' | 'end';
-export const TEACHER_PARTS: Part[] = ['quiz', 'answers'];
 
 export type Slide =
-  | { k: 'title'; label: string; title: string; subtitle: string }
+  | { k: 'title'; label: string; title: string; subtitle: string; grade: number; topicId: string }
   | { k: 'agenda'; title: string; items: string[] }
-  | { k: 'divider'; n: number; title: string }
+  | { k: 'divider'; n: number; total: number; title: string; label: string }
   | { k: 'text'; label: string; title: string; text: string }
-  | { k: 'point'; label: string; n: number; title: string; text: string }
-  | { k: 'formula'; label: string; title: string; plain: string; topicId: string }
+  | { k: 'point'; label: string; n: number; total: number; title: string; text: string; of: string }
+  | { k: 'formula'; label: string; title: string; plain: string; caption: string; topicId: string }
   | { k: 'model'; label: string; title: string; caption: string; topicId: string }
-  | { k: 'summary'; label: string; title: string; items: string[] }
-  | { k: 'quiz'; label: string; n: number; total: number; q: string; options: string[] }
-  | { k: 'answers'; title: string; items: string[] }
+  | { k: 'summary'; label: string; title: string; items: { title: string; text: string }[] }
+  | { k: 'quiz'; label: string; q: string; options: string[] }
+  | { k: 'answers'; title: string; items: { letter: string; text: string }[] }
   | { k: 'end'; title: string; subtitle: string };
 
 export type SlideWithNotes = Slide & { notes?: string };
@@ -35,10 +35,13 @@ export interface Theme {
   bg: string;
   ink: string;
   muted: string;
+  /** cards on the slide */
   card: string;
-  /** the title and closing slides */
+  /** the coloured side panel of point slides */
+  panel: string;
   heroBg: string;
   heroInk: string;
+  heroMuted: string;
 }
 
 const SUBJECT_COLOR: Record<string, string> = { physics: 'E5484D', chemistry: '30A46C', biology: 'F5A524', mathematics: '8E4EC6' };
@@ -54,9 +57,14 @@ export const accentFor = (subject: string) => SUBJECT_COLOR[subject] ?? '2F5BFF'
 
 export function themeFor(id: ThemeId, subject: string): Theme {
   const a = accentFor(subject);
-  if (id === 'dark') return { id, name: { ru: 'Тёмная', en: 'Dark' }, bg: '111214', ink: 'EDEDED', muted: '8C8F98', card: '1C1E23', heroBg: '0B0C0E', heroInk: 'FFFFFF' };
-  if (id === 'bright') return { id, name: { ru: 'Яркая', en: 'Bright' }, bg: SUBJECT_SOFT[subject] ?? 'EEF1FF', ink: '16171A', muted: '5A5D66', card: 'FFFFFF', heroBg: a, heroInk: 'FFFFFF' };
-  return { id, name: { ru: 'Светлая', en: 'Light' }, bg: 'FFFFFF', ink: '16171A', muted: '6B6B6B', card: 'F4F3EF', heroBg: 'FFFFFF', heroInk: '16171A' };
+  const soft = SUBJECT_SOFT[subject] ?? 'EEF1FF';
+  if (id === 'dark') return { id, name: { ru: 'Тёмная', en: 'Dark' }, bg: '121316', ink: 'F1F1EE', muted: '8C8F98', card: '1D1F24', panel: '1A1C21', heroBg: '0C0D0F', heroInk: 'FFFFFF', heroMuted: 'A0A3AB' };
+  if (id === 'bright') {
+    // white text is hard to read on yellow, so the biology hero keeps dark text
+    const darkHero = subject === 'biology';
+    return { id, name: { ru: 'Яркая', en: 'Bright' }, bg: soft, ink: '16171A', muted: '5A5D66', card: 'FFFFFF', panel: 'FFFFFF', heroBg: a, heroInk: darkHero ? '1D1405' : 'FFFFFF', heroMuted: darkHero ? '4A3A12' : 'FFFFFF' };
+  }
+  return { id, name: { ru: 'Светлая', en: 'Light' }, bg: 'FFFFFF', ink: '16171A', muted: '6B6B6B', card: 'F5F4F0', panel: soft, heroBg: 'FFFFFF', heroInk: '16171A', heroMuted: '6B6B6B' };
 }
 export const THEMES: ThemeId[] = ['light', 'bright', 'dark'];
 
@@ -121,7 +129,7 @@ export function buildSlides(o: BuildOptions): SlideWithNotes[] {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const subj = SUBJECT_NAME[o.topic.subject][lang];
   const grade = `${o.topic.grade} ${L('класс', 'grade')}`;
-  const label = `${subj} · ${grade}`.toUpperCase();
+  const label = `${subj} · ${grade}`;
   const seed = o.seed ?? 7;
   const slides: SlideWithNotes[] = [];
   const topics = o.section ? o.section.topics : [o.topic];
@@ -130,34 +138,45 @@ export function buildSlides(o: BuildOptions): SlideWithNotes[] {
   if (parts.has('title'))
     slides.push({
       k: 'title',
-      label: `${subj} · ${grade}`,
+      label,
       title: o.section ? o.section.title[lang] : o.topic.title[lang],
-      subtitle: o.section ? L(`${topics.length} тем раздела`, `${topics.length} topics`) : firstSentence(o.topic.intro[lang]),
+      subtitle: o.section ? L(`Раздел · ${topics.length} тем`, `Section · ${topics.length} topics`) : firstSentence(o.topic.intro[lang]),
+      grade: o.topic.grade,
+      topicId: o.topic.id,
       notes: note(L('Представьте тему и спросите класс, где они встречали это в жизни.', 'Introduce the topic and ask where the class has met it in real life.')),
     });
-  if (o.section && parts.has('title')) slides.push({ k: 'agenda', title: L('План', 'Outline'), items: topics.map((t) => t.title[lang]) });
+  if (o.section && parts.has('title')) slides.push({ k: 'agenda', title: L('План урока', 'Outline'), items: topics.map((t) => t.title[lang]) });
 
   topics.forEach((t, ti) => {
-    const tl = o.section ? t.title[lang].toUpperCase() : label;
-    if (o.section) slides.push({ k: 'divider', n: ti + 1, title: t.title[lang] });
+    const tl = o.section ? t.title[lang] : label;
+    if (o.section) slides.push({ k: 'divider', n: ti + 1, total: topics.length, title: t.title[lang], label: L(`Тема ${ti + 1} из ${topics.length}`, `Topic ${ti + 1} of ${topics.length}`) });
     if (parts.has('intro'))
-      slides.push({ k: 'text', label: tl, title: o.section ? L('Суть', 'The idea') : L('О чём тема', 'What it is about'), text: t.intro[lang], notes: note(`${t.intro[lang]}\n\n${L('Вопрос классу: ', 'Ask the class: ')}${L('как бы вы объяснили это младшему брату?', 'how would you explain this to a younger sibling?')}`) });
+      slides.push({ k: 'text', label: tl, title: o.section ? L('Суть', 'The idea') : L('О чём тема', 'What it is about'), text: t.intro[lang], notes: note(`${t.intro[lang]}\n\n${L('Вопрос классу: как бы вы объяснили это младшему брату?', 'Ask the class: how would you explain this to a younger sibling?')}`) });
     if (parts.has('points'))
       t.points.forEach((p, i) =>
-        slides.push({ k: 'point', label: tl, n: i + 1, title: p.title[lang], text: p.text[lang], notes: note(`${p.text[lang]}\n\n${L('Проверка понимания: попросите ученика своими словами объяснить', 'Check understanding: ask a student to explain')} «${p.title[lang]}».`) }),
+        slides.push({
+          k: 'point',
+          label: tl,
+          n: i + 1,
+          total: t.points.length,
+          of: L(`Шаг ${i + 1} из ${t.points.length}`, `Step ${i + 1} of ${t.points.length}`),
+          title: p.title[lang],
+          text: p.text[lang],
+          notes: note(`${p.text[lang]}\n\n${L('Проверка понимания: попросите ученика своими словами объяснить', 'Check understanding: ask a student to explain')} «${p.title[lang]}».`),
+        }),
       );
     if (parts.has('formula') && t.formula)
-      slides.push({ k: 'formula', label: tl, title: L('Формула', 'Formula'), plain: texToText(t.formula), topicId: t.id, notes: note(`${texToText(t.formula)}\n\n${L('Разберите, что означает каждая буква и в каких единицах она измеряется.', 'Go through what each letter means and its units.')}`) });
+      slides.push({ k: 'formula', label: tl, title: L('Формула', 'Formula'), plain: texToText(t.formula), caption: t.title[lang], topicId: t.id, notes: note(`${texToText(t.formula)}\n\n${L('Разберите, что означает каждая буква и в каких единицах она измеряется.', 'Go through what each letter means and its units.')}`) });
     if (parts.has('model') && o.hasModel && !o.section)
-      slides.push({ k: 'model', label: tl, title: L('Модель', 'Model'), caption: L('Интерактивная модель — stem-visualizer.pages.dev', 'Interactive model — stem-visualizer.pages.dev'), topicId: t.id, notes: note(L('Откройте модель на сайте и покажите, как меняется результат при изменении параметров.', 'Open the model on the site and show how the result changes with the parameters.')) });
+      slides.push({ k: 'model', label: tl, title: L('Смотрим на модели', 'See it in the model'), caption: L('Интерактивная модель: stem-visualizer.pages.dev', 'Interactive model: stem-visualizer.pages.dev'), topicId: t.id, notes: note(L('Откройте модель на сайте и покажите, как меняется результат при изменении параметров.', 'Open the model on the site and show how the result changes with the parameters.')) });
   });
 
   if (parts.has('summary'))
     slides.push({
       k: 'summary',
-      label: o.section ? (o.section.title[lang] ?? '').toUpperCase() : label,
+      label: o.section ? o.section.title[lang] : label,
       title: L('Главное', 'Key points'),
-      items: o.section ? topics.map((t) => `${t.title[lang]}: ${firstSentence(t.intro[lang])}`) : o.topic.points.map((p) => `${p.title[lang]}: ${firstSentence(p.text[lang])}`),
+      items: o.section ? topics.map((t) => ({ title: t.title[lang], text: firstSentence(t.intro[lang]) })) : o.topic.points.map((p) => ({ title: p.title[lang], text: firstSentence(p.text[lang]) })),
     });
 
   if (parts.has('quiz') || parts.has('answers')) {
@@ -165,35 +184,65 @@ export function buildSlides(o: BuildOptions): SlideWithNotes[] {
     const letters = 'ABCD';
     if (parts.has('quiz'))
       qs.forEach((q, i) =>
-        slides.push({ k: 'quiz', label: L(`ВОПРОС ${i + 1} / ${qs.length}`, `QUESTION ${i + 1} / ${qs.length}`), n: i + 1, total: qs.length, q: q.prompt[lang], options: q.options.map((x) => optText(x, lang)), notes: note(`${L('Ответ', 'Answer')}: ${letters[q.correct]} — ${optText(q.options[q.correct], lang)}${q.explain ? `\n${q.explain[lang]}` : ''}`) }),
+        slides.push({ k: 'quiz', label: L(`Вопрос ${i + 1} из ${qs.length}`, `Question ${i + 1} of ${qs.length}`), q: q.prompt[lang], options: q.options.map((x) => optText(x, lang)), notes: note(`${L('Ответ', 'Answer')}: ${letters[q.correct]} — ${optText(q.options[q.correct], lang)}${q.explain ? `\n${q.explain[lang]}` : ''}`) }),
       );
-    if (parts.has('answers')) slides.push({ k: 'answers', title: L('Ответы', 'Answers'), items: qs.map((q, i) => `${i + 1}. ${letters[q.correct]} — ${optText(q.options[q.correct], lang)}`) });
+    if (parts.has('answers')) slides.push({ k: 'answers', title: L('Ответы', 'Answers'), items: qs.map((q) => ({ letter: letters[q.correct], text: optText(q.options[q.correct], lang) })) });
   }
 
-  if (parts.has('end')) slides.push({ k: 'end', title: L('Спасибо за внимание!', 'Thank you!'), subtitle: L('Вопросы?', 'Questions?') });
+  if (parts.has('end')) slides.push({ k: 'end', title: L('Спасибо за внимание!', 'Thank you!'), subtitle: L('Ваши вопросы?', 'Any questions?') });
   return slides;
 }
 
-/* ---------- layout shared by the preview and the file (inches on a 13.333 × 7.5 slide) ---------- */
+/* ---------- layout: every slide becomes a list of shapes in inches on a 13.333 × 7.5 slide ---------- */
 
 export const SLIDE_W = 13.333;
 export const SLIDE_H = 7.5;
-export const FONT_HEAD = 'Georgia';
-export const FONT_BODY = 'Arial';
-
-/** body size that fills the slide with short texts and keeps long ones on it */
-export const bodySize = (text: string, extra = 0) => extra + (text.length < 90 ? 36 : text.length < 160 ? 32 : text.length < 300 ? 26 : text.length < 480 ? 22 : 19);
-export const listSize = (items: string[]) => {
-  const len = items.join('').length;
-  return len < 240 ? 26 : len < 420 ? 22 : len < 650 ? 18 : 15;
-};
-export const optSize = (s: string) => (s.length > 70 ? 14 : s.length > 40 ? 17 : 20);
+/** fonts present in PowerPoint on Windows and Mac and in Google Slides, with Cyrillic */
+export const FONTS = { head: 'Georgia', body: 'Calibri', math: 'Cambria Math' } as const;
 
 export interface Img {
   data: string;
   w: number;
   h: number;
 }
+export type Images = { formula: Record<string, Img>; model: Record<string, Img> };
+
+export interface Run {
+  text: string;
+  bold?: boolean;
+  color?: string;
+  size?: number;
+  /** start a new paragraph after this run */
+  br?: boolean;
+}
+
+export type Prim =
+  | { t: 'rect'; x: number; y: number; w: number; h: number; fill: string; alpha?: number; r?: number; line?: string }
+  | { t: 'ellipse'; x: number; y: number; w: number; h: number; fill: string; alpha?: number }
+  | {
+      t: 'text';
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      runs: Run[];
+      size: number;
+      color: string;
+      font: keyof typeof FONTS;
+      bold?: boolean;
+      italic?: boolean;
+      /** 0..1 */
+      alpha?: number;
+      align?: 'left' | 'center' | 'right';
+      valign?: 'top' | 'middle' | 'bottom';
+      /** line spacing, as a multiple of single */
+      lh?: number;
+      /** letter spacing in points */
+      spacing?: number;
+      /** space after each paragraph in points */
+      para?: number;
+    }
+  | { t: 'img'; x: number; y: number; w: number; h: number; data: string; cover?: boolean };
 
 /** fit an image into a box keeping its proportions */
 export function fit(img: Img, x: number, y: number, w: number, h: number) {
@@ -203,125 +252,243 @@ export function fit(img: Img, x: number, y: number, w: number, h: number) {
   return { x: x + (w - iw) / 2, y: y + (h - ih) / 2, w: iw, h: ih };
 }
 
+// text sizes chosen by length so short texts fill the slide and long ones still fit
+const pick = (len: number, steps: [number, number][], last: number) => steps.find(([max]) => len <= max)?.[1] ?? last;
+
+export interface LayoutCtx {
+  theme: Theme;
+  accent: string;
+  images: Images;
+  /** footer: the deck's name */
+  deck: string;
+  index: number;
+  total: number;
+}
+
+const M = 0.75; // side margin
+const one = (text: string): Run[] => [{ text }];
+
+export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[] } {
+  const { theme: T, accent: A } = c;
+  const P: Prim[] = [];
+  const text = (x: number, y: number, w: number, h: number, runs: Run[] | string, size: number, color: string, font: keyof typeof FONTS = 'body', extra: Partial<Extract<Prim, { t: 'text' }>> = {}) =>
+    P.push({ t: 'text', x, y, w, h, runs: typeof runs === 'string' ? one(runs) : runs, size, color, font, ...extra });
+  const rect = (x: number, y: number, w: number, h: number, fill: string, extra: Partial<Extract<Prim, { t: 'rect' }>> = {}) => P.push({ t: 'rect', x, y, w, h, fill, ...extra });
+  const ellipse = (x: number, y: number, w: number, h: number, fill: string, alpha = 1) => P.push({ t: 'ellipse', x, y, w, h, fill, alpha });
+
+  /** small caps label with a short accent rule under it */
+  const kicker = (label: string, x = M, y = 0.55, color = A) => {
+    text(x, y, 9, 0.3, label.toUpperCase(), 11, color, 'body', { bold: true, spacing: 2 });
+    rect(x, y + 0.42, 0.55, 0.05, color);
+  };
+  const footer = (left = c.deck) => {
+    text(M, SLIDE_H - 0.55, 9, 0.3, left, 10, T.muted, 'body');
+    text(SLIDE_W - M - 1.5, SLIDE_H - 0.55, 1.5, 0.3, `${String(c.index + 1).padStart(2, '0')} / ${String(c.total).padStart(2, '0')}`, 10, T.muted, 'body', { align: 'right', spacing: 1 });
+  };
+  let bg = T.bg;
+
+  switch (sl.k) {
+    case 'title': {
+      bg = T.heroBg;
+      const img = c.images.model[sl.topicId];
+      const bright = T.id === 'bright';
+      const px = 8.15;
+      // right side: the model picture, or a coloured panel with the grade
+      if (img) {
+        rect(px, 0, SLIDE_W - px, SLIDE_H, bright ? 'FFFFFF' : A, { alpha: bright ? 0.18 : 1 });
+        P.push({ t: 'img', x: px, y: 0, w: SLIDE_W - px, h: SLIDE_H, data: img.data, cover: true });
+      } else {
+        rect(px, 0, SLIDE_W - px, SLIDE_H, bright ? 'FFFFFF' : A, { alpha: bright ? 0.14 : 1 });
+        ellipse(px + 2.2, -1.4, 5, 5, 'FFFFFF', 0.12);
+        ellipse(px - 1.2, 4.6, 3.6, 3.6, bright ? 'FFFFFF' : A, bright ? 0.12 : 1);
+        text(px, 1.6, SLIDE_W - px, 3.2, String(sl.grade), 190, 'FFFFFF', 'head', { align: 'center', valign: 'middle' });
+        text(px, 4.7, SLIDE_W - px, 0.5, sl.label.split('·')[1]?.trim().toUpperCase() ?? '', 14, 'FFFFFF', 'body', { align: 'center', bold: true, spacing: 4 });
+      }
+      const ink = T.heroInk;
+      const sub = bright ? T.heroMuted : T.muted;
+      kicker(sl.label, M, 1.55, bright ? T.heroInk : A);
+      const ts = pick(sl.title.length, [[24, 46], [44, 40], [70, 34]], 30);
+      text(M, 2.25, px - M - 0.6, 3.0, sl.title, ts, ink, 'head', { valign: 'top', lh: 0.95 });
+      if (sl.subtitle) text(M, 5.35, px - M - 0.7, 1.3, sl.subtitle, pick(sl.subtitle.length, [[90, 18], [160, 16]], 14), sub, 'body', { valign: 'top', lh: 1.1 });
+      break;
+    }
+    case 'agenda': {
+      kicker(c.deck);
+      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      const n = sl.items.length;
+      const cols = n > 5 ? 2 : 1;
+      const rows = Math.ceil(n / cols);
+      const gw = (SLIDE_W - 2 * M - (cols - 1) * 0.4) / cols;
+      const rh = Math.min(0.85, 4.5 / rows);
+      sl.items.forEach((it, i) => {
+        const col = Math.floor(i / rows);
+        const row = i % rows;
+        const x = M + col * (gw + 0.4);
+        const y = 2.35 + row * rh;
+        text(x, y, 0.8, rh, String(i + 1).padStart(2, '0'), 20, A, 'head', { valign: 'middle' });
+        text(x + 0.8, y, gw - 0.8, rh, it, rows > 6 ? 16 : 20, T.ink, 'body', { valign: 'middle' });
+        if (row < rows - 1) rect(x, y + rh - 0.01, gw, 0.01, T.muted, { alpha: 0.25 });
+      });
+      footer();
+      break;
+    }
+    case 'divider': {
+      rect(0, 0, 5.0, SLIDE_H, A);
+      ellipse(-1.4, 4.4, 4.5, 4.5, 'FFFFFF', 0.1);
+      text(0, 1.6, 5.0, 3.6, String(sl.n).padStart(2, '0'), 150, 'FFFFFF', 'head', { align: 'center', valign: 'middle' });
+      kicker(sl.label, 5.8, 2.55);
+      text(5.8, 3.15, SLIDE_W - 5.8 - M, 2.6, sl.title, pick(sl.title.length, [[30, 40], [60, 34]], 28), T.ink, 'head', { valign: 'top', lh: 1.0 });
+      break;
+    }
+    case 'text': {
+      kicker(sl.label);
+      text(M, 1.35, 4.0, 1.6, sl.title, 36, T.ink, 'head', { valign: 'top', lh: 0.95 });
+      text(4.95, 0.85, 1.2, 1.4, '“', 120, A, 'head', { alpha: 0.35 });
+      rect(5.3, 1.55, 0.06, 4.6, A, { alpha: 0.6 });
+      text(5.75, 1.35, SLIDE_W - 5.75 - M, 5.0, sl.text, pick(sl.text.length, [[110, 32], [200, 28], [330, 24], [480, 21]], 18), T.ink, 'head', { valign: 'middle', lh: 1.15 });
+      footer();
+      break;
+    }
+    case 'point': {
+      const pw = 4.7;
+      rect(0, 0, pw, SLIDE_H, T.panel);
+      kicker(sl.label, M, 0.55);
+      text(M, 1.3, pw - M - 0.3, 1.9, String(sl.n).padStart(2, '0'), 110, A, 'head', { valign: 'top', lh: 0.9 });
+      text(M, 3.35, pw - M - 0.35, 2.6, sl.title, pick(sl.title.length, [[18, 36], [34, 30], [56, 25]], 21), T.ink, 'head', { valign: 'top', lh: 1.0 });
+      // progress dots for the steps of this topic
+      for (let i = 0; i < Math.min(sl.total, 12); i++) ellipse(M + i * 0.28, 6.55, 0.13, 0.13, A, i === sl.n - 1 ? 1 : 0.28);
+      text(M, 6.8, pw - M, 0.3, sl.of, 10, T.muted, 'body');
+      text(pw + 0.85, 0.9, SLIDE_W - pw - 0.85 - M, 5.6, sl.text, pick(sl.text.length, [[80, 34], [150, 30], [260, 26], [400, 22], [560, 19]], 17), T.ink, 'body', { valign: 'middle', lh: 1.25 });
+      text(SLIDE_W - M - 1.5, SLIDE_H - 0.55, 1.5, 0.3, `${String(c.index + 1).padStart(2, '0')} / ${String(c.total).padStart(2, '0')}`, 10, T.muted, 'body', { align: 'right', spacing: 1 });
+      break;
+    }
+    case 'formula': {
+      kicker(sl.label);
+      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      const img = c.images.formula[sl.topicId];
+      rect(M, 2.3, SLIDE_W - 2 * M, 3.85, T.id === 'dark' ? 'FFFFFF' : T.card, { r: 0.18 });
+      rect(M, 2.3, 0.09, 3.85, A);
+      if (img) P.push({ t: 'img', ...fit(img, M + 0.8, 2.75, SLIDE_W - 2 * M - 1.6, 2.95), data: img.data });
+      else text(M + 0.5, 2.3, SLIDE_W - 2 * M - 1, 3.85, sl.plain, pick(sl.plain.length, [[20, 54], [40, 44]], 34), T.id === 'dark' ? '16171A' : T.ink, 'math', { align: 'center', valign: 'middle' });
+      text(M, 6.35, SLIDE_W - 2 * M, 0.4, sl.caption, 13, T.muted, 'body', { italic: true });
+      footer();
+      break;
+    }
+    case 'model': {
+      kicker(sl.label);
+      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      const img = c.images.model[sl.topicId];
+      if (img) {
+        const f = fit(img, M, 2.25, SLIDE_W - 2 * M, 4.35);
+        rect(f.x - 0.06, f.y - 0.06, f.w + 0.12, f.h + 0.12, A, { alpha: 0.35, r: 0.08 });
+        P.push({ t: 'img', ...f, data: img.data });
+      }
+      footer(sl.caption);
+      break;
+    }
+    case 'summary': {
+      kicker(sl.label);
+      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      const n = sl.items.length;
+      const cols = n <= 3 ? n : n === 4 ? 2 : 3;
+      const rows = Math.ceil(n / cols);
+      const gap = 0.3;
+      const cw = (SLIDE_W - 2 * M - (cols - 1) * gap) / cols;
+      const top = 2.35;
+      // few points get big cards with big text; many points share the space
+      const ts = n <= 3 ? 22 : n === 4 ? 19 : 15;
+      const bs = n <= 3 ? 17 : n === 4 ? 15 : 12;
+      const ch = Math.min((SLIDE_H - 0.95 - top - (rows - 1) * gap) / rows, n <= 3 ? 3.1 : 9);
+      const y0 = top + ((SLIDE_H - 0.95 - top) - (rows * ch + (rows - 1) * gap)) / 2;
+      sl.items.forEach((it, i) => {
+        const x = M + (i % cols) * (cw + gap);
+        const y = y0 + Math.floor(i / cols) * (ch + gap);
+        rect(x, y, cw, ch, T.card, { r: 0.14 });
+        rect(x, y, cw, 0.07, A);
+        text(x + 0.35, y + 0.3, 1.2, 0.6, String(i + 1).padStart(2, '0'), ts + 6, A, 'head');
+        text(x + 0.35, y + (n <= 4 ? 1.0 : 0.75), cw - 0.7, ch - (n <= 4 ? 1.15 : 0.85), [{ text: it.title, bold: true, size: ts, br: true }, { text: it.text, color: T.muted }], bs, T.ink, 'body', { valign: 'top', lh: 1.1, para: 6 });
+      });
+      footer();
+      break;
+    }
+    case 'quiz': {
+      kicker(sl.label);
+      text(M, 1.15, SLIDE_W - 2 * M, 2.0, sl.q, pick(sl.q.length, [[70, 32], [130, 27], [220, 23]], 20), T.ink, 'head', { valign: 'middle', lh: 1.05 });
+      const two = sl.options.length <= 2;
+      const gap = 0.3;
+      const ow = (SLIDE_W - 2 * M - gap) / 2;
+      const oh = two ? 2.0 : 1.45;
+      sl.options.forEach((o, i) => {
+        const x = M + (i % 2) * (ow + gap);
+        const y = (two ? 3.75 : 3.5) + Math.floor(i / 2) * (oh + 0.25);
+        rect(x, y, ow, oh, T.card, { r: 0.14 });
+        ellipse(x + 0.3, y + oh / 2 - 0.3, 0.6, 0.6, A);
+        text(x + 0.3, y + oh / 2 - 0.3, 0.6, 0.6, 'ABCD'[i], 16, 'FFFFFF', 'body', { bold: true, align: 'center', valign: 'middle' });
+        text(x + 1.15, y, ow - 1.4, oh, o, pick(o.length, [[30, two ? 26 : 20], [60, 17], [100, 15]], 13), T.ink, 'body', { valign: 'middle', lh: 1.05 });
+      });
+      footer();
+      break;
+    }
+    case 'answers': {
+      kicker(c.deck);
+      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      const n = sl.items.length;
+      const cols = n > 5 ? 2 : 1;
+      const rows = Math.ceil(n / cols);
+      const gw = (SLIDE_W - 2 * M - (cols - 1) * 0.4) / cols;
+      const rh = Math.min(0.85, 4.5 / rows);
+      sl.items.forEach((it, i) => {
+        const col = Math.floor(i / rows);
+        const row = i % rows;
+        const x = M + col * (gw + 0.4);
+        const y = 2.35 + row * rh;
+        text(x, y, 0.6, rh, String(i + 1), 18, T.muted, 'head', { valign: 'middle' });
+        ellipse(x + 0.6, y + rh / 2 - 0.24, 0.48, 0.48, A);
+        text(x + 0.6, y + rh / 2 - 0.24, 0.48, 0.48, it.letter, 13, 'FFFFFF', 'body', { bold: true, align: 'center', valign: 'middle' });
+        text(x + 1.3, y, gw - 1.3, rh, it.text, rows > 6 ? 14 : 18, T.ink, 'body', { valign: 'middle' });
+        if (row < rows - 1) rect(x, y + rh - 0.01, gw, 0.01, T.muted, { alpha: 0.25 });
+      });
+      footer();
+      break;
+    }
+    case 'end': {
+      bg = T.heroBg;
+      const onAccent = T.heroBg === A;
+      ellipse(-1.6, -1.8, 5.2, 5.2, onAccent ? 'FFFFFF' : A, onAccent ? 0.12 : 0.1);
+      ellipse(SLIDE_W - 3.2, SLIDE_H - 2.6, 4.6, 4.6, onAccent ? 'FFFFFF' : A, onAccent ? 0.12 : 0.14);
+      text(M, 2.35, SLIDE_W - 2 * M, 1.5, sl.title, 54, T.heroInk, 'head', { align: 'center', valign: 'middle' });
+      rect(SLIDE_W / 2 - 0.5, 4.05, 1.0, 0.06, onAccent ? T.heroInk : A);
+      text(M, 4.35, SLIDE_W - 2 * M, 0.7, sl.subtitle, 24, onAccent ? T.heroInk : A, 'body', { align: 'center', valign: 'middle' });
+      break;
+    }
+  }
+  return { bg, prims: P };
+}
+
 export const fileName = (s: string) => `${s.replace(/[\\/:*?"<>|«»]/g, '').replace(/\s+/g, ' ').trim().slice(0, 80) || 'presentation'}.pptx`;
 
 /** writes the .pptx; pptxgenjs loads only when someone downloads */
-export async function downloadPptx(slides: SlideWithNotes[], theme: Theme, accent: string, images: { formula: Record<string, Img>; model: Record<string, Img> }, name: string, author?: string) {
+export async function downloadPptx(slides: SlideWithNotes[], theme: Theme, accent: string, images: Images, name: string, deck: string, author?: string) {
   const { default: PptxGenJS } = await import('pptxgenjs');
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
-  pptx.title = name;
+  pptx.title = deck;
   if (author) pptx.author = author;
-  const A = accent;
-  const total = slides.length;
+  const tr = (alpha?: number) => (alpha === undefined || alpha >= 1 ? 0 : Math.round((1 - alpha) * 100));
 
-  slides.forEach((sl, idx) => {
+  slides.forEach((sl, index) => {
     const s = pptx.addSlide();
-    const hero = sl.k === 'title' || sl.k === 'end';
-    s.background = { color: hero ? theme.heroBg : sl.k === 'divider' ? theme.card : theme.bg };
-    const ink = hero ? theme.heroInk : theme.ink;
-    const onAccent = hero && theme.heroBg === A;
-    const head = (label: string) => {
-      s.addText(label, { x: 0.6, y: 0.3, w: 10, h: 0.4, fontFace: FONT_BODY, fontSize: 12, bold: true, color: A, charSpacing: 1.5 });
-      s.addShape(pptx.ShapeType.rect, { x: 0.6, y: 0.78, w: 0.7, h: 0.06, fill: { color: A }, line: { color: A } });
-    };
-    if (!hero) s.addText(`${idx + 1} / ${total}`, { x: SLIDE_W - 1.8, y: SLIDE_H - 0.55, w: 1.3, h: 0.3, fontFace: FONT_BODY, fontSize: 10, color: theme.muted, align: 'right' });
-
-    switch (sl.k) {
-      case 'title':
-      case 'end': {
-        if (!onAccent) s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.35, h: SLIDE_H, fill: { color: A }, line: { color: A } });
-        s.addShape(pptx.ShapeType.ellipse, { x: 9.4, y: -1.2, w: 5.2, h: 5.2, fill: { color: onAccent ? 'FFFFFF' : A, transparency: onAccent ? 85 : 88 }, line: { type: 'none' } });
-        s.addShape(pptx.ShapeType.ellipse, { x: 10.9, y: 4.3, w: 3, h: 3, fill: { color: onAccent ? 'FFFFFF' : A, transparency: onAccent ? 80 : 82 }, line: { type: 'none' } });
-        if (sl.k === 'title') {
-          s.addText(sl.label.toUpperCase(), { x: 1.0, y: 1.6, w: 10, h: 0.5, fontFace: FONT_BODY, fontSize: 16, bold: true, color: onAccent ? 'FFFFFF' : A, charSpacing: 2 });
-          s.addText(sl.title, { x: 1.0, y: 2.15, w: 10.5, h: 2.4, fontFace: FONT_HEAD, fontSize: sl.title.length > 50 ? 36 : 44, color: ink, valign: 'top' });
-          if (sl.subtitle) s.addText(sl.subtitle, { x: 1.0, y: 4.7, w: 10, h: 1.4, fontFace: FONT_BODY, fontSize: 18, color: onAccent ? 'FFFFFF' : theme.muted, valign: 'top' });
-        } else {
-          s.addText(sl.title, { x: 1.0, y: 2.6, w: 10.5, h: 1.3, fontFace: FONT_HEAD, fontSize: 48, color: ink });
-          s.addText(sl.subtitle, { x: 1.0, y: 3.9, w: 10, h: 0.8, fontFace: FONT_BODY, fontSize: 24, color: onAccent ? 'FFFFFF' : A });
-        }
-        break;
-      }
-      case 'agenda': {
-        head('');
-        s.addText(sl.title, { x: 0.6, y: 1.0, w: 12, h: 0.9, fontFace: FONT_HEAD, fontSize: 34, color: ink });
-        const half = Math.ceil(sl.items.length / 2);
-        const cols = sl.items.length > 6 ? [sl.items.slice(0, half), sl.items.slice(half)] : [sl.items];
-        cols.forEach((col, c) =>
-          s.addText(
-            col.map((t, i) => ({ text: `${String(c * half + i + 1).padStart(2, '0')}   ${t}`, options: { breakLine: true } })),
-            { x: 0.6 + c * 6.2, y: 2.1, w: cols.length > 1 ? 6 : 12, h: 4.8, fontFace: FONT_BODY, fontSize: sl.items.length > 8 ? 18 : 24, color: ink, valign: 'top', paraSpaceAfter: 12 },
-          ),
-        );
-        break;
-      }
-      case 'divider':
-        s.addText(String(sl.n).padStart(2, '0'), { x: 0.9, y: 1.9, w: 3, h: 1.4, fontFace: FONT_HEAD, fontSize: 80, color: A });
-        s.addText(sl.title, { x: 0.9, y: 3.4, w: 11.5, h: 2, fontFace: FONT_HEAD, fontSize: 40, color: ink, valign: 'top' });
-        break;
-      case 'text':
-        head(sl.label);
-        s.addText(sl.title, { x: 0.6, y: 1.0, w: 12, h: 0.9, fontFace: FONT_HEAD, fontSize: 32, color: ink });
-        s.addShape(pptx.ShapeType.rect, { x: 0.6, y: 2.25, w: 0.08, h: 3.9, fill: { color: A }, line: { color: A } });
-        s.addText(sl.text, { x: 0.95, y: 2.2, w: 11.6, h: 4.2, fontFace: FONT_HEAD, fontSize: bodySize(sl.text, 2), color: ink, valign: 'top', lineSpacingMultiple: 1.15 });
-        break;
-      case 'point':
-        s.addShape(pptx.ShapeType.ellipse, { x: 10.6, y: 4.6, w: 4.2, h: 4.2, fill: { color: A, transparency: 90 }, line: { type: 'none' } });
-        head(sl.label);
-        s.addText(String(sl.n).padStart(2, '0'), { x: 0.6, y: 1.0, w: 2, h: 1, fontFace: FONT_HEAD, fontSize: 48, color: A });
-        s.addText(sl.title, { x: 0.6, y: 2.0, w: 12, h: 1.1, fontFace: FONT_HEAD, fontSize: sl.title.length > 45 ? 28 : 34, color: ink, valign: 'top' });
-        s.addText(sl.text, { x: 0.6, y: 3.25, w: 11.2, h: 3.6, fontFace: FONT_BODY, fontSize: bodySize(sl.text), color: ink, valign: 'top', lineSpacingMultiple: 1.2 });
-        break;
-      case 'formula': {
-        head(sl.label);
-        s.addText(sl.title, { x: 0.6, y: 1.0, w: 12, h: 0.9, fontFace: FONT_HEAD, fontSize: 32, color: ink });
-        s.addShape(pptx.ShapeType.roundRect, { x: 0.6, y: 2.1, w: 12.1, h: 4.4, fill: { color: theme.card }, line: { type: 'none' }, rectRadius: 0.15 });
-        const img = images.formula[sl.topicId];
-        if (img) {
-          const f = fit(img, 1.0, 2.5, 11.3, 3.6);
-          if (theme.id === 'dark') s.addShape(pptx.ShapeType.roundRect, { x: f.x - 0.25, y: f.y - 0.2, w: f.w + 0.5, h: f.h + 0.4, fill: { color: 'FFFFFF' }, line: { type: 'none' }, rectRadius: 0.1 });
-          s.addImage({ data: img.data, ...f });
-        } else s.addText(sl.plain, { x: 1.0, y: 2.5, w: 11.3, h: 3.6, fontFace: 'Cambria Math', fontSize: sl.plain.length > 40 ? 30 : 40, color: ink, align: 'center', valign: 'middle' });
-        break;
-      }
-      case 'model': {
-        head(sl.label);
-        s.addText(sl.title, { x: 0.6, y: 1.0, w: 12, h: 0.8, fontFace: FONT_HEAD, fontSize: 30, color: ink });
-        const img = images.model[sl.topicId];
-        if (img) s.addImage({ data: img.data, ...fit(img, 0.6, 1.9, 12.1, 4.9) });
-        s.addText(sl.caption, { x: 0.6, y: SLIDE_H - 0.6, w: 9, h: 0.35, fontFace: FONT_BODY, fontSize: 11, color: theme.muted });
-        break;
-      }
-      case 'summary':
-        head(sl.label);
-        s.addText(sl.title, { x: 0.6, y: 1.0, w: 12, h: 0.9, fontFace: FONT_HEAD, fontSize: 32, color: ink });
+    const { bg, prims } = layoutSlide(sl, { theme, accent, images, deck, index, total: slides.length });
+    s.background = { color: bg };
+    for (const p of prims) {
+      if (p.t === 'rect') s.addShape(p.r ? pptx.ShapeType.roundRect : pptx.ShapeType.rect, { x: p.x, y: p.y, w: p.w, h: p.h, fill: { color: p.fill, transparency: tr(p.alpha) }, line: p.line ? { color: p.line, width: 1 } : { type: 'none' }, rectRadius: p.r });
+      else if (p.t === 'ellipse') s.addShape(pptx.ShapeType.ellipse, { x: p.x, y: p.y, w: p.w, h: p.h, fill: { color: p.fill, transparency: tr(p.alpha) }, line: { type: 'none' } });
+      else if (p.t === 'img') s.addImage(p.cover ? { data: p.data, x: p.x, y: p.y, w: p.w, h: p.h, sizing: { type: 'cover', w: p.w, h: p.h } } : { data: p.data, x: p.x, y: p.y, w: p.w, h: p.h });
+      else
         s.addText(
-          sl.items.map((t) => ({ text: t, options: { bullet: { code: '25CF' }, breakLine: true } })),
-          { x: 0.6, y: 2.1, w: 12, h: 4.8, fontFace: FONT_BODY, fontSize: listSize(sl.items), color: ink, valign: 'top', paraSpaceAfter: 10 },
+          p.runs.map((r) => ({ text: r.text, options: { bold: r.bold, color: r.color, fontSize: r.size, breakLine: r.br } })),
+          { x: p.x, y: p.y, w: p.w, h: p.h, margin: 0, fontFace: FONTS[p.font], fontSize: p.size, color: p.color, bold: p.bold, italic: p.italic, transparency: tr(p.alpha), align: p.align ?? 'left', valign: p.valign ?? 'top', lineSpacingMultiple: p.lh, charSpacing: p.spacing, paraSpaceAfter: p.para, fit: 'none' },
         );
-        break;
-      case 'quiz': {
-        head(sl.label);
-        s.addText(sl.q, { x: 0.6, y: 1.1, w: 12.1, h: 2.0, fontFace: FONT_HEAD, fontSize: sl.q.length > 140 ? 22 : 28, color: ink, valign: 'top' });
-        sl.options.forEach((opt, i) => {
-          const x = 0.6 + (i % 2) * 6.15;
-          const y = 3.35 + Math.floor(i / 2) * 1.75;
-          s.addShape(pptx.ShapeType.roundRect, { x, y, w: 5.95, h: 1.5, fill: { color: theme.card }, line: { type: 'none' }, rectRadius: 0.12 });
-          s.addShape(pptx.ShapeType.ellipse, { x: x + 0.3, y: y + 0.45, w: 0.6, h: 0.6, fill: { color: A }, line: { type: 'none' } });
-          s.addText('ABCD'[i], { x: x + 0.3, y: y + 0.45, w: 0.6, h: 0.6, fontFace: FONT_BODY, fontSize: 16, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' });
-          s.addText(opt, { x: x + 1.1, y, w: 4.7, h: 1.5, fontFace: FONT_BODY, fontSize: optSize(opt), color: ink, valign: 'middle' });
-        });
-        break;
-      }
-      case 'answers':
-        head('');
-        s.addText(sl.title, { x: 0.6, y: 1.0, w: 12, h: 0.9, fontFace: FONT_HEAD, fontSize: 32, color: ink });
-        s.addText(
-          sl.items.map((t) => ({ text: t, options: { breakLine: true } })),
-          { x: 0.6, y: 2.1, w: 12, h: 4.8, fontFace: FONT_BODY, fontSize: sl.items.length > 6 ? 18 : 24, color: ink, valign: 'top', paraSpaceAfter: 10 },
-        );
-        break;
     }
     if (sl.notes) s.addNotes(sl.notes);
   });
