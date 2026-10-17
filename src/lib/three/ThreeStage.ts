@@ -71,7 +71,7 @@ export class ThreeStage {
     this.camera = new THREE.PerspectiveCamera(options.fov ?? 42, w / Math.max(h, 1), 0.05, 200);
     this.camera.position.set(...(options.cameraPosition ?? [0, 3, 10]));
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); // lets a topic export a snapshot of the model
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(w, h);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;

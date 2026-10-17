@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { StemCategory, VisualMode } from '../types/stem';
-import { ArrowLeft, ArrowRight, Box, Check, Search, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Box, Check, Presentation, Search, X } from 'lucide-react';
 import { Formula } from './Formula';
 import { SimView } from './SimView';
 import { Quiz } from './practice/Quiz';
@@ -10,6 +10,8 @@ import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicBy
 import { setMentorTopic } from '../lib/mentorTopic';
 
 type Lang = 'ru' | 'en';
+
+const PresentationModal = lazy(() => import('./presentation/PresentationModal'));
 
 interface TextbookReaderProps {
   lang: Lang;
@@ -321,6 +323,9 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
   }, [topic.id]);
 
   const sectionTitle = sectionsFor(topic.subject, topic.grade).find((s) => s.id === topic.sectionId)?.title;
+  const formulaRef = useRef<HTMLDivElement>(null);
+  const modelRef = useRef<HTMLDivElement>(null);
+  const [slides, setSlides] = useState(false);
 
   return (
     <article className="flex flex-col gap-6 w-full">
@@ -345,6 +350,13 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
           <h1 className="mt-2 font-serif text-[30px] sm:text-[36px] leading-tight tracking-[-0.02em] text-ink">{topic.title[lang]}</h1>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
+          <button
+            onClick={() => setSlides(true)}
+            className="h-10 px-4 rounded-lg bg-surface border border-line hover:bg-muted text-sm text-ink transition-colors cursor-pointer inline-flex items-center gap-2"
+          >
+            <Presentation className="w-4 h-4" strokeWidth={1.75} />
+            {lang === 'ru' ? 'Презентация' : 'Slides'}
+          </button>
           {onAskMentor && (
             <button
               onClick={() => onAskMentor(topic.id, topic.title[lang])}
@@ -368,13 +380,21 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
       <p className="max-w-3xl font-serif text-xl leading-relaxed text-ink">{topic.intro[lang]}</p>
 
       {topic.formula && (
-        <div className="self-start max-w-full overflow-x-auto px-5 py-3 rounded-xl bg-surface border border-line text-ink">
+        <div ref={formulaRef} className="self-start max-w-full overflow-x-auto px-5 py-3 rounded-xl bg-surface border border-line text-ink">
           <Formula tex={topic.formula} display />
         </div>
       )}
 
       {topic.sim && (
-        <SimView sim={topic.sim} title={topic.title[lang]} formula={topic.formula} lang={lang} onLaunchSimulation={onLaunchSimulation} />
+        <div ref={modelRef}>
+          <SimView sim={topic.sim} title={topic.title[lang]} formula={topic.formula} lang={lang} onLaunchSimulation={onLaunchSimulation} />
+        </div>
+      )}
+
+      {slides && (
+        <Suspense fallback={null}>
+          <PresentationModal topic={topic} lang={lang} formulaEl={formulaRef.current} modelEl={modelRef.current} onClose={() => setSlides(false)} />
+        </Suspense>
       )}
 
       <section>

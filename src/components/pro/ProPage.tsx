@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Crown, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen } from 'lucide-react';
+import { Check, Crown, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
 import { PRICES, FREE_MENTOR_DAILY, inSom, openCheckout, paymentsEnabled, redeemCode, redeemErrorText, usePlan } from '../../lib/plan';
 import { cloudEnabled, useSession } from '../../lib/supabase';
 
@@ -94,10 +94,12 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
     { icon: <Target className="w-4 h-4" />, t: L('Пробные ОРТ-экзамены', 'ORT-style mock exams'), d: L('Полный вариант на время с разбором', 'Full timed papers with review') },
     { icon: <Gauge className="w-4 h-4" />, t: L('Готовность к ОРТ', 'Exam readiness'), d: L('Процент по каждому предмету и слабые темы', 'A score per subject and your weak topics') },
     { icon: <NotebookPen className="w-4 h-4" />, t: L('Работа над ошибками', 'Mistake review'), d: L('Ошибки возвращаются через 1, 3 и 7 дней', 'Mistakes come back after 1, 3 and 7 days') },
+    { icon: <Presentation className="w-4 h-4" />, t: L('Презентации по темам', 'Slides for any topic'), d: L('Готовый .pptx в 3 оформлениях за секунду', 'A ready .pptx in 3 themes in a second') },
     { icon: <Route className="w-4 h-4" />, t: L('Персональный план', 'Personal plan'), d: L('Что повторить по твоим ошибкам', 'What to revise based on your mistakes') },
   ];
   const TEACHER = [
     L('Всё из Pro', 'Everything in Pro'),
+    L('Презентации к уроку: тест-слайды, ответы, заметки, целый раздел', 'Lesson slides: quiz, answers, speaker notes, whole sections'),
     L('Классы: ученики входят по коду', 'Classes that students join with a code'),
     L('Задания по темам и разделам со сроком', 'Topic and section assignments with due dates'),
     L('Таблица прогресса и ошибок учеников', 'Progress and mistakes of every student'),

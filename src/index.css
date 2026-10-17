@@ -870,3 +870,7 @@
   .lift:hover { transform: none; }
   .confetti-piece { display: none; }
 }
+
+/* light scrollbars inside light dialogs */
+.soft-scroll::-webkit-scrollbar-track, .soft-scroll *::-webkit-scrollbar-track { background: transparent; }
+.soft-scroll::-webkit-scrollbar-thumb, .soft-scroll *::-webkit-scrollbar-thumb { background: #D6D4CE; }
