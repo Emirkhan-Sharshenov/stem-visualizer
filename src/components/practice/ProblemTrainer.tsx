@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Calculator, Check, Flame, Shuffle, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calculator, Check, Flame, Heart, Shuffle, X } from 'lucide-react';
 import { PROBLEMS, ProblemGen, problemQuestion } from '../../lib/problems';
 import { progress, useProgress } from '../../lib/progress';
 import { Formula } from '../Formula';
+import { Marathon } from './Marathon';
 
 type Lang = 'ru' | 'en';
 const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524' };
@@ -26,6 +27,7 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
     setAnswer(k);
     const ok = k === q.correct;
     progress.recordProblem(gen.id, ok);
+    if (!ok) progress.recordMistakes([q]);
     setStats((s) => ({ ok: s.ok + (ok ? 1 : 0), total: s.total + 1, streak: ok ? s.streak + 1 : 0 }));
   };
   const next = () => {
@@ -105,8 +107,10 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
 export const ProblemTrainer: React.FC<{ lang: Lang }> = ({ lang }) => {
   const [subject, setSubject] = useState('all');
   const [run, setRun] = useState<{ gens: ProblemGen[]; title: string } | null>(null);
-  const { problems } = useProgress();
+  const [marathon, setMarathon] = useState(false);
+  const { problems, marathonBest } = useProgress();
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
+  if (marathon) return <Marathon lang={lang} subject={subject} onBack={() => setMarathon(false)} />;
   if (run) return <Run lang={lang} gens={run.gens} title={run.title} onBack={() => setRun(null)} />;
   const list = PROBLEMS.filter((g) => subject === 'all' || g.subject === subject).sort((a, b) => a.grade - b.grade);
   const solved = Object.values(problems ?? {}).reduce((s, x) => s + x.ok, 0);
@@ -125,6 +129,12 @@ export const ProblemTrainer: React.FC<{ lang: Lang }> = ({ lang }) => {
             </button>
           ))}
         </div>
+        <div className="flex flex-wrap gap-2">
+        <button onClick={() => setMarathon(true)} className="h-10 px-4 rounded-lg border border-[#F6CBB9] bg-[#FFF4F0] hover:bg-[#FFE9E1] text-sm font-medium text-[#B42318] inline-flex items-center gap-2 cursor-pointer">
+          <Heart className="w-4 h-4" fill="#E5484D" strokeWidth={1.75} />
+          {L('Марафон: 3 жизни', 'Marathon: 3 lives')}
+          {(marathonBest ?? 0) > 0 && <span className="font-mono text-xs opacity-70">{L('рекорд', 'best')} {marathonBest}</span>}
+        </button>
         <button
           onClick={() => setRun({ gens: [...list].sort(() => Math.random() - 0.5), title: L('Смешанные задачи', 'Mixed problems') })}
           className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-2 cursor-pointer"
@@ -133,6 +143,7 @@ export const ProblemTrainer: React.FC<{ lang: Lang }> = ({ lang }) => {
           <Shuffle className="w-4 h-4" strokeWidth={1.75} />
           {L('Решать вперемешку', 'Mixed run')}
         </button>
+        </div>
       </div>
       <p className="text-sm text-ink-2">
         {L(`${PROBLEMS.length} типов задач — числа каждый раз новые, так что задач бесконечно много. После ответа показывается решение. Решено верно: `, `${PROBLEMS.length} problem types with fresh numbers each time, so there’s no end to them. A worked solution follows each answer. Solved correctly: `)}

@@ -548,6 +548,303 @@ export const PROBLEMS: ProblemGen[] = [
         : { prompt: t(`6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂. Сколько молекул CO₂ нужно для синтеза ${g} молекул глюкозы?`, `How many CO₂ molecules are needed to make ${g} glucose molecules?`), answer: g * 6, wrong: [g, g * 12, g * 3], solution: t(`На одну глюкозу — 6 CO₂: ${g}·6 = ${g * 6}`, `6 CO₂ per glucose: ${g * 6}`) };
     },
   },
+  /* ===== exam set: physics ===== */
+  {
+    id: 'avg-speed', subject: 'physics', grade: 9, topics: ['p9-uniform', 'p10-uniform'], title: t('Средняя скорость', 'Average speed'),
+    make: (r) => {
+      const [v1, v2] = pick(r, [[60, 40], [30, 60], [40, 120], [20, 80], [90, 45], [36, 72]]);
+      const v = (2 * v1 * v2) / (v1 + v2);
+      return { prompt: t(`Первую половину пути машина ехала со скоростью ${v1} км/ч, вторую — ${v2} км/ч. Найди среднюю скорость на всём пути.`, `A car covers the first half of the way at ${v1} km/h and the second at ${v2} km/h. Find the average speed.`), answer: v, unit: U.kmh, wrong: [(v1 + v2) / 2, v1 + v2, Math.abs(v1 - v2)], solution: t(`Пусть каждая половина s. t = s/${v1} + s/${v2}; v = 2s / t = 2·${v1}·${v2} / (${v1} + ${v2}) = ${n(v)} км/ч. Среднее арифметическое (${(v1 + v2) / 2}) — частая ловушка.`, `v = 2v₁v₂/(v₁ + v₂) = ${v} km/h, not the arithmetic mean ${(v1 + v2) / 2}.`) };
+    },
+  },
+  {
+    id: 'throw-up', subject: 'physics', grade: 9, topics: ['p9-freefall', 'p10-projectile', 'p9-energy'], title: t('Бросок вверх', 'Vertical throw'),
+    make: (r) => {
+      const v = int(r, 2, 6) * 5;
+      const h = (v * v) / 20;
+      return { prompt: t(`Мяч бросили вертикально вверх со скоростью ${v} м/с. На какую высоту он поднимется? (g = 10 м/с², сопротивление воздуха не учитывать)`, `A ball is thrown straight up at ${v} m/s. How high does it rise? (g = 10 m/s²)`), answer: h, unit: U.m, wrong: [(v * v) / 10, v / 2, (v * v) / 2], solution: t(`h = v² / 2g = ${v}² / 20 = ${n(h)} м`, `h = v²/2g = ${h} m`) };
+    },
+  },
+  {
+    id: 'horizontal-throw', subject: 'physics', grade: 10, topics: ['p10-projectile'], title: t('Горизонтальный бросок', 'Horizontal throw'),
+    make: (r) => {
+      const h = pick(r, [5, 20, 45, 80, 125]);
+      const v = int(r, 2, 10);
+      const tt = Math.sqrt(h / 5);
+      return { prompt: t(`Камень бросили горизонтально с высоты ${h} м со скоростью ${v} м/с. На каком расстоянии от места броска (по горизонтали) он упадёт? (g = 10 м/с²)`, `A stone is thrown horizontally from ${h} m at ${v} m/s. How far away does it land? (g = 10 m/s²)`), answer: v * tt, unit: U.m, wrong: [(v * 2 * h) / 10, v * tt * 2, v * h], solution: t(`Время падения t = √(2h/g) = √(${2 * h}/10) = ${tt} с; L = v·t = ${v}·${tt} = ${v * tt} м`, `t = √(2h/g) = ${tt} s; L = vt = ${v * tt} m`) };
+    },
+  },
+  {
+    id: 'friction', subject: 'physics', grade: 10, topics: ['p10-friction', 'p7-friction'], title: t('Сила трения', 'Friction force'),
+    make: (r) => {
+      const m = int(r, 2, 50);
+      const mu = pick(r, [0.1, 0.2, 0.25, 0.3, 0.4, 0.5]);
+      const F = round(mu * m * 10, 2);
+      return { prompt: t(`Брусок массой ${m} кг тянут по горизонтальному столу равномерно. Коэффициент трения ${n(mu)}. Какова сила трения? (g = 10 м/с²)`, `A ${m} kg block slides steadily on a table, μ = ${mu}. Find the friction force (g = 10 m/s²).`), answer: F, unit: U.N, wrong: [round(mu * m, 2), m * 10, round(F * 10, 1)], solution: t(`F = μ·N = μ·m·g = ${n(mu)}·${m}·10 = ${n(F)} Н`, `F = μmg = ${F} N`) };
+    },
+  },
+  {
+    id: 'pendulum', subject: 'physics', grade: 9, topics: ['p9-harmonic', 'p9-oscillation-quantities', 'p11-free-osc'], title: t('Математический маятник', 'Simple pendulum'),
+    make: (r) => {
+      const l = pick(r, [0.25, 1, 2.25, 4]);
+      const T = 2 * Math.sqrt(l);
+      return { prompt: t(`Найди период колебаний математического маятника длиной ${n(l)} м. Считай g ≈ π² м/с².`, `Find the period of a ${l} m pendulum. Take g ≈ π² m/s².`), answer: T, unit: U.s, wrong: [2 * l, Math.sqrt(l), 4 * Math.sqrt(l)], solution: t(`T = 2π√(l/g) = 2π√(${n(l)}/π²) = 2√${n(l)} = ${n(T)} с`, `T = 2π√(l/g) = 2√l = ${T} s`) };
+    },
+  },
+  {
+    id: 'spring-period', subject: 'physics', grade: 11, topics: ['p11-free-osc', 'p9-harmonic'], title: t('Пружинный маятник', 'Mass on a spring'),
+    make: (r) => {
+      const ratio = pick(r, [0.01, 0.04, 0.09, 0.16, 0.25]);
+      const m = pick(r, [0.1, 0.2, 0.4, 0.5, 1]);
+      const k = round(m / ratio, 2);
+      const s = Math.sqrt(ratio);
+      return { prompt: t(`Груз массой ${n(m)} кг висит на пружине жёсткостью ${n(k)} Н/м. Найди период колебаний (π = 3,14).`, `A ${m} kg mass hangs on a ${k} N/m spring. Find the period (π = 3.14).`), answer: round(6.28 * s, 2), unit: U.s, wrong: [round(6.28 * ratio, 3), round(3.14 * s, 2), round(6.28 / s, 1)], solution: t(`T = 2π√(m/k) = 6,28·√(${n(m)}/${n(k)}) = 6,28·${n(s)} = ${n(round(6.28 * s, 2))} с`, `T = 2π√(m/k) = ${round(6.28 * s, 2)} s`) };
+    },
+  },
+  {
+    id: 'mixing', subject: 'physics', grade: 8, topics: ['p8-heat-balance', 'p8-heat-quantity'], title: t('Смешивание воды', 'Mixing water'),
+    make: (r) => {
+      const m1 = int(r, 1, 5);
+      const m2 = int(r, 1, 5);
+      const t1 = int(r, 1, 3) * 10;
+      const t2 = int(r, 6, 9) * 10;
+      const tt = (m1 * t1 + m2 * t2) / (m1 + m2);
+      return { prompt: t(`Смешали ${m1} кг воды при ${t1} °C и ${m2} кг воды при ${t2} °C. Какая установится температура? (потерями тепла пренебречь)`, `Mix ${m1} kg of water at ${t1} °C with ${m2} kg at ${t2} °C. What is the final temperature?`), answer: round(tt, 1), unit: t('°C', '°C'), digits: 1, wrong: [(t1 + t2) / 2, t2 - t1, round((m1 * t2 + m2 * t1) / (m1 + m2), 1)], solution: t(`Тепло отданное = тепло полученное: ${m2}·(${t2} − t) = ${m1}·(t − ${t1}) ⇒ t = (${m1}·${t1} + ${m2}·${t2}) / ${m1 + m2} = ${n(round(tt, 1))} °C`, `t = (m₁t₁ + m₂t₂)/(m₁ + m₂) = ${round(tt, 1)} °C`) };
+    },
+  },
+  {
+    id: 'melting', subject: 'physics', grade: 8, topics: ['p8-melting'], title: t('Плавление льда', 'Melting ice'),
+    make: (r) => {
+      const m = pick(r, [0.5, 1, 2, 3, 4, 5]);
+      return { prompt: t(`Сколько теплоты нужно, чтобы расплавить ${n(m)} кг льда, взятого при 0 °C? (λ = 330 кДж/кг)`, `How much heat melts ${m} kg of ice at 0 °C? (λ = 330 kJ/kg)`), answer: 330 * m, unit: U.kJ, wrong: [round(330 / m, 1), 2300 * m, 33 * m], solution: t(`Q = λm = 330·${n(m)} = ${n(330 * m)} кДж (лёд уже при 0 °C, нагревать не нужно)`, `Q = λm = ${330 * m} kJ`) };
+    },
+  },
+  {
+    id: 'boiling', subject: 'physics', grade: 8, topics: ['p8-boiling', 'p8-evaporation'], title: t('Парообразование', 'Vaporisation'),
+    make: (r) => {
+      const m = pick(r, [0.2, 0.5, 1, 2, 3]);
+      return { prompt: t(`Сколько теплоты нужно, чтобы превратить в пар ${n(m)} кг воды при 100 °C? (L = 2,3 МДж/кг)`, `How much heat turns ${m} kg of water at 100 °C into steam? (L = 2.3 MJ/kg)`), answer: round(2.3 * m, 2), unit: U.MJ, wrong: [round(0.33 * m, 3), round(2.3 / m, 2), round(23 * m, 1)], solution: t(`Q = Lm = 2,3·${n(m)} = ${n(round(2.3 * m, 2))} МДж`, `Q = Lm = ${round(2.3 * m, 2)} MJ`) };
+    },
+  },
+  {
+    id: 'clapeyron', subject: 'physics', grade: 10, topics: ['p10-clapeyron', 'p10-ideal-gas'], title: t('Уравнение Менделеева–Клапейрона', 'Ideal gas equation'),
+    make: (r) => {
+      const nu = int(r, 1, 5);
+      const T = pick(r, [300, 350, 400, 500]);
+      const V = pick(r, [0.01, 0.02, 0.05, 0.1]);
+      const p = round((nu * 8.31 * T) / V / 1000, 1);
+      return { prompt: t(`${nu} моль идеального газа занимают объём ${n(V)} м³ при температуре ${T} К. Найди давление газа (R = 8,31 Дж/(моль·К)).`, `${nu} mol of ideal gas fill ${V} m³ at ${T} K. Find the pressure (R = 8.31).`), answer: p, unit: U.kPa, digits: 1, wrong: [round(nu * 8.31 * T * V / 1000, 2), round((nu * 8.31 * (T - 273)) / V / 1000, 1), round(p * 1000, 0)], solution: t(`pV = νRT ⇒ p = νRT / V = ${nu}·8,31·${T} / ${n(V)} ≈ ${n(p)} кПа`, `p = νRT/V ≈ ${p} kPa`) };
+    },
+  },
+  {
+    id: 'field-strength', subject: 'physics', grade: 8, topics: ['p8-electric-field', 'p10-field'], title: t('Напряжённость поля', 'Field strength'),
+    make: (r) => {
+      const q = int(r, 2, 9);
+      const k = int(r, 1, 9);
+      const F = q * k;
+      return { prompt: t(`На заряд ${q} мкКл в электрическом поле действует сила ${F} мН. Найди напряжённость поля.`, `A ${q} µC charge feels a ${F} mN force. Find the field strength.`), answer: k * 1000, unit: t('Н/Кл', 'N/C'), wrong: [F * q, k, round(1000 / k, 1)], solution: t(`E = F / q = ${F}·10⁻³ / ${q}·10⁻⁶ = ${k * 1000} Н/Кл`, `E = F/q = ${k * 1000} N/C`) };
+    },
+  },
+  {
+    id: 'cap-energy', subject: 'physics', grade: 10, topics: ['p10-capacitors'], title: t('Энергия конденсатора', 'Capacitor energy'),
+    make: (r) => {
+      const C = pick(r, [2, 4, 5, 10, 20]);
+      const Uv = pick(r, [10, 20, 50, 100]);
+      const W = (C * Uv * Uv) / 2 / 1000;
+      return { prompt: t(`Конденсатор ёмкостью ${C} мкФ заряжен до ${Uv} В. Какая энергия в нём запасена?`, `A ${C} µF capacitor is charged to ${Uv} V. How much energy does it store?`), answer: W, unit: t('мДж', 'mJ'), wrong: [W * 2, (C * Uv) / 2 / 1000, (C * Uv * Uv) / 2], solution: t(`W = CU²/2 = ${C}·10⁻⁶·${Uv}² / 2 = ${n(W)}·10⁻³ Дж = ${n(W)} мДж`, `W = CU²/2 = ${W} mJ`) };
+    },
+  },
+  {
+    id: 'ampere-force', subject: 'physics', grade: 9, topics: ['p9-ampere', 'p11-ampere'], title: t('Сила Ампера', 'Ampère force'),
+    make: (r) => {
+      const B = pick(r, [0.1, 0.2, 0.5]);
+      const I = int(r, 2, 10);
+      const Lm = pick(r, [0.2, 0.5, 1]);
+      const F = round(B * I * Lm, 3);
+      return { prompt: t(`Проводник длиной ${n(Lm)} м с током ${I} А расположен перпендикулярно линиям поля с индукцией ${n(B)} Тл. Найди силу Ампера.`, `A ${Lm} m wire with ${I} A lies across a ${B} T field. Find the force.`), answer: F, unit: U.N, wrong: [round((B * I) / Lm, 2), round(F * 10, 2), I * Lm], solution: t(`F = B·I·L·sin 90° = ${n(B)}·${I}·${n(Lm)} = ${n(F)} Н`, `F = BIL = ${F} N`) };
+    },
+  },
+  {
+    id: 'induction-emf', subject: 'physics', grade: 11, topics: ['p11-flux-law', 'p9-induction'], title: t('ЭДС индукции', 'Induced EMF'),
+    make: (r) => {
+      const N = pick(r, [1, 10, 50, 100]);
+      const dF = int(r, 2, 20);
+      const dt = pick(r, [0.1, 0.2, 0.5]);
+      const e = round((N * dF * 1e-3) / dt, 3);
+      return { prompt: t(`Магнитный поток через катушку из ${N} витков равномерно изменился на ${dF} мВб за ${n(dt)} с. Найди ЭДС индукции.`, `The flux through a ${N}-turn coil changes by ${dF} mWb in ${dt} s. Find the induced EMF.`), answer: e, unit: U.V, wrong: [round((dF * 1e-3) / dt, 4), round(N * dF * 1e-3 * dt, 4), round((N * dF) / dt, 0)], solution: t(`ε = N·ΔΦ/Δt = ${N}·${dF}·10⁻³ / ${n(dt)} = ${n(e)} В`, `ε = NΔΦ/Δt = ${e} V`) };
+    },
+  },
+  {
+    id: 'transformer', subject: 'physics', grade: 11, topics: ['p11-generator', 'p9-ac'], title: t('Трансформатор', 'Transformer'),
+    make: (r) => {
+      const U1 = pick(r, [220, 110, 380]);
+      const N1 = pick(r, [500, 1000, 2000]);
+      const N2 = pick(r, [50, 100, 250, 500]);
+      const U2 = round((U1 * N2) / N1, 1);
+      return { prompt: t(`Первичная обмотка трансформатора — ${N1} витков, вторичная — ${N2}. На первичную подали ${U1} В. Какое напряжение на вторичной?`, `A transformer has ${N1} primary and ${N2} secondary turns; ${U1} V is applied. Find the secondary voltage.`), answer: U2, unit: U.V, digits: 1, wrong: [round((U1 * N1) / N2, 1), round(U1 / N2, 2), round(U2 * 2, 1)], solution: t(`U₂ / U₁ = N₂ / N₁ ⇒ U₂ = ${U1}·${N2} / ${N1} = ${n(U2)} В`, `U₂ = U₁N₂/N₁ = ${U2} V`) };
+    },
+  },
+  {
+    id: 'photoeffect', subject: 'physics', grade: 11, topics: ['p11-quanta'], title: t('Уравнение Эйнштейна', 'Photoelectric equation'),
+    make: (r) => {
+      const metal = pick(r, [{ A: 2.3, ru: 'натрия', en: 'sodium' }, { A: 1.9, ru: 'цезия', en: 'caesium' }, { A: 2.2, ru: 'калия', en: 'potassium' }, { A: 4.3, ru: 'цинка', en: 'zinc' }]);
+      const E = round(metal.A + int(r, 3, 25) / 10, 1);
+      const Ek = round(E - metal.A, 1);
+      return { prompt: t(`Фотон с энергией ${n(E)} эВ выбивает электрон из ${metal.ru} (работа выхода ${n(metal.A)} эВ). Какова максимальная кинетическая энергия электрона?`, `A ${E} eV photon ejects an electron from ${metal.en} (work function ${metal.A} eV). Find the maximum kinetic energy.`), answer: Ek, unit: U.eV, digits: 1, wrong: [round(E + metal.A, 1), metal.A, E], solution: t(`hν = A + Eₖ ⇒ Eₖ = ${n(E)} − ${n(metal.A)} = ${n(Ek)} эВ`, `Eₖ = hν − A = ${Ek} eV`) };
+    },
+  },
+  {
+    id: 'refraction-speed', subject: 'physics', grade: 11, topics: ['p11-geometric', 'p11-light-speed'], title: t('Скорость света в среде', 'Speed of light in a medium'),
+    make: (r) => {
+      const m = pick(r, [{ n: 1.33, ru: 'воде', en: 'water' }, { n: 1.5, ru: 'стекле', en: 'glass' }, { n: 2.42, ru: 'алмазе', en: 'diamond' }, { n: 1.2, ru: 'среде с n = 1,2', en: 'a medium with n = 1.2' }]);
+      const v = Math.round(300 / m.n);
+      return { prompt: t(`Показатель преломления равен ${n(m.n)}. С какой скоростью свет идёт в ${m.ru}? (c = 300 тыс. км/с)`, `The refractive index is ${m.n}. How fast does light travel in ${m.en}? (c = 300 thousand km/s)`), answer: v, unit: t('тыс. км/с', 'thousand km/s'), digits: 0, wrong: [Math.round(300 * m.n), 300, Math.round(300 - m.n * 100)], solution: t(`n = c / v ⇒ v = c / n = 300 / ${n(m.n)} ≈ ${v} тыс. км/с`, `v = c/n ≈ ${v} thousand km/s`) };
+    },
+  },
+  /* ===== exam set: chemistry ===== */
+  {
+    id: 'molarity', subject: 'chemistry', grade: 9, topics: ['c8-solutions', 'c9-electrolytes'], title: t('Молярная концентрация', 'Molar concentration'),
+    make: (r) => {
+      const V = pick(r, [0.25, 0.5, 1, 2]);
+      const c = pick(r, [0.1, 0.2, 0.5, 1, 2]);
+      const m = round(40 * c * V, 2);
+      return { prompt: t(`В ${n(V)} л раствора содержится ${n(m)} г NaOH. Найди молярную концентрацию (M(NaOH) = 40 г/моль).`, `${V} L of solution contains ${m} g of NaOH. Find the molar concentration (M = 40 g/mol).`), answer: c, unit: t('моль/л', 'mol/L'), wrong: [round(m / V, 2), round(m / 40, 3), round(c * V, 3)], solution: t(`n = m / M = ${n(m)} / 40 = ${n(round(m / 40, 3))} моль; c = n / V = ${n(round(m / 40, 3))} / ${n(V)} = ${n(c)} моль/л`, `c = (m/M)/V = ${c} mol/L`) };
+    },
+  },
+  {
+    id: 'dilution', subject: 'chemistry', grade: 8, topics: ['c8-solutions'], title: t('Разбавление раствора', 'Diluting a solution'),
+    make: (r) => {
+      const m = pick(r, [100, 200, 250, 400, 500]);
+      const w1 = pick(r, [10, 20, 25, 30, 40]);
+      const k = pick(r, [0.25, 1, 3]);
+      const water = m * k;
+      const w2 = round(w1 / (1 + k), 1);
+      return { prompt: t(`К ${m} г ${w1}%-го раствора соли добавили ${water} г воды. Какой стала массовая доля соли?`, `${water} g of water is added to ${m} g of a ${w1}% salt solution. What is the new mass fraction?`), answer: w2, unit: U.pct, digits: 1, wrong: [round(w1 * (1 + k), 1), round((w1 * m) / water, 1), round(w1 - w1 * k, 1)], solution: t(`m(соли) = ${m}·${w1}% = ${(m * w1) / 100} г; m(раствора) = ${m} + ${water} = ${m + water} г; w = ${(m * w1) / 100} / ${m + water} = ${n(w2)}%`, `w = ${(m * w1) / 100} / ${m + water} = ${w2}%`) };
+    },
+  },
+  {
+    id: 'yield', subject: 'chemistry', grade: 9, topics: ['c8-equations', 'c9-alkali', 'c9-carbon'], title: t('Выход продукта', 'Product yield'),
+    make: (r) => {
+      const a = int(r, 1, 5);
+      const eta = pick(r, [75, 80, 85, 90]);
+      const mPr = round((56 * a * eta) / 100, 1);
+      return { prompt: t(`CaCO₃ → CaO + CO₂. При обжиге ${100 * a} г известняка получили оксид кальция с выходом ${eta}%. Сколько граммов CaO получили?`, `CaCO₃ → CaO + CO₂. Roasting ${100 * a} g of limestone gives CaO with ${eta}% yield. How many grams of CaO?`), answer: mPr, unit: U.g, digits: 1, wrong: [56 * a, round((100 * a * eta) / 100, 1), round((56 * a * 100) / eta, 1)], solution: t(`n(CaCO₃) = ${100 * a} / 100 = ${a} моль = n(CaO); m(теор) = ${a}·56 = ${56 * a} г; m(практ) = ${56 * a}·${eta}% = ${n(mPr)} г`, `m = ${56 * a}·${eta}% = ${mPr} g`) };
+    },
+  },
+  {
+    id: 'avogadro', subject: 'chemistry', grade: 8, topics: ['c8-mole'], title: t('Число Авогадро', 'Avogadro’s number'),
+    make: (r) => {
+      const nu = pick(r, [0.5, 1, 2, 3, 5]);
+      const m = 18 * nu;
+      const sci = (x: number) => {
+        let e = 23;
+        let v = x;
+        while (v >= 10) {
+          v /= 10;
+          e++;
+        }
+        return `${String(round(v, 2)).replace('.', ',')}·10${e === 23 ? '²³' : e === 24 ? '²⁴' : '²⁵'}`;
+      };
+      const ans = sci(6.02 * nu);
+      return { prompt: t(`Сколько молекул содержится в ${n(m)} г воды? (M = 18 г/моль, Nₐ = 6,02·10²³ моль⁻¹)`, `How many molecules are in ${m} g of water? (M = 18 g/mol, Nₐ = 6.02·10²³)`), answer: ans, wrong: [sci(6.02 * m), sci(round(6.02 * nu * 3, 2)), sci(6.02 * nu * 10)].filter((w) => w !== ans), solution: t(`n = ${n(m)} / 18 = ${n(nu)} моль; N = n·Nₐ = ${n(nu)}·6,02·10²³ = ${ans}`, `N = nNₐ = ${ans}`) };
+    },
+  },
+  {
+    id: 'rel-density', subject: 'chemistry', grade: 8, topics: ['c8-masses', 'c8-mole'], title: t('Относительная плотность газа', 'Relative gas density'),
+    make: (r) => {
+      const g = pick(r, [{ f: 'CO₂', M: 44 }, { f: 'CH₄', M: 16 }, { f: 'O₂', M: 32 }, { f: 'NH₃', M: 17 }, { f: 'SO₂', M: 64 }, { f: 'N₂', M: 28 }, { f: 'C₂H₆', M: 30 }]);
+      return { prompt: t(`Найди относительную плотность ${g.f} по водороду.`, `Find the density of ${g.f} relative to hydrogen.`), answer: g.M / 2, digits: 1, wrong: [g.M, g.M * 2, round(g.M / 29, 2)], solution: t(`D(H₂) = M(${g.f}) / M(H₂) = ${g.M} / 2 = ${n(g.M / 2)}`, `D = M/2 = ${g.M / 2}`) };
+    },
+  },
+  {
+    id: 'excess', subject: 'chemistry', grade: 9, topics: ['c8-equations', 'c8-acids', 'c9-metals-general'], title: t('Задача на избыток', 'Limiting reagent'),
+    make: (r) => {
+      const a = int(r, 1, 4);
+      let b = int(r, 1, 8);
+      if (b === 2 * a) b += 1;
+      const lim = Math.min(a, b / 2);
+      const V = round(lim * 22.4, 2);
+      return { prompt: t(`Zn + 2HCl → ZnCl₂ + H₂↑. Смешали ${65 * a} г цинка и ${n(36.5 * b)} г HCl. Какой объём водорода (н. у.) выделится?`, `Zn + 2HCl → ZnCl₂ + H₂. ${65 * a} g of zinc reacts with ${36.5 * b} g of HCl. What volume of H₂ forms (STP)?`), answer: V, unit: U.L, digits: 2, wrong: [round(Math.max(a, b / 2) * 22.4, 2), round(b * 22.4, 2), round((a + b) * 22.4, 2)], solution: t(`n(Zn) = ${a} моль, n(HCl) = ${b} моль. На ${a} моль Zn нужно ${2 * a} моль HCl — ${b < 2 * a ? 'кислоты не хватает, считаем по HCl' : 'кислота в избытке, считаем по цинку'}: n(H₂) = ${n(lim)} моль, V = ${n(lim)}·22,4 = ${n(V)} л`, `Limiting reagent: ${b < 2 * a ? 'HCl' : 'Zn'}; n(H₂) = ${lim} mol, V = ${V} L`) };
+    },
+  },
+  {
+    id: 'formula-find', subject: 'chemistry', grade: 10, topics: ['c10-formula-problems', 'c8-formulas-valence'], title: t('Вывод формулы', 'Finding the formula'),
+    make: (r) => {
+      const c = pick(r, [
+        { q: t('Оксид железа содержит 70% железа по массе.', 'An iron oxide is 70% iron by mass.'), a: 'Fe₂O₃', w: ['FeO', 'Fe₃O₄', 'FeO₂'], ex: '70/56 : 30/16 = 1,25 : 1,875 = 2 : 3' },
+        { q: t('Оксид железа содержит 77,8% железа по массе.', 'An iron oxide is 77.8% iron by mass.'), a: 'FeO', w: ['Fe₂O₃', 'Fe₃O₄', 'Fe₂O'], ex: '77,8/56 : 22,2/16 = 1,39 : 1,39 = 1 : 1' },
+        { q: t('Углеводород: 75% углерода, 25% водорода.', 'A hydrocarbon is 75% C and 25% H.'), a: 'CH₄', w: ['C₂H₆', 'C₂H₄', 'CH₂'], ex: '75/12 : 25/1 = 6,25 : 25 = 1 : 4' },
+        { q: t('Углеводород: 80% углерода, 20% водорода.', 'A hydrocarbon is 80% C and 20% H.'), a: 'C₂H₆', w: ['CH₄', 'C₂H₄', 'C₃H₈'], ex: '80/12 : 20/1 = 6,67 : 20 = 1 : 3 ⇒ CH₃, реальная формула C₂H₆' },
+        { q: t('Углеводород: 85,7% углерода, плотность по водороду 14.', 'A hydrocarbon: 85.7% C, density relative to H₂ is 14.'), a: 'C₂H₄', w: ['CH₂', 'C₂H₆', 'C₃H₆'], ex: '85,7/12 : 14,3/1 = 1 : 2 ⇒ (CH₂)ₙ; M = 14·2 = 28 ⇒ n = 2' },
+      ]);
+      return { prompt: t(`${c.q.ru} Какова формула вещества?`, `${c.q.en} What is its formula?`), answer: c.a, wrong: c.w, solution: t(`Делим массовые доли на атомные массы: ${c.ex} ⇒ ${c.a}`, `Divide the mass fractions by atomic masses: ${c.ex} ⇒ ${c.a}`) };
+    },
+  },
+  /* ===== exam set: biology ===== */
+  {
+    id: 'dihybrid', subject: 'biology', grade: 10, topics: ['b10-gene-interaction', 'b10-mendel-laws', 'b9-mendel'], title: t('Дигибридное скрещивание', 'Dihybrid cross'),
+    make: (r) => {
+      const c = pick(r, [
+        { ph: t('жёлтые гладкие', 'yellow smooth'), a: '9/16' },
+        { ph: t('жёлтые морщинистые', 'yellow wrinkled'), a: '3/16' },
+        { ph: t('зелёные гладкие', 'green smooth'), a: '3/16' },
+        { ph: t('зелёные морщинистые', 'green wrinkled'), a: '1/16' },
+      ]);
+      const all = ['9/16', '3/16', '1/16', '1/4', '3/4', '1/2'];
+      return { prompt: t(`У гороха жёлтая окраска (A) доминирует над зелёной, гладкая форма (B) — над морщинистой. Скрещивают AaBb × AaBb. Какая доля потомков будет ${c.ph.ru}?`, `In peas yellow (A) is dominant over green and smooth (B) over wrinkled. AaBb × AaBb: what share of offspring are ${c.ph.en}?`), answer: c.a, wrong: all.filter((x) => x !== c.a).slice(0, 3), solution: t(`Решётка Пеннета даёт расщепление 9 : 3 : 3 : 1 (A_B_ : A_bb : aaB_ : aabb). ${c.ph.ru} — ${c.a}.`, `The Punnett square gives 9 : 3 : 3 : 1; ${c.ph.en} is ${c.a}.`) };
+    },
+  },
+  {
+    id: 'blood-groups', subject: 'biology', grade: 11, topics: ['b11-human-methods', 'b10-gene-interaction', 'b11-hereditary-diseases'], title: t('Группы крови', 'Blood groups'),
+    make: (r) => {
+      const c = pick(r, [
+        { p: 'IᴬI⁰ × IᴮI⁰', q: t('I (0)', 'O'), a: 25, w: [0, 50, 75], ex: t('Потомки: IᴬIᴮ, IᴬI⁰, IᴮI⁰, I⁰I⁰ — по 1/4; группа I только у I⁰I⁰.', 'Children: AB, A, B, O, each 1/4.') },
+        { p: 'IᴬIᴬ × IᴮIᴮ', q: t('IV (AB)', 'AB'), a: 100, w: [25, 50, 0], ex: t('Все дети IᴬIᴮ — IV группа (кодоминирование).', 'All children are IᴬIᴮ: group AB (codominance).') },
+        { p: 'IᴬI⁰ × I⁰I⁰', q: t('II (A)', 'A'), a: 50, w: [25, 75, 100], ex: t('Потомки IᴬI⁰ и I⁰I⁰ поровну.', 'Children IᴬI⁰ and I⁰I⁰ in equal shares.') },
+        { p: 'IᴬIᴮ × I⁰I⁰', q: t('IV (AB)', 'AB'), a: 0, w: [25, 50, 100], ex: t('Потомки только IᴬI⁰ и IᴮI⁰ — IV группы не будет.', 'Children are only IᴬI⁰ or IᴮI⁰: no AB.') },
+      ]);
+      return { prompt: t(`Генотипы родителей по группе крови: ${c.p}. Какова вероятность (%) рождения ребёнка с группой крови ${c.q.ru}?`, `Parents’ blood-group genotypes: ${c.p}. What is the chance (%) of a child with group ${c.q.en}?`), answer: c.a, unit: U.pct, wrong: c.w, solution: c.ex };
+    },
+  },
+  {
+    id: 'hemophilia', subject: 'biology', grade: 10, topics: ['b10-morgan', 'b9-linkage-sex', 'b11-hereditary-diseases'], title: t('Наследование, сцепленное с полом', 'Sex-linked inheritance'),
+    make: (r) => {
+      const c = pick(r, [
+        { q: t('больного сына (от всех детей)', 'an affected son (of all children)'), a: 25, w: [50, 0, 100] },
+        { q: t('больного ребёнка среди сыновей', 'an affected child among the sons'), a: 50, w: [25, 0, 100] },
+        { q: t('больной дочери', 'an affected daughter'), a: 0, w: [25, 50, 100] },
+        { q: t('дочери-носительницы среди дочерей', 'a carrier among the daughters'), a: 50, w: [25, 0, 100] },
+      ]);
+      return { prompt: t(`Мать — носительница гемофилии (XᴴXʰ), отец здоров (XᴴY). Какова вероятность (%) рождения ${c.q.ru}?`, `The mother carries haemophilia (XᴴXʰ), the father is healthy (XᴴY). What is the chance (%) of ${c.q.en}?`), answer: c.a, unit: U.pct, wrong: c.w, solution: t('Дети: XᴴXᴴ, XᴴXʰ (дочери здоровы, половина — носительницы), XᴴY, XʰY (половина сыновей больны). Каждый вариант — 1/4.', 'Children: XᴴXᴴ, XᴴXʰ, XᴴY, XʰY, each 1/4: daughters are healthy (half carriers), half of the sons are affected.') };
+    },
+  },
+  {
+    id: 'hardy-weinberg', subject: 'biology', grade: 11, topics: ['b11-populations', 'b11-species-population', 'b9-species-population'], title: t('Закон Харди–Вайнберга', 'Hardy–Weinberg law'),
+    make: (r) => {
+      const q = pick(r, [0.1, 0.2, 0.3, 0.4, 0.5]);
+      const rec = round(q * q * 100, 1);
+      const het = round(2 * q * (1 - q) * 100, 1);
+      return { prompt: t(`В популяции ${n(rec)}% особей имеют рецессивный признак (aa). Какой процент гетерозиготных носителей (Aa)?`, `${rec}% of a population show the recessive trait (aa). What percentage are carriers (Aa)?`), answer: het, unit: U.pct, digits: 1, wrong: [round(rec * 2, 1), round(q * 100, 1), round((1 - q) * (1 - q) * 100, 1)], solution: t(`q² = ${n(q * q)} ⇒ q = ${n(q)}, p = ${n(1 - q)}; 2pq = 2·${n(1 - q)}·${n(q)} = ${n(het / 100)} = ${n(het)}%`, `q = ${q}, p = ${1 - q}; 2pq = ${het}%`) };
+    },
+  },
+  {
+    id: 'dna-length', subject: 'biology', grade: 10, topics: ['b10-nucleic', 'b9-nucleic-atp', 'b10-replication'], title: t('Длина молекулы ДНК', 'DNA length'),
+    make: (r) => {
+      const pairs = int(r, 3, 30) * 100;
+      const len = round(pairs * 0.34, 1);
+      return { prompt: t(`Фрагмент ДНК содержит ${pairs} пар нуклеотидов. Какова его длина? (расстояние между нуклеотидами 0,34 нм)`, `A DNA fragment has ${pairs} base pairs. How long is it? (0.34 nm per pair)`), answer: len, unit: t('нм', 'nm'), digits: 1, wrong: [round(len * 2, 1), round(len / 2, 1), round(pairs / 0.34, 0)], solution: t(`Длину считают по одной цепи: L = ${pairs}·0,34 = ${n(len)} нм`, `L = ${pairs}·0.34 = ${len} nm (one strand)`) };
+    },
+  },
+  {
+    id: 'mrna-length', subject: 'biology', grade: 10, topics: ['b10-protein-synthesis', 'b9-protein-synthesis'], title: t('Белок, иРНК и ген', 'Protein, mRNA and gene'),
+    make: (r) => {
+      const N = int(r, 5, 40) * 10;
+      const gene = r() < 0.5;
+      return gene
+        ? { prompt: t(`Белок состоит из ${N} аминокислот. Сколько нуклеотидов в участке ДНК (обе цепи), который его кодирует? (стоп-кодон не учитывать)`, `A protein has ${N} amino acids. How many nucleotides are in the coding DNA (both strands)? (ignore the stop codon)`), answer: N * 6, wrong: [N * 3, N * 2, N], solution: t(`Каждую аминокислоту кодирует триплет: в иРНК ${N}·3 = ${N * 3}; в двух цепях ДНК вдвое больше — ${N * 6}`, `3 per amino acid in mRNA (${N * 3}); twice that in double-stranded DNA: ${N * 6}`) }
+        : { prompt: t(`Белок состоит из ${N} аминокислот. Сколько нуклеотидов в кодирующей его иРНК? (стоп-кодон не учитывать)`, `A protein has ${N} amino acids. How many nucleotides are in its mRNA? (ignore the stop codon)`), answer: N * 3, wrong: [N, N * 6, Math.round(N / 3)], solution: t(`Одна аминокислота — один кодон из 3 нуклеотидов: ${N}·3 = ${N * 3}`, `One codon (3 nucleotides) per amino acid: ${N * 3}`) };
+    },
+  },
 ];
 
 /* ---------- to quiz questions ---------- */

@@ -401,7 +401,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
           <button
             onClick={handleRevealPrediction}
             disabled={!predictionAnswer}
-            className="w-full py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-2.5 rounded-xl text-xs font-bold bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-4 h-4" />
             {lang === 'ru' ? 'SIMULATE & ПРОВЕРИТЬ' : 'SIMULATE & VERIFY'}

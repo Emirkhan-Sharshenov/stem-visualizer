@@ -24,6 +24,7 @@ export type VisualMode =
   | 'waves'
   | 'titration'
   | 'formulas'
+  | 'rating'
   | 'atom'
   | 'kinetics'
   | 'selection'

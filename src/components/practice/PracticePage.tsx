@@ -7,11 +7,12 @@ import { Quiz } from './Quiz';
 import { DailyCard, SectionTests, TopicsBrowser } from './PracticeBlocks';
 import { ProblemTrainer } from './ProblemTrainer';
 import { OrtExam } from './OrtExam';
+import { MistakesReview } from './MistakesReview';
 
 const SimById = lazy(() => import('../sims/SimById'));
 
 type Lang = 'ru' | 'en';
-type Tab = 'predict' | 'problems' | 'topics' | 'sections' | 'test' | 'ort';
+type Tab = 'predict' | 'problems' | 'mistakes' | 'topics' | 'sections' | 'test' | 'ort';
 
 const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
   all: { ru: 'Все предметы', en: 'All subjects', color: '#2F5BFF' },
@@ -229,6 +230,8 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const list = useMemo(() => PREDICTIONS.filter((p) => subject === 'all' || p.subject === subject), [subject]);
   const solved = Object.values(predictions).filter((x) => x.ok).length;
+  const { mistakes } = useProgress();
+  const dueCount = Object.values(mistakes ?? {}).filter((m) => m.due <= Date.now()).length;
 
   if (openId) {
     const idx = PREDICTIONS.findIndex((p) => p.id === openId);
@@ -271,6 +274,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
           [
             ['predict', L('Предскажи, потом проверь', 'Predict, then check')],
             ['problems', L('Задачи', 'Problems')],
+            ['mistakes', L(`Работа над ошибками${dueCount ? ` · ${dueCount}` : ''} ★`, `Mistakes${dueCount ? ` · ${dueCount}` : ''} ★`)],
             ['topics', L('По темам', 'By topic')],
             ['sections', L('Тесты по разделам', 'Section tests')],
             ['test', L('Тренировка', 'Practice test')],
@@ -285,6 +289,8 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
 
       {tab === 'problems' ? (
         <ProblemTrainer lang={lang} />
+      ) : tab === 'mistakes' ? (
+        <MistakesReview lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'topics' ? (
         <TopicsBrowser lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'sections' ? (

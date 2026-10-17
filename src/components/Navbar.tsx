@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { VisualMode } from '../types/stem';
 import { LogoMark } from './brand/Logo';
-import { Search, User, BookOpen, Network, FlaskConical, Target, Flame } from 'lucide-react';
+import { Search, User, BookOpen, FlaskConical, Target, Flame, Trophy } from 'lucide-react';
 import { dayStreak, useProgress } from '../lib/progress';
 import { signOut, useSession } from '../lib/supabase';
 import { LogOut, Crown, Users, GraduationCap } from 'lucide-react';
@@ -20,6 +20,7 @@ const NAV_ITEMS: { id: VisualMode; label: { en: string; ru: string } }[] = [
   { id: 'textbook', label: { en: 'Textbook', ru: 'Учебник' } },
   { id: 'labs', label: { en: 'Labs', ru: 'Лаборатории' } },
   { id: 'practice', label: { en: 'Practice', ru: 'Практикум' } },
+  { id: 'rating', label: { en: 'Leagues', ru: 'Рейтинг' } },
   { id: 'course_map', label: { en: 'Map', ru: 'Карта' } },
   { id: 'formulas', label: { en: 'Formulas', ru: 'Формулы' } },
 ];
@@ -32,7 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onToggleMentor,
 }) => {
-  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro', 'teacher', 'classes', 'sandbox', 'circuits', 'optics', 'chemlab', 'genetics', 'heat', 'ecosystem', 'molbuilder', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'atom', 'kinetics', 'selection', 'photosynthesis'];
+  const SECTIONS: VisualMode[] = ['labs', 'practice', 'course_map', 'progress', 'pro', 'teacher', 'classes', 'sandbox', 'circuits', 'optics', 'chemlab', 'genetics', 'heat', 'ecosystem', 'molbuilder', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'rating', 'atom', 'kinetics', 'selection', 'photosynthesis'];
   const plan = usePlan();
   const isActive = (id: VisualMode) => (id === 'textbook' ? !SECTIONS.includes(currentMode) : currentMode === id);
   const p = useProgress();
@@ -53,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectMode(item.id)}
-                className={`${item.id === 'formulas' ? 'hidden xl:block ' : ''}h-8 px-3 rounded-md text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                className={`${item.id === 'formulas' || item.id === 'course_map' ? 'hidden xl:block ' : ''}h-8 px-2 xl:px-3 rounded-md text-sm whitespace-nowrap transition-colors cursor-pointer ${
                   isActive(item.id) ? 'text-accent font-medium' : 'text-ink-2 hover:text-ink hover:bg-hover'
                 }`}
               >
@@ -139,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <TabButton active={isActive('textbook')} onClick={() => onSelectMode('textbook')} icon={<BookOpen className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Учебник' : 'Textbook'} />
           <TabButton active={isActive('labs')} onClick={() => onSelectMode('labs')} icon={<FlaskConical className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Лаборатории' : 'Labs'} />
           <TabButton active={isActive('practice')} onClick={() => onSelectMode('practice')} icon={<Target className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Практикум' : 'Practice'} />
-          <TabButton active={isActive('course_map')} onClick={() => onSelectMode('course_map')} icon={<Network className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Карта' : 'Map'} />
+          <TabButton active={isActive('rating')} onClick={() => onSelectMode('rating')} icon={<Trophy className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Рейтинг' : 'Leagues'} />
           <TabButton active={isActive('progress')} onClick={() => onSelectMode('progress')} icon={<Flame className="w-5 h-5" strokeWidth={1.5} />} label={lang === 'ru' ? 'Прогресс' : 'Progress'} />
         </div>
       </nav>

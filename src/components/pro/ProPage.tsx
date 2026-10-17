@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Crown, GraduationCap, Loader2, Sparkles, Target, Bot, Route } from 'lucide-react';
+import { Check, Crown, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen } from 'lucide-react';
 import { PRICES, FREE_MENTOR_DAILY, inSom, openCheckout, paymentsEnabled, redeemCode, redeemErrorText, usePlan } from '../../lib/plan';
 import { cloudEnabled, useSession } from '../../lib/supabase';
 
@@ -13,7 +13,7 @@ export const ProGate: React.FC<{ lang: Lang; pro: boolean; onUpgrade: () => void
   return (
     <div className="relative rounded-xl overflow-hidden border border-line">
       <div className="pointer-events-none select-none blur-[3px] opacity-60 max-h-[340px] overflow-hidden">{children}</div>
-      <div className="absolute inset-0 flex items-center justify-center p-4 bg-gradient-to-b from-transparent via-[rgba(250,250,247,0.85)] to-[rgba(250,250,247,0.97)]">
+      <div className="absolute inset-0 flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom, rgba(250,250,247,0.1), rgba(250,250,247,0.85) 45%, rgba(250,250,247,0.97))' }}>
         <div className="max-w-sm text-center bg-surface border border-line rounded-xl p-5 shadow-lg">
           <span className="inline-flex w-10 h-10 rounded-full bg-[#FFF4DA] items-center justify-center text-[#B5651D]">
             <Crown className="w-5 h-5" strokeWidth={1.75} />
@@ -21,7 +21,7 @@ export const ProGate: React.FC<{ lang: Lang; pro: boolean; onUpgrade: () => void
           <h3 className="mt-2 font-serif text-xl text-ink">{title}</h3>
           <p className="mt-1 text-sm text-ink-2">{text}</p>
           <button onClick={onUpgrade} className="mt-3 h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
-            {lang === 'ru' ? `Pro за ${PRICES.month} в месяц` : `Pro for ${PRICES.month}/mo`}
+            {lang === 'ru' ? `Pro за $${PRICES.month} в месяц` : `Pro for $${PRICES.month}/mo`}
           </button>
         </div>
       </div>
@@ -86,11 +86,14 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
     L('Все 486 тем и 60+ лабораторий', 'All 486 topics and 60+ labs'),
     L('Тесты по темам и разделам, задачи, вопросы дня', 'Topic and section tests, problems, daily questions'),
     L('Карта курса и прогресс', 'Course map and progress'),
+    L('Лиги, рейтинг и марафон задач', 'Leagues, rankings and the problem marathon'),
     L(`Наставник — ${FREE_MENTOR_DAILY} вопросов в день`, `Mentor: ${FREE_MENTOR_DAILY} questions a day`),
   ];
   const PRO = [
     { icon: <Bot className="w-4 h-4" />, t: L('ИИ-наставник без лимита', 'Unlimited AI mentor'), d: L('Объясняет то, что видно в модели', 'Explains what’s on screen') },
     { icon: <Target className="w-4 h-4" />, t: L('Пробные ОРТ-экзамены', 'ORT-style mock exams'), d: L('Полный вариант на время с разбором', 'Full timed papers with review') },
+    { icon: <Gauge className="w-4 h-4" />, t: L('Готовность к ОРТ', 'Exam readiness'), d: L('Процент по каждому предмету и слабые темы', 'A score per subject and your weak topics') },
+    { icon: <NotebookPen className="w-4 h-4" />, t: L('Работа над ошибками', 'Mistake review'), d: L('Ошибки возвращаются через 1, 3 и 7 дней', 'Mistakes come back after 1, 3 and 7 days') },
     { icon: <Route className="w-4 h-4" />, t: L('Персональный план', 'Personal plan'), d: L('Что повторить по твоим ошибкам', 'What to revise based on your mistakes') },
   ];
   const TEACHER = [

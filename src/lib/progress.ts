@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import type { Question } from './quiz';
 
 /* Learner progress kept in the browser (until accounts arrive with Supabase). */
 
@@ -31,12 +32,34 @@ export interface Progress {
   daily: Record<string, { score: number; total: number }>;
   /** calculation problems solved, by generator */
   problems: Record<string, { ok: number; total: number }>;
+  /** experience points earned on this device (the league total lives on the server) */
+  xp: number;
+  /** wrong answers to revisit, spaced out: box 0…3, due as a timestamp */
+  mistakes: Record<string, Mistake>;
+  /** best run in the problem marathon */
+  marathonBest: number;
   /** last change, used to merge with the cloud copy */
   updatedAt: number;
 }
 
+export interface Mistake {
+  q: Question;
+  box: number;
+  due: number;
+  at: number;
+  misses: number;
+}
+
+/** days until the next review after a correct answer from box 0, 1, 2; after box 3 it is learnt */
+export const REVIEW_DAYS = [1, 3, 7];
+const DAY = 86400000;
+const MAX_MISTAKES = 150;
+
+/** points for each kind of work (the server caps a day at 2000) */
+export const XP = { problem: 10, review: 8, prediction: 5, topic: 10, quizPass: 15, perQuizAnswer: 2, perTestAnswer: 2, perDailyAnswer: 5, daily: 5, perMarathon: 2 };
+
 const KEY = 'stemProgress';
-const EMPTY: Progress = { completed: {}, quiz: {}, predictions: {}, bestStreak: 0, currentStreak: 0, labs: {}, days: [], tests: [], daily: {}, problems: {}, updatedAt: 0 };
+const EMPTY: Progress = { completed: {}, quiz: {}, predictions: {}, bestStreak: 0, currentStreak: 0, labs: {}, days: [], tests: [], daily: {}, problems: {}, xp: 0, mistakes: {}, marathonBest: 0, updatedAt: 0 };
 
 function load(): Progress {
   try {
@@ -66,6 +89,13 @@ function commit(next: Progress, touch = true) {
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+/** points: kept locally and announced, xp.ts sends them to the league on the server */
+function award(p: Progress, amount: number, reason: string): Progress {
+  if (amount <= 0) return p;
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('stem-xp', { detail: { amount, reason } }));
+  return { ...p, xp: (p.xp ?? 0) + amount };
+}
 const withDay = (p: Progress): Progress => (p.days.includes(today()) ? p : { ...p, days: [...p.days, today()].slice(-400) });
 
 export function useProgress() {
@@ -82,30 +112,57 @@ export function useProgress() {
 export const progress = {
   get: () => state,
   setCompleted(id: string, value: boolean) {
-    commit(withDay({ ...state, completed: { ...state.completed, [id]: value } }));
+    const first = value && !state.completed[id];
+    commit(award(withDay({ ...state, completed: { ...state.completed, [id]: value } }), first ? XP.topic : 0, 'topic'));
   },
   recordQuiz(id: string, score: number, total: number) {
     const prev = state.quiz[id];
     const best = Math.max(prev?.best ?? 0, score);
     const passed = score / total >= 0.75;
-    commit(withDay({ ...state, quiz: { ...state.quiz, [id]: { best, total, at: Date.now() } }, completed: passed ? { ...state.completed, [id]: true } : state.completed }));
+    const firstPass = passed && !state.completed[id];
+    commit(award(withDay({ ...state, quiz: { ...state.quiz, [id]: { best, total, at: Date.now() } }, completed: passed ? { ...state.completed, [id]: true } : state.completed }), score * XP.perQuizAnswer + (firstPass ? XP.quizPass : 0), 'quiz'));
   },
   recordPrediction(id: string, ok: boolean) {
     const currentStreak = ok ? state.currentStreak + 1 : 0;
-    commit(withDay({ ...state, predictions: { ...state.predictions, [id]: { ok, at: Date.now() } }, currentStreak, bestStreak: Math.max(state.bestStreak, currentStreak) }));
+    const firstRight = ok && !state.predictions[id]?.ok;
+    commit(award(withDay({ ...state, predictions: { ...state.predictions, [id]: { ok, at: Date.now() } }, currentStreak, bestStreak: Math.max(state.bestStreak, currentStreak) }), firstRight ? XP.prediction : 0, 'prediction'));
   },
   recordLab(key: string) {
     commit(withDay({ ...state, labs: { ...state.labs, [key]: (state.labs[key] ?? 0) + 1 } }));
   },
   recordTest(t: TestRecord) {
-    commit(withDay({ ...state, tests: [...state.tests, t].slice(-100) }));
+    commit(award(withDay({ ...state, tests: [...state.tests, t].slice(-100) }), t.score * XP.perTestAnswer, 'test'));
   },
   recordProblem(id: string, ok: boolean) {
     const cur = state.problems?.[id] ?? { ok: 0, total: 0 };
-    commit(withDay({ ...state, problems: { ...state.problems, [id]: { ok: cur.ok + (ok ? 1 : 0), total: cur.total + 1 } } }));
+    commit(award(withDay({ ...state, problems: { ...state.problems, [id]: { ok: cur.ok + (ok ? 1 : 0), total: cur.total + 1 } } }), ok ? XP.problem : 0, 'problem'));
   },
   recordDaily(date: string, score: number, total: number) {
-    commit(withDay({ ...state, daily: { ...state.daily, [date]: { score, total } } }));
+    const first = !state.daily[date];
+    commit(award(withDay({ ...state, daily: { ...state.daily, [date]: { score, total } } }), first ? score * XP.perDailyAnswer + XP.daily : 0, 'daily'));
+  },
+  /** remember wrong answers for spaced review (a repeated mistake starts over) */
+  recordMistakes(qs: Question[]) {
+    if (!qs.length) return;
+    const now = Date.now();
+    const mistakes = { ...(state.mistakes ?? {}) };
+    for (const q of qs) mistakes[q.id] = { q, box: 0, due: now, at: now, misses: (mistakes[q.id]?.misses ?? 0) + 1 };
+    // keep the newest ones
+    const keep = Object.values(mistakes).sort((a, b) => b.at - a.at).slice(0, MAX_MISTAKES);
+    commit({ ...state, mistakes: Object.fromEntries(keep.map((m) => [m.q.id, m])) });
+  },
+  /** answer a review card: right moves it to a longer interval (and out after the last), wrong starts over tomorrow */
+  reviewMistake(id: string, ok: boolean) {
+    const m = state.mistakes?.[id];
+    if (!m) return;
+    const now = Date.now();
+    const mistakes = { ...state.mistakes };
+    if (ok && m.box >= REVIEW_DAYS.length) delete mistakes[id];
+    else mistakes[id] = ok ? { ...m, box: m.box + 1, due: now + REVIEW_DAYS[m.box] * DAY, at: now } : { ...m, box: 0, due: now + DAY, at: now, misses: m.misses + 1 };
+    commit(award(withDay({ ...state, mistakes }), ok ? XP.review : 0, 'review'));
+  },
+  recordMarathon(score: number) {
+    commit(award(withDay({ ...state, marathonBest: Math.max(state.marathonBest ?? 0, score) }), score * XP.perMarathon, 'marathon'));
   },
   /** replace the whole state (after merging with the cloud copy) */
   replace(next: Progress) {
@@ -195,6 +252,10 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     problems[k] = !x || v.total > x.total ? v : x;
   });
   const tests = [...a.tests, ...b.tests.filter((t) => !a.tests.some((x) => x.at === t.at))].sort((x, y) => x.at - y.at).slice(-100);
+  const mistakes = { ...(a.mistakes ?? {}) };
+  Object.entries(b.mistakes ?? {}).forEach(([k, v]) => {
+    if (!mistakes[k] || v.at > mistakes[k].at) mistakes[k] = v;
+  });
   const completed = { ...a.completed };
   Object.entries(b.completed).forEach(([k, v]) => v && (completed[k] = true));
   return {
@@ -205,6 +266,9 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     daily,
     problems,
     tests,
+    mistakes,
+    xp: Math.max(a.xp ?? 0, b.xp ?? 0),
+    marathonBest: Math.max(a.marathonBest ?? 0, b.marathonBest ?? 0),
     days: [...new Set([...a.days, ...b.days])].sort().slice(-400),
     bestStreak: Math.max(a.bestStreak, b.bestStreak),
     currentStreak: a.updatedAt >= b.updatedAt ? a.currentStreak : b.currentStreak,

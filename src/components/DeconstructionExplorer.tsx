@@ -581,7 +581,7 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
               <button
                 onClick={triggerRepulsionSnap}
                 disabled={isRepelling}
-                className="mt-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-50"
+                className="mt-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-50"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 {isRepelling

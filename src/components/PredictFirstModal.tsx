@@ -91,7 +91,7 @@ export const PredictFirstModal: React.FC<PredictFirstModalProps> = ({
           <button
             onClick={handleReveal}
             disabled={!selectedOptionId}
-            className="w-full py-3 rounded-2xl text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="w-full py-3 rounded-2xl text-xs font-bold bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <Sparkles className="w-4 h-4" />
             <span>{lang === 'ru' ? 'РАСКРЫТЬ МОДЕЛЬ (REVEAL)' : 'REVEAL SCIENTIFIC MODEL'}</span>

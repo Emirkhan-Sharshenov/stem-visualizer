@@ -3,6 +3,7 @@ import { Check, Clock, RotateCcw, X } from 'lucide-react';
 import type { Question } from '../../lib/quiz';
 import { topicById } from '../../data/curriculum';
 import { Formula } from '../Formula';
+import { progress } from '../../lib/progress';
 
 type Lang = 'ru' | 'en';
 
@@ -36,6 +37,7 @@ export const Quiz: React.FC<{
   const finish = () => {
     if (done) return;
     setDone(true);
+    progress.recordMistakes(questions.filter((q, k) => picked[k] !== null && picked[k] !== q.correct));
     onFinish(score, questions.length, Math.floor((Date.now() - start) / 1000));
   };
 

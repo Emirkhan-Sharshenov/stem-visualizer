@@ -42,6 +42,18 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         <p className="mt-1 text-[15px] text-ink-2">{user
             ? L('Прогресс сохраняется в аккаунте и доступен на всех устройствах.', 'Progress is saved to your account and available on every device.')
             : L('Прогресс хранится в этом браузере. Войди в аккаунт, чтобы не потерять его.', 'Progress is saved in this browser. Log in to keep it safe.')}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(
+            [
+              ['rating', L('Рейтинг и лиги', 'Leagues')],
+              ['course_map', L('Карта курса', 'Course map')],
+            ] as const
+          ).map(([mode, label]) => (
+            <button key={mode} onClick={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: mode }))} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink hover:border-accent hover:text-accent cursor-pointer">
+              {label}
+            </button>
+          ))}
+        </div>
       </header>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

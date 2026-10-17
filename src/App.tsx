@@ -34,6 +34,8 @@ import { BreakTheModel } from './components/BreakTheModel';
 import { KnowledgeMap } from './components/KnowledgeMap';
 import { PredictFirstModal } from './components/PredictFirstModal';
 import { VisualMentor } from './components/VisualMentor';
+import { XpToast } from './components/XpToast';
+import './lib/xp';
 import { MilestonesModal } from './components/MilestonesModal';
 import { SearchModal } from './components/SearchModal';
 import { progress } from './lib/progress';
@@ -58,6 +60,7 @@ const FieldLab = lazy(() => import('./components/efield/FieldLab'));
 const WaveLab = lazy(() => import('./components/waves/WaveLab'));
 const TitrationLab = lazy(() => import('./components/titration/TitrationLab'));
 const FormulasPage = lazy(() => import('./components/formulas/FormulasPage'));
+const RatingPage = lazy(() => import('./components/rating/RatingPage'));
 const AtomLab = lazy(() => import('./components/atom/AtomLab'));
 const KineticsLab = lazy(() => import('./components/kinetics/KineticsLab'));
 const SelectionLab = lazy(() => import('./components/selection/SelectionLab'));
@@ -113,7 +116,7 @@ interface AppProps {
 
 export default function App({ lang, setLang }: AppProps) {
   // deep links like #/app?lab=chemlab open a section directly (handy for social posts)
-  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher'];
+  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'rating', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher'];
   const [currentMode, setCurrentMode] = useState<VisualMode>(() => {
     const lab = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('lab') as VisualMode | null;
     return lab && LINKABLE.includes(lab) ? lab : 'textbook';
@@ -464,6 +467,7 @@ export default function App({ lang, setLang }: AppProps) {
               </div>
             )}
             {currentMode === 'formulas' && <FormulasPage lang={lang} onOpenTopic={openTopic} />}
+            {currentMode === 'rating' && <RatingPage lang={lang} />}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}
             {(currentMode === 'teacher' || currentMode === 'classes') && (
               <TeacherPage key={currentMode} lang={lang} onOpenTopic={openTopic} initialTab={currentMode === 'teacher' ? 'teacher' : 'student'} />
@@ -668,6 +672,8 @@ export default function App({ lang, setLang }: AppProps) {
           onOpenTopic={openTopic}
         />
       )}
+
+      <XpToast lang={lang} />
 
       {/* AI Visual Mentor Drawer */}
       <VisualMentor

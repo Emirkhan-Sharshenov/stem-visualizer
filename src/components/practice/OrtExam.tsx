@@ -5,6 +5,7 @@ import { progress, useProgress } from '../../lib/progress';
 import { usePlan } from '../../lib/plan';
 import { ProGate } from '../pro/ProPage';
 import { Quiz } from './Quiz';
+import { OrtReadiness } from './OrtReadiness';
 
 type Lang = 'ru' | 'en';
 const SUBJ = [
@@ -52,9 +53,11 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
       lang={lang}
       pro={plan.pro}
       onUpgrade={() => window.dispatchEvent(new Event('open-pro'))}
-      title={L('Пробный ОРТ — в Pro', 'Mock ORT is part of Pro')}
-      text={L('Полный вариант на время, как на настоящем экзамене, с разбором каждой ошибки.', 'A full timed paper, like the real exam, with every mistake explained.')}
+      title={L('Пробный ОРТ и прогноз готовности — в Pro', 'Mock exams and readiness are part of Pro')}
+      text={L('Полный вариант на время с разбором ошибок и процент готовности по каждому предмету со списком тем, которые нужно подтянуть.', 'Full timed papers with review, plus your readiness for each subject and the topics to fix first.')}
     >
+      <div className="flex flex-col gap-5">
+      <OrtReadiness lang={lang} onOpenTopic={onOpenTopic} />
       <div className="grid lg:grid-cols-[1fr_320px] gap-5 items-start">
         <div className="bg-surface border border-line rounded-xl p-5 sm:p-6 flex flex-col gap-5">
           <div>
@@ -109,6 +112,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
               ))}
           </ul>
         </aside>
+      </div>
       </div>
     </ProGate>
   );
