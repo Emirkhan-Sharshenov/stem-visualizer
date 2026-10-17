@@ -18,14 +18,20 @@ import { BIOLOGY_8 } from './biology8';
 import { BIOLOGY_9 } from './biology9';
 import { BIOLOGY_10 } from './biology10';
 import { BIOLOGY_11 } from './biology11';
+import { MATH_5 } from './math5';
+import { MATH_6 } from './math6';
+import { MATH_7 } from './math7';
+import { MATH_8 } from './math8';
+import { MATH_9 } from './math9';
+import { MATH_10 } from './math10';
+import { MATH_11 } from './math11';
 
 export * from './types';
 
 /** Newly authored curriculum, by subject and grade */
-const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11, ...BIOLOGY_5, ...BIOLOGY_6, ...BIOLOGY_7, ...BIOLOGY_8, ...BIOLOGY_9, ...BIOLOGY_10, ...BIOLOGY_11];
+const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11, ...BIOLOGY_5, ...BIOLOGY_6, ...BIOLOGY_7, ...BIOLOGY_8, ...BIOLOGY_9, ...BIOLOGY_10, ...BIOLOGY_11, ...MATH_5, ...MATH_6, ...MATH_7, ...MATH_8, ...MATH_9, ...MATH_10, ...MATH_11];
 
-// Mathematics is paused until its course is re-authored
-export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology'];
+export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
 
 const DEDICATED: string[] = ['orbitals', 'deconstruction', 'physics_gravity', 'math_revolution', 'math_divergence', 'biology_cell', 'break_model'];
 

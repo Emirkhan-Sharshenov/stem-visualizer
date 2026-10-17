@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Atom, Bone, Box, FlaskConical, Grid3x3, Hexagon, Play, Search, Table2 } from 'lucide-react';
+import { ArrowLeft, Atom, Bone, Box, ChartSpline, FlaskConical, Grid3x3, Hexagon, Play, Search, Table2, Triangle } from 'lucide-react';
 import type { StemCategory, VisualMode } from '../../types/stem';
 import { buildCatalog, LabItem } from './catalog';
 import { SIMS, SimId } from '../sims/registry';
@@ -98,7 +98,7 @@ const MoleculeThumb: React.FC<{ id: string }> = ({ id }) => {
   return <canvas ref={ref} width={480} height={270} className="w-full h-full object-cover" />;
 };
 
-const ORDER = ['process', 'molecule', 'reaction', 'model', 'lattice', 'table', 'classic'];
+const ORDER = ['process', 'molecule', 'reaction', 'model', 'lattice', 'table', 'graph', 'geom', 'solid', 'classic'];
 
 const KIND_ICON: Record<string, React.ReactNode> = {
   model: <Bone className="w-12 h-12" strokeWidth={1.25} />,
@@ -106,6 +106,9 @@ const KIND_ICON: Record<string, React.ReactNode> = {
   lattice: <Grid3x3 className="w-12 h-12" strokeWidth={1.25} />,
   table: <Table2 className="w-12 h-12" strokeWidth={1.25} />,
   classic: <Atom className="w-12 h-12" strokeWidth={1.25} />,
+  graph: <ChartSpline className="w-12 h-12" strokeWidth={1.25} />,
+  geom: <Triangle className="w-12 h-12" strokeWidth={1.25} />,
+  solid: <Box className="w-12 h-12" strokeWidth={1.25} />,
 };
 
 const Thumb: React.FC<{ item: LabItem; hover: boolean; lang: Lang }> = ({ item, hover, lang }) => {
@@ -577,7 +580,7 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
         </div>
       </section>
       <div className="flex flex-wrap gap-2">
-        {(['all', '3d', 'physics', 'chemistry', 'biology'] as Filter[]).map((f) => (
+        {(['all', '3d', 'physics', 'chemistry', 'biology', 'mathematics'] as Filter[]).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -588,7 +591,7 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
           </button>
         ))}
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div key={filter} className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 anim-stagger">
         {shown.map((it) => (
           <Card key={it.key} item={it} lang={lang} onOpen={() => setOpen(it)} />
         ))}

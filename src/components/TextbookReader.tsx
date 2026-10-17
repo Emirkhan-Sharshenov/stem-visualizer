@@ -50,7 +50,7 @@ function writeStored(key: string, value: unknown) {
   }
 }
 
-const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim || 'model' in sim || 'molecules' in sim || 'reactions' in sim || 'lattices' in sim ? '3d' : 'live');
+const simKind = (sim?: SimRef) => (!sim ? null : 'lab' in sim || 'model' in sim || 'molecules' in sim || 'reactions' in sim || 'lattices' in sim || 'solid' in sim ? '3d' : 'live');
 
 export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSimulation, onAskMentor, initialTopicId }) => {
   const [subject, setSubject] = useState<StemCategory>(() => {
@@ -246,12 +246,12 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
       {/* Dedicated 3D labs */}
       <section className="flex flex-col gap-4">
         <h2 className="font-serif text-2xl text-ink">{lang === 'ru' ? '3D-лаборатории' : '3D labs'}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 anim-stagger">
           {LABS_3D.map((lab) => (
             <button
               key={lab.mode}
               onClick={() => onLaunchSimulation(lab.mode)}
-              className="group text-left bg-surface border border-line hover:border-line-strong rounded-xl overflow-hidden transition-colors cursor-pointer"
+              className="group text-left bg-surface border border-line hover:border-line-strong rounded-xl overflow-hidden transition-colors cursor-pointer lift"
             >
               <div className="lab-stage relative h-24 flex items-center justify-center text-[#EDEDED] text-lg !rounded-none">
                 <div className="absolute inset-0 tech-grid opacity-60" />
@@ -379,7 +379,7 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
 
       <section>
         <h2 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Разбираем по шагам' : 'Step by step'}</h2>
-        <div className="mt-3 grid md:grid-cols-2 gap-4">
+        <div className="mt-3 grid md:grid-cols-2 gap-4 anim-stagger">
           {topic.points.map((p, i) => (
             <div key={i} className="bg-surface border border-line rounded-xl p-5">
               <div className="flex items-baseline gap-2.5">

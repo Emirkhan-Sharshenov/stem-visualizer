@@ -4,6 +4,7 @@ import type { SimId } from '../../components/sims/registry';
 import type { MolId } from '../../components/chem/MoleculeLab';
 import type { LatticeId } from '../../components/chem/LatticeLab';
 import type { TableMode } from '../../components/chem/PeriodicTable';
+import type { GeomId, GraphId, SolidId } from '../../components/math/ids';
 
 export type L = { ru: string; en: string };
 
@@ -17,7 +18,10 @@ export type SimRef =
   | { molecules: MolId[] } // real 3D molecules
   | { reactions: string[] } // 3D reaction mechanisms with a timeline
   | { lattices: LatticeId[] } // 3D crystal lattices
-  | { table: TableMode }; // interactive periodic table
+  | { table: TableMode } // interactive periodic table
+  | { graph: GraphId } // interactive function graph with sliders
+  | { geom: GeomId } // interactive geometry drawing with draggable points
+  | { solid: SolidId }; // 3D solid with its volume and surface formulas
 
 export interface Point {
   title: L;

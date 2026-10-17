@@ -9,7 +9,7 @@ import { ProGate } from '../pro/ProPage';
 
 type Lang = 'ru' | 'en';
 type T2 = { ru: string; en: string };
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524' };
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
 
 interface Step {
   topic: Topic;

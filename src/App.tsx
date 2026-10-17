@@ -262,7 +262,7 @@ export default function App({ lang, setLang }: AppProps) {
         )}
 
         {/* View Routing */}
-        <div className="flex-1 w-full">
+        <div key={currentMode} className="flex-1 w-full anim-page">
           {currentMode === 'textbook' && (
             <TextbookReader
               key={textbookKey}

@@ -1,6 +1,7 @@
 import type { Question } from './quiz';
 import { hashStr, rng, shuffle } from './quiz';
 import { LAW_PROBLEMS, SUM_LAW_PROBLEMS } from './laws';
+import { MATH_PROBLEMS } from './mathProblems';
 
 /*
  * Calculation problems generated with fresh numbers every time.
@@ -22,7 +23,7 @@ interface Problem {
 
 export interface ProblemGen {
   id: string;
-  subject: 'physics' | 'chemistry' | 'biology';
+  subject: 'physics' | 'chemistry' | 'biology' | 'mathematics';
   grade: number;
   topics: string[];
   title: T2;
@@ -849,7 +850,7 @@ export const PROBLEMS: ProblemGen[] = [
 ];
 
 // procedural problems from the textbook's formulas (src/lib/laws.ts)
-PROBLEMS.push(...LAW_PROBLEMS, ...SUM_LAW_PROBLEMS);
+PROBLEMS.push(...LAW_PROBLEMS, ...SUM_LAW_PROBLEMS, ...MATH_PROBLEMS);
 
 /* ---------- to quiz questions ---------- */
 
@@ -857,7 +858,7 @@ export function problemQuestion(gen: ProblemGen, seed: number): Question {
   const r = rng(seed + hashStr(gen.id));
   const p = gen.make(r);
   const d = p.digits ?? 3;
-  const show = (x: number | string, lang: 'ru' | 'en') => `${fmt(x, d, lang)}${p.unit ? ' ' + p.unit[lang] : ''}`;
+  const show = (x: number | string, lang: 'ru' | 'en') => `${fmt(x, d, lang)}${p.unit ? (p.unit[lang] === '°' ? '' : ' ') + p.unit[lang] : ''}`;
   const right = { ru: show(p.answer, 'ru'), en: show(p.answer, 'en') };
   const seen = new Set([right.ru]);
   const wrong: { ru: string; en: string }[] = [];
@@ -869,8 +870,10 @@ export function problemQuestion(gen: ProblemGen, seed: number): Question {
     }
   }
   // make sure there are always three wrong options
-  for (let k = 2; wrong.length < 3 && typeof p.answer === 'number'; k++) {
-    const o = { ru: show(round(p.answer * (k % 2 ? k : 1 / k), 3), 'ru'), en: show(round(p.answer * (k % 2 ? k : 1 / k), 3), 'en') };
+  for (let k = 2; wrong.length < 3 && typeof p.answer === 'number' && k < 40; k++) {
+    // a zero answer cannot be scaled, so shift it instead
+    const v = p.answer === 0 ? (k % 2 ? k : -k) : round(p.answer * (k % 2 ? k : 1 / k), 3);
+    const o = { ru: show(v, 'ru'), en: show(v, 'en') };
     if (!seen.has(o.ru)) {
       seen.add(o.ru);
       wrong.push(o);

@@ -4,10 +4,11 @@ import { SIMS, SimId } from '../sims/registry';
 import { MOLECULE_DATA } from '../../lib/chem/moleculeData';
 import { REACTIONS } from '../../lib/chem/reactions';
 import { MODELS } from '../../lib/three/models';
+import { MATH_LAB_NAMES } from '../math/names';
 
 type T2 = { ru: string; en: string };
 
-export type LabKind = 'process' | 'model' | 'molecule' | 'reaction' | 'lattice' | 'table' | 'classic';
+export type LabKind = 'process' | 'model' | 'molecule' | 'reaction' | 'lattice' | 'table' | 'classic' | 'graph' | 'geom' | 'solid';
 
 export interface LabItem {
   key: string;
@@ -56,6 +57,10 @@ const CLASSIC: Record<string, T2> = {
   thermodynamics_first_law: { ru: 'Первый закон термодинамики', en: 'First law of thermodynamics' },
   photoelectric_effect: { ru: 'Фотоэффект', en: 'Photoelectric effect' },
   friction_dynamometer: { ru: 'Сила трения', en: 'Friction' },
+  moment_trig_circle: { ru: 'Тригонометрический круг', en: 'Unit circle' },
+  moment_derivative: { ru: 'Производная', en: 'Derivative' },
+  moment_pythagoras: { ru: 'Теорема Пифагора', en: 'Pythagoras’ theorem' },
+  moment_gauss: { ru: 'Нормальное распределение', en: 'Normal distribution' },
   rutherford_alpha_atom: { ru: 'Опыт Резерфорда', en: 'Rutherford’s experiment' },
   biology_cell: { ru: 'Клетка изнутри (3D)', en: 'Inside the cell (3D)' },
   orbitals: { ru: 'Атомные орбитали (3D)', en: 'Atomic orbitals (3D)' },
@@ -77,7 +82,7 @@ export function buildCatalog(): LabItem[] {
   };
   TOPICS.forEach((t) => {
     const s = t.sim;
-    if (!s || t.subject === 'mathematics') return;
+    if (!s) return;
     if ('process' in s) {
       const def = SIMS[s.process as SimId];
       const mode = s.mode ?? def.modes?.[0]?.id;
@@ -99,6 +104,12 @@ export function buildCatalog(): LabItem[] {
       s.lattices.forEach((id) => add(`lat:${id}`, () => ({ key: `lat:${id}`, kind: 'lattice', title: LATTICE_NAMES[id], subtitle: { ru: 'Кристаллическая решётка, 3D', en: 'Crystal lattice, 3D' }, sim: { lattices: [id] }, is3d: true }), t));
     } else if ('table' in s) {
       add('table', () => ({ key: 'table', kind: 'table', title: { ru: 'Таблица Менделеева', en: 'Periodic table' }, subtitle: { ru: 'Интерактивная', en: 'Interactive' }, sim: { table: 'category' }, is3d: false }), t);
+    } else if ('graph' in s) {
+      add(`g:${s.graph}`, () => ({ key: `g:${s.graph}`, kind: 'graph', title: MATH_LAB_NAMES[s.graph], subtitle: { ru: 'Интерактивный график', en: 'Interactive graph' }, sim: s, is3d: false }), t);
+    } else if ('geom' in s) {
+      add(`ge:${s.geom}`, () => ({ key: `ge:${s.geom}`, kind: 'geom', title: MATH_LAB_NAMES[s.geom], subtitle: { ru: 'Живой чертёж', en: 'Live drawing' }, sim: s, is3d: false }), t);
+    } else if ('solid' in s) {
+      add(`so:${s.solid}`, () => ({ key: `so:${s.solid}`, kind: 'solid', title: MATH_LAB_NAMES[s.solid], subtitle: { ru: '3D-тело', en: '3D solid' }, sim: s, is3d: true }), t);
     } else {
       const id = 'moment' in s ? s.moment : 'engine' in s ? s.engine : s.lab;
       const title = CLASSIC[id] ?? { ru: t.title.ru, en: t.title.en };

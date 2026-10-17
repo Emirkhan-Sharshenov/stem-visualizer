@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Clock, ListChecks } from 'lucide-react';
-import { ORT, ortExam, Question } from '../../lib/quiz';
+import { ArrowLeft, Calculator, Clock, ListChecks, Timer, Trophy } from 'lucide-react';
+import { ORT_FORMATS, OrtFormat, ortExam, Question } from '../../lib/quiz';
 import { progress, useProgress } from '../../lib/progress';
 import { usePlan } from '../../lib/plan';
 import { ProGate } from '../pro/ProPage';
@@ -12,19 +12,27 @@ const SUBJ = [
   { id: 'physics', ru: 'Физика', en: 'Physics', color: '#E5484D' },
   { id: 'chemistry', ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   { id: 'biology', ru: 'Биология', en: 'Biology', color: '#F5A524' },
+  { id: 'mathematics', ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
 ];
 
 /** Pro: a full timed mock of the ORT subject test with a review at the end */
 export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = ({ lang, onOpenTopic }) => {
   const plan = usePlan();
   const [subject, setSubject] = useState('physics');
-  const [run, setRun] = useState<{ qs: Question[]; seed: number } | null>(null);
+  const [format, setFormat] = useState<OrtFormat>('full');
+  const [run, setRun] = useState<{ qs: Question[]; seed: number; format: OrtFormat } | null>(null);
   const { tests } = useProgress();
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const past = tests.filter((t) => t.section === 'ort');
+  const ORT = ORT_FORMATS[format];
+  const FORMATS: { id: OrtFormat; icon: React.ReactNode; ru: string; en: string; dru: string; den: string }[] = [
+    { id: 'full', icon: <Trophy className="w-4 h-4" />, ru: 'Полный вариант', en: 'Full paper', dru: 'Как на настоящем экзамене', den: 'Like the real exam' },
+    { id: 'quick', icon: <Timer className="w-4 h-4" />, ru: 'Экспресс', en: 'Quick', dru: 'Быстрая проверка за перемену', den: 'A check in a break' },
+    { id: 'problems', icon: <Calculator className="w-4 h-4" />, ru: 'Только задачи', en: 'Problems only', dru: 'Одни расчёты, от простых к сложным', den: 'Calculations only, easy to hard' },
+  ];
   const start = () => {
     const seed = Date.now() % 1000000;
-    setRun({ seed, qs: ortExam(subject, seed) });
+    setRun({ seed, format, qs: ortExam(subject, seed, format) });
   };
 
   if (run && plan.pro) {
@@ -38,7 +46,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
           key={run.seed}
           lang={lang}
           questions={run.qs}
-          timeLimit={ORT.minutes * 60}
+          timeLimit={ORT_FORMATS[run.format].minutes * 60}
           passMark={0.6}
           onFinish={(score, total, secs) => progress.recordTest({ at: Date.now(), subject, score, total, secs, section: 'ort' })}
           onRetry={start}
@@ -64,10 +72,28 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
             <h2 className="font-serif text-2xl text-ink">{L('Пробный ОРТ по предмету', 'Mock ORT subject test')}</h2>
             <p className="mt-1 text-sm text-ink-2">
               {L(
-                `${ORT.questions} вопросов за ${ORT.minutes} минут по программе 7–11 классов, треть — расчётные задачи. Вариант каждый раз новый. В конце — балл, разбор и ссылки на темы, которые стоит повторить.`,
-                `${ORT.questions} questions in ${ORT.minutes} minutes from the grade 7–11 syllabus, a third are calculations. A fresh paper every time, with a score, review and topic links at the end.`,
+                `Программа ${subject === 'mathematics' ? '5–11' : '7–11'} классов, ${format === 'problems' ? 'только расчётные задачи' : subject === 'mathematics' ? 'половина — задачи на вычисление' : 'треть — расчётные задачи'}. Вариант каждый раз новый. В конце — балл, разбор и ссылки на темы, которые стоит повторить.`,
+                `The grade ${subject === 'mathematics' ? '5–11' : '7–11'} syllabus, ${format === 'problems' ? 'calculations only' : subject === 'mathematics' ? 'half are calculations' : 'a third are calculations'}. A fresh paper every time, with a score, review and topic links at the end.`,
               )}
             </p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-2">
+            {FORMATS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFormat(f.id)}
+                className={`text-left rounded-xl border p-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${format === f.id ? 'border-accent bg-accent-soft shadow-sm' : 'border-line bg-surface hover:border-line-strong'}`}
+              >
+                <span className={`flex items-center gap-1.5 text-sm font-medium ${format === f.id ? 'text-accent' : 'text-ink'}`}>
+                  {f.icon}
+                  {lang === 'ru' ? f.ru : f.en}
+                </span>
+                <span className="mt-1 block text-xs text-ink-2">{lang === 'ru' ? f.dru : f.den}</span>
+                <span className="mt-1.5 block text-xs font-mono text-ink-3">
+                  {ORT_FORMATS[f.id].questions} · {ORT_FORMATS[f.id].minutes} {L('мин', 'min')}
+                </span>
+              </button>
+            ))}
           </div>
           <div className="flex flex-wrap gap-2">
             {SUBJ.map((s) => (

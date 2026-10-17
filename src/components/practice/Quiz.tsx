@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Confetti } from '../fx/Confetti';
 import { Check, Clock, RotateCcw, X } from 'lucide-react';
 import type { Question } from '../../lib/quiz';
 import { topicById } from '../../data/curriculum';
@@ -59,9 +60,10 @@ export const Quiz: React.FC<{
     const ok = score / questions.length >= passMark;
     return (
       <div className="flex flex-col gap-4">
-        <div className={`rounded-xl p-5 border ${ok ? 'bg-[#EAF6EF] border-[#BFE3CC]' : 'bg-[#FDF0EF] border-[#F2C8C5]'}`}>
+        <div className={`relative overflow-hidden rounded-xl p-5 border anim-page ${ok ? 'bg-[#EAF6EF] border-[#BFE3CC]' : 'bg-[#FDF0EF] border-[#F2C8C5]'}`}>
+          {ok && <Confetti />}
           <div className="font-serif text-3xl text-ink">
-            {score} / {questions.length}
+            <span className="anim-score">{score}</span> / {questions.length}
           </div>
           <p className="mt-1 text-[15px] text-ink-2">
             {ok ? L('Отлично! Тема засчитана.', 'Great! Topic passed.') : L('Почти. Перечитай пункты, где ошибся, и попробуй снова.', 'Nearly. Re-read the points you missed and try again.')}
@@ -107,7 +109,7 @@ export const Quiz: React.FC<{
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-          <div className="h-full bg-accent transition-all" style={{ width: `${((i + (answer !== null ? 1 : 0)) / questions.length) * 100}%` }} />
+          <div className="h-full bg-accent transition-all duration-500 ease-out" style={{ width: `${((i + (answer !== null ? 1 : 0)) / questions.length) * 100}%` }} />
         </div>
         <span className="font-mono text-xs text-ink-2">
           {i + 1}/{questions.length}
@@ -119,8 +121,8 @@ export const Quiz: React.FC<{
           </span>
         )}
       </div>
-      <h3 className="font-serif text-xl text-ink leading-snug">{q.prompt[lang]}</h3>
-      <div className="flex flex-col gap-2">
+      <h3 key={`h${i}`} className="font-serif text-xl text-ink leading-snug anim-q">{q.prompt[lang]}</h3>
+      <div key={`o${i}`} className="flex flex-col gap-2 anim-stagger">
         {q.options.map((o, k) => {
           const chosen = answer === k;
           const isRight = k === q.correct;
@@ -134,9 +136,9 @@ export const Quiz: React.FC<{
                 state === 'idle'
                   ? 'bg-surface border-line hover:border-accent hover:bg-accent-soft cursor-pointer text-ink'
                   : state === 'right'
-                    ? 'bg-[#EAF6EF] border-[#30A46C] text-ink'
+                    ? 'bg-[#EAF6EF] border-[#30A46C] text-ink anim-right'
                     : state === 'wrong'
-                      ? 'bg-[#FDF0EF] border-[#E5484D] text-ink'
+                      ? 'bg-[#FDF0EF] border-[#E5484D] text-ink anim-wrong'
                       : 'bg-surface border-line text-ink-3'
               }`}
             >
@@ -147,7 +149,7 @@ export const Quiz: React.FC<{
         })}
       </div>
       {answer !== null && q.explain && (
-        <div className="rounded-xl bg-muted px-4 py-3 text-[14px] leading-relaxed text-ink">
+        <div className="anim-page rounded-xl bg-muted px-4 py-3 text-[14px] leading-relaxed text-ink">
           <span className="font-medium text-accent">{lang === 'ru' ? 'Решение: ' : 'Solution: '}</span>
           {q.explain[lang]}
         </div>

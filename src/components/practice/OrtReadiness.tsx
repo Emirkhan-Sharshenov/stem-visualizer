@@ -9,6 +9,7 @@ const SUBJ = [
   { id: 'physics', ru: 'Физика', en: 'Physics', color: '#E5484D' },
   { id: 'chemistry', ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   { id: 'biology', ru: 'Биология', en: 'Biology', color: '#F5A524' },
+  { id: 'mathematics', ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
 ];
 
 /** how ready the learner is for each ORT subject test, and the weakest sections to fix first */
@@ -19,7 +20,7 @@ export const OrtReadiness: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
   const rows = useMemo(
     () =>
       SUBJ.map((s) => {
-        const secs = SECTIONS.filter((x) => x.subject === s.id && x.grade >= 7);
+        const secs = SECTIONS.filter((x) => x.subject === s.id && x.grade >= (s.id === 'mathematics' ? 5 : 7));
         const topics = secs.flatMap((x) => x.topics);
         const coverage = topics.length ? topics.filter((t) => p.completed[t.id]).length / topics.length : 0;
         const gens = PROBLEMS.filter((g) => g.subject === s.id);

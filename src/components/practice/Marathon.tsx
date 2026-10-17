@@ -135,7 +135,7 @@ export const Marathon: React.FC<{ lang: Lang; subject: string; onBack: () => voi
                 disabled={answer !== null}
                 onClick={() => choose(k)}
                 className={`text-left px-4 py-3 rounded-xl border font-mono text-[15px] transition-colors ${
-                  state === 'idle' ? 'bg-surface border-line hover:border-accent hover:bg-accent-soft cursor-pointer text-ink' : state === 'right' ? 'bg-[#EAF6EF] border-[#30A46C] text-ink' : state === 'wrong' ? 'bg-[#FDF0EF] border-[#E5484D] text-ink' : 'bg-surface border-line text-ink-3'
+                  state === 'idle' ? 'bg-surface border-line hover:border-accent hover:bg-accent-soft cursor-pointer text-ink' : state === 'right' ? 'bg-[#EAF6EF] border-[#30A46C] text-ink anim-right' : state === 'wrong' ? 'bg-[#FDF0EF] border-[#E5484D] text-ink anim-wrong' : 'bg-surface border-line text-ink-3'
                 }`}
               >
                 {o.tex ? <Formula tex={o.ru} /> : o[lang]}

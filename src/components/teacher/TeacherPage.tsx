@@ -32,6 +32,7 @@ const SUBJ: { id: StemCategory; ru: string; en: string; color: string }[] = [
   { id: 'physics', ru: 'Физика', en: 'Physics', color: '#E5484D' },
   { id: 'chemistry', ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   { id: 'biology', ru: 'Биология', en: 'Biology', color: '#F5A524' },
+  { id: 'mathematics', ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
 ];
 const card = 'bg-surface border border-line rounded-xl';
 const btn = 'h-10 px-4 rounded-lg text-sm font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-50';

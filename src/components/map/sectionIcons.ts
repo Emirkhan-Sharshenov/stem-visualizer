@@ -1,5 +1,5 @@
 import {
-  Activity, Apple, Atom, Baby, Battery, Beaker, Bone, Boxes, Brain, Bug, Cog, Dna, Droplet, Droplets, Earth, Egg, Eye, Filter, Fish, Flame, FlaskConical, Flower2, Footprints, Fuel, Gauge, Gem, GitBranch, Hand, HeartPulse, Hexagon, Hourglass, Layers, Leaf, Lightbulb, Link, Magnet, Microscope, Mountain, PawPrint, Pickaxe, Pill, Puzzle, Rabbit, Radiation, Radio, Recycle, Rocket, Ruler, Scale, Shapes, Shell, Snail, Snowflake, Sparkles, Sprout, Sun, Syringe, Target, Telescope, TestTubes, Trees, Turtle, Users, Utensils, Waves, Wheat, Wind, Zap,
+  Activity, Apple, Atom, Baby, Box, Calculator, ChartSpline, Compass, Cylinder, Dices, Divide, Grid3x3, Hash, MoveUpRight, Percent, Pi, Radical, Sigma, Superscript, Triangle, Battery, Beaker, Bone, Boxes, Brain, Bug, Cog, Dna, Droplet, Droplets, Earth, Egg, Eye, Filter, Fish, Flame, FlaskConical, Flower2, Footprints, Fuel, Gauge, Gem, GitBranch, Hand, HeartPulse, Hexagon, Hourglass, Layers, Leaf, Lightbulb, Link, Magnet, Microscope, Mountain, PawPrint, Pickaxe, Pill, Puzzle, Rabbit, Radiation, Radio, Recycle, Rocket, Ruler, Scale, Shapes, Shell, Snail, Snowflake, Sparkles, Sprout, Sun, Syringe, Target, Telescope, TestTubes, Trees, Turtle, Users, Utensils, Waves, Wheat, Wind, Zap,
   type LucideIcon,
 } from 'lucide-react';
 import type { Section } from '../../data/curriculum';
@@ -7,6 +7,29 @@ import type { Section } from '../../data/curriculum';
 /* An icon for every textbook section, picked from its title. First match wins, so specific rules go first. */
 
 const RULES: [RegExp, LucideIcon][] = [
+  // mathematics
+  [/тригонометр/, Pi],
+  [/корни и степени/, Superscript],
+  [/производная|интеграл/, Sigma],
+  [/показательн|логарифм/, ChartSpline],
+  [/тела вращения/, Cylinder],
+  [/стереометр/, Box],
+  [/прогресси|вероятност/, Dices],
+  [/вектор/, MoveUpRight],
+  [/функции и неравенств/, ChartSpline],
+  [/квадратные уравнения/, Radical],
+  [/подобие/, Compass],
+  [/четырёхугольник/, Grid3x3],
+  [/треугольник/, Triangle],
+  [/выражения и уравнения/, Calculator],
+  [/координатн/, Compass],
+  [/отрицательн/, Hash],
+  [/отношения и пропорц/, Divide],
+  [/процент/, Percent],
+  [/дроб/, Divide],
+  [/делимост/, Hash],
+  [/натуральн/, Calculator],
+  [/наглядная геометр/, Triangle],
   // words hidden inside other words go first: «углеВОДОРОДы», «НЕорганические», «многоКЛЕТочные», «обмен веществ и ЭНЕРГИИ»
   [/обмен веществ/, Recycle],
   [/углеводород/, Fuel],
@@ -91,7 +114,7 @@ const RULES: [RegExp, LucideIcon][] = [
   [/наука о живом|общую биологию/, Sprout],
 ];
 
-const FALLBACK: Record<string, LucideIcon> = { physics: Atom, chemistry: FlaskConical, biology: Leaf };
+const FALLBACK: Record<string, LucideIcon> = { physics: Atom, chemistry: FlaskConical, biology: Leaf, mathematics: Sigma };
 
 export function sectionIcon(s: Section): LucideIcon {
   const title = s.title.ru.toLowerCase();

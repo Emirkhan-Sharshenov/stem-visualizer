@@ -202,7 +202,7 @@ const pick = <X,>(r: () => number, arr: X[]) => arr[Math.floor(r() * arr.length)
 
 function lawGen(law: Law, idx: number): ProblemGen {
   const topic = topicById(law.topic);
-  const subject = law.topic.startsWith('c') ? 'chemistry' : law.topic.startsWith('b') ? 'biology' : 'physics';
+  const subject = law.topic.startsWith('c') ? 'chemistry' : law.topic.startsWith('b') ? 'biology' : law.topic.startsWith('m') ? 'mathematics' : 'physics';
   const grade = topic?.grade ?? Number(law.topic.match(/\d+/)?.[0] ?? 9);
   const title = topic ? t(`${topic.title.ru} (${law.text.split('=')[0].trim()})`, `${topic.title.en} (${law.text.split('=')[0].trim()})`) : t(law.text, law.text);
   return {
@@ -671,7 +671,7 @@ function findRoot(f: (z: number) => number, near: number): number[] {
 
 function gLawGen(law: GLaw, idx: number): ProblemGen {
   const topic = topicById(law.topic);
-  const subject = law.topic.startsWith('c') ? 'chemistry' : law.topic.startsWith('b') ? 'biology' : 'physics';
+  const subject = law.topic.startsWith('c') ? 'chemistry' : law.topic.startsWith('b') ? 'biology' : law.topic.startsWith('m') ? 'mathematics' : 'physics';
   const grade = topic?.grade ?? Number(law.topic.match(/\d+/)?.[0] ?? 9);
   const head = law.text.split(/[=(]/)[0].trim();
   return {

@@ -9,12 +9,13 @@ import { TopicDrill } from './TopicDrill';
 import { TOPICS } from '../../data/curriculum';
 
 type Lang = 'ru' | 'en';
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524' };
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
 const NAME: Record<string, { ru: string; en: string }> = {
   all: { ru: 'Все', en: 'All' },
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
+  mathematics: { ru: 'Математика', en: 'Maths' },
 };
 
 /** endless run of generated problems: answer, see the worked solution, next */
@@ -76,9 +77,9 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
                   state === 'idle'
                     ? 'bg-surface border-line hover:border-accent hover:bg-accent-soft cursor-pointer text-ink'
                     : state === 'right'
-                      ? 'bg-[#EAF6EF] border-[#30A46C] text-ink'
+                      ? 'bg-[#EAF6EF] border-[#30A46C] text-ink anim-right'
                       : state === 'wrong'
-                        ? 'bg-[#FDF0EF] border-[#E5484D] text-ink'
+                        ? 'bg-[#FDF0EF] border-[#E5484D] text-ink anim-wrong'
                         : 'bg-surface border-line text-ink-3'
                 }`}
               >

@@ -143,15 +143,15 @@ export function questionsForTopic(topic: Topic, max = 10, salt = 0): Question[] 
 }
 
 /** mixed practice test across topics of a subject and grade range */
-export function practiceTest(subject: string | 'all', grades: [number, number], count: number, seed: number): Question[] {
+export function practiceTest(subject: string | 'all', grades: [number, number], count: number, seed: number, calcEvery = 3): Question[] {
   const rand = rng(seed);
   const topics = TOPICS.filter((t) => (subject === 'all' || t.subject === subject) && t.grade >= grades[0] && t.grade <= grades[1] && t.points.length >= 2);
   const picked = shuffle(topics, rand).slice(0, count);
   return picked
     .map((t, i) => {
-      // every third question is a calculation problem when the topic has one
+      // every third question (every other one in maths) is a calculation problem when the topic has one
       const gens = problemsForTopic(t.id);
-      if (i % 3 === 2 && gens.length) return problemQuestion(gens[i % gens.length], seed + i);
+      if (i % calcEvery === calcEvery - 1 && gens.length) return problemQuestion(gens[i % gens.length], seed + i);
       return shuffle(questionsForTopic(t, 10, seed + i), rand)[0];
     })
     .filter(Boolean);
@@ -168,19 +168,40 @@ export function sectionTest(section: Section, seed: number, perTopic = 2): Quest
 
 export const todayKey = () => new Date().toISOString().slice(0, 10);
 
-/** three questions of the day, one per subject, the same for everyone on a given date */
+/** four questions of the day, one per subject, the same for everyone on a given date */
 export function dailyQuestions(date = todayKey()): Question[] {
   const seed = hashStr(date);
   const rand = rng(seed);
-  return (['physics', 'chemistry', 'biology'] as const).map((s, i) => {
+  return (['physics', 'chemistry', 'biology', 'mathematics'] as const).map((s, i) => {
     const pool = TOPICS.filter((t) => t.subject === s && t.points.length >= 2);
     const topic = pool[Math.floor(rand() * pool.length)];
     return shuffle(questionsForTopic(topic, 10, seed + i), rand)[0];
   });
 }
 
-/** mock exam modelled on the ORT subject test: 40 questions from grades 7–11, about a third are calculations */
-export const ORT = { questions: 40, minutes: 60 };
-export function ortExam(subject: string, seed: number): Question[] {
-  return practiceTest(subject, [7, 11], ORT.questions, seed);
+/** a paper of calculation problems only, each from a different generator, easy grades first */
+export function problemsTest(subject: string, grades: [number, number], count: number, seed: number): Question[] {
+  const rand = rng(seed);
+  const topics = TOPICS.filter((t) => t.subject === subject && t.grade >= grades[0] && t.grade <= grades[1]);
+  const seen = new Set<string>();
+  const gens = topics.flatMap((t) => problemsForTopic(t.id).map((g) => ({ g, grade: t.grade }))).filter(({ g }) => (seen.has(g.id) ? false : (seen.add(g.id), true)));
+  return shuffle(gens, rand)
+    .slice(0, count)
+    .sort((a, b) => a.grade - b.grade)
+    .map(({ g }, i) => problemQuestion(g, seed + i));
+}
+
+/** mock exams modelled on the ORT subject test; maths takes grades 5–11 and has more calculations */
+export const ORT_FORMATS = {
+  full: { questions: 40, minutes: 60 },
+  quick: { questions: 20, minutes: 25 },
+  problems: { questions: 20, minutes: 40 },
+} as const;
+export type OrtFormat = keyof typeof ORT_FORMATS;
+export const ORT = ORT_FORMATS.full;
+export function ortExam(subject: string, seed: number, format: OrtFormat = 'full'): Question[] {
+  const f = ORT_FORMATS[format];
+  const grades: [number, number] = subject === 'mathematics' ? [5, 11] : [7, 11];
+  if (format === 'problems') return problemsTest(subject, grades, f.questions, seed);
+  return practiceTest(subject, grades, f.questions, seed, subject === 'mathematics' ? 2 : 3);
 }

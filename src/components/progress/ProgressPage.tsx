@@ -18,7 +18,7 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
   const p = useProgress();
   const { user } = useSession();
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
-  const topics = useMemo(() => TOPICS.filter((t) => t.subject !== 'mathematics'), []);
+  const topics = TOPICS;
   const done = topics.filter((t) => p.completed[t.id]).length;
   const streak = dayStreak(p);
   const list = badges(p, { all: topics.length });
@@ -56,7 +56,7 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         </div>
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 anim-stagger">
         <div className="rounded-xl bg-surface border border-line p-4">
           <div className="text-xs text-ink-2">{L('Серия дней', 'Day streak')}</div>
           <div className="mt-1 flex items-center gap-2 font-serif text-3xl text-ink">
@@ -149,7 +149,7 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         <h2 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
           {L('Значки', 'Badges')} · {list.filter((b) => b.got).length}/{list.length}
         </h2>
-        <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 anim-stagger">
           {list.map((b) => (
             <div key={b.id} className={`rounded-xl border p-4 ${b.got ? 'bg-surface border-line' : 'bg-muted/60 border-line'}`}>
               <div className="flex items-start gap-3">

@@ -10,13 +10,14 @@ import { useScreenDetail } from '../../lib/pageContext';
    Finished sections are filled in, the first unfinished one is "you are here". */
 
 type Lang = 'ru' | 'en';
-const SUBJ: StemCategory[] = ['physics', 'chemistry', 'biology'];
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524' };
-const SOFT: Record<string, string> = { physics: '#FDECEC', chemistry: '#E7F6EE', biology: '#FEF4E0' };
+const SUBJ: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
+const SOFT: Record<string, string> = { physics: '#FDECEC', chemistry: '#E7F6EE', biology: '#FEF4E0', mathematics: '#F3ECFA' };
 const NAME: Record<string, { ru: string; en: string }> = {
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
+  mathematics: { ru: 'Математика', en: 'Maths' },
 };
 
 /** hand-picked links where one subject explains another */
@@ -219,7 +220,7 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
         </div>
       </header>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-2xl">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 max-w-3xl">
         {SUBJ.map((s) => {
           const st = subjectStats(s);
           const on = s === subject;

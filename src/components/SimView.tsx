@@ -33,6 +33,9 @@ const MoleculeLab = lazy(() => import('./chem/MoleculeLab').then((m) => ({ defau
 const ReactionLab = lazy(() => import('./chem/ReactionLab').then((m) => ({ default: m.ReactionLab })));
 const LatticeLab = lazy(() => import('./chem/LatticeLab').then((m) => ({ default: m.LatticeLab })));
 const PeriodicTable = lazy(() => import('./chem/PeriodicTable').then((m) => ({ default: m.PeriodicTable })));
+const MathGraph = lazy(() => import('./math/MathGraph'));
+const GeoBoard = lazy(() => import('./math/GeoBoard'));
+const Solid3D = lazy(() => import('./math/Solid3D'));
 const ModelLab = lazy(() => import('./lab/ModelLab').then((m) => ({ default: m.ModelLab })));
 
 export interface SimViewProps {
@@ -80,6 +83,9 @@ const SimInner: React.FC<SimViewProps> = ({ sim, title, formula, lang, onLaunchS
   if ('engine' in sim) {
     return <PhysicsLaboratoryEngine engineType={sim.engine} title={title ?? ""} formula={formula} lang={lang} />;
   }
+  if ('graph' in sim) return <MathGraph key={sim.graph} lang={lang} id={sim.graph} />;
+  if ('geom' in sim) return <GeoBoard key={sim.geom} lang={lang} id={sim.geom} />;
+  if ('solid' in sim) return <Solid3D key={sim.solid} lang={lang} id={sim.solid} />;
   switch (sim.moment) {
     case 'moment_circuit': return <MomentCircuit lang={lang} />;
     case 'moment_chemical_bond': return <MomentChemicalBond lang={lang} />;

@@ -20,6 +20,7 @@ const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
   physics: { ru: 'Физика', en: 'Physics', color: '#E5484D' },
   chemistry: { ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   biology: { ru: 'Биология', en: 'Biology', color: '#F5A524' },
+  mathematics: { ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
 };
 
 /* ---------- predict, then check ---------- */
@@ -65,9 +66,9 @@ const Challenge: React.FC<{ lang: Lang; p: Prediction; onNext?: () => void; onBa
                   state === 'idle'
                     ? 'bg-surface border-line hover:border-accent hover:bg-accent-soft text-ink cursor-pointer'
                     : state === 'right'
-                      ? 'bg-[#EAF6EF] border-[#30A46C] text-ink'
+                      ? 'bg-[#EAF6EF] border-[#30A46C] text-ink anim-right'
                       : state === 'wrong'
-                        ? 'bg-[#FDF0EF] border-[#E5484D] text-ink'
+                        ? 'bg-[#FDF0EF] border-[#E5484D] text-ink anim-wrong'
                         : 'bg-surface border-line text-ink-3'
                 }`}
               >
@@ -304,7 +305,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(SUBJECTS).map(([id, s]) => (
+            {Object.entries(SUBJECTS).filter(([id]) => id === 'all' || PREDICTIONS.some((p) => p.subject === id)).map(([id, s]) => (
               <button
                 key={id}
                 onClick={() => setSubject(id)}
@@ -315,7 +316,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
               </button>
             ))}
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 anim-stagger">
             {list.map((p) => {
               const r = predictions[p.id];
               return (

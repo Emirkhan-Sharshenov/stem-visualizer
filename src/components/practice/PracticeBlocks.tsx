@@ -7,11 +7,12 @@ import { Quiz } from './Quiz';
 import type { StemCategory } from '../../types/stem';
 
 type Lang = 'ru' | 'en';
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524' };
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
 const NAME: Record<string, { ru: string; en: string }> = {
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
+  mathematics: { ru: 'Математика', en: 'Maths' },
 };
 
 const chipCls = (active: boolean) => `h-9 px-3.5 rounded-full text-sm border cursor-pointer transition-colors ${active ? 'border-transparent' : 'bg-surface border-line text-ink-2 hover:text-ink'}`;
@@ -72,9 +73,9 @@ export const DailyCard: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
             <Sun className="w-5 h-5" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="font-serif text-xl text-ink">{L('3 вопроса дня', '3 questions of the day')}</h2>
+            <h2 className="font-serif text-xl text-ink">{L('4 вопроса дня', '4 questions of the day')}</h2>
             <p className="text-sm text-ink-2">
-              {L('Физика, химия и биология — по одному. Новые каждый день.', 'Physics, chemistry and biology, one each. New every day.')}
+              {L('Физика, химия, биология и математика — по одному. Новые каждый день.', 'Physics, chemistry, biology and maths, one each. New every day.')}
               {streak > 0 && <span className="ml-1 text-[#B5651D]">{L(`Серия: ${streak} дн.`, `Streak: ${streak} d`)}</span>}
             </p>
           </div>
@@ -232,7 +233,7 @@ export const SectionTests: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
           {L('На время (1 мин на вопрос)', 'Timed (1 min per question)')}
         </label>
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 anim-stagger">
         {sections.map((sec) => {
           const mine = tests.filter((t) => t.section === sec.id);
           const best = mine.reduce<number | null>((m, t) => Math.max(m ?? 0, Math.round((t.score / t.total) * 100)), null);

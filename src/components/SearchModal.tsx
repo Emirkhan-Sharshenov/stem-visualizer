@@ -8,11 +8,12 @@ interface SearchModalProps {
   onOpenTopic: (id: string) => void;
 }
 
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524' };
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
 const NAME: Record<string, { ru: string; en: string }> = {
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
+  mathematics: { ru: 'Математика', en: 'Maths' },
 };
 
 const SUGGEST = ['p7-liquid-pressure', 'p8-conduction', 'p11-lorentz', 'c8-combustion', 'c11-redox', 'c8-lattices', 'b9-mitosis', 'b8-bones', 'b8-blood-groups', 'b11-adaptations'];

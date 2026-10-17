@@ -1,0 +1,171 @@
+import { section } from './types';
+
+const M = 'mathematics';
+
+export const MATH_11 = [
+  section(M, 11, 'alg-calculus', ['Алгебра: производная и интеграл', 'Algebra: derivatives and integrals'], [
+    {
+      id: 'm11-derivative',
+      title: ['Производная. Геометрический и физический смысл', 'The derivative: what it means'],
+      intro: ['Производная показывает скорость изменения функции. На графике это наклон касательной, в физике — мгновенная скорость.', 'The derivative is the rate of change: on a graph it is the slope of the tangent, in physics the instant speed.'],
+      points: [
+        ['Определение', 'Definition', 'f′(x) — предел отношения Δy/Δx, когда Δx стремится к нулю.', 'f′(x) is the limit of Δy/Δx as Δx tends to zero.'],
+        ['Геометрический смысл', 'Geometric meaning', 'f′(x₀) = tg α — угловой коэффициент касательной в точке x₀.', 'f′(x₀) = tan α, the slope of the tangent at x₀.'],
+        ['Физический смысл', 'Physical meaning', 'Если x(t) — координата, то v(t) = x′(t), а ускорение a(t) = v′(t).', 'If x(t) is position, v(t) = x′(t) and a(t) = v′(t).'],
+        ['Уравнение касательной', 'Tangent line', 'y = f(x₀) + f′(x₀)(x − x₀).', 'y = f(x₀) + f′(x₀)(x − x₀).'],
+      ],
+      formula: 'f\'(x_0) = \\lim_{\\Delta x \\to 0} \\frac{\\Delta y}{\\Delta x}',
+      sim: { moment: 'moment_derivative' },
+    },
+    {
+      id: 'm11-derivative-rules',
+      title: ['Правила дифференцирования', 'Differentiation rules'],
+      intro: ['Производные основных функций и несколько правил позволяют продифференцировать почти любое выражение.', 'A table of basic derivatives plus a few rules handle almost any expression.'],
+      points: [
+        ['Таблица', 'Table', '(xⁿ)′ = nxⁿ⁻¹, (sin x)′ = cos x, (cos x)′ = −sin x, (eˣ)′ = eˣ, (ln x)′ = 1/x.', '(xⁿ)′ = nxⁿ⁻¹, (sin x)′ = cos x, (cos x)′ = −sin x, (eˣ)′ = eˣ, (ln x)′ = 1/x.'],
+        ['Сумма и константа', 'Sum and constant', '(u + v)′ = u′ + v′, (Cu)′ = Cu′.', '(u + v)′ = u′ + v′, (Cu)′ = Cu′.'],
+        ['Произведение и частное', 'Product and quotient', '(uv)′ = u′v + uv′, (u/v)′ = (u′v − uv′)/v².', '(uv)′ = u′v + uv′, (u/v)′ = (u′v − uv′)/v².'],
+        ['Сложная функция', 'Chain rule', '(f(g(x)))′ = f′(g(x)) · g′(x): (sin 3x)′ = 3 cos 3x.', '(f(g(x)))′ = f′(g(x)) · g′(x): (sin 3x)′ = 3 cos 3x.'],
+      ],
+      formula: '(x^n)\' = n x^{n-1}, \\quad (uv)\' = u\'v + uv\'',
+      sim: { graph: 'tangent' },
+    },
+    {
+      id: 'm11-derivative-use',
+      title: ['Применение производной: экстремумы и наибольшее значение', 'Using derivatives: extrema and optimisation'],
+      intro: ['По знаку производной видно, где функция растёт и где убывает, а в точках, где производная равна нулю, бывают максимумы и минимумы.', 'The sign of the derivative shows where a function rises or falls; where it is zero there may be a maximum or minimum.'],
+      points: [
+        ['Монотонность', 'Monotonicity', 'f′(x) > 0 — функция возрастает, f′(x) < 0 — убывает.', 'f′(x) > 0: increasing; f′(x) < 0: decreasing.'],
+        ['Экстремумы', 'Extrema', 'Если f′ меняет знак с + на −, это максимум, с − на + — минимум.', 'If f′ changes from + to − it is a maximum; from − to + a minimum.'],
+        ['Наибольшее значение на отрезке', 'Largest value on an interval', 'Сравниваем значения в критических точках внутри отрезка и на его концах.', 'Compare the values at critical points inside and at the endpoints.'],
+        ['Задачи на оптимизацию', 'Optimisation', 'Например, из всех прямоугольников с периметром 20 наибольшую площадь имеет квадрат 5 × 5.', 'E.g. of all rectangles with perimeter 20 the 5 × 5 square has the largest area.'],
+      ],
+      formula: 'f\'(x_0) = 0, \\; f\' \\text{ меняет знак}',
+      sim: { graph: 'tangent' },
+    },
+    {
+      id: 'm11-antiderivative',
+      title: ['Первообразная', 'Antiderivatives'],
+      intro: ['Первообразная — действие, обратное дифференцированию: F′(x) = f(x). Зная скорость, по ней находят путь.', 'An antiderivative undoes differentiation: F′(x) = f(x). From a speed it recovers the distance.'],
+      points: [
+        ['Общий вид', 'General form', 'Все первообразные отличаются на константу: F(x) + C.', 'All antiderivatives differ by a constant: F(x) + C.'],
+        ['Таблица', 'Table', '∫xⁿ dx = xⁿ⁺¹/(n + 1) + C, ∫cos x dx = sin x + C, ∫eˣ dx = eˣ + C, ∫dx/x = ln|x| + C.', '∫xⁿ dx = xⁿ⁺¹/(n + 1) + C, ∫cos x dx = sin x + C, ∫eˣ dx = eˣ + C, ∫dx/x = ln|x| + C.'],
+        ['Правила', 'Rules', 'Первообразная суммы — сумма первообразных; константу выносят.', 'The antiderivative of a sum is the sum of antiderivatives; constants factor out.'],
+      ],
+      formula: '\\int x^n\\,dx = \\frac{x^{n+1}}{n + 1} + C',
+      sim: { graph: 'integral' },
+    },
+    {
+      id: 'm11-integral',
+      title: ['Определённый интеграл. Площадь криволинейной трапеции', 'Definite integrals and areas'],
+      intro: ['Определённый интеграл — площадь под графиком. Формула Ньютона — Лейбница связывает её с первообразной.', 'A definite integral is the area under a graph; the Newton–Leibniz formula links it to the antiderivative.'],
+      points: [
+        ['Ньютон — Лейбниц', 'Newton–Leibniz', '∫ₐᵇ f(x) dx = F(b) − F(a).', '∫ₐᵇ f(x) dx = F(b) − F(a).'],
+        ['Пример', 'Example', '∫₀² x² dx = 8/3 − 0 = 8/3.', '∫₀² x² dx = 8/3.'],
+        ['Объём тела вращения', 'Volume of revolution', 'V = π ∫ₐᵇ f²(x) dx — так считают объёмы конуса и шара.', 'V = π ∫ₐᵇ f²(x) dx, which gives the volumes of a cone and a sphere.'],
+      ],
+      formula: '\\int_a^b f(x)\\,dx = F(b) - F(a)',
+      sim: { graph: 'integral' },
+    },
+  ]),
+  section(M, 11, 'alg-exp-log', ['Алгебра: показательная и логарифмическая функции', 'Algebra: exponentials and logarithms'], [
+    {
+      id: 'm11-exponential',
+      title: ['Показательная функция и уравнения', 'Exponential functions and equations'],
+      intro: ['y = aˣ (a > 0, a ≠ 1) описывает рост и распад: размножение бактерий, сложные проценты, радиоактивность.', 'y = aˣ (a > 0, a ≠ 1) describes growth and decay: bacteria, compound interest, radioactivity.'],
+      points: [
+        ['Свойства', 'Properties', 'aˣ > 0 всегда; при a > 1 функция возрастает, при 0 < a < 1 убывает; график проходит через (0; 1).', 'aˣ > 0 always; it rises for a > 1 and falls for 0 < a < 1; the graph passes through (0, 1).'],
+        ['Уравнения', 'Equations', 'Приводим к одному основанию: 2ˣ = 32 ⇒ 2ˣ = 2⁵ ⇒ x = 5.', 'Use the same base: 2ˣ = 32 ⇒ 2ˣ = 2⁵ ⇒ x = 5.'],
+        ['Неравенства', 'Inequalities', 'При основании меньше 1 знак неравенства меняется: (1/2)ˣ > 1/8 ⇒ x < 3.', 'With a base below 1 the sign flips: (1/2)ˣ > 1/8 ⇒ x < 3.'],
+      ],
+      formula: 'a^{f(x)} = a^{g(x)} \\;\\Leftrightarrow\\; f(x) = g(x)',
+      sim: { graph: 'exp' },
+    },
+    {
+      id: 'm11-logarithm',
+      title: ['Логарифмы и их свойства', 'Logarithms'],
+      intro: ['Логарифм — показатель степени: log_a b — это число, в которое надо возвести a, чтобы получить b. log₂ 8 = 3.', 'A logarithm is an exponent: log_a b is the power a must be raised to to give b; log₂ 8 = 3.'],
+      points: [
+        ['Основное тождество', 'Basic identity', 'a^(log_a b) = b.', 'a^(log_a b) = b.'],
+        ['Свойства', 'Properties', 'log_a(bc) = log_a b + log_a c, log_a(b/c) = log_a b − log_a c, log_a bⁿ = n log_a b.', 'log_a(bc) = log_a b + log_a c, log_a(b/c) = log_a b − log_a c, log_a bⁿ = n log_a b.'],
+        ['Переход к другому основанию', 'Change of base', 'log_a b = log_c b / log_c a. Десятичный lg и натуральный ln — особые случаи.', 'log_a b = log_c b / log_c a; lg and ln are special cases.'],
+      ],
+      formula: '\\log_a (bc) = \\log_a b + \\log_a c',
+      sim: { graph: 'log' },
+    },
+    {
+      id: 'm11-log-equations',
+      title: ['Логарифмическая функция. Уравнения и неравенства', 'Logarithmic functions and equations'],
+      intro: ['y = log_a x — функция, обратная к y = aˣ: её график симметричен графику показательной функции относительно прямой y = x.', 'y = log_a x is the inverse of y = aˣ; its graph mirrors the exponential in the line y = x.'],
+      points: [
+        ['Область определения', 'Domain', 'Логарифм определён только для положительных чисел: x > 0.', 'Defined only for positive x.'],
+        ['Уравнения', 'Equations', 'log₂(x − 1) = 3 ⇒ x − 1 = 8 ⇒ x = 9. Проверяем, что аргумент положителен.', 'log₂(x − 1) = 3 ⇒ x − 1 = 8 ⇒ x = 9; check the argument is positive.'],
+        ['Шкалы', 'Scales', 'Логарифмы лежат в основе шкал pH, децибел и магнитуды землетрясений.', 'Logarithms underlie the pH, decibel and earthquake magnitude scales.'],
+      ],
+      formula: '\\log_a f(x) = c \\;\\Leftrightarrow\\; f(x) = a^c, \\; f(x) > 0',
+      sim: { graph: 'log' },
+    },
+    {
+      id: 'm11-probability',
+      title: ['Сложение и умножение вероятностей', 'Adding and multiplying probabilities'],
+      intro: ['Сложные события раскладываются на простые: «или» соответствует сложению вероятностей, «и» — умножению.', 'Complex events break into simple ones: “or” means adding probabilities, “and” means multiplying.'],
+      points: [
+        ['Несовместные события', 'Mutually exclusive', 'P(A или B) = P(A) + P(B), если A и B не могут произойти одновременно.', 'P(A or B) = P(A) + P(B) when A and B can’t happen together.'],
+        ['Независимые события', 'Independent events', 'P(A и B) = P(A) · P(B): две «шестёрки» подряд — 1/36.', 'P(A and B) = P(A) · P(B): two sixes in a row is 1/36.'],
+        ['Схема Бернулли', 'Bernoulli trials', 'Вероятность k успехов из n: Cₙᵏ pᵏ(1 − p)ⁿ⁻ᵏ.', 'The chance of k successes in n trials is Cₙᵏ pᵏ(1 − p)ⁿ⁻ᵏ.'],
+      ],
+      formula: 'P(AB) = P(A) \\cdot P(B)',
+      sim: { graph: 'dice' },
+    },
+  ]),
+  section(M, 11, 'geo-solids', ['Геометрия: тела вращения и объёмы', 'Geometry: solids of revolution and volumes'], [
+    {
+      id: 'm11-space-coords',
+      title: ['Координаты и векторы в пространстве', 'Coordinates and vectors in space'],
+      intro: ['Третья ось z превращает плоские формулы в пространственные — в каждой просто появляется ещё одно слагаемое.', 'A third axis z turns flat formulas into spatial ones, each gaining one more term.'],
+      points: [
+        ['Расстояние', 'Distance', 'd = √(Δx² + Δy² + Δz²).', 'd = √(Δx² + Δy² + Δz²).'],
+        ['Длина вектора', 'Vector length', '|a| = √(x² + y² + z²).', '|a| = √(x² + y² + z²).'],
+        ['Угол между векторами', 'Angle between vectors', 'cos φ = (x₁x₂ + y₁y₂ + z₁z₂) / (|a||b|).', 'cos φ = (x₁x₂ + y₁y₂ + z₁z₂) / (|a||b|).'],
+      ],
+      formula: 'd = \\sqrt{\\Delta x^2 + \\Delta y^2 + \\Delta z^2}',
+      sim: { solid: 'cuboid' },
+    },
+    {
+      id: 'm11-cylinder-cone',
+      title: ['Цилиндр и конус', 'Cylinders and cones'],
+      intro: ['Цилиндр получается вращением прямоугольника вокруг стороны, конус — вращением прямоугольного треугольника вокруг катета.', 'A cylinder comes from spinning a rectangle about a side, a cone from spinning a right triangle about a leg.'],
+      points: [
+        ['Цилиндр', 'Cylinder', 'Sбок = 2πRh, V = πR²h.', 'Lateral area 2πRh, volume πR²h.'],
+        ['Конус', 'Cone', 'Sбок = πRl (l — образующая), V = ⅓πR²h.', 'Lateral area πRl (l is the slant), volume ⅓πR²h.'],
+        ['Связь', 'The link', 'Конус занимает ровно треть цилиндра с тем же основанием и высотой.', 'A cone fills exactly a third of the cylinder with the same base and height.'],
+      ],
+      formula: 'V_{\\text{цил}} = \\pi R^2 h, \\quad V_{\\text{кон}} = \\frac{1}{3}\\pi R^2 h',
+      sim: { solid: 'cylinder' },
+    },
+    {
+      id: 'm11-sphere',
+      title: ['Шар и сфера', 'Spheres and balls'],
+      intro: ['Шар — тело вращения полукруга вокруг диаметра. Из всех тел с одинаковой площадью поверхности у шара наибольший объём — поэтому капли и пузыри круглые.', 'A ball is a half-disc spun about its diameter. Of all solids with the same surface area it holds the most volume, which is why drops and bubbles are round.'],
+      points: [
+        ['Площадь сферы', 'Surface area', 'S = 4πR² — ровно четыре площади большого круга.', 'S = 4πR², exactly four great circles.'],
+        ['Объём шара', 'Volume', 'V = 4/3 πR³.', 'V = 4/3 πR³.'],
+        ['Сечение', 'Cross-section', 'Любое сечение шара плоскостью — круг; через центр проходит большой круг.', 'Any plane section of a ball is a disc; through the centre it is a great circle.'],
+      ],
+      formula: 'V = \\frac{4}{3}\\pi R^3, \\quad S = 4\\pi R^2',
+      sim: { solid: 'sphere' },
+    },
+    {
+      id: 'm11-volumes',
+      title: ['Объёмы многогранников', 'Volumes of polyhedra'],
+      intro: ['Объём призмы — площадь основания на высоту, пирамиды — втрое меньше. Это работает для любых оснований.', 'A prism’s volume is base area times height, a pyramid’s is a third of that, for any base.'],
+      points: [
+        ['Призма и параллелепипед', 'Prism and cuboid', 'V = Sосн · h; у куба V = a³.', 'V = base area · h; a cube has a³.'],
+        ['Пирамида', 'Pyramid', 'V = ⅓ Sосн · h.', 'V = ⅓ base area · h.'],
+        ['Принцип Кавальери', 'Cavalieri’s principle', 'Если все сечения двух тел на одной высоте равны по площади, то равны и их объёмы.', 'If two solids have equal cross-sections at every height, their volumes are equal.'],
+      ],
+      formula: 'V_{\\text{пир}} = \\frac{1}{3} S h',
+      sim: { solid: 'pyramid' },
+    },
+  ]),
+];

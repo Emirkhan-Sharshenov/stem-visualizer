@@ -29,7 +29,7 @@ const SUBJECT: Record<string, { ru: string; en: string; color: string }> = {
   physics: { ru: 'Физика', en: 'Physics', color: '#E5484D' },
   chemistry: { ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   biology: { ru: 'Биология', en: 'Biology', color: '#F5A524' },
-  mathematics: { ru: 'Математика', en: 'Maths', color: '#2F5BFF' },
+  mathematics: { ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
 };
 
 /** compact topic description sent to the server so answers stay on the page's content */
