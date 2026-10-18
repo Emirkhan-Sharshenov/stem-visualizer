@@ -12,7 +12,23 @@ import { iconFor, IconName } from './slideIcons';
 type Lang = 'ru' | 'en';
 type T2 = { ru: string; en: string };
 
-export type ThemeId = 'light' | 'dark' | 'bright';
+export type ThemeId = 'light' | 'bright' | 'dark' | 'paper' | 'chalk' | 'neon' | 'mono' | 'pastel';
+export type FontPairId = 'classic' | 'modern' | 'strict' | 'book' | 'friendly';
+export type DecorId = 'none' | 'dots' | 'grid' | 'blobs' | 'rings';
+export type TitleLayoutId = 'split' | 'full' | 'center';
+export type ScaleId = 'compact' | 'normal' | 'large';
+
+/** everything the person can choose about the look of a deck */
+export interface DesignStyle {
+  theme: ThemeId;
+  fonts: FontPairId;
+  /** null keeps the subject colour */
+  accent: string | null;
+  decor: DecorId;
+  title: TitleLayoutId;
+  scale: ScaleId;
+}
+export const DEFAULT_STYLE: DesignStyle = { theme: 'light', fonts: 'classic', accent: null, decor: 'none', title: 'split', scale: 'normal' };
 export type Part = 'title' | 'intro' | 'points' | 'formula' | 'model' | 'summary' | 'quiz' | 'answers' | 'end';
 
 export type Slide =
@@ -43,6 +59,10 @@ export interface Theme {
   heroBg: string;
   heroInk: string;
   heroMuted: string;
+  /** the accent colour and the text colour that reads on it */
+  accent: string;
+  onAccent: string;
+  dark: boolean;
 }
 
 const SUBJECT_COLOR: Record<string, string> = { physics: 'E5484D', chemistry: '30A46C', biology: 'F5A524', mathematics: '8E4EC6' };
@@ -56,18 +76,67 @@ const SUBJECT_NAME: Record<string, T2> = {
 
 export const accentFor = (subject: string) => SUBJECT_COLOR[subject] ?? '2F5BFF';
 
-export function themeFor(id: ThemeId, subject: string): Theme {
-  const a = accentFor(subject);
-  const soft = SUBJECT_SOFT[subject] ?? 'EEF1FF';
-  if (id === 'dark') return { id, name: { ru: 'Тёмная', en: 'Dark' }, bg: '121316', ink: 'F1F1EE', muted: '8C8F98', card: '1D1F24', panel: '1A1C21', heroBg: '0C0D0F', heroInk: 'FFFFFF', heroMuted: 'A0A3AB' };
-  if (id === 'bright') {
-    // white text is hard to read on yellow, so the biology hero keeps dark text
-    const darkHero = subject === 'biology';
-    return { id, name: { ru: 'Яркая', en: 'Bright' }, bg: soft, ink: '16171A', muted: '5A5D66', card: 'FFFFFF', panel: 'FFFFFF', heroBg: a, heroInk: darkHero ? '1D1405' : 'FFFFFF', heroMuted: darkHero ? '4A3A12' : 'FFFFFF' };
+const hexRgb = (h: string) => [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+/** relative brightness 0…1 */
+export const lum = (h: string) => {
+  const [r, g, b] = hexRgb(h);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+};
+/** a mixed into b by t (0 → b, 1 → a) */
+const mix = (a: string, b: string, t: number) =>
+  hexRgb(a)
+    .map((v, i) => Math.round(v * t + hexRgb(b)[i] * (1 - t)).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+
+const NEON: Record<string, string> = { physics: 'FF4D6D', chemistry: '2EF2A0', biology: 'FFC93C', mathematics: 'B98CFF' };
+export const THEME_NAMES: Record<ThemeId, T2> = {
+  light: { ru: 'Светлая', en: 'Light' },
+  bright: { ru: 'Яркая', en: 'Bright' },
+  dark: { ru: 'Тёмная', en: 'Dark' },
+  paper: { ru: 'Бумага', en: 'Paper' },
+  chalk: { ru: 'Школьная доска', en: 'Chalkboard' },
+  neon: { ru: 'Неон', en: 'Neon' },
+  mono: { ru: 'Чёрно-белая', en: 'Mono' },
+  pastel: { ru: 'Пастель', en: 'Pastel' },
+};
+
+export function themeFor(id: ThemeId, subject: string, accent: string | null = null): Theme {
+  const a = accent ?? (id === 'chalk' ? 'F2D06B' : id === 'mono' ? '1A1A1A' : id === 'neon' ? NEON[subject] ?? '3DF2D0' : accentFor(subject));
+  const onAccent = lum(a) > 0.6 ? '16171A' : 'FFFFFF';
+  const base = { id, name: THEME_NAMES[id], accent: a, onAccent };
+  switch (id) {
+    case 'dark':
+      return { ...base, bg: '121316', ink: 'F1F1EE', muted: '8C8F98', card: '1D1F24', panel: '1A1C21', heroBg: '0C0D0F', heroInk: 'FFFFFF', heroMuted: 'A0A3AB', dark: true };
+    case 'bright':
+      return { ...base, bg: mix(a, 'FFFFFF', 0.1), ink: '16171A', muted: '5A5D66', card: 'FFFFFF', panel: 'FFFFFF', heroBg: a, heroInk: onAccent, heroMuted: onAccent === 'FFFFFF' ? 'FFFFFF' : '3A2E10', dark: false };
+    case 'paper':
+      return { ...base, bg: 'F6F1E6', ink: '2E2A24', muted: '7C7263', card: 'EDE5D3', panel: mix(a, 'F6F1E6', 0.14), heroBg: 'F6F1E6', heroInk: '2E2A24', heroMuted: '7C7263', dark: false };
+    case 'chalk':
+      return { ...base, bg: '223B2F', ink: 'F3F1E7', muted: 'B4C2B8', card: '2B4A3B', panel: '284536', heroBg: '1B3226', heroInk: 'FFFFFF', heroMuted: 'C8D4CB', dark: true };
+    case 'neon':
+      return { ...base, bg: '0B1026', ink: 'EAEEFF', muted: '8E97C4', card: '151C3F', panel: '121939', heroBg: '070B1C', heroInk: 'FFFFFF', heroMuted: 'A3ACD6', dark: true };
+    case 'mono':
+      return { ...base, bg: 'FFFFFF', ink: '111111', muted: '6E6E6E', card: 'F2F2F2', panel: 'F2F2F2', heroBg: '111111', heroInk: 'FFFFFF', heroMuted: 'B5B5B5', dark: false };
+    case 'pastel':
+      return { ...base, bg: 'FBF8F3', ink: '2E2A33', muted: '7E7886', card: 'FFFFFF', panel: mix(a, 'FFFFFF', 0.18), heroBg: mix(a, 'FFFFFF', 0.22), heroInk: '2E2A33', heroMuted: '6E6876', dark: false };
+    default:
+      return { ...base, bg: 'FFFFFF', ink: '16171A', muted: '6B6B6B', card: 'F5F4F0', panel: mix(a, 'FFFFFF', 0.12), heroBg: 'FFFFFF', heroInk: '16171A', heroMuted: '6B6B6B', dark: false };
   }
-  return { id, name: { ru: 'Светлая', en: 'Light' }, bg: 'FFFFFF', ink: '16171A', muted: '6B6B6B', card: 'F5F4F0', panel: soft, heroBg: 'FFFFFF', heroInk: '16171A', heroMuted: '6B6B6B' };
 }
-export const THEMES: ThemeId[] = ['light', 'bright', 'dark'];
+export const THEMES: ThemeId[] = ['light', 'bright', 'dark', 'paper', 'pastel', 'chalk', 'neon', 'mono'];
+/** accent swatches besides the subject colour */
+export const ACCENTS = ['2F5BFF', '0EA5E9', '14B8A6', '22A06B', 'F97316', 'E11D48', 'D946EF', '7C3AED', '334155'];
+
+/** font pairs present in PowerPoint (Windows and Mac) and Google Slides, all with Cyrillic */
+export const FONT_PAIRS: Record<FontPairId, { name: T2; head: string; body: string; headBold: boolean }> = {
+  classic: { name: { ru: 'Классика', en: 'Classic' }, head: 'Georgia', body: 'Calibri', headBold: false },
+  modern: { name: { ru: 'Современный', en: 'Modern' }, head: 'Calibri', body: 'Calibri', headBold: true },
+  strict: { name: { ru: 'Строгий', en: 'Strict' }, head: 'Arial', body: 'Arial', headBold: true },
+  book: { name: { ru: 'Книжный', en: 'Bookish' }, head: 'Cambria', body: 'Cambria', headBold: false },
+  friendly: { name: { ru: 'Дружелюбный', en: 'Friendly' }, head: 'Trebuchet MS', body: 'Trebuchet MS', headBold: true },
+};
+
 
 /** TeX to readable text for when the formula picture is not available */
 export function texToText(tex: string): string {
@@ -203,6 +272,7 @@ export const SLIDE_W = 13.333;
 export const SLIDE_H = 7.5;
 /** fonts present in PowerPoint on Windows and Mac and in Google Slides, with Cyrillic */
 export const FONTS = { head: 'Georgia', body: 'Calibri', math: 'Cambria Math' } as const;
+export const fontFace = (pair: FontPairId, f: keyof typeof FONTS) => (f === 'math' ? FONTS.math : FONT_PAIRS[pair][f]);
 
 export interface Img {
   data: string;
@@ -235,7 +305,7 @@ export interface Run {
 
 export type Prim =
   | { t: 'rect'; x: number; y: number; w: number; h: number; fill: string; alpha?: number; r?: number; line?: string }
-  | { t: 'ellipse'; x: number; y: number; w: number; h: number; fill: string; alpha?: number }
+  | { t: 'ellipse'; x: number; y: number; w: number; h: number; fill: string; alpha?: number; line?: string; lineAlpha?: number }
   | {
       t: 'text';
       x: number;
@@ -273,6 +343,7 @@ export function fit(img: Img, x: number, y: number, w: number, h: number) {
 const pick = (len: number, steps: [number, number][], last: number) => steps.find(([max]) => len <= max)?.[1] ?? last;
 
 export interface LayoutCtx {
+  style: DesignStyle;
   theme: Theme;
   accent: string;
   images: Images;
@@ -285,19 +356,27 @@ export interface LayoutCtx {
 const M = 0.75; // side margin
 
 /** Wikipedia pictures take the title and the intro (the model, with its controls, has a slide of its own) */
-function picks(c: { images: Images }) {
+function picks(c: { images: Images; style: DesignStyle }) {
   const ph = c.images.photos;
-  return { title: ph[0] ?? null, intro: ph[1] ?? null };
+  // the centred title has no picture, so the intro takes the first one
+  return c.style.title === 'center' ? { title: null, intro: ph[0] ?? null } : { title: ph[0] ?? null, intro: ph[1] ?? null };
 }
 const one = (text: string): Run[] => [{ text }];
 
 export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[] } {
-  const { theme: T, accent: A } = c;
+  const { theme: T, accent: A, style: S } = c;
   const P: Prim[] = [];
+  const k = S.scale === 'large' ? 1.1 : S.scale === 'compact' ? 0.9 : 1;
+  const headBold = FONT_PAIRS[S.fonts].headBold;
+  // body and heading sizes follow the chosen text size; small labels and huge numerals stay put
   const text = (x: number, y: number, w: number, h: number, runs: Run[] | string, size: number, color: string, font: keyof typeof FONTS = 'body', extra: Partial<Extract<Prim, { t: 'text' }>> = {}) =>
-    P.push({ t: 'text', x, y, w, h, runs: typeof runs === 'string' ? one(runs) : runs, size, color, font, ...extra });
+    P.push({ t: 'text', x, y, w, h, runs: typeof runs === 'string' ? one(runs) : runs, size: size >= 15 && size <= 60 ? Math.round(size * k) : size, color, font, bold: font === 'head' && headBold ? true : undefined, ...extra });
   const rect = (x: number, y: number, w: number, h: number, fill: string, extra: Partial<Extract<Prim, { t: 'rect' }>> = {}) => P.push({ t: 'rect', x, y, w, h, fill, ...extra });
   const ellipse = (x: number, y: number, w: number, h: number, fill: string, alpha = 1) => P.push({ t: 'ellipse', x, y, w, h, fill, alpha });
+  // the accent on the title and closing slides: falls back to the text colour when it would not show
+  const heroA = Math.abs(lum(A) - lum(T.heroBg)) < 0.25 ? T.heroInk : A;
+  const heroOnAccent = T.heroBg === A;
+  const ON = T.onAccent;
 
   /** small caps label with a short accent rule under it */
   const kicker = (label: string, x = M, y = 0.55, color = A) => {
@@ -310,11 +389,63 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
   };
   let bg = T.bg;
 
+  // background pattern on the content slides, drawn first so everything sits on top
+  if (sl.k !== 'title' && sl.k !== 'end' && sl.k !== 'divider') {
+    if (S.decor === 'dots') for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) ellipse(SLIDE_W - 3.0 + i * 0.32, 0.4 + j * 0.32, 0.07, 0.07, A, 0.4);
+    if (S.decor === 'grid') {
+      for (let x = 0.5; x < SLIDE_W; x += 0.5) rect(x, 0, 0.01, SLIDE_H, T.ink, { alpha: 0.05 });
+      for (let y = 0.5; y < SLIDE_H; y += 0.5) rect(0, y, SLIDE_W, 0.01, T.ink, { alpha: 0.05 });
+    }
+    if (S.decor === 'blobs') {
+      ellipse(SLIDE_W - 3.2, -1.7, 5.2, 5.2, A, 0.08);
+      ellipse(-1.9, SLIDE_H - 2.3, 4.4, 4.4, A, 0.06);
+    }
+    if (S.decor === 'rings') {
+      P.push({ t: 'ellipse', x: SLIDE_W - 3.0, y: -1.6, w: 4.4, h: 4.4, fill: A, alpha: 0, line: A, lineAlpha: 0.3 });
+      P.push({ t: 'ellipse', x: SLIDE_W - 2.3, y: -0.9, w: 3.0, h: 3.0, fill: A, alpha: 0, line: A, lineAlpha: 0.22 });
+      P.push({ t: 'ellipse', x: -1.6, y: SLIDE_H - 1.9, w: 3.4, h: 3.4, fill: A, alpha: 0, line: A, lineAlpha: 0.2 });
+    }
+  }
+
   switch (sl.k) {
     case 'title': {
       bg = T.heroBg;
       const photo = picks(c).title;
-      const bright = T.id === 'bright';
+      const tsz = pick(sl.title.length, [[24, 46], [44, 40], [70, 34]], 30);
+      if (S.title === 'center') {
+        P.push({ t: 'ellipse', x: SLIDE_W / 2 - 4.2, y: SLIDE_H / 2 - 4.2, w: 8.4, h: 8.4, fill: A, alpha: 0, line: heroA, lineAlpha: 0.18 });
+        P.push({ t: 'ellipse', x: SLIDE_W / 2 - 3.2, y: SLIDE_H / 2 - 3.2, w: 6.4, h: 6.4, fill: A, alpha: 0, line: heroA, lineAlpha: 0.12 });
+        ellipse(SLIDE_W - 2.4, -1.1, 3.4, 3.4, heroOnAccent ? 'FFFFFF' : A, heroOnAccent ? 0.12 : 0.1);
+        ellipse(-1.2, SLIDE_H - 2.2, 3.0, 3.0, heroOnAccent ? 'FFFFFF' : A, heroOnAccent ? 0.12 : 0.1);
+        text(M, 1.7, SLIDE_W - 2 * M, 0.35, sl.label.toUpperCase(), 12, heroA, 'body', { bold: true, spacing: 3, align: 'center' });
+        text(1.5, 2.2, SLIDE_W - 3, 2.4, sl.title, tsz + 4, T.heroInk, 'head', { align: 'center', valign: 'middle', lh: 0.95 });
+        rect(SLIDE_W / 2 - 0.5, 4.8, 1.0, 0.06, heroA);
+        if (sl.subtitle) text(2.2, 5.05, SLIDE_W - 4.4, 1.2, sl.subtitle, 17, heroOnAccent ? T.heroMuted : T.heroMuted, 'body', { align: 'center', valign: 'top', lh: 1.1 });
+        break;
+      }
+      if (S.title === 'full') {
+        const overlay = !!photo?.photo;
+        if (photo?.photo) {
+          P.push({ t: 'img', x: 0, y: 0, w: SLIDE_W, h: SLIDE_H, data: photo.data, cover: true });
+          rect(0, 0, SLIDE_W, SLIDE_H, '000000', { alpha: 0.55 });
+        } else {
+          text(SLIDE_W - 5.6, -0.6, 5.6, 7.5, String(sl.grade), 400, heroOnAccent ? 'FFFFFF' : A, 'head', { align: 'right', valign: 'middle', alpha: heroOnAccent ? 0.18 : 0.12 });
+          ellipse(-1.6, -1.8, 5.2, 5.2, heroOnAccent ? 'FFFFFF' : A, heroOnAccent ? 0.12 : 0.08);
+          if (photo) {
+            rect(8.4, 1.1, 4.2, 4.9, 'FFFFFF', { r: 0.2 });
+            P.push({ t: 'img', ...fit(photo, 8.65, 1.35, 3.7, 4.4), data: photo.data });
+          }
+        }
+        const ink = overlay ? 'FFFFFF' : T.heroInk;
+        const acc = overlay ? 'FFFFFF' : heroA;
+        text(M, 3.1, 7.4, 0.35, sl.label.toUpperCase(), 12, acc, 'body', { bold: true, spacing: 3 });
+        rect(M, 3.55, 0.7, 0.06, acc);
+        text(M, 3.8, photo && !overlay ? 7.2 : 10.5, 2.2, sl.title, tsz + 4, ink, 'head', { valign: 'top', lh: 0.95 });
+        if (sl.subtitle) text(M, 6.0, photo && !overlay ? 7.0 : 9.5, 0.9, sl.subtitle, 16, overlay ? 'FFFFFF' : T.heroMuted, 'body', { valign: 'top', lh: 1.1 });
+        if (photo) text(M, SLIDE_H - 0.4, 9, 0.3, photo.credit, 8, overlay ? 'FFFFFF' : T.heroMuted, 'body', { alpha: 0.8 });
+        break;
+      }
+      const bright = heroOnAccent;
       const px = 8.15;
       // right side: a Wikipedia picture, or a coloured panel with the grade
       if (photo) {
@@ -331,14 +462,13 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
         rect(px, 0, SLIDE_W - px, SLIDE_H, bright ? 'FFFFFF' : A, { alpha: bright ? 0.14 : 1 });
         ellipse(px + 2.2, -1.4, 5, 5, 'FFFFFF', 0.12);
         ellipse(px - 1.2, 4.6, 3.6, 3.6, bright ? 'FFFFFF' : A, bright ? 0.12 : 1);
-        text(px, 1.6, SLIDE_W - px, 3.2, String(sl.grade), 190, 'FFFFFF', 'head', { align: 'center', valign: 'middle' });
-        text(px, 4.7, SLIDE_W - px, 0.5, sl.label.split('·')[1]?.trim().toUpperCase() ?? '', 14, 'FFFFFF', 'body', { align: 'center', bold: true, spacing: 4 });
+        text(px, 1.6, SLIDE_W - px, 3.2, String(sl.grade), 190, bright ? T.heroInk : ON, 'head', { align: 'center', valign: 'middle' });
+        text(px, 4.7, SLIDE_W - px, 0.5, sl.label.split('·')[1]?.trim().toUpperCase() ?? '', 14, bright ? T.heroInk : ON, 'body', { align: 'center', bold: true, spacing: 4 });
       }
       const ink = T.heroInk;
-      const sub = bright ? T.heroMuted : T.muted;
-      kicker(sl.label, M, 1.55, bright ? T.heroInk : A);
-      const ts = pick(sl.title.length, [[24, 46], [44, 40], [70, 34]], 30);
-      text(M, 2.25, px - M - 0.6, 3.0, sl.title, ts, ink, 'head', { valign: 'top', lh: 0.95 });
+      const sub = T.heroMuted;
+      kicker(sl.label, M, 1.55, heroA);
+      text(M, 2.25, px - M - 0.6, 3.0, sl.title, tsz, ink, 'head', { valign: 'top', lh: 0.95 });
       if (sl.subtitle) text(M, 5.35, px - M - 0.7, 1.3, sl.subtitle, pick(sl.subtitle.length, [[90, 18], [160, 16]], 14), sub, 'body', { valign: 'top', lh: 1.1 });
       break;
     }
@@ -365,7 +495,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
     case 'divider': {
       rect(0, 0, 5.0, SLIDE_H, A);
       ellipse(-1.4, 4.4, 4.5, 4.5, 'FFFFFF', 0.1);
-      text(0, 1.6, 5.0, 3.6, String(sl.n).padStart(2, '0'), 150, 'FFFFFF', 'head', { align: 'center', valign: 'middle' });
+      text(0, 1.6, 5.0, 3.6, String(sl.n).padStart(2, '0'), 150, ON, 'head', { align: 'center', valign: 'middle' });
       const dic = c.images.icons[sl.icon];
       if (dic) P.push({ t: 'img', x: SLIDE_W - M - 2.4, y: SLIDE_H - 3.0, w: 2.4, h: 2.4, data: dic.data, alpha: 0.35 });
       kicker(sl.label, 5.8, 2.55);
@@ -409,7 +539,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       const ic = c.images.icons[sl.icon];
       if (ic) {
         // a big line drawing in the corner of the panel, partly cut off by the edge
-        P.push({ t: 'img', x: pw - 2.3, y: 5.0, w: 2.6, h: 2.6, data: ic.data, alpha: T.id === 'dark' ? 0.55 : 0.4 });
+        P.push({ t: 'img', x: pw - 2.3, y: 5.0, w: 2.6, h: 2.6, data: ic.data, alpha: T.dark ? 0.55 : 0.4 });
         ellipse(SLIDE_W - M - 1.0, 0.55, 1.0, 1.0, A, 0.12);
         P.push({ t: 'img', x: SLIDE_W - M - 0.8, y: 0.75, w: 0.6, h: 0.6, data: ic.data });
       }
@@ -424,10 +554,10 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       kicker(sl.label);
       text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
       const img = c.images.formula[sl.topicId];
-      rect(M, 2.3, SLIDE_W - 2 * M, 3.85, T.id === 'dark' ? 'FFFFFF' : T.card, { r: 0.18 });
+      rect(M, 2.3, SLIDE_W - 2 * M, 3.85, T.dark ? 'FFFFFF' : T.card, { r: 0.18 });
       rect(M, 2.3, 0.09, 3.85, A);
       if (img) P.push({ t: 'img', ...fit(img, M + 0.8, 2.75, SLIDE_W - 2 * M - 1.6, 2.95), data: img.data });
-      else text(M + 0.5, 2.3, SLIDE_W - 2 * M - 1, 3.85, sl.plain, pick(sl.plain.length, [[20, 54], [40, 44]], 34), T.id === 'dark' ? '16171A' : T.ink, 'math', { align: 'center', valign: 'middle' });
+      else text(M + 0.5, 2.3, SLIDE_W - 2 * M - 1, 3.85, sl.plain, pick(sl.plain.length, [[20, 54], [40, 44]], 34), T.dark ? '16171A' : T.ink, 'math', { align: 'center', valign: 'middle' });
       text(M, 6.35, SLIDE_W - 2 * M, 0.4, sl.caption, 13, T.muted, 'body', { italic: true });
       footer();
       break;
@@ -486,7 +616,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
         const y = (two ? 3.75 : 3.5) + Math.floor(i / 2) * (oh + 0.25);
         rect(x, y, ow, oh, T.card, { r: 0.14 });
         ellipse(x + 0.3, y + oh / 2 - 0.3, 0.6, 0.6, A);
-        text(x + 0.3, y + oh / 2 - 0.3, 0.6, 0.6, 'ABCD'[i], 16, 'FFFFFF', 'body', { bold: true, align: 'center', valign: 'middle' });
+        text(x + 0.3, y + oh / 2 - 0.3, 0.6, 0.6, 'ABCD'[i], 16, ON, 'body', { bold: true, align: 'center', valign: 'middle' });
         text(x + 1.15, y, ow - 1.4, oh, o, pick(o.length, [[30, two ? 26 : 20], [60, 17], [100, 15]], 13), T.ink, 'body', { valign: 'middle', lh: 1.05 });
       });
       footer();
@@ -507,7 +637,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
         const y = 2.35 + row * rh;
         text(x, y, 0.6, rh, String(i + 1), 18, T.muted, 'head', { valign: 'middle' });
         ellipse(x + 0.6, y + rh / 2 - 0.24, 0.48, 0.48, A);
-        text(x + 0.6, y + rh / 2 - 0.24, 0.48, 0.48, it.letter, 13, 'FFFFFF', 'body', { bold: true, align: 'center', valign: 'middle' });
+        text(x + 0.6, y + rh / 2 - 0.24, 0.48, 0.48, it.letter, 13, ON, 'body', { bold: true, align: 'center', valign: 'middle' });
         text(x + 1.3, y, gw - 1.3, rh, it.text, rows > 6 ? 14 : 18, T.ink, 'body', { valign: 'middle' });
         if (row < rows - 1) rect(x, y + rh - 0.01, gw, 0.01, T.muted, { alpha: 0.25 });
       });
@@ -516,12 +646,11 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
     }
     case 'end': {
       bg = T.heroBg;
-      const onAccent = T.heroBg === A;
-      ellipse(-1.6, -1.8, 5.2, 5.2, onAccent ? 'FFFFFF' : A, onAccent ? 0.12 : 0.1);
-      ellipse(SLIDE_W - 3.2, SLIDE_H - 2.6, 4.6, 4.6, onAccent ? 'FFFFFF' : A, onAccent ? 0.12 : 0.14);
+      ellipse(-1.6, -1.8, 5.2, 5.2, heroOnAccent ? 'FFFFFF' : A, heroOnAccent ? 0.12 : 0.1);
+      ellipse(SLIDE_W - 3.2, SLIDE_H - 2.6, 4.6, 4.6, heroOnAccent ? 'FFFFFF' : A, heroOnAccent ? 0.12 : 0.14);
       text(M, 2.35, SLIDE_W - 2 * M, 1.5, sl.title, 54, T.heroInk, 'head', { align: 'center', valign: 'middle' });
-      rect(SLIDE_W / 2 - 0.5, 4.05, 1.0, 0.06, onAccent ? T.heroInk : A);
-      text(M, 4.35, SLIDE_W - 2 * M, 0.7, sl.subtitle, 24, onAccent ? T.heroInk : A, 'body', { align: 'center', valign: 'middle' });
+      rect(SLIDE_W / 2 - 0.5, 4.05, 1.0, 0.06, heroA);
+      text(M, 4.35, SLIDE_W - 2 * M, 0.7, sl.subtitle, 24, heroA, 'body', { align: 'center', valign: 'middle' });
       break;
     }
   }
@@ -531,7 +660,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
 export const fileName = (s: string) => `${s.replace(/[\\/:*?"<>|«»]/g, '').replace(/\s+/g, ' ').trim().slice(0, 80) || 'presentation'}.pptx`;
 
 /** writes the .pptx; pptxgenjs loads only when someone downloads */
-export async function downloadPptx(slides: SlideWithNotes[], theme: Theme, accent: string, images: Images, name: string, deck: string, author?: string) {
+export async function downloadPptx(slides: SlideWithNotes[], style: DesignStyle, theme: Theme, images: Images, name: string, deck: string, author?: string) {
   const { default: PptxGenJS } = await import('pptxgenjs');
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
@@ -541,16 +670,17 @@ export async function downloadPptx(slides: SlideWithNotes[], theme: Theme, accen
 
   slides.forEach((sl, index) => {
     const s = pptx.addSlide();
-    const { bg, prims } = layoutSlide(sl, { theme, accent, images, deck, index, total: slides.length });
+    const { bg, prims } = layoutSlide(sl, { style, theme, accent: theme.accent, images, deck, index, total: slides.length });
     s.background = { color: bg };
     for (const p of prims) {
       if (p.t === 'rect') s.addShape(p.r ? pptx.ShapeType.roundRect : pptx.ShapeType.rect, { x: p.x, y: p.y, w: p.w, h: p.h, fill: { color: p.fill, transparency: tr(p.alpha) }, line: p.line ? { color: p.line, width: 1 } : { type: 'none' }, rectRadius: p.r });
-      else if (p.t === 'ellipse') s.addShape(pptx.ShapeType.ellipse, { x: p.x, y: p.y, w: p.w, h: p.h, fill: { color: p.fill, transparency: tr(p.alpha) }, line: { type: 'none' } });
+      else if (p.t === 'ellipse')
+        s.addShape(pptx.ShapeType.ellipse, { x: p.x, y: p.y, w: p.w, h: p.h, fill: p.alpha === 0 ? { type: 'none' } : { color: p.fill, transparency: tr(p.alpha) }, line: p.line ? { color: p.line, width: 1.5, transparency: tr(p.lineAlpha) } : { type: 'none' } });
       else if (p.t === 'img') s.addImage({ data: p.data, x: p.x, y: p.y, w: p.w, h: p.h, ...(p.cover ? { sizing: { type: 'cover' as const, w: p.w, h: p.h } } : {}), ...(p.alpha !== undefined && p.alpha < 1 ? { transparency: tr(p.alpha) } : {}) });
       else
         s.addText(
           p.runs.map((r) => ({ text: r.text, options: { bold: r.bold, color: r.color, fontSize: r.size, breakLine: r.br } })),
-          { x: p.x, y: p.y, w: p.w, h: p.h, margin: 0, fontFace: FONTS[p.font], fontSize: p.size, color: p.color, bold: p.bold, italic: p.italic, transparency: tr(p.alpha), align: p.align ?? 'left', valign: p.valign ?? 'top', lineSpacingMultiple: p.lh, charSpacing: p.spacing, paraSpaceAfter: p.para, fit: 'none' },
+          { x: p.x, y: p.y, w: p.w, h: p.h, margin: 0, fontFace: fontFace(style.fonts, p.font), fontSize: p.size, color: p.color, bold: p.bold, italic: p.italic, transparency: tr(p.alpha), align: p.align ?? 'left', valign: p.valign ?? 'top', lineSpacingMultiple: p.lh, charSpacing: p.spacing, paraSpaceAfter: p.para, fit: 'none' },
         );
     }
     if (sl.notes) s.addNotes(sl.notes);

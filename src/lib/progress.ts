@@ -38,6 +38,8 @@ export interface Progress {
   mistakes: Record<string, Mistake>;
   /** best run in the problem marathon */
   marathonBest: number;
+  /** best score in each game */
+  games?: Record<string, number>;
   /** last change, used to merge with the cloud copy */
   updatedAt: number;
 }
@@ -161,6 +163,12 @@ export const progress = {
     else mistakes[id] = ok ? { ...m, box: m.box + 1, due: now + REVIEW_DAYS[m.box] * DAY, at: now } : { ...m, box: 0, due: now + DAY, at: now, misses: m.misses + 1 };
     commit(award(withDay({ ...state, mistakes }), ok ? XP.review : 0, 'review'));
   },
+  /** a finished game: keeps the record and gives XP for the points scored (a little extra for a new record) */
+  recordGame(id: string, score: number, xp: number) {
+    const best = state.games?.[id] ?? 0;
+    const bonus = score > best && best > 0 ? 5 : 0;
+    commit(award(withDay({ ...state, games: { ...(state.games ?? {}), [id]: Math.max(best, score) } }), Math.min(60, Math.round(xp)) + bonus, 'game'));
+  },
   recordMarathon(score: number) {
     commit(award(withDay({ ...state, marathonBest: Math.max(state.marathonBest ?? 0, score) }), score * XP.perMarathon, 'marathon'));
   },
@@ -269,6 +277,7 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     mistakes,
     xp: Math.max(a.xp ?? 0, b.xp ?? 0),
     marathonBest: Math.max(a.marathonBest ?? 0, b.marathonBest ?? 0),
+    games: Object.fromEntries([...new Set([...Object.keys(a.games ?? {}), ...Object.keys(b.games ?? {})])].map((k) => [k, Math.max(a.games?.[k] ?? 0, b.games?.[k] ?? 0)])),
     days: [...new Set([...a.days, ...b.days])].sort().slice(-400),
     bestStreak: Math.max(a.bestStreak, b.bestStreak),
     currentStreak: a.updatedAt >= b.updatedAt ? a.currentStreak : b.currentStreak,
