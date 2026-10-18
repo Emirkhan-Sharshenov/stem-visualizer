@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Crown, Download, GraduationCap, Loader2, Lock, Presentation, X } from 'lucide-react';
+import { Check, Crown, Download, GraduationCap, ImageIcon, Loader2, Lock, Presentation, Shuffle, X } from 'lucide-react';
 import type { Section, Topic } from '../../data/curriculum';
 import { sectionsFor } from '../../data/curriculum';
 import { usePlan } from '../../lib/plan';
 import { useSession } from '../../lib/supabase';
 import {
-  accentFor, buildSlides, downloadPptx, fileName, Images, Img, layoutSlide, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
+  accentFor, buildSlides, downloadPptx, fileName, Images, Img, iconsUsed, layoutSlide, NO_IMAGES, Photo, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
 } from '../../lib/presentation';
+import type { PhotoCandidate } from '../../lib/illustrations';
 
 type Lang = 'ru' | 'en';
 
@@ -72,7 +73,7 @@ export const SlideView: React.FC<{ slide: SlideWithNotes; theme: Theme; accent: 
         const box: React.CSSProperties = { position: 'absolute', left: p.x * k, top: p.y * k, width: p.w * k, height: p.h * k };
         if (p.t === 'rect') return <div key={i} style={{ ...box, background: hex(p.fill), opacity: p.alpha ?? 1, borderRadius: p.r ? p.r * k : 0 }} />;
         if (p.t === 'ellipse') return <div key={i} style={{ ...box, background: hex(p.fill), opacity: p.alpha ?? 1, borderRadius: '50%' }} />;
-        if (p.t === 'img') return <img key={i} src={p.data} alt="" style={{ ...box, objectFit: p.cover ? 'cover' : 'fill' }} />;
+        if (p.t === 'img') return <img key={i} src={p.data} alt="" style={{ ...box, objectFit: p.cover ? 'cover' : 'fill', opacity: p.alpha ?? 1 }} />;
         // runs split into paragraphs at each break
         const paras: Run[][] = [[]];
         p.runs.forEach((r) => {
@@ -138,7 +139,12 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   const [parts, setParts] = useState<Set<Part>>(() => new Set<Part>(['title', 'intro', 'points', 'formula', 'model', 'summary', 'end']));
   const [notes, setNotes] = useState(false);
   const [whole, setWhole] = useState(false);
-  const [images, setImages] = useState<Images>({ formula: {}, model: {} });
+  const [images, setImages] = useState<Images>(NO_IMAGES);
+  const [usePhotos, setUsePhotos] = useState(true);
+  const [cands, setCands] = useState<PhotoCandidate[] | null>(null);
+  const [photoAt, setPhotoAt] = useState(0);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [capturing, setCapturing] = useState(true);
   const [current, setCurrent] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -162,6 +168,32 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     };
   }, [formulaEl, modelEl, topic]);
 
+  // Wikipedia pictures for the topic: look them up once, then load two at a time
+  useEffect(() => {
+    let alive = true;
+    import('../../lib/illustrations')
+      .then((m) => m.findPhotos([topic.title[lang], `${topic.title[lang]} ${section?.title[lang] ?? ''}`.trim()], lang))
+      .then((c) => alive && setCands(c))
+      .catch(() => alive && setCands([]));
+    return () => {
+      alive = false;
+    };
+  }, [topic, lang, section]);
+  useEffect(() => {
+    if (!cands) return;
+    let alive = true;
+    const pick = cands.length <= 2 ? cands : [cands[photoAt % cands.length], cands[(photoAt + 1) % cands.length]];
+    setPhotoBusy(true);
+    import('../../lib/illustrations')
+      .then((m) => m.loadPhotos(pick, lang))
+      .then((ph) => alive && setPhotos(ph))
+      .catch(() => alive && setPhotos([]))
+      .finally(() => alive && setPhotoBusy(false));
+    return () => {
+      alive = false;
+    };
+  }, [cands, photoAt, lang]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -182,6 +214,25 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   );
   useEffect(() => setCurrent((c) => Math.min(c, Math.max(0, slides.length - 1))), [slides.length]);
 
+  // icons in the subject colour for every slide that has one
+  const [icons, setIcons] = useState<Images['icons']>({});
+  const iconKey = iconsUsed(slides).join();
+  useEffect(() => {
+    let alive = true;
+    const names = iconKey ? (iconKey.split(',') as ReturnType<typeof iconsUsed>) : [];
+    import('../../lib/illustrations').then(async (m) => {
+      const out: Images['icons'] = {};
+      for (const n of names) out[n] = await m.iconImage(n, accent);
+      if (alive) setIcons(out);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [iconKey, accent]);
+  // the file waits until every picture is ready
+  const waiting = capturing || (usePhotos && !useSection && (cands === null || photoBusy));
+  const all: Images = useMemo(() => ({ ...images, photos: usePhotos && !useSection ? photos : [], icons }), [images, usePhotos, useSection, photos, icons]);
+
   const toggle = (p: Part) => setParts((s) => {
     const n = new Set(s);
     if (n.has(p)) n.delete(p);
@@ -194,10 +245,10 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   };
   const download = async () => {
     if (!plan.pro) return upgrade();
-    if (capturing || !slides.length) return;
+    if (waiting || !slides.length) return;
     setBusy(true);
     try {
-      await downloadPptx(slides, theme, accent, images, fileName(deck), deck, user?.email ?? undefined);
+      await downloadPptx(slides, theme, accent, all, fileName(deck), deck, user?.email ?? undefined);
       setDone(true);
       setTimeout(() => setDone(false), 2500);
     } finally {
@@ -252,7 +303,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                   const t = themeFor(id, topic.subject);
                   return (
                     <button key={id} onClick={() => setThemeId(id)} className={`rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${themeId === id ? 'border-accent scale-[1.03] shadow-md' : 'border-transparent hover:border-line-strong'}`}>
-                      <SlideView slide={{ k: 'title', label: '', title: topic.title[lang], subtitle: '', grade: topic.grade, topicId: topic.id }} theme={t} accent={accent} images={{ formula: {}, model: {} }} width={84} index={0} total={1} deck="" />
+                      <SlideView slide={{ k: 'title', label: '', title: topic.title[lang], subtitle: '', grade: topic.grade, topicId: topic.id }} theme={t} accent={accent} images={NO_IMAGES} width={84} index={0} total={1} deck="" />
                       <span className="block text-[11px] py-1 text-ink-2 bg-surface">{t.name[lang]}</span>
                     </button>
                   );
@@ -271,6 +322,26 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
               <Row on={parts.has('summary')} onClick={() => toggle('summary')} label={L('Главное', 'Key points')} />
               <Row on={parts.has('end')} onClick={() => toggle('end')} label={L('«Спасибо за внимание»', '“Thank you” slide')} />
             </div>
+            {!useSection && (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-1">{L('Иллюстрации', 'Pictures')}</p>
+                <Row
+                  on={usePhotos}
+                  onClick={() => setUsePhotos(!usePhotos)}
+                  label={L('Фото и схемы из Википедии', 'Photos and diagrams from Wikipedia')}
+                  hint={cands === null ? L('ищем подходящие…', 'searching…') : cands.length ? L('на титульном слайде и во введении, с автором и лицензией', 'on the title and intro, with author and licence') : L('для этой темы ничего не нашлось', 'nothing found for this topic')}
+                />
+                {usePhotos && cands && cands.length > 2 && (
+                  <button onClick={() => setPhotoAt((n) => n + 2)} disabled={photoBusy} className="ml-7 mt-1 h-8 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-xs text-ink inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60">
+                    {photoBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Shuffle className="w-3.5 h-3.5" />}
+                    {L('Другие картинки', 'Other pictures')}
+                  </button>
+                )}
+                <p className="ml-7 mt-2 text-xs text-ink-3 flex items-center gap-1">
+                  <ImageIcon className="w-3.5 h-3.5" /> {L('Иконки по смыслу — на каждом шаге', 'Topic icons on every step')}
+                </p>
+              </div>
+            )}
             <div className="rounded-xl border border-line bg-surface p-3">
               <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-1">
                 <GraduationCap className="w-4 h-4" /> {L('Для учителя', 'For teachers')}
@@ -295,7 +366,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
               <div className="flex-1 min-h-[300px] flex items-center justify-center text-sm text-ink-2">{L('Выбери хотя бы один слайд.', 'Pick at least one slide.')}</div>
             ) : (
               <>
-                <PreviewMain slides={slides} theme={theme} accent={accent} images={images} current={current} deck={deck} />
+                <PreviewMain slides={slides} theme={theme} accent={accent} images={all} current={current} deck={deck} />
                 <div className="flex items-center justify-between text-xs text-ink-2">
                   <span>
                     {L('Слайд', 'Slide')} {current + 1} {L('из', 'of')} {slides.length}
@@ -305,7 +376,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                 <div className="shrink-0 flex gap-2 overflow-x-auto pb-2">
                   {slides.map((s, i) => (
                     <button key={i} onClick={() => setCurrent(i)} className={`shrink-0 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${i === current ? 'border-accent' : 'border-transparent opacity-80 hover:opacity-100'}`}>
-                      <SlideView slide={s} theme={theme} accent={accent} images={images} width={128} index={i} total={slides.length} deck={deck} />
+                      <SlideView slide={s} theme={theme} accent={accent} images={all} width={128} index={i} total={slides.length} deck={deck} />
                     </button>
                   ))}
                 </div>
@@ -318,12 +389,12 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
           <p className="text-xs text-ink-3 flex-1 min-w-[200px]">{L('Файл .pptx открывается в PowerPoint, Google Slides и Keynote — его можно редактировать.', 'The .pptx opens in PowerPoint, Google Slides and Keynote, and stays editable.')}</p>
           <button
             onClick={download}
-            disabled={busy || (plan.pro && capturing) || !slides.length}
+            disabled={busy || (plan.pro && waiting) || !slides.length}
             className="h-11 px-5 rounded-lg text-sm font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-60 transition-transform active:scale-[0.98]"
             style={{ background: plan.pro ? '#2F5BFF' : '#16171A', color: '#fff' }}
           >
-            {busy || (plan.pro && capturing) ? <Loader2 className="w-4 h-4 animate-spin" /> : done ? <Check className="w-4 h-4" /> : plan.pro ? <Download className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
-            {done ? L('Скачано', 'Downloaded') : plan.pro && capturing ? L('Готовим картинки…', 'Preparing pictures…') : plan.pro ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}
+            {busy || (plan.pro && waiting) ? <Loader2 className="w-4 h-4 animate-spin" /> : done ? <Check className="w-4 h-4" /> : plan.pro ? <Download className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
+            {done ? L('Скачано', 'Downloaded') : plan.pro && waiting ? L('Готовим картинки…', 'Preparing pictures…') : plan.pro ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}
           </button>
         </footer>
       </div>
