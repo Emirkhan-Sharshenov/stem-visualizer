@@ -67,6 +67,19 @@ const AtomLab = lazy(() => import('./components/atom/AtomLab'));
 const KineticsLab = lazy(() => import('./components/kinetics/KineticsLab'));
 const SelectionLab = lazy(() => import('./components/selection/SelectionLab'));
 const PhotoLab = lazy(() => import('./components/photosynthesis/PhotoLab'));
+const ProjectileLab = lazy(() => import('./components/projectile/ProjectileLab'));
+const PlotterLab = lazy(() => import('./components/plotter/PlotterLab'));
+const EnzymeLab = lazy(() => import('./components/enzymes/EnzymeLab'));
+const GalvanicLab = lazy(() => import('./components/galvanic/GalvanicLab'));
+const GamesPage = lazy(() => import('./components/games/GamesPage'));
+
+/** labs that share the same page frame: back link, subject line and title */
+const SIMPLE_LABS: Partial<Record<VisualMode, { comp: React.LazyExoticComponent<React.FC<{ lang: 'ru' | 'en' }>>; kicker: { ru: string; en: string }; title: { ru: string; en: string } }>> = {
+  projectile: { comp: ProjectileLab, kicker: { ru: 'Физика · конструктор опытов', en: 'Physics · experiment builder' }, title: { ru: 'Бросок под углом', en: 'Projectile motion' } },
+  plotter: { comp: PlotterLab, kicker: { ru: 'Математика · лаборатория', en: 'Maths · lab' }, title: { ru: 'Графопостроитель', en: 'Graph plotter' } },
+  enzymes: { comp: EnzymeLab, kicker: { ru: 'Биология · конструктор опытов', en: 'Biology · experiment builder' }, title: { ru: 'Ферменты', en: 'Enzymes' } },
+  galvanic: { comp: GalvanicLab, kicker: { ru: 'Химия · конструктор опытов', en: 'Chemistry · experiment builder' }, title: { ru: 'Гальванический элемент', en: 'Galvanic cell' } },
+};
 const PageFallback = () => <div className="h-[60vh] rounded-xl bg-muted animate-pulse" />;
 
 const SUBJECT_DOT: Record<string, string> = {
@@ -118,7 +131,7 @@ interface AppProps {
 
 export default function App({ lang, setLang }: AppProps) {
   // deep links like #/app?lab=chemlab open a section directly (handy for social posts)
-  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'rating', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher'];
+  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'rating', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher', 'projectile', 'plotter', 'enzymes', 'galvanic', 'games'];
   const [currentMode, setCurrentMode] = useState<VisualMode>(() => {
     const lab = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('lab') as VisualMode | null;
     return lab && LINKABLE.includes(lab) ? lab : 'textbook';
@@ -473,6 +486,24 @@ export default function App({ lang, setLang }: AppProps) {
                 <PhotoLab lang={lang} />
               </div>
             )}
+            {(() => {
+              const lab = SIMPLE_LABS[currentMode];
+              if (!lab) return null;
+              const Comp = lab.comp;
+              return (
+                <div className="flex flex-col gap-5">
+                  <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                    ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
+                  </button>
+                  <div>
+                    <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lab.kicker[lang]}</span>
+                    <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lab.title[lang]}</h1>
+                  </div>
+                  <Comp lang={lang} />
+                </div>
+              );
+            })()}
+            {currentMode === 'games' && <GamesPage lang={lang} />}
             {currentMode === 'formulas' && <FormulasPage lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'rating' && <RatingPage lang={lang} />}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}

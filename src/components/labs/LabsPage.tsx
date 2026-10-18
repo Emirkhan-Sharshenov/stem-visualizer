@@ -480,6 +480,77 @@ const BUILDERS: { mode: VisualMode; color: string; subject: { ru: string; en: st
       </svg>
     ),
   },
+  {
+    mode: 'projectile',
+    color: '#E5484D',
+    subject: { ru: 'Физика', en: 'Physics' },
+    title: { ru: 'Бросок под углом', en: 'Projectile motion' },
+    text: { ru: 'Скорость, угол и высота броска на Земле, Луне, Марсе и Юпитере. С воздухом и без — и игра «попади в цель».', en: 'Speed, angle and height on Earth, the Moon, Mars and Jupiter. With or without air, plus a hit-the-target game.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <line x1="10" y1="95" x2="210" y2="95" stroke="#7BBF6A" strokeWidth="3" />
+        <path d="M 20 95 Q 80 -10 140 95" fill="none" stroke="#5B8CFF" strokeWidth="2.5" />
+        <path d="M 20 95 Q 95 25 175 95" fill="none" stroke="#E5484D" strokeWidth="2.5" strokeDasharray="5 4" />
+        <circle cx="80" cy="43" r="6" fill="#5B8CFF" />
+        <rect x="168" y="90" width="18" height="6" fill="#E5484D" />
+      </svg>
+    ),
+  },
+  {
+    mode: 'plotter',
+    color: '#8E4EC6',
+    subject: { ru: 'Математика', en: 'Maths' },
+    title: { ru: 'Графопостроитель', en: 'Graph plotter' },
+    text: { ru: 'Пиши любую формулу как в тетради: 2x², sin x, √x. Нули, экстремумы, пересечения и производная.', en: 'Type any formula as in a notebook: 2x², sin x, √x. Zeros, extrema, intersections and the derivative.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <line x1="10" y1="60" x2="210" y2="60" stroke="#3A3D45" />
+        <line x1="110" y1="5" x2="110" y2="105" stroke="#3A3D45" />
+        <path d="M 30 10 Q 110 160 190 10" fill="none" stroke="#A35BE0" strokeWidth="3" />
+        <path d="M 10 60 C 40 20, 60 20, 85 60 S 135 100, 160 60 S 200 20, 210 40" fill="none" stroke="#5B8CFF" strokeWidth="2.5" />
+        <circle cx="72" cy="60" r="4" fill="#fff" />
+        <circle cx="148" cy="60" r="4" fill="#fff" />
+        <circle cx="110" cy="85" r="4" fill="#F5A524" />
+      </svg>
+    ),
+  },
+  {
+    mode: 'enzymes',
+    color: '#F5A524',
+    subject: { ru: 'Биология', en: 'Biology' },
+    title: { ru: 'Ферменты', en: 'Enzymes' },
+    text: { ru: 'Амилаза, пепсин, каталаза, липаза: найди оптимум температуры и pH. Перегреешь — фермент погибнет.', en: 'Amylase, pepsin, catalase, lipase: find the best temperature and pH. Overheat it and the enzyme dies.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <path d="M 20 95 C 60 95, 80 20, 110 20 S 150 90, 200 95" fill="none" stroke="#F5A524" strokeWidth="3" />
+        <line x1="110" y1="12" x2="110" y2="100" stroke="#9AA0AA" strokeDasharray="4 4" />
+        <path d="M 60 70 L 70 60 A 12 12 0 1 1 70 80 Z" fill="#A35BE0" />
+        <rect x="140" y="55" width="10" height="10" fill="#F5A524" />
+        <circle cx="170" cy="45" r="5" fill="#30A46C" />
+        <circle cx="185" cy="62" r="5" fill="#30A46C" />
+      </svg>
+    ),
+  },
+  {
+    mode: 'galvanic',
+    color: '#30A46C',
+    subject: { ru: 'Химия', en: 'Chemistry' },
+    title: { ru: 'Гальванический элемент', en: 'Galvanic cell' },
+    text: { ru: 'Собери батарейку из любых двух металлов: анод, катод, ЭДС по Нернсту и движение электронов.', en: 'Build a battery from any two metals: anode, cathode, Nernst voltage and moving electrons.' },
+    art: (
+      <svg viewBox="0 0 220 110" className="h-24" aria-hidden>
+        <rect x="25" y="55" width="70" height="48" rx="6" fill="#1C2433" stroke="#3A3D45" />
+        <rect x="125" y="55" width="70" height="48" rx="6" fill="#1B2E44" stroke="#3A3D45" />
+        <rect x="52" y="30" width="14" height="60" fill="#A9B1BC" />
+        <rect x="153" y="30" width="14" height="60" fill="#C26A3A" />
+        <path d="M 59 30 L 59 12 L 160 12 L 160 30" fill="none" stroke="#EDEDED" strokeWidth="2" />
+        <circle cx="110" cy="12" r="9" fill="#111214" stroke="#EDEDED" strokeWidth="1.5" />
+        <text x="110" y="15" textAnchor="middle" fontSize="8" fill="#EDEDED">1,1</text>
+        {[80, 132, 148].map((x) => <circle key={x} cx={x} cy={12} r="3" fill="#5B8CFF" />)}
+        <path d="M 80 70 L 80 48 L 140 48 L 140 70" fill="none" stroke="#E9DFC6" strokeWidth="6" />
+      </svg>
+    ),
+  },
 ];
 
 export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void; onLaunchSimulation: (m: VisualMode) => void }> = ({ lang, onOpenTopic, onLaunchSimulation }) => {
