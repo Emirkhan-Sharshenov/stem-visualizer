@@ -6,7 +6,7 @@ import { sectionsFor } from '../../data/curriculum';
 import { usePlan } from '../../lib/plan';
 import { useSession } from '../../lib/supabase';
 import {
-  ACCENTS, accentFor, Branding, buildSlides, LESSON_PARTS, LessonPart, Slide, DecorId, DEFAULT_STYLE, DesignStyle, FONT_PAIRS, FontPairId, ScaleId, TitleLayoutId, downloadPptx, fileName, Images, Img, iconsUsed, layoutSlide, NO_IMAGES, Photo, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
+  ACCENTS, accentFor, Branding, EndLayoutId, HeaderId, IntroLayoutId, PointLayoutId, QuizLayoutId, SummaryLayoutId, TEMPLATES, buildSlides, LESSON_PARTS, LessonPart, Slide, DecorId, DEFAULT_STYLE, DesignStyle, FONT_PAIRS, FontPairId, ScaleId, TitleLayoutId, downloadPptx, fileName, Images, Img, iconsUsed, layoutSlide, NO_IMAGES, Photo, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
 } from '../../lib/presentation';
 import type { PhotoCandidate } from '../../lib/illustrations';
 
@@ -56,6 +56,7 @@ async function snap(el: HTMLElement | null, bg: string, skipFonts = false, style
 /* ---------- the slide preview: draws the same shapes that go into the file ---------- */
 
 const hex = (c: string) => `#${c}`;
+const rgba = (c: string, a: number) => `rgba(${parseInt(c.slice(0, 2), 16)}, ${parseInt(c.slice(2, 4), 16)}, ${parseInt(c.slice(4, 6), 16)}, ${a})`;
 // what the browser shows when Calibri is not installed: metrically compatible Carlito, then system sans
 const CSS_FACE: Record<string, string> = {
   Georgia: 'Georgia, "Times New Roman", serif',
@@ -75,13 +76,12 @@ export const SlideView: React.FC<{ slide: SlideWithNotes; style: DesignStyle; th
     <div style={{ position: 'relative', width, height: SLIDE_H * k, background: hex(bg), overflow: 'hidden' }}>
       {prims.map((p, i) => {
         const box: React.CSSProperties = { position: 'absolute', left: p.x * k, top: p.y * k, width: p.w * k, height: p.h * k };
-        if (p.t === 'rect') return <div key={i} style={{ ...box, background: hex(p.fill), opacity: p.alpha ?? 1, borderRadius: p.r ? p.r * k : 0 }} />;
+        // fills and outlines keep their own transparency, as in PowerPoint
+        const lineW = `${Math.max(1, (1.5 / 72) * k)}px`;
+        if (p.t === 'rect')
+          return <div key={i} style={{ ...box, background: rgba(p.fill, p.alpha ?? 1), border: p.line ? `${lineW} solid ${hex(p.line)}` : undefined, borderRadius: p.r ? p.r * k : 0 }} />;
         if (p.t === 'ellipse')
-          return p.alpha === 0 ? (
-            <div key={i} style={{ ...box, borderRadius: '50%', border: `${Math.max(1, (1.5 / 72) * k)}px solid ${hex(p.line ?? p.fill)}`, opacity: p.lineAlpha ?? 1 }} />
-          ) : (
-            <div key={i} style={{ ...box, background: hex(p.fill), opacity: p.alpha ?? 1, borderRadius: '50%' }} />
-          );
+          return <div key={i} style={{ ...box, background: rgba(p.fill, p.alpha ?? 1), border: p.line ? `${lineW} solid ${rgba(p.line, p.lineAlpha ?? 1)}` : undefined, borderRadius: '50%' }} />;
         if (p.t === 'img') return <img key={i} src={p.data} alt="" style={{ ...box, objectFit: p.cover ? 'cover' : 'fill', opacity: p.alpha ?? 1 }} />;
         // runs split into paragraphs at each break
         const paras: Run[][] = [[]];
@@ -206,7 +206,8 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     });
   const surprise = () => {
     const any = <T,>(a: readonly T[]) => a[Math.floor(Math.random() * a.length)];
-    setStyle({ theme: any(THEMES), fonts: any(Object.keys(FONT_PAIRS) as FontPairId[]), accent: Math.random() < 0.5 ? null : any(ACCENTS), decor: any(['none', 'dots', 'grid', 'blobs', 'rings'] as DecorId[]), title: any(['split', 'full', 'center'] as TitleLayoutId[]) });
+    const tp = any(TEMPLATES);
+    setStyle({ ...tp.style, template: undefined, theme: any(THEMES), fonts: any(Object.keys(FONT_PAIRS) as FontPairId[]), accent: Math.random() < 0.5 ? null : any(ACCENTS), decor: any(['none', 'dots', 'grid', 'blobs', 'rings'] as DecorId[]), title: any(['split', 'full', 'center', 'band', 'frame', 'minimal', 'magazine', 'blocks', 'split-left'] as TitleLayoutId[]) });
   };
   const [parts, setParts] = useState<Set<Part>>(() => new Set<Part>(['title', 'intro', 'points', 'formula', 'model', 'summary', 'end']));
   const [notes, setNotes] = useState(false);
@@ -344,13 +345,13 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     const names = iconKey ? (iconKey.split(',') as ReturnType<typeof iconsUsed>) : [];
     import('../../lib/illustrations').then(async (m) => {
       const out: Images['icons'] = {};
-      for (const n of names) out[n] = await m.iconImage(n, accent);
+      for (const n of names) out[n] = await m.iconImage(n, theme.accent);
       if (alive) setIcons(out);
     });
     return () => {
       alive = false;
     };
-  }, [iconKey, accent]);
+  }, [iconKey, theme.accent]);
   // the file waits until every picture is ready
   const waiting = capturing || (usePhotos && !useSection && (cands === null || photoBusy));
   const all: Images = useMemo(
@@ -641,8 +642,98 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
   const titleSlide = { k: 'title' as const, label: L('Предмет · класс', 'Subject · grade'), title: topic.title[lang], subtitle: '', grade: topic.grade, topicId: topic.id };
   const textSlide = { k: 'text' as const, label: '', title: L('О чём тема', 'About'), text: topic.intro[lang] };
   const chip = (on: boolean) => `rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${on ? 'border-accent shadow-md scale-[1.03]' : 'border-transparent hover:border-line-strong'}`;
+  const pointSlide = { k: 'point' as const, label: L('Предмет · класс', 'Subject · grade'), n: 1, total: 3, of: L('Шаг 1 из 3', 'Step 1 of 3'), title: topic.points[0]?.title[lang] ?? topic.title[lang], text: topic.points[0]?.text[lang] ?? topic.intro[lang], icon: 'Atom' as const };
+  const [showAll, setShowAll] = useState(false);
+  const [fine, setFine] = useState(false);
+  const list = showAll ? TEMPLATES : TEMPLATES.slice(0, 8);
+  const select = <V extends string>(label: string, value: V, set: (v: V) => void, opts: [V, string][]) => (
+    <label className="flex items-center justify-between gap-2 text-xs text-ink-2">
+      <span>{label}</span>
+      <select value={value} onChange={(e) => set(e.target.value as V)} className="h-8 px-2 rounded-lg border border-line bg-surface text-ink text-xs cursor-pointer max-w-[60%]">
+        {opts.map(([v, n]) => (
+          <option key={v} value={v}>
+            {n}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
   return (
     <div className="flex flex-col gap-5">
+      <Group title={L(`Шаблоны · ${TEMPLATES.length}`, `Templates · ${TEMPLATES.length}`)}>
+        <div className="grid grid-cols-2 gap-2">
+          {list.map((tp) => {
+            const st = { ...style, ...tp.style, template: tp.id };
+            const th = themeFor(st.theme, topic.subject, st.accent);
+            return (
+              <button key={tp.id} onClick={() => setStyle({ ...tp.style, template: tp.id })} className={`text-left ${chip(style.template === tp.id)}`}>
+                <SlideView slide={titleSlide} style={st} theme={th} images={NO_IMAGES} width={124} index={0} total={9} deck="" />
+                <SlideView slide={pointSlide} style={st} theme={th} images={NO_IMAGES} width={124} index={2} total={9} deck="" />
+                <span className="block text-[11px] py-1 px-1.5 text-ink bg-surface font-medium truncate">{tp.name[lang]}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={() => setShowAll(!showAll)} className="mt-2 w-full h-8 rounded-lg border border-line hover:bg-muted text-xs text-ink-2 cursor-pointer">
+          {showAll ? L('Свернуть', 'Show fewer') : L(`Показать все ${TEMPLATES.length} шаблонов`, `Show all ${TEMPLATES.length} templates`)}
+        </button>
+      </Group>
+      <div>
+        <button onClick={() => setFine(!fine)} className="w-full flex items-center justify-between text-xs font-medium uppercase tracking-[0.05em] text-ink-2 cursor-pointer">
+          {L('Макет каждого слайда', 'Layout of each slide')} <span className="text-ink-3">{fine ? '−' : '+'}</span>
+        </button>
+        {fine && (
+          <div className="mt-2 flex flex-col gap-1.5">
+            {select(L('Титульный', 'Title'), style.title, (v) => setStyle({ title: v }), [
+              ['split', L('Две части, фото справа', 'Split, photo right')],
+              ['split-left', L('Две части, фото слева', 'Split, photo left')],
+              ['full', L('Фото на весь слайд', 'Full-bleed photo')],
+              ['center', L('По центру с кольцами', 'Centred with rings')],
+              ['band', L('Цветная полоса', 'Colour band')],
+              ['frame', L('В рамке', 'Framed')],
+              ['minimal', L('Минималистичный', 'Minimal')],
+              ['magazine', L('Журнальный', 'Magazine')],
+              ['blocks', L('Мозаика', 'Mosaic')],
+            ])}
+            {select(L('Заголовки', 'Headings'), style.header ?? 'kicker', (v: HeaderId) => setStyle({ header: v }), [
+              ['kicker', L('Подпись и заголовок', 'Label and title')],
+              ['band', L('Цветная шапка', 'Colour header')],
+              ['underline', L('С линией', 'Underlined')],
+              ['side', L('Полоса сбоку', 'Side stripe')],
+            ])}
+            {select(L('Подтемы', 'Sub-topics'), style.point ?? 'panel', (v: PointLayoutId) => setStyle({ point: v }), [
+              ['panel', L('Панель слева', 'Panel left')],
+              ['panel-right', L('Панель справа', 'Panel right')],
+              ['band', L('Цветная шапка', 'Colour header')],
+              ['card', L('Карточка', 'Card')],
+              ['big-number', L('Большая цифра', 'Big number')],
+              ['steps', L('Шаги сверху', 'Steps on top')],
+            ])}
+            {select(L('Введение', 'Intro'), style.intro ?? 'quote', (v: IntroLayoutId) => setStyle({ intro: v }), [
+              ['quote', L('Цитата', 'Quote')],
+              ['card', L('Карточка', 'Card')],
+              ['centered', L('По центру', 'Centred')],
+              ['band', L('Цветная полоса', 'Colour band')],
+            ])}
+            {select(L('Главное', 'Key points'), style.summary ?? 'cards', (v: SummaryLayoutId) => setStyle({ summary: v }), [
+              ['cards', L('Карточки', 'Cards')],
+              ['list', L('Нумерованный список', 'Numbered list')],
+              ['timeline', L('Лента времени', 'Timeline')],
+              ['columns', L('Колонки с иконками', 'Icon columns')],
+            ])}
+            {select(L('Тест', 'Quiz'), style.quiz ?? 'grid', (v: QuizLayoutId) => setStyle({ quiz: v }), [
+              ['grid', L('Сетка 2 × 2', '2 × 2 grid')],
+              ['list', L('Список', 'List')],
+              ['tiles', L('Плитки в ряд', 'Tiles in a row')],
+            ])}
+            {select(L('Финал', 'Closing'), style.end ?? 'center', (v: EndLayoutId) => setStyle({ end: v }), [
+              ['center', L('По центру', 'Centred')],
+              ['split', L('С вопросом', 'With a question mark')],
+              ['band', L('Цветная полоса', 'Colour band')],
+            ])}
+          </div>
+        )}
+      </div>
       <button onClick={onSurprise} className="h-9 rounded-lg border border-dashed border-line-strong hover:border-accent hover:text-accent text-sm text-ink-2 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
         <Dices className="w-4 h-4" /> {L('Удиви меня — случайный стиль', 'Surprise me')}
       </button>
@@ -689,16 +780,6 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
               </button>
             );
           })}
-        </div>
-      </Group>
-      <Group title={L('Титульный слайд', 'Title slide')}>
-        <div className="grid grid-cols-3 gap-1.5">
-          {([['split', L('Две части', 'Split')], ['full', L('На весь слайд', 'Full bleed')], ['center', L('По центру', 'Centred')]] as [TitleLayoutId, string][]).map(([id, name]) => (
-            <button key={id} onClick={() => setStyle({ title: id })} className={chip(style.title === id)}>
-              <SlideView slide={titleSlide} style={{ ...style, title: id }} theme={theme} images={NO_IMAGES} width={80} index={0} total={1} deck="" />
-              <span className="block text-[10px] py-0.5 text-ink-2 bg-surface">{name}</span>
-            </button>
-          ))}
         </div>
       </Group>
       <Group title={L('Фон слайдов', 'Background')}>

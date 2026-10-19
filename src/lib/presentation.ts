@@ -16,7 +16,13 @@ type T2 = { ru: string; en: string };
 export type ThemeId = 'light' | 'bright' | 'dark' | 'paper' | 'chalk' | 'neon' | 'mono' | 'pastel';
 export type FontPairId = 'classic' | 'modern' | 'strict' | 'book' | 'friendly';
 export type DecorId = 'none' | 'dots' | 'grid' | 'blobs' | 'rings';
-export type TitleLayoutId = 'split' | 'full' | 'center';
+export type TitleLayoutId = 'split' | 'full' | 'center' | 'band' | 'frame' | 'minimal' | 'magazine' | 'blocks' | 'split-left';
+export type HeaderId = 'kicker' | 'band' | 'underline' | 'side';
+export type PointLayoutId = 'panel' | 'panel-right' | 'band' | 'card' | 'big-number' | 'steps';
+export type IntroLayoutId = 'quote' | 'card' | 'centered' | 'band';
+export type SummaryLayoutId = 'cards' | 'list' | 'timeline' | 'columns';
+export type QuizLayoutId = 'grid' | 'list' | 'tiles';
+export type EndLayoutId = 'center' | 'split' | 'band';
 export type ScaleId = 'compact' | 'normal' | 'large';
 
 /** everything the person can choose about the look of a deck */
@@ -34,7 +40,42 @@ export interface DesignStyle {
   footer?: 'full' | 'number' | 'none';
   /** subject icons on the slides */
   icons?: boolean;
+  /** how each kind of slide is composed */
+  header?: HeaderId;
+  point?: PointLayoutId;
+  intro?: IntroLayoutId;
+  summary?: SummaryLayoutId;
+  quiz?: QuizLayoutId;
+  end?: EndLayoutId;
+  /** the template these settings came from */
+  template?: string;
 }
+
+/** ready-made templates: each sets its own composition for every kind of slide, plus colours and fonts */
+export const TEMPLATES: { id: string; name: T2; style: Partial<DesignStyle> }[] = [
+  { id: 'classic', name: { ru: 'Классика', en: 'Classic' }, style: { theme: 'light', fonts: 'classic', accent: null, decor: 'none', title: 'split', header: 'kicker', point: 'panel', intro: 'quote', summary: 'cards', quiz: 'grid', end: 'center', corners: 'round' } },
+  { id: 'magazine', name: { ru: 'Журнал', en: 'Magazine' }, style: { theme: 'light', fonts: 'book', accent: null, decor: 'none', title: 'magazine', header: 'underline', point: 'big-number', intro: 'centered', summary: 'list', quiz: 'list', end: 'split', corners: 'sharp' } },
+  { id: 'corporate', name: { ru: 'Деловой', en: 'Business' }, style: { theme: 'light', fonts: 'strict', accent: '334155', decor: 'none', title: 'band', header: 'band', point: 'band', intro: 'card', summary: 'columns', quiz: 'tiles', end: 'band', corners: 'sharp' } },
+  { id: 'minimal', name: { ru: 'Минимализм', en: 'Minimal' }, style: { theme: 'mono', fonts: 'modern', accent: null, decor: 'none', title: 'minimal', header: 'underline', point: 'big-number', intro: 'centered', summary: 'list', quiz: 'list', end: 'center', corners: 'sharp' } },
+  { id: 'science', name: { ru: 'Научный', en: 'Science' }, style: { theme: 'light', fonts: 'book', accent: null, decor: 'grid', title: 'frame', header: 'side', point: 'panel-right', intro: 'card', summary: 'timeline', quiz: 'list', end: 'center', corners: 'sharp' } },
+  { id: 'steps', name: { ru: 'Шаг за шагом', en: 'Step by step' }, style: { theme: 'light', fonts: 'modern', accent: null, decor: 'none', title: 'split-left', header: 'kicker', point: 'steps', intro: 'quote', summary: 'timeline', quiz: 'grid', end: 'split', corners: 'round' } },
+  { id: 'cards', name: { ru: 'Карточки', en: 'Cards' }, style: { theme: 'pastel', fonts: 'friendly', accent: null, decor: 'blobs', title: 'center', header: 'kicker', point: 'card', intro: 'card', summary: 'cards', quiz: 'tiles', end: 'center', corners: 'round' } },
+  { id: 'kids', name: { ru: 'Для младших', en: 'For kids' }, style: { theme: 'bright', fonts: 'friendly', accent: null, decor: 'blobs', title: 'blocks', header: 'band', point: 'card', intro: 'band', summary: 'columns', quiz: 'tiles', end: 'band', corners: 'round' } },
+  { id: 'chalk', name: { ru: 'У доски', en: 'Chalkboard' }, style: { theme: 'chalk', fonts: 'friendly', accent: null, decor: 'none', title: 'center', header: 'underline', point: 'big-number', intro: 'centered', summary: 'list', quiz: 'list', end: 'center', corners: 'round' } },
+  { id: 'neon', name: { ru: 'Неон', en: 'Neon' }, style: { theme: 'neon', fonts: 'modern', accent: null, decor: 'rings', title: 'full', header: 'side', point: 'panel-right', intro: 'band', summary: 'timeline', quiz: 'tiles', end: 'split', corners: 'round' } },
+  { id: 'paper', name: { ru: 'Тетрадь', en: 'Notebook' }, style: { theme: 'paper', fonts: 'book', accent: null, decor: 'grid', title: 'frame', header: 'underline', point: 'big-number', intro: 'quote', summary: 'list', quiz: 'list', end: 'center', corners: 'sharp' } },
+  { id: 'cinema', name: { ru: 'Кинозал', en: 'Cinema' }, style: { theme: 'dark', fonts: 'classic', accent: null, decor: 'none', title: 'full', header: 'kicker', point: 'big-number', intro: 'centered', summary: 'columns', quiz: 'grid', end: 'band', corners: 'round' } },
+  { id: 'poster', name: { ru: 'Плакат', en: 'Poster' }, style: { theme: 'bright', fonts: 'strict', accent: null, decor: 'none', title: 'band', header: 'band', point: 'band', intro: 'band', summary: 'cards', quiz: 'tiles', end: 'band', corners: 'sharp' } },
+  { id: 'gallery', name: { ru: 'Галерея', en: 'Gallery' }, style: { theme: 'light', fonts: 'classic', accent: null, decor: 'dots', title: 'magazine', header: 'kicker', point: 'panel', intro: 'quote', summary: 'columns', quiz: 'grid', end: 'split', corners: 'round' } },
+  { id: 'mosaic', name: { ru: 'Мозаика', en: 'Mosaic' }, style: { theme: 'light', fonts: 'modern', accent: null, decor: 'dots', title: 'blocks', header: 'side', point: 'card', intro: 'card', summary: 'cards', quiz: 'tiles', end: 'split', corners: 'round' } },
+  { id: 'lesson', name: { ru: 'Открытый урок', en: 'Open lesson' }, style: { theme: 'light', fonts: 'friendly', accent: null, decor: 'none', title: 'split', header: 'band', point: 'steps', intro: 'card', summary: 'timeline', quiz: 'list', end: 'center', corners: 'round' } },
+  { id: 'academic', name: { ru: 'Академический', en: 'Academic' }, style: { theme: 'paper', fonts: 'book', accent: '7C3AED', decor: 'none', title: 'minimal', header: 'underline', point: 'panel-right', intro: 'quote', summary: 'list', quiz: 'list', end: 'center', corners: 'sharp' } },
+  { id: 'ocean', name: { ru: 'Океан', en: 'Ocean' }, style: { theme: 'light', fonts: 'modern', accent: '0EA5E9', decor: 'rings', title: 'split-left', header: 'side', point: 'band', intro: 'card', summary: 'columns', quiz: 'tiles', end: 'band', corners: 'round' } },
+  { id: 'sunset', name: { ru: 'Закат', en: 'Sunset' }, style: { theme: 'pastel', fonts: 'classic', accent: 'F97316', decor: 'blobs', title: 'center', header: 'underline', point: 'card', intro: 'centered', summary: 'timeline', quiz: 'grid', end: 'split', corners: 'round' } },
+  { id: 'forest', name: { ru: 'Природа', en: 'Nature' }, style: { theme: 'paper', fonts: 'friendly', accent: '22A06B', decor: 'none', title: 'frame', header: 'kicker', point: 'panel', intro: 'band', summary: 'columns', quiz: 'list', end: 'band', corners: 'round' } },
+  { id: 'night', name: { ru: 'Ночь', en: 'Night' }, style: { theme: 'neon', fonts: 'strict', accent: null, decor: 'none', title: 'minimal', header: 'band', point: 'steps', intro: 'centered', summary: 'cards', quiz: 'tiles', end: 'center', corners: 'sharp' } },
+  { id: 'berry', name: { ru: 'Ягодный', en: 'Berry' }, style: { theme: 'bright', fonts: 'classic', accent: 'E11D48', decor: 'rings', title: 'split-left', header: 'underline', point: 'panel-right', intro: 'quote', summary: 'timeline', quiz: 'grid', end: 'split', corners: 'round' } },
+];
 
 /** the teacher's own details for the title slide and footer */
 export interface Branding {
@@ -460,8 +501,9 @@ const M = 0.75; // side margin
 /** Wikipedia pictures take the title and the intro (the model, with its controls, has a slide of its own) */
 function picks(c: { images: Images; style: DesignStyle }) {
   const ph = c.images.photos;
-  // the centred title has no picture, so the intro takes the first one
-  return c.style.title === 'center' ? { title: null, intro: ph[0] ?? null } : { title: ph[0] ?? null, intro: ph[1] ?? null };
+  // titles without a picture slot hand the first one to the intro
+  const noPhoto = ['center', 'frame', 'minimal'].includes(c.style.title);
+  return noPhoto ? { title: null, intro: ph[0] ?? null } : { title: ph[0] ?? null, intro: ph[1] ?? null };
 }
 const one = (text: string): Run[] => [{ text }];
 /** labels drawn by the layout follow the deck language, read from the first Cyrillic letter in its name */
@@ -487,6 +529,32 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
     text(x, y, 9, 0.3, label.toUpperCase(), 11, color, 'body', { bold: true, spacing: 2 });
     rect(x, y + 0.42, 0.55, 0.05, color);
   };
+  /** the label and heading at the top of a content slide, in the template's style; an empty title draws only the label */
+  const HD = S.header ?? 'kicker';
+  const head = (label: string, title: string, size = 36) => {
+    if (HD === 'band') {
+      rect(0, 0, SLIDE_W, title ? 1.9 : 1.0, A);
+      text(M, title ? 0.42 : 0.35, 9, 0.3, label.toUpperCase(), 11, ON, 'body', { bold: true, spacing: 2, alpha: 0.85 });
+      if (title) text(M, 0.78, SLIDE_W - 2 * M, 0.95, title, size - 2, ON, 'head', { valign: 'middle' });
+      return;
+    }
+    if (HD === 'underline') {
+      text(M, 0.45, 9, 0.3, label.toUpperCase(), 11, T.muted, 'body', { bold: true, spacing: 2 });
+      if (title) {
+        text(M, 0.85, SLIDE_W - 2 * M, 0.95, title, size, T.ink, 'head', { valign: 'middle' });
+        rect(M, 1.9, SLIDE_W - 2 * M, 0.035, A);
+      } else rect(M, 0.9, SLIDE_W - 2 * M, 0.03, A);
+      return;
+    }
+    if (HD === 'side') {
+      rect(0, 0, 0.3, SLIDE_H, A);
+      kicker(label, M + 0.1);
+      if (title) text(M + 0.1, 1.2, SLIDE_W - 2 * M - 0.1, 0.9, title, size, T.ink, 'head');
+      return;
+    }
+    kicker(label);
+    if (title) text(M, 1.2, SLIDE_W - 2 * M, 0.9, title, size, T.ink, 'head');
+  };
   const B = c.brand ?? {};
   const pageNo = () => {
     if (S.footer === 'none') return;
@@ -505,7 +573,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
 
   // background pattern on the content slides, drawn first so everything sits on top
   if (sl.k !== 'title' && sl.k !== 'end' && sl.k !== 'divider') {
-    if (S.decor === 'dots') for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) ellipse(SLIDE_W - 3.0 + i * 0.32, 0.4 + j * 0.32, 0.07, 0.07, A, 0.4);
+    if (S.decor === 'dots') for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) ellipse(SLIDE_W - 3.0 + i * 0.32, (S.header === 'band' ? SLIDE_H - 1.75 : 0.4) + j * 0.32, 0.07, 0.07, A, 0.4);
     if (S.decor === 'grid') {
       for (let x = 0.5; x < SLIDE_W; x += 0.5) rect(x, 0, 0.01, SLIDE_H, T.ink, { alpha: 0.05 });
       for (let y = 0.5; y < SLIDE_H; y += 0.5) rect(0, y, SLIDE_W, 0.01, T.ink, { alpha: 0.05 });
@@ -541,6 +609,106 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
         rect(SLIDE_W / 2 - 0.5, 4.8, 1.0, 0.06, heroA);
         if (sl.subtitle) text(2.2, 5.05, SLIDE_W - 4.4, 1.2, sl.subtitle, 17, T.heroMuted, 'body', { align: 'center', valign: 'top', lh: 1.1 });
         titleExtras(M, SLIDE_H - 0.75, SLIDE_W - 2 * M, T.heroMuted, 'center');
+        break;
+      }
+      if (S.title === 'band') {
+        const top = 2.25;
+        const bh = 2.9;
+        rect(0, top, SLIDE_W, bh, heroOnAccent ? T.heroInk : A);
+        const onBand = heroOnAccent ? T.heroBg : ON;
+        const bw = photo ? SLIDE_W - 5.0 - M : SLIDE_W - 2 * M;
+        text(M, 1.55, 9, 0.35, sl.label.toUpperCase(), 12, heroA, 'body', { bold: true, spacing: 3 });
+        text(M, top, bw, bh, sl.title, tsz + 2, onBand, 'head', { valign: 'middle', lh: 0.95 });
+        if (photo) {
+          rect(SLIDE_W - 4.6, 1.2, 4.0, 5.0, 'FFFFFF', { r: 0.12 });
+          if (photo.photo) P.push({ t: 'img', x: SLIDE_W - 4.45, y: 1.35, w: 3.7, h: 4.7, data: photo.data, cover: true });
+          else P.push({ t: 'img', ...fit(photo, SLIDE_W - 4.45, 1.35, 3.7, 4.7), data: photo.data });
+          if (photo.credit) text(SLIDE_W - 4.6, 6.3, 4.0, 0.3, photo.credit, 7, T.heroMuted, 'body');
+        }
+        if (sl.subtitle) text(M, top + bh + 0.3, bw, 1.0, sl.subtitle, 16, T.heroMuted, 'body', { valign: 'top', lh: 1.1 });
+        titleExtras(M, SLIDE_H - 0.6, bw, T.heroMuted);
+        break;
+      }
+      if (S.title === 'frame') {
+        rect(0.45, 0.45, SLIDE_W - 0.9, SLIDE_H - 0.9, T.heroBg, { alpha: 0, line: heroA });
+        for (const [x, y] of [[0.3, 0.3], [SLIDE_W - 0.6, 0.3], [0.3, SLIDE_H - 0.6], [SLIDE_W - 0.6, SLIDE_H - 0.6]] as [number, number][]) rect(x, y, 0.3, 0.3, heroA);
+        text(M + 0.5, 1.9, SLIDE_W - 2 * M - 1, 0.35, sl.label.toUpperCase(), 12, heroA, 'body', { bold: true, spacing: 4, align: 'center' });
+        text(1.4, 2.35, SLIDE_W - 2.8, 2.3, sl.title, tsz + 4, T.heroInk, 'head', { align: 'center', valign: 'middle', lh: 0.95 });
+        rect(SLIDE_W / 2 - 1.2, 4.85, 2.4, 0.03, heroA);
+        if (sl.subtitle) text(2.2, 5.05, SLIDE_W - 4.4, 1.0, sl.subtitle, 15, T.heroMuted, 'body', { align: 'center', valign: 'top', lh: 1.1 });
+        titleExtras(M + 0.5, SLIDE_H - 1.15, SLIDE_W - 2 * M - 1, T.heroMuted, 'center');
+        break;
+      }
+      if (S.title === 'minimal') {
+        text(M, 0.65, 8, 0.35, sl.label.toUpperCase(), 12, heroA, 'body', { bold: true, spacing: 3 });
+        text(SLIDE_W - M - 2.2, 0.35, 2.2, 1.4, String(sl.grade), 64, heroA, 'head', { align: 'right', alpha: 0.6 });
+        rect(M, 3.35, SLIDE_W - 2 * M, 0.025, T.heroInk, { alpha: 0.6 });
+        text(M, 3.55, SLIDE_W - 2 * M, 2.4, sl.title, tsz + 10, T.heroInk, 'head', { valign: 'top', lh: 0.95 });
+        if (sl.subtitle) text(M, 6.0, 9, 0.8, sl.subtitle, 14, T.heroMuted, 'body', { valign: 'top' });
+        titleExtras(M, 1.15, 9, T.heroMuted);
+        break;
+      }
+      if (S.title === 'magazine') {
+        const ph = 4.0;
+        if (photo?.photo) P.push({ t: 'img', x: 0, y: 0, w: SLIDE_W, h: ph, data: photo.data, cover: true });
+        else {
+          rect(0, 0, SLIDE_W, ph, heroOnAccent ? T.heroInk : A);
+          text(SLIDE_W - 6.5, -0.4, 6.0, ph + 0.4, String(sl.grade), 260, heroOnAccent ? T.heroBg : ON, 'head', { align: 'right', valign: 'middle', alpha: 0.25 });
+          if (photo) {
+            rect(M, 0.45, 4.6, 3.1, 'FFFFFF', { r: 0.1 });
+            P.push({ t: 'img', ...fit(photo, M + 0.15, 0.6, 4.3, 2.8), data: photo.data });
+          }
+        }
+        if (photo?.credit) text(SLIDE_W - 5.2, ph + 0.05, 4.5, 0.25, photo.credit, 7, T.heroMuted, 'body', { align: 'right' });
+        text(M, ph + 0.35, 4, 0.35, sl.label.toUpperCase(), 12, heroA, 'body', { bold: true, spacing: 3 });
+        text(M, ph + 0.7, 7.9, 2.2, sl.title, tsz, T.heroInk, 'head', { valign: 'top', lh: 0.95 });
+        rect(8.95, ph + 0.45, 0.03, 2.4, heroA);
+        if (sl.subtitle) text(9.25, ph + 0.4, SLIDE_W - 9.25 - M, 2.5, sl.subtitle, 13, T.heroMuted, 'body', { valign: 'top', lh: 1.15 });
+        titleExtras(M, SLIDE_H - 0.45, 8, T.heroMuted);
+        break;
+      }
+      if (S.title === 'blocks') {
+        // a mosaic of squares in the accent colour, the picture taking the big one
+        const x0 = 7.4;
+        const cell = 1.95;
+        const alphas = [1, 0.55, 0.3, 0.75, 0.15, 0.9, 0.45, 0.2, 0.65];
+        for (let i = 0; i < 3; i++)
+          for (let j = 0; j < 3; j++) rect(x0 + i * (cell + 0.08), 0.6 + j * (cell + 0.08), cell, cell, heroOnAccent ? 'FFFFFF' : A, { alpha: heroOnAccent ? alphas[i * 3 + j] * 0.35 : alphas[i * 3 + j], r: 0.12 });
+        if (photo) {
+          const big = 2 * cell + 0.08;
+          rect(x0 + cell + 0.08, 0.6, big, big, 'FFFFFF', { r: 0.12 });
+          if (photo.photo) P.push({ t: 'img', x: x0 + cell + 0.08, y: 0.6, w: big, h: big, data: photo.data, cover: true });
+          else P.push({ t: 'img', ...fit(photo, x0 + cell + 0.2, 0.72, big - 0.24, big - 0.24), data: photo.data });
+        } else text(x0 + cell + 0.08, 0.6, 2 * cell + 0.08, 2 * cell + 0.08, String(sl.grade), 140, heroOnAccent ? T.heroInk : ON, 'head', { align: 'center', valign: 'middle' });
+        kicker(sl.label, M, 1.55, heroA);
+        text(M, 2.25, x0 - M - 0.5, 3.0, sl.title, tsz, T.heroInk, 'head', { valign: 'top', lh: 0.95 });
+        if (sl.subtitle) text(M, 5.35, x0 - M - 0.6, 1.3, sl.subtitle, 15, T.heroMuted, 'body', { valign: 'top', lh: 1.1 });
+        titleExtras(M, SLIDE_H - 0.6, x0 - M - 0.5, T.heroMuted);
+        break;
+      }
+      if (S.title === 'split-left') {
+        const pw = 5.2;
+        if (photo) {
+          if (photo.photo) P.push({ t: 'img', x: 0, y: 0, w: pw, h: SLIDE_H, data: photo.data, cover: true });
+          else {
+            rect(0, 0, pw, SLIDE_H, 'FFFFFF');
+            P.push({ t: 'img', ...fit(photo, 0.4, 0.5, pw - 0.8, SLIDE_H - 1.3), data: photo.data });
+          }
+          if (photo.credit) {
+            rect(0, SLIDE_H - 0.42, pw, 0.42, '000000', { alpha: 0.45 });
+            text(0.2, SLIDE_H - 0.38, pw - 0.4, 0.34, photo.credit, 8, 'FFFFFF', 'body', { valign: 'middle' });
+          }
+          rect(pw, 0, 0.12, SLIDE_H, A);
+        } else {
+          rect(0, 0, pw, SLIDE_H, heroOnAccent ? 'FFFFFF' : A, { alpha: heroOnAccent ? 0.14 : 1 });
+          ellipse(-2, -1.5, 5, 5, 'FFFFFF', 0.12);
+          text(0, 1.6, pw, 3.2, String(sl.grade), 190, heroOnAccent ? T.heroInk : ON, 'head', { align: 'center', valign: 'middle' });
+        }
+        const tx = pw + 0.8;
+        kicker(sl.label, tx, 1.55, heroA);
+        text(tx, 2.25, SLIDE_W - tx - M, 3.0, sl.title, tsz, T.heroInk, 'head', { valign: 'top', lh: 0.95 });
+        if (sl.subtitle) text(tx, 5.35, SLIDE_W - tx - M, 1.3, sl.subtitle, 15, T.heroMuted, 'body', { valign: 'top', lh: 1.1 });
+        titleExtras(tx, SLIDE_H - 0.8, SLIDE_W - tx - M, T.heroMuted);
         break;
       }
       if (S.title === 'full') {
@@ -597,8 +765,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'agenda': {
-      kicker(c.deck);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(c.deck, sl.title);
       const n = sl.items.length;
       const cols = n > 5 ? 2 : 1;
       const rows = Math.ceil(n / cols);
@@ -648,6 +815,31 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
         text(M, SLIDE_H - 0.55, 5, 0.3, c.deck, 10, T.muted, 'body');
         break;
       }
+      const IL = S.intro ?? 'quote';
+      const tsz2 = pick(sl.text.length, [[110, 32], [200, 28], [330, 24], [480, 21]], 18);
+      if (IL === 'card') {
+        head(sl.label, sl.title);
+        rect(M, 2.35, SLIDE_W - 2 * M, 4.1, T.card, { r: 0.18 });
+        rect(M, 2.35, 0.1, 4.1, A);
+        text(M + 0.6, 2.35, SLIDE_W - 2 * M - 1.1, 4.1, sl.text, tsz2, T.ink, 'head', { valign: 'middle', lh: 1.15 });
+        footer();
+        break;
+      }
+      if (IL === 'centered') {
+        text(M, 0.6, SLIDE_W - 2 * M, 0.3, sl.label.toUpperCase(), 11, A, 'body', { bold: true, spacing: 2, align: 'center' });
+        text(M, 1.0, SLIDE_W - 2 * M, 0.8, sl.title, 30, T.muted, 'head', { align: 'center' });
+        rect(SLIDE_W / 2 - 0.4, 1.95, 0.8, 0.05, A);
+        text(1.4, 2.3, SLIDE_W - 2.8, 4.0, sl.text, tsz2 + 2, T.ink, 'head', { align: 'center', valign: 'middle', lh: 1.15 });
+        footer();
+        break;
+      }
+      if (IL === 'band') {
+        head(sl.label, sl.title);
+        rect(0, 2.45, SLIDE_W, 3.7, A);
+        text(M, 2.45, SLIDE_W - 2 * M, 3.7, sl.text, tsz2, ON, 'head', { valign: 'middle', lh: 1.15 });
+        footer();
+        break;
+      }
       kicker(sl.label);
       text(M, 1.35, 4.0, 1.6, sl.title, 36, T.ink, 'head', { valign: 'top', lh: 0.95 });
       text(4.95, 0.85, 1.2, 1.4, '“', 120, A, 'head', { alpha: 0.35 });
@@ -657,6 +849,87 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'point': {
+      const PL = S.point ?? 'panel';
+      const bodySz = pick(sl.text.length, [[80, 34], [150, 30], [260, 26], [400, 22], [560, 19]], 17);
+      const titleSz = pick(sl.title.length, [[18, 36], [34, 30], [56, 25]], 21);
+      const num = String(sl.n).padStart(2, '0');
+      const dots = (x: number, y: number) => {
+        for (let i = 0; i < Math.min(sl.total, 12); i++) ellipse(x + i * 0.28, y, 0.13, 0.13, A, i === sl.n - 1 ? 1 : 0.28);
+      };
+      if (PL === 'panel-right') {
+        const pw = 4.7;
+        const px = SLIDE_W - pw;
+        rect(px, 0, pw, SLIDE_H, T.panel);
+        kicker(sl.label, px + 0.55, 0.55);
+        text(px + 0.55, 1.3, pw - 1, 1.9, num, 110, A, 'head', { valign: 'top', lh: 0.9 });
+        text(px + 0.55, 3.35, pw - 0.9, 1.5, sl.title, titleSz, T.ink, 'head', { valign: 'top', lh: 1.0 });
+        const ic = icon(sl.icon);
+        if (ic) P.push({ t: 'img', x: SLIDE_W - 2.4, y: 4.9, w: 2.7, h: 2.7, data: ic.data, alpha: T.dark ? 0.55 : 0.4 });
+        dots(px + 0.55, 6.55);
+        text(px + 0.55, 6.8, pw - 1, 0.3, sl.of, 10, T.muted, 'body');
+        text(M, 0.9, px - M - 0.85, 5.6, sl.text, bodySz, T.ink, 'body', { valign: 'middle', lh: 1.25 });
+        text(M, SLIDE_H - 0.55, 1.5, 0.3, `${String(c.index + 1).padStart(2, '0')} / ${String(c.total).padStart(2, '0')}`, 10, T.muted, 'body', { spacing: 1 });
+        break;
+      }
+      if (PL === 'band') {
+        rect(0, 0, SLIDE_W, 2.45, A);
+        text(M, 0.35, 9, 0.3, sl.label.toUpperCase(), 11, ON, 'body', { bold: true, spacing: 2, alpha: 0.85 });
+        text(M, 0.7, 2.0, 1.5, num, 80, ON, 'head', { valign: 'middle' });
+        text(M + 2.2, 0.7, SLIDE_W - 2 * M - 2.2, 1.5, sl.title, titleSz, ON, 'head', { valign: 'middle', lh: 1.0 });
+        const ic = icon(sl.icon);
+        if (ic) P.push({ t: 'img', x: SLIDE_W - M - 2.4, y: 3.4, w: 2.4, h: 2.4, data: ic.data, alpha: 0.85 });
+        text(M, 2.9, SLIDE_W - 2 * M - (ic ? 3.0 : 0), 3.6, sl.text, bodySz, T.ink, 'body', { valign: 'middle', lh: 1.25 });
+        dots(M, 6.75);
+        pageNo();
+        break;
+      }
+      if (PL === 'card') {
+        rect(1.2, 0.8, SLIDE_W - 2.4, 5.75, T.card, { r: 0.3 });
+        ellipse(0.8, 0.45, 1.1, 1.1, A);
+        text(0.8, 0.45, 1.1, 1.1, String(sl.n), 30, ON, 'head', { align: 'center', valign: 'middle' });
+        text(2.2, 1.0, 8, 0.3, sl.label.toUpperCase(), 11, A, 'body', { bold: true, spacing: 2 });
+        text(2.2, 1.35, SLIDE_W - 5.5, 1.2, sl.title, titleSz, T.ink, 'head', { valign: 'middle', lh: 1.0 });
+        const ic = icon(sl.icon);
+        if (ic) P.push({ t: 'img', x: SLIDE_W - 3.0, y: 1.05, w: 1.4, h: 1.4, data: ic.data });
+        rect(2.2, 2.75, 1.0, 0.05, A);
+        text(2.2, 2.95, SLIDE_W - 4.4, 3.35, sl.text, bodySz - 2, T.ink, 'body', { valign: 'top', lh: 1.25 });
+        dots(SLIDE_W / 2 - Math.min(sl.total, 12) * 0.14, 6.85);
+        pageNo();
+        break;
+      }
+      if (PL === 'big-number') {
+        text(SLIDE_W - 6.2, -0.6, 6.0, 7.0, num, 330, A, 'head', { align: 'right', valign: 'middle', alpha: T.dark ? 0.16 : 0.1 });
+        kicker(`${sl.label} · ${sl.of}`);
+        text(M, 1.25, SLIDE_W - 2 * M - 2, 1.3, sl.title, titleSz + 6, T.ink, 'head', { valign: 'top', lh: 1.0 });
+        const ic = icon(sl.icon);
+        if (ic) P.push({ t: 'img', x: M, y: 2.75, w: 0.75, h: 0.75, data: ic.data });
+        text(M + (ic ? 1.05 : 0), 2.7, 8.6, 3.8, sl.text, bodySz - 2, T.ink, 'body', { valign: 'top', lh: 1.3 });
+        pageNo();
+        break;
+      }
+      if (PL === 'steps') {
+        // the steps of the topic as a row of numbered stops
+        const nn = Math.min(sl.total, 8);
+        const span = Math.min(SLIDE_W - 2 * M, nn * 1.6);
+        const gap = nn > 1 ? span / (nn - 1) : 0;
+        if (nn > 1) rect(M + 0.25, 0.83, span - 0.0, 0.04, A, { alpha: 0.35 });
+        for (let i = 0; i < nn; i++) {
+          const x = M + i * gap;
+          const on = i === sl.n - 1;
+          P.push({ t: 'ellipse', x, y: 0.6, w: 0.5, h: 0.5, fill: on || i < sl.n - 1 ? A : T.bg, alpha: 1, line: A, lineAlpha: 1 });
+          text(x, 0.6, 0.5, 0.5, String(i + 1), 13, on || i < sl.n - 1 ? ON : A, 'body', { align: 'center', valign: 'middle', bold: true });
+        }
+        text(M, 1.5, SLIDE_W - 2 * M, 1.0, sl.title, titleSz + 2, T.ink, 'head', { valign: 'middle' });
+        rect(M, 2.6, 1.2, 0.05, A);
+        const ic = icon(sl.icon);
+        if (ic) {
+          rect(SLIDE_W - M - 3.0, 3.0, 3.0, 3.0, T.card, { r: 0.2 });
+          P.push({ t: 'img', x: SLIDE_W - M - 2.55, y: 3.45, w: 2.1, h: 2.1, data: ic.data });
+        }
+        text(M, 2.95, SLIDE_W - 2 * M - (ic ? 3.5 : 0), 3.6, sl.text, bodySz - 2, T.ink, 'body', { valign: 'middle', lh: 1.25 });
+        footer(sl.of);
+        break;
+      }
       const pw = 4.7;
       rect(0, 0, pw, SLIDE_H, T.panel);
       kicker(sl.label, M, 0.55);
@@ -677,8 +950,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'formula': {
-      kicker(sl.label);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(sl.label, sl.title);
       const img = c.images.formula[sl.topicId];
       rect(M, 2.3, SLIDE_W - 2 * M, 3.85, T.dark ? 'FFFFFF' : T.card, { r: 0.18 });
       rect(M, 2.3, 0.09, 3.85, A);
@@ -689,8 +961,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'model': {
-      kicker(sl.label);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(sl.label, sl.title);
       const img = c.images.model[sl.topicId];
       if (img) {
         const f = fit(img, M, 2.25, SLIDE_W - 2 * M, 4.35);
@@ -701,8 +972,60 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'summary': {
-      kicker(sl.label);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(sl.label, sl.title);
+      const SL = S.summary ?? 'cards';
+      if (SL === 'list') {
+        const nn = sl.items.length;
+        const rh = Math.min(1.15, 4.4 / nn);
+        sl.items.forEach((it, i) => {
+          const y = 2.3 + i * rh;
+          text(M, y, 1.0, rh, String(i + 1).padStart(2, '0'), nn > 4 ? 22 : 30, A, 'head', { valign: 'middle' });
+          text(M + 1.2, y, SLIDE_W - 2 * M - 1.2, rh, [{ text: it.title + '  ', bold: true }, { text: it.text, color: T.muted }], nn > 4 ? 13 : 16, T.ink, 'body', { valign: 'middle', lh: 1.05 });
+          if (i < nn - 1) rect(M + 1.2, y + rh - 0.02, SLIDE_W - 2 * M - 1.2, 0.015, T.muted, { alpha: 0.3 });
+        });
+        footer();
+        break;
+      }
+      if (SL === 'timeline') {
+        const nn = sl.items.length;
+        const span = SLIDE_W - 2 * M - 1.0;
+        const gap = nn > 1 ? span / (nn - 1) : 0;
+        const ly = 3.7;
+        rect(M + 0.5, ly - 0.02, span, 0.05, A, { alpha: 0.5 });
+        sl.items.forEach((it, i) => {
+          const cx = M + 0.5 + i * gap;
+          const up = i % 2 === 0;
+          const w = Math.min(3.0, Math.max(1.6, gap - 0.1));
+          ellipse(cx - 0.3, ly - 0.3, 0.6, 0.6, A);
+          text(cx - 0.3, ly - 0.3, 0.6, 0.6, String(i + 1), 14, ON, 'body', { align: 'center', valign: 'middle', bold: true });
+          // captions stay inside the slide even for the first and last stop
+          const lx = Math.max(0.35, Math.min(SLIDE_W - 0.35 - w, cx - w / 2));
+          text(lx, up ? 2.15 : 4.2, w, up ? 1.35 : 0.45, it.title, nn > 5 ? 12 : 15, T.ink, 'body', { align: 'center', valign: up ? 'bottom' : 'top', bold: true });
+          text(lx, up ? 4.2 : 4.7, w, 1.9, it.text, nn > 5 ? 10 : 12, T.muted, 'body', { align: 'center', valign: 'top', lh: 1.05 });
+        });
+        footer();
+        break;
+      }
+      if (SL === 'columns') {
+        const nn = sl.items.length;
+        const cols = Math.min(nn, 4);
+        const rows = Math.ceil(nn / cols);
+        const cw = (SLIDE_W - 2 * M - (cols - 1) * 0.35) / cols;
+        const rhh = (SLIDE_H - 3.1) / rows;
+        sl.items.forEach((it, i) => {
+          const x = M + (i % cols) * (cw + 0.35);
+          const y = 2.3 + Math.floor(i / cols) * rhh;
+          const d = rows > 1 ? 0.7 : 1.1;
+          ellipse(x + cw / 2 - d / 2, y, d, d, A, 0.15);
+          const ic = icon(it.icon);
+          if (ic) P.push({ t: 'img', x: x + cw / 2 - d * 0.3, y: y + d * 0.2, w: d * 0.6, h: d * 0.6, data: ic.data });
+          else text(x + cw / 2 - d / 2, y, d, d, String(i + 1), 18, A, 'head', { align: 'center', valign: 'middle' });
+          text(x, y + d + 0.15, cw, 0.5, it.title, rows > 1 ? 14 : 18, T.ink, 'body', { align: 'center', bold: true, valign: 'top' });
+          text(x + 0.1, y + d + 0.7, cw - 0.2, rhh - d - 0.8, it.text, rows > 1 ? 12 : 15, T.muted, 'body', { align: 'center', valign: 'top', lh: 1.1 });
+        });
+        footer();
+        break;
+      }
       const n = sl.items.length;
       const cols = n <= 3 ? n : n === 4 ? 2 : 3;
       const rows = Math.ceil(n / cols);
@@ -731,8 +1054,38 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'quiz': {
-      kicker(sl.label);
-      text(M, 1.15, SLIDE_W - 2 * M, 2.0, sl.q, pick(sl.q.length, [[70, 32], [130, 27], [220, 23]], 20), T.ink, 'head', { valign: 'middle', lh: 1.05 });
+      head(sl.label, '');
+      const qy = HD === 'band' ? 1.25 : 1.15;
+      const QL = S.quiz ?? 'grid';
+      if (QL === 'list') {
+        text(M, qy, SLIDE_W - 2 * M, 1.9, sl.q, pick(sl.q.length, [[70, 30], [130, 25], [220, 21]], 18), T.ink, 'head', { valign: 'middle', lh: 1.05 });
+        const rh = Math.min(0.85, 3.4 / sl.options.length);
+        sl.options.forEach((o, i) => {
+          const y = 3.25 + i * (rh + 0.12);
+          rect(M, y, SLIDE_W - 2 * M, rh, T.card, { r: 0.12 });
+          rect(M, y, 0.09, rh, A);
+          text(M + 0.35, y, 0.6, rh, 'ABCD'[i], 20, A, 'head', { valign: 'middle', bold: true });
+          text(M + 1.0, y, SLIDE_W - 2 * M - 1.3, rh, o, pick(o.length, [[50, 18], [100, 15]], 13), T.ink, 'body', { valign: 'middle' });
+        });
+        footer();
+        break;
+      }
+      if (QL === 'tiles') {
+        text(M, qy, SLIDE_W - 2 * M, 1.9, sl.q, pick(sl.q.length, [[70, 30], [130, 25], [220, 21]], 18), T.ink, 'head', { valign: 'middle', lh: 1.05, align: 'center' });
+        const nn = sl.options.length;
+        const gap = 0.25;
+        const tw = (SLIDE_W - 2 * M - (nn - 1) * gap) / nn;
+        sl.options.forEach((o, i) => {
+          const x = M + i * (tw + gap);
+          rect(x, 3.35, tw, 3.1, T.card, { r: 0.16 });
+          rect(x, 3.35, tw, 0.9, A, { r: 0.16 });
+          text(x, 3.35, tw, 0.9, 'ABCD'[i], 30, ON, 'head', { align: 'center', valign: 'middle' });
+          text(x + 0.2, 4.35, tw - 0.4, 2.0, o, pick(o.length, [[30, 18], [70, 15]], 12), T.ink, 'body', { align: 'center', valign: 'middle', lh: 1.05 });
+        });
+        footer();
+        break;
+      }
+      text(M, qy, SLIDE_W - 2 * M, 2.0, sl.q, pick(sl.q.length, [[70, 32], [130, 27], [220, 23]], 20), T.ink, 'head', { valign: 'middle', lh: 1.05 });
       const two = sl.options.length <= 2;
       const gap = 0.3;
       const ow = (SLIDE_W - 2 * M - gap) / 2;
@@ -749,8 +1102,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'answers': {
-      kicker(c.deck);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(c.deck, sl.title);
       const n = sl.items.length;
       const cols = n > 5 ? 2 : 1;
       const rows = Math.ceil(n / cols);
@@ -771,8 +1123,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'goals': {
-      kicker(c.deck);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(c.deck, sl.title);
       const colW = (SLIDE_W - 2 * M - 0.4) / 2;
       ([[L0(c, 'Узнаем', 'We will learn'), sl.know], [L0(c, 'Научимся', 'We will be able to'), sl.can]] as [string, string[]][]).forEach(([h, items], i) => {
         const x = M + i * (colW + 0.4);
@@ -785,8 +1136,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'warmup': {
-      kicker(L0(c, 'Повторение', 'Review'));
-      text(M, 1.2, SLIDE_W - 2 * M, 0.9, sl.title, pick(sl.title.length, [[40, 34], [70, 28]], 24), T.ink, 'head');
+      head(L0(c, 'Повторение', 'Review'), sl.title, pick(sl.title.length, [[40, 34], [70, 28]], 24));
       sl.items.forEach((q, i) => {
         const y = 2.35 + i * 1.45;
         rect(M, y, SLIDE_W - 2 * M, 1.25, T.card, { r: 0.14 });
@@ -798,8 +1148,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'terms': {
-      kicker(c.deck);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(c.deck, sl.title);
       const n2 = sl.items.length;
       const rh = Math.min(1.25, 4.6 / Math.max(1, n2));
       sl.items.forEach((it, i) => {
@@ -812,8 +1161,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'example': {
-      kicker(c.deck);
-      text(M, 1.15, 10, 0.8, sl.title, 34, T.ink, 'head');
+      head(c.deck, sl.title, 34);
       rect(M, 2.1, SLIDE_W - 2 * M, 1.35, T.card, { r: 0.14 });
       rect(M, 2.1, 0.09, 1.35, A);
       text(M + 0.4, 2.1, SLIDE_W - 2 * M - 0.7, 1.35, sl.problem, pick(sl.problem.length, [[90, 22], [170, 19]], 16), T.ink, 'head', { valign: 'middle', lh: 1.05 });
@@ -826,10 +1174,9 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'homework': {
-      kicker(L0(c, 'Задание на дом', 'Homework'));
-      text(M, 1.2, 8, 0.9, sl.title, 36, T.ink, 'head');
-      rect(SLIDE_W - M - 2.6, 1.3, 2.6, 0.55, A, { r: 0.27 });
-      text(SLIDE_W - M - 2.6, 1.3, 2.6, 0.55, sl.due, 13, ON, 'body', { align: 'center', valign: 'middle', bold: true });
+      head(L0(c, 'Задание на дом', 'Homework'), sl.title);
+      rect(SLIDE_W - M - 2.6, HD === 'band' ? 0.25 : 1.3, 2.6, 0.55, HD === 'band' ? ON : A, { r: 0.27 });
+      text(SLIDE_W - M - 2.6, HD === 'band' ? 0.25 : 1.3, 2.6, 0.55, sl.due, 13, HD === 'band' ? A : ON, 'body', { align: 'center', valign: 'middle', bold: true });
       sl.items.forEach((t, i) => {
         const y = 2.35 + i * 1.12;
         text(M, y, 0.8, 0.9, String(i + 1).padStart(2, '0'), 26, A, 'head', { valign: 'middle' });
@@ -840,8 +1187,7 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
       break;
     }
     case 'reflection': {
-      kicker(c.deck);
-      text(M, 1.2, 10, 0.9, sl.title, 36, T.ink, 'head');
+      head(c.deck, sl.title);
       const cards: [string, string][] = [
         ['30A46C', L0(c, 'Понял и могу объяснить', 'I get it and can explain it')],
         ['F5A524', L0(c, 'Понял, но есть вопросы', 'I get it, with questions')],
@@ -864,6 +1210,21 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
     }
     case 'end': {
       bg = T.heroBg;
+      const EL = S.end ?? 'center';
+      if (EL === 'split') {
+        rect(0, 0, SLIDE_W * 0.42, SLIDE_H, A);
+        text(0, 0.5, SLIDE_W * 0.42, 6.5, '?', 300, ON, 'head', { align: 'center', valign: 'middle', alpha: 0.9 });
+        text(SLIDE_W * 0.42 + 0.8, 2.3, SLIDE_W * 0.58 - 1.6, 1.6, sl.title, 46, T.heroInk, 'head', { valign: 'middle' });
+        rect(SLIDE_W * 0.42 + 0.8, 4.05, 1.0, 0.06, heroA);
+        text(SLIDE_W * 0.42 + 0.8, 4.3, SLIDE_W * 0.58 - 1.6, 0.7, sl.subtitle, 24, heroA, 'body', { valign: 'middle' });
+        break;
+      }
+      if (EL === 'band') {
+        rect(0, 2.3, SLIDE_W, 2.9, A);
+        text(M, 2.35, SLIDE_W - 2 * M, 1.8, sl.title, 52, ON, 'head', { align: 'center', valign: 'middle' });
+        text(M, 4.1, SLIDE_W - 2 * M, 0.8, sl.subtitle, 22, ON, 'body', { align: 'center', valign: 'middle', alpha: 0.85 });
+        break;
+      }
       ellipse(-1.6, -1.8, 5.2, 5.2, heroOnAccent ? 'FFFFFF' : A, heroOnAccent ? 0.12 : 0.1);
       ellipse(SLIDE_W - 3.2, SLIDE_H - 2.6, 4.6, 4.6, heroOnAccent ? 'FFFFFF' : A, heroOnAccent ? 0.12 : 0.14);
       text(M, 2.35, SLIDE_W - 2 * M, 1.5, sl.title, 54, T.heroInk, 'head', { align: 'center', valign: 'middle' });
@@ -892,7 +1253,7 @@ export async function downloadPptx(slides: SlideWithNotes[], style: DesignStyle,
     const { bg, prims } = layoutSlide(sl, { style, theme, accent: theme.accent, images, deck, index, total: slides.length, brand });
     s.background = { color: bg };
     for (const p of prims) {
-      if (p.t === 'rect') s.addShape(p.r ? pptx.ShapeType.roundRect : pptx.ShapeType.rect, { x: p.x, y: p.y, w: p.w, h: p.h, fill: { color: p.fill, transparency: tr(p.alpha) }, line: p.line ? { color: p.line, width: 1 } : { type: 'none' }, rectRadius: p.r });
+      if (p.t === 'rect') s.addShape(p.r ? pptx.ShapeType.roundRect : pptx.ShapeType.rect, { x: p.x, y: p.y, w: p.w, h: p.h, fill: p.alpha === 0 ? { type: 'none' } : { color: p.fill, transparency: tr(p.alpha) }, line: p.line ? { color: p.line, width: 1.5 } : { type: 'none' }, rectRadius: p.r });
       else if (p.t === 'ellipse')
         s.addShape(pptx.ShapeType.ellipse, { x: p.x, y: p.y, w: p.w, h: p.h, fill: p.alpha === 0 ? { type: 'none' } : { color: p.fill, transparency: tr(p.alpha) }, line: p.line ? { color: p.line, width: 1.5, transparency: tr(p.lineAlpha) } : { type: 'none' } });
       else if (p.t === 'img') s.addImage({ data: p.data, x: p.x, y: p.y, w: p.w, h: p.h, ...(p.cover ? { sizing: { type: 'cover' as const, w: p.w, h: p.h } } : {}), ...(p.alpha !== undefined && p.alpha < 1 ? { transparency: tr(p.alpha) } : {}) });
