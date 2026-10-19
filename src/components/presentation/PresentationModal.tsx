@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Crown, Dices, Download, GraduationCap, ImageIcon, Loader2, Lock, Presentation, Shuffle, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Crown, Dices, Download, Eye, EyeOff, GraduationCap, ImageIcon, Loader2, Lock, Presentation, Shuffle, Trash2, Upload, X } from 'lucide-react';
 import type { Section, Topic } from '../../data/curriculum';
 import { sectionsFor } from '../../data/curriculum';
 import { usePlan } from '../../lib/plan';
 import { useSession } from '../../lib/supabase';
 import {
-  ACCENTS, accentFor, buildSlides, DecorId, DEFAULT_STYLE, DesignStyle, FONT_PAIRS, FontPairId, ScaleId, TitleLayoutId, downloadPptx, fileName, Images, Img, iconsUsed, layoutSlide, NO_IMAGES, Photo, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
+  ACCENTS, accentFor, Branding, buildSlides, LESSON_PARTS, LessonPart, Slide, DecorId, DEFAULT_STYLE, DesignStyle, FONT_PAIRS, FontPairId, ScaleId, TitleLayoutId, downloadPptx, fileName, Images, Img, iconsUsed, layoutSlide, NO_IMAGES, Photo, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
 } from '../../lib/presentation';
 import type { PhotoCandidate } from '../../lib/illustrations';
 
@@ -67,10 +67,10 @@ const CSS_FACE: Record<string, string> = {
 };
 const cssFont = (style: DesignStyle, f: 'head' | 'body' | 'math') => (f === 'math' ? CSS_FACE.math : CSS_FACE[FONT_PAIRS[style.fonts][f]]);
 
-export const SlideView: React.FC<{ slide: SlideWithNotes; style: DesignStyle; theme: Theme; images: Images; width: number; index: number; total: number; deck: string }> = ({ slide, style, theme, images, width, index, total, deck }) => {
+export const SlideView: React.FC<{ slide: SlideWithNotes; style: DesignStyle; theme: Theme; images: Images; width: number; index: number; total: number; deck: string; brand?: Branding }> = ({ slide, style, theme, images, width, index, total, deck, brand }) => {
   const k = width / SLIDE_W;
   const pt = (n: number) => (n / 72) * k;
-  const { bg, prims } = layoutSlide(slide, { style, theme, accent: theme.accent, images, deck, index, total });
+  const { bg, prims } = layoutSlide(slide, { style, theme, accent: theme.accent, images, deck, index, total, brand });
   return (
     <div style={{ position: 'relative', width, height: SLIDE_H * k, background: hex(bg), overflow: 'hidden' }}>
       {prims.map((p, i) => {
@@ -125,6 +125,48 @@ export const SlideView: React.FC<{ slide: SlideWithNotes; style: DesignStyle; th
   );
 };
 
+/* ---------- teacher tools ---------- */
+
+/** an uploaded picture, shrunk so the file stays small */
+async function readImage(file: File, max: number, photo: boolean): Promise<Img> {
+  const url = await new Promise<string>((ok, fail) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result));
+    r.onerror = fail;
+    r.readAsDataURL(file);
+  });
+  const img = await loadImg(url);
+  const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.naturalWidth * k);
+  c.height = Math.round(img.naturalHeight * k);
+  c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+  return { data: photo ? c.toDataURL('image/jpeg', 0.86) : c.toDataURL('image/png'), w: c.width, h: c.height };
+}
+
+type Edit = { title?: string; body?: string };
+/** the slide's own heading and main text, which the teacher can rewrite */
+const editable = (s: Slide): { title?: string; body?: string } => {
+  const title = 'title' in s ? (s as { title: string }).title : undefined;
+  if (s.k === 'text' || s.k === 'point') return { title, body: s.text };
+  if (s.k === 'title' || s.k === 'end') return { title, body: s.subtitle };
+  if (s.k === 'example') return { title, body: s.problem };
+  if (s.k === 'quiz') return { body: s.q };
+  return { title };
+};
+function applyEdit(s: SlideWithNotes, e?: Edit): SlideWithNotes {
+  if (!e) return s;
+  const out = { ...s } as SlideWithNotes & Record<string, unknown>;
+  if (e.title !== undefined && 'title' in out) out.title = e.title;
+  if (e.body !== undefined) {
+    if (s.k === 'text' || s.k === 'point') out.text = e.body;
+    else if (s.k === 'title' || s.k === 'end') out.subtitle = e.body;
+    else if (s.k === 'example') out.problem = e.body;
+    else if (s.k === 'quiz') out.q = e.body;
+  }
+  return out;
+}
+
 /* ---------- the modal ---------- */
 
 interface Props {
@@ -168,6 +210,25 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   };
   const [parts, setParts] = useState<Set<Part>>(() => new Set<Part>(['title', 'intro', 'points', 'formula', 'model', 'summary', 'end']));
   const [notes, setNotes] = useState(false);
+  // the teacher's details are remembered between presentations
+  const [brand, setBrandState] = useState<Branding>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('presBrand') ?? '{}');
+    } catch {
+      return {};
+    }
+  });
+  const setBrand = (patch: Partial<Branding>) =>
+    setBrandState((b) => {
+      const n = { ...b, ...patch };
+      try {
+        localStorage.setItem('presBrand', JSON.stringify(n));
+      } catch {
+        /* too big or private mode */
+      }
+      return n;
+    });
+  const [titlePhoto, setTitlePhoto] = useState<Photo | null>(null);
   const [whole, setWhole] = useState(false);
   const [images, setImages] = useState<Images>(NO_IMAGES);
   const [usePhotos, setUsePhotos] = useState(true);
@@ -237,12 +298,43 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   const theme = themeFor(style.theme, topic.subject, style.accent);
   const deck = whole && teacher && section ? section.title[lang] : topic.title[lang];
   const useSection = whole && teacher && !!section;
-  const slides = useMemo(
+  const built = useMemo(
     () =>
-      buildSlides({ lang, topic, section: useSection ? section : undefined, parts: teacher ? parts : new Set([...parts].filter((p) => p !== 'quiz' && p !== 'answers')), notes: teacher && notes, hasFormulaImage: !!images.formula[topic.id], hasModel: capturing || !!images.model[topic.id] }),
+      buildSlides({
+        lang,
+        topic,
+        section: useSection ? section : undefined,
+        parts: teacher ? parts : new Set([...parts].filter((p) => p !== 'quiz' && p !== 'answers' && !LESSON_PARTS.includes(p as LessonPart))),
+        notes: teacher && notes,
+        hasFormulaImage: !!images.formula[topic.id],
+        hasModel: capturing || !!images.model[topic.id],
+      }),
     [images, capturing, lang, topic, section, useSection, parts, notes, teacher],
   );
-  useEffect(() => setCurrent((c) => Math.min(c, Math.max(0, slides.length - 1))), [slides.length]);
+  // the teacher's changes to the deck: order, hidden slides and rewritten texts; a new set of slides starts clean
+  const builtKey = built.map((x) => x.k).join();
+  const [order, setOrder] = useState<number[] | null>(null);
+  const [hidden, setHidden] = useState<Set<number>>(new Set());
+  const [edits, setEdits] = useState<Record<number, Edit>>({});
+  useEffect(() => {
+    setOrder(null);
+    setHidden(new Set());
+    setEdits({});
+  }, [builtKey]);
+  const ordered = useMemo(() => (order && order.length === built.length ? order : built.map((_, i) => i)), [order, built]);
+  const visible = ordered.filter((i) => !hidden.has(i));
+  const slides = useMemo(() => visible.map((i) => applyEdit(built[i], edits[i])), [visible.join(), built, edits]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => setCurrent((c) => Math.min(c, Math.max(0, ordered.length - 1))), [ordered.length]);
+  const curSrc = ordered[current] ?? 0;
+  const curSlide = built.length ? applyEdit(built[curSrc], edits[curSrc]) : null;
+  const move = (dir: -1 | 1) => {
+    const j = current + dir;
+    if (j < 0 || j >= ordered.length) return;
+    const n = [...ordered];
+    [n[current], n[j]] = [n[j], n[current]];
+    setOrder(n);
+    setCurrent(j);
+  };
 
   // icons in the subject colour for every slide that has one
   const [icons, setIcons] = useState<Images['icons']>({});
@@ -261,7 +353,11 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   }, [iconKey, accent]);
   // the file waits until every picture is ready
   const waiting = capturing || (usePhotos && !useSection && (cands === null || photoBusy));
-  const all: Images = useMemo(() => ({ ...images, photos: usePhotos && !useSection ? photos : [], icons }), [images, usePhotos, useSection, photos, icons]);
+  const all: Images = useMemo(
+    () => ({ ...images, photos: [...(teacher && titlePhoto ? [titlePhoto] : []), ...(usePhotos && !useSection ? photos : [])], icons }),
+    [images, usePhotos, useSection, photos, icons, teacher, titlePhoto],
+  );
+  const brandOn = teacher ? brand : undefined;
 
   const toggle = (p: Part) => setParts((s) => {
     const n = new Set(s);
@@ -278,7 +374,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     if (waiting || !slides.length) return;
     setBusy(true);
     try {
-      await downloadPptx(slides, style, theme, all, fileName(deck), deck, user?.email ?? undefined);
+      await downloadPptx(slides, style, theme, all, fileName(deck), deck, user?.email ?? undefined, brandOn);
       setDone(true);
       setTimeout(() => setDone(false), 2500);
     } finally {
@@ -326,7 +422,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
         <div className="flex-1 min-h-0 grid lg:grid-cols-[300px_1fr] overflow-y-auto lg:overflow-hidden">
           {/* settings */}
           <aside className="p-5 border-b lg:border-b-0 lg:border-r border-line flex flex-col gap-5 lg:overflow-y-auto">
-            <DesignPanel lang={lang} style={style} setStyle={setStyle} onSurprise={surprise} topic={topic} />
+            <DesignPanel lang={lang} style={style} setStyle={setStyle} onSurprise={surprise} topic={topic} teacher={teacher} onUpgrade={upgrade} />
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-1">{L('Слайды', 'Slides')}</p>
               <Row on={parts.has('title')} onClick={() => toggle('title')} label={L('Титульный слайд', 'Title slide')} />
@@ -369,9 +465,60 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
               {section && section.topics.length > 1 && (
                 <Row locked={!teacher} on={whole} onClick={() => setWhole(!whole)} label={L('Весь раздел', 'Whole section')} hint={`${section.title[lang]} · ${section.topics.length} ${L('тем', 'topics')}`} />
               )}
+              {!useSection && (
+                <>
+                  <p className="mt-3 mb-0.5 text-[11px] font-medium uppercase tracking-[0.05em] text-ink-3">{L('Структура урока', 'Lesson structure')}</p>
+                  {(
+                    [
+                      ['goals', L('Цели урока', 'Lesson goals'), L('«узнаем» и «научимся»', '“learn” and “be able to”')],
+                      ['warmup', L('Разминка', 'Warm-up'), L('3 вопроса по прошлой теме', '3 questions on the previous topic')],
+                      ['terms', L('Ключевые понятия', 'Key terms'), L('словарик темы', 'topic glossary')],
+                      ['example', L('Задача у доски', 'Worked example'), L('решение по шагам и ответ', 'steps and the answer')],
+                      ['homework', L('Домашнее задание', 'Homework'), L('3 задачи, ответы в заметках', '3 problems, answers in the notes')],
+                      ['reflection', L('Рефлексия', 'Reflection'), L('светофор и «продолжи фразу»', 'traffic light and sentence starters')],
+                    ] as [LessonPart, string, string][]
+                  ).map(([id, label, hint]) => (
+                    <Row key={id} locked={!teacher} on={parts.has(id)} onClick={() => toggle(id)} label={label} hint={hint} />
+                  ))}
+                </>
+              )}
+              <p className="mt-3 mb-1 text-[11px] font-medium uppercase tracking-[0.05em] text-ink-3">{L('Школа и класс', 'School and class')}</p>
+              <div className={`flex flex-col gap-1.5 ${teacher ? '' : 'opacity-60'}`} onClickCapture={teacher ? undefined : (e) => { e.preventDefault(); e.stopPropagation(); upgrade(); }}>
+                {(
+                  [
+                    ['teacher', L('Учитель (ФИО)', 'Teacher')],
+                    ['school', L('Школа', 'School')],
+                    ['klass', L('Класс, например 8 «А»', 'Class, e.g. 8A')],
+                    ['date', L('Дата урока', 'Lesson date')],
+                  ] as [keyof Branding, string][]
+                ).map(([k, ph]) => (
+                  <input key={k} value={(brand[k] as string) ?? ''} onChange={(e) => setBrand({ [k]: e.target.value })} placeholder={ph} readOnly={!teacher} className="h-8 px-2.5 rounded-lg border border-line bg-paper text-sm outline-none focus:border-accent" />
+                ))}
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  <label className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs text-ink inline-flex items-center gap-1.5 cursor-pointer">
+                    <Upload className="w-3.5 h-3.5" /> {brand.logo ? L('Другой логотип', 'Change logo') : L('Логотип школы', 'School logo')}
+                    <input type="file" accept="image/*" className="hidden" disabled={!teacher} onChange={async (e) => { const f = e.target.files?.[0]; if (f) setBrand({ logo: await readImage(f, 500, false) }); e.target.value = ''; }} />
+                  </label>
+                  {brand.logo && (
+                    <button onClick={() => setBrand({ logo: undefined })} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer" title={L('Убрать логотип', 'Remove logo')}>
+                      <Trash2 className="w-3.5 h-3.5 text-ink-2" />
+                    </button>
+                  )}
+                  <label className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs text-ink inline-flex items-center gap-1.5 cursor-pointer">
+                    <ImageIcon className="w-3.5 h-3.5" /> {titlePhoto ? L('Другое фото', 'Change photo') : L('Своё фото на титул', 'Own title photo')}
+                    <input type="file" accept="image/*" className="hidden" disabled={!teacher} onChange={async (e) => { const f = e.target.files?.[0]; if (f) setTitlePhoto({ ...(await readImage(f, 1600, true)), credit: '', photo: true }); e.target.value = ''; }} />
+                  </label>
+                  {titlePhoto && (
+                    <button onClick={() => setTitlePhoto(null)} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer" title={L('Убрать фото', 'Remove photo')}>
+                      <Trash2 className="w-3.5 h-3.5 text-ink-2" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-ink-3">{L('Учитель, класс и дата — на титульном слайде, логотип — на каждом.', 'Teacher, class and date go on the title, the logo on every slide.')}</p>
+              </div>
               {!teacher && (
-                <button onClick={upgrade} className="mt-1 text-xs text-accent hover:underline cursor-pointer">
-                  {L('Доступно в тарифе «Учитель»', 'Part of the Teacher plan')}
+                <button onClick={upgrade} className="mt-2 text-xs text-accent hover:underline cursor-pointer">
+                  {L('Всё это — в тарифе «Учитель»', 'All of this is in the Teacher plan')}
                 </button>
               )}
             </div>
@@ -379,24 +526,60 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
 
           {/* preview */}
           <section className="order-first lg:order-none p-4 sm:p-5 flex flex-col gap-4 min-w-0 lg:overflow-y-auto bg-muted/40">
-            {slides.length === 0 ? (
+            {built.length === 0 || !curSlide ? (
               <div className="flex-1 min-h-[300px] flex items-center justify-center text-sm text-ink-2">{L('Выбери хотя бы один слайд.', 'Pick at least one slide.')}</div>
             ) : (
               <>
-                <PreviewMain slides={slides} style={style} theme={theme} images={all} current={current} deck={deck} />
+                <PreviewMain slide={curSlide} index={Math.max(0, visible.indexOf(curSrc))} total={slides.length} hidden={hidden.has(curSrc)} style={style} theme={theme} images={all} deck={deck} brand={brandOn} />
                 <div className="flex items-center justify-between text-xs text-ink-2">
                   <span>
-                    {L('Слайд', 'Slide')} {current + 1} {L('из', 'of')} {slides.length}
+                    {L('Слайд', 'Slide')} {current + 1} {L('из', 'of')} {ordered.length}
+                    {hidden.size > 0 && ` · ${L('скрыто', 'hidden')}: ${hidden.size}`}
                   </span>
-                  {slides[current]?.notes && <span className="truncate max-w-[60%]">📝 {slides[current].notes!.split('\n')[0]}</span>}
+                  {curSlide.notes && <span className="truncate max-w-[60%]">📝 {curSlide.notes.split('\n')[0]}</span>}
                 </div>
                 <div className="shrink-0 flex gap-2 overflow-x-auto pb-2">
-                  {slides.map((s, i) => (
-                    <button key={i} onClick={() => setCurrent(i)} className={`shrink-0 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${i === current ? 'border-accent' : 'border-transparent opacity-80 hover:opacity-100'}`}>
-                      <SlideView slide={s} style={style} theme={theme} images={all} width={128} index={i} total={slides.length} deck={deck} />
+                  {ordered.map((src, i) => (
+                    <button key={src} onClick={() => setCurrent(i)} className={`relative shrink-0 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${i === current ? 'border-accent' : 'border-transparent opacity-80 hover:opacity-100'} ${hidden.has(src) ? 'opacity-35' : ''}`}>
+                      <SlideView slide={applyEdit(built[src], edits[src])} style={style} theme={theme} images={all} width={128} index={Math.max(0, visible.indexOf(src))} total={slides.length} deck={deck} brand={brandOn} />
+                      {hidden.has(src) && <EyeOff className="absolute inset-0 m-auto w-5 h-5 text-ink" />}
                     </button>
                   ))}
                 </div>
+                {teacher ? (
+                  <div className="shrink-0 rounded-xl border border-line bg-surface p-3 flex flex-col gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mr-auto">{L('Этот слайд', 'This slide')}</span>
+                      <button onClick={() => move(-1)} disabled={current === 0} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer disabled:opacity-40" title={L('Сдвинуть влево', 'Move left')}>
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => move(1)} disabled={current === ordered.length - 1} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer disabled:opacity-40" title={L('Сдвинуть вправо', 'Move right')}>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setHidden((h) => { const n = new Set(h); if (n.has(curSrc)) n.delete(curSrc); else n.add(curSrc); return n; })}
+                        className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        {hidden.has(curSrc) ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />} {hidden.has(curSrc) ? L('Показать', 'Show') : L('Скрыть', 'Hide')}
+                      </button>
+                      {edits[curSrc] && (
+                        <button onClick={() => setEdits((e) => { const n = { ...e }; delete n[curSrc]; return n; })} className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs cursor-pointer">
+                          {L('Вернуть текст', 'Reset text')}
+                        </button>
+                      )}
+                    </div>
+                    {editable(curSlide).title !== undefined && (
+                      <input value={editable(curSlide).title} onChange={(e) => setEdits((x) => ({ ...x, [curSrc]: { ...x[curSrc], title: e.target.value } }))} className="h-9 px-2.5 rounded-lg border border-line bg-paper text-sm outline-none focus:border-accent" aria-label={L('Заголовок', 'Title')} />
+                    )}
+                    {editable(curSlide).body !== undefined && (
+                      <textarea value={editable(curSlide).body} onChange={(e) => setEdits((x) => ({ ...x, [curSrc]: { ...x[curSrc], body: e.target.value } }))} rows={3} className="px-2.5 py-2 rounded-lg border border-line bg-paper text-sm outline-none focus:border-accent resize-y" aria-label={L('Текст', 'Text')} />
+                    )}
+                  </div>
+                ) : (
+                  <button onClick={upgrade} className="shrink-0 text-left rounded-xl border border-dashed border-line-strong p-3 text-xs text-ink-2 hover:border-accent cursor-pointer inline-flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5" /> {L('Свой текст на слайдах, скрытие и порядок слайдов — в тарифе «Учитель»', 'Your own slide text, hiding and reordering are in the Teacher plan')}
+                  </button>
+                )}
               </>
             )}
           </section>
@@ -421,7 +604,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
 };
 
 /** the big preview fills the available width */
-const PreviewMain: React.FC<{ slides: SlideWithNotes[]; style: DesignStyle; theme: Theme; images: Images; current: number; deck: string }> = ({ slides, style, theme, images, current, deck }) => {
+const PreviewMain: React.FC<{ slide: SlideWithNotes; index: number; total: number; hidden: boolean; style: DesignStyle; theme: Theme; images: Images; deck: string; brand?: Branding }> = ({ slide, index, total, hidden, style, theme, images, deck, brand }) => {
   const [w, setW] = useState(640);
   const ref = React.useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -434,8 +617,8 @@ const PreviewMain: React.FC<{ slides: SlideWithNotes[]; style: DesignStyle; them
   }, []);
   return (
     <div ref={ref} className="w-full shrink-0">
-      <div key={current} className="rounded-xl overflow-hidden shadow-lg border border-line mx-auto anim-page" style={{ width: w }}>
-        <SlideView slide={slides[current]} style={style} theme={theme} images={images} width={w} index={current} total={slides.length} deck={deck} />
+      <div key={`${slide.k}${index}`} className={`relative rounded-xl overflow-hidden shadow-lg border border-line mx-auto anim-page ${hidden ? 'opacity-40' : ''}`} style={{ width: w }}>
+        <SlideView slide={slide} style={style} theme={theme} images={images} width={w} index={index} total={total} deck={deck} brand={brand} />
       </div>
     </div>
   );
@@ -452,7 +635,7 @@ const Group: React.FC<{ title: string; children: React.ReactNode }> = ({ title, 
   </div>
 );
 
-const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Partial<DesignStyle>) => void; onSurprise: () => void; topic: Topic }> = ({ lang, style, setStyle, onSurprise, topic }) => {
+const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Partial<DesignStyle>) => void; onSurprise: () => void; topic: Topic; teacher: boolean; onUpgrade: () => void }> = ({ lang, style, setStyle, onSurprise, topic, teacher, onUpgrade }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const theme = themeFor(style.theme, topic.subject, style.accent);
   const titleSlide = { k: 'title' as const, label: L('Предмет · класс', 'Subject · grade'), title: topic.title[lang], subtitle: '', grade: topic.grade, topicId: topic.id };
@@ -485,6 +668,11 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
           {ACCENTS.map((c) => (
             <button key={c} onClick={() => setStyle({ accent: c })} aria-label={c} className={`w-7 h-7 rounded-full cursor-pointer transition-transform hover:scale-110 ${style.accent === c ? 'ring-2 ring-offset-2 ring-ink' : ''}`} style={{ background: `#${c}` }} />
           ))}
+          {/* any colour, e.g. the school's own: a teacher feature */}
+          <label className={`relative w-7 h-7 rounded-full cursor-pointer border-2 border-dashed border-line-strong flex items-center justify-center text-ink-3 ${style.accent && !ACCENTS.includes(style.accent) ? 'ring-2 ring-offset-2 ring-ink' : ''}`} title={teacher ? L('Свой цвет', 'Custom colour') : L('Свой цвет — в тарифе «Учитель»', 'Custom colour: Teacher plan')} style={style.accent && !ACCENTS.includes(style.accent) ? { background: `#${style.accent}`, borderStyle: 'solid' } : undefined} onClick={teacher ? undefined : (e) => { e.preventDefault(); onUpgrade(); }}>
+            {!(style.accent && !ACCENTS.includes(style.accent)) && (teacher ? '+' : <Lock className="w-3 h-3" />)}
+            <input type="color" className="absolute inset-0 opacity-0 cursor-pointer" disabled={!teacher} value={`#${style.accent ?? '2F5BFF'}`} onChange={(e) => setStyle({ accent: e.target.value.slice(1).toUpperCase() })} />
+          </label>
         </div>
       </Group>
       <Group title={L('Шрифты', 'Fonts')}>
@@ -521,6 +709,28 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
               <span className="block text-[10px] py-0.5 text-ink-2 bg-surface truncate">{name}</span>
             </button>
           ))}
+        </div>
+      </Group>
+      <Group title={L('Детали', 'Details')}>
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="flex p-0.5 rounded-lg bg-muted border border-line">
+            {([['full', L('Подвал полностью', 'Full footer')], ['number', L('Только номер', 'Number only')], ['none', L('Без подвала', 'No footer')]] as ['full' | 'number' | 'none', string][]).map(([id, name]) => (
+              <button key={id} onClick={() => setStyle({ footer: id })} className={`flex-1 h-8 rounded-md text-xs cursor-pointer ${(style.footer ?? 'full') === id ? 'bg-surface border border-line text-ink font-medium shadow-sm' : 'text-ink-2'}`}>
+                {name}
+              </button>
+            ))}
+          </div>
+          <div className="flex p-0.5 rounded-lg bg-muted border border-line">
+            {([['round', L('Скруглённые карточки', 'Rounded cards')], ['sharp', L('Острые углы', 'Square corners')]] as ['round' | 'sharp', string][]).map(([id, name]) => (
+              <button key={id} onClick={() => setStyle({ corners: id })} className={`flex-1 h-8 rounded-md text-xs cursor-pointer ${(style.corners ?? 'round') === id ? 'bg-surface border border-line text-ink font-medium shadow-sm' : 'text-ink-2'}`}>
+                {name}
+              </button>
+            ))}
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer text-ink">
+            <input type="checkbox" checked={style.icons !== false} onChange={(e) => setStyle({ icons: e.target.checked })} />
+            {L('Иконки на слайдах', 'Icons on slides')}
+          </label>
         </div>
       </Group>
       <Group title={L('Размер текста', 'Text size')}>
