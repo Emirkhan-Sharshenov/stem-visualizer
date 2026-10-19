@@ -68,6 +68,37 @@ const onCircle = (c: Pt, r: number) => (_k: string, pt: Pt): Pt => {
   return [c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)];
 };
 
+const GREY = '#9AA0AA';
+const mid = (a: Pt, b: Pt): Pt => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+/** the foot of the perpendicular from p to the line ab */
+const foot = (p: Pt, a: Pt, b: Pt): Pt => {
+  const d = [b[0] - a[0], b[1] - a[1]];
+  const t = ((p[0] - a[0]) * d[0] + (p[1] - a[1]) * d[1]) / (d[0] ** 2 + d[1] ** 2 || 1);
+  return [a[0] + d[0] * t, a[1] + d[1] * t];
+};
+/** centre and radius of the inscribed circle */
+const incenter = (A: Pt, B: Pt, C: Pt) => {
+  const a = dist(B, C);
+  const b = dist(A, C);
+  const c = dist(A, B);
+  const s = a + b + c || 1;
+  return { c: [(a * A[0] + b * B[0] + c * C[0]) / s, (a * A[1] + b * B[1] + c * C[1]) / s] as Pt, r: (2 * area([A, B, C])) / s };
+};
+/** centre and radius of the circumscribed circle */
+const circum = (A: Pt, B: Pt, C: Pt) => {
+  const d = 2 * (A[0] * (B[1] - C[1]) + B[0] * (C[1] - A[1]) + C[0] * (A[1] - B[1])) || 1e-9;
+  const sq = (P: Pt) => P[0] ** 2 + P[1] ** 2;
+  const c: Pt = [(sq(A) * (B[1] - C[1]) + sq(B) * (C[1] - A[1]) + sq(C) * (A[1] - B[1])) / d, (sq(A) * (C[0] - B[0]) + sq(B) * (A[0] - C[0]) + sq(C) * (B[0] - A[0])) / d];
+  return { c, r: dist(c, A) };
+};
+/** where the lines p1p2 and p3p4 cross */
+const lineX = (p1: Pt, p2: Pt, p3: Pt, p4: Pt): Pt | null => {
+  const d = (p1[0] - p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] - p4[0]);
+  if (Math.abs(d) < 1e-9) return null;
+  const t = ((p1[0] - p3[0]) * (p3[1] - p4[1]) - (p1[1] - p3[1]) * (p3[0] - p4[0])) / d;
+  return [p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1])];
+};
+
 /* ---------- drawing helpers (world coordinates) ---------- */
 const Poly: React.FC<{ ps: Pt[]; fill?: string; stroke?: string; dash?: boolean; w?: number }> = ({ ps, fill = 'none', stroke = INK, dash, w = 2 }) => (
   <polygon points={ps.map((p) => `${sx(p[0])},${sy(p[1])}`).join(' ')} fill={fill} stroke={stroke} strokeWidth={w} strokeDasharray={dash ? '6 5' : undefined} strokeLinejoin="round" className="transition-[fill] duration-300" />
@@ -559,6 +590,545 @@ const PRESETS: Record<GeomId, Preset> = {
       );
     },
     facts: ({ pts, p, lang }) => [p.m === 1 ? L(lang, 'Симметрия относительно оси Oy: (x; y) → (−x; y)', 'Mirror in the y-axis: (x, y) → (−x, y)') : p.m === 2 ? L(lang, 'Симметрия относительно оси Ox: (x; y) → (x; −y)', 'Mirror in the x-axis: (x, y) → (x, −y)') : L(lang, 'Центральная симметрия: (x; y) → (−x; −y)', 'Point symmetry: (x, y) → (−x, −y)'), `A(${n(pts.A[0])}; ${n(pts.A[1])}) → A′(${n(p.m === 2 ? pts.A[0] : -pts.A[0])}; ${n(p.m === 1 ? pts.A[1] : -pts.A[1])})`, L(lang, 'Фигура и её отражение равны: длины и углы сохраняются.', 'The shape and its image are congruent: lengths and angles are kept.')],
+  },
+  'triangle-lines': {
+    pts: { A: [-5, -3], B: [5, -3], C: [0.5, 3.5] },
+    sliders: [{ k: 'm', ru: '1 медианы, 2 биссектрисы, 3 высоты, 4 серединные перпендикуляры', en: '1 medians, 2 bisectors, 3 altitudes, 4 perpendicular bisectors', min: 1, max: 4, step: 1, v: 1 }],
+    render: ({ pts, p }) => {
+      const { A, B, C } = pts;
+      const T = [A, B, C];
+      const lines: [Pt, Pt][] = [];
+      let point: Pt | null = null;
+      if (p.m === 1) {
+        T.forEach((V, i) => lines.push([V, mid(T[(i + 1) % 3], T[(i + 2) % 3])]));
+        point = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3];
+      } else if (p.m === 2) {
+        T.forEach((V, i) => {
+          const P1 = T[(i + 1) % 3];
+          const P2 = T[(i + 2) % 3];
+          const k = dist(V, P1) / (dist(V, P1) + dist(V, P2));
+          lines.push([V, [P1[0] + (P2[0] - P1[0]) * k, P1[1] + (P2[1] - P1[1]) * k]]);
+        });
+        point = incenter(A, B, C).c;
+      } else if (p.m === 3) {
+        T.forEach((V, i) => lines.push([V, foot(V, T[(i + 1) % 3], T[(i + 2) % 3])]));
+        const O = circum(A, B, C).c;
+        point = [A[0] + B[0] + C[0] - 2 * O[0], A[1] + B[1] + C[1] - 2 * O[1]];
+      } else {
+        const O = circum(A, B, C).c;
+        T.forEach((V, i) => lines.push([mid(V, T[(i + 1) % 3]), O]));
+        point = O;
+      }
+      const colors = [C1, C2, C3];
+      return (
+        <>
+          <Poly ps={T} fill="rgba(142,78,198,0.08)" stroke={INK} w={2.5} />
+          {lines.map(([a, b], i) => (
+            <Seg key={i} a={a} b={b} c={colors[i]} w={2} dash={p.m === 4} />
+          ))}
+          {p.m === 3 && lines.map(([, f], i) => <circle key={`f${i}`} cx={sx(f[0])} cy={sy(f[1])} r={3.5} fill={colors[i]} />)}
+          {p.m === 4 && (() => { const O = circum(A, B, C); return <circle cx={sx(O.c[0])} cy={sy(O.c[1])} r={O.r * U} fill="none" stroke={C4} strokeWidth={1.5} strokeDasharray="5 5" />; })()}
+          {p.m === 2 && (() => { const I = incenter(A, B, C); return <circle cx={sx(I.c[0])} cy={sy(I.c[1])} r={I.r * U} fill="none" stroke={C4} strokeWidth={1.5} strokeDasharray="5 5" />; })()}
+          {point && (
+            <>
+              <circle cx={sx(point[0])} cy={sy(point[1])} r={6} fill={C5} stroke="#fff" strokeWidth={2} />
+              <Txt at={point} c={C5}>{['M', 'I', 'H', 'O'][p.m - 1]}</Txt>
+            </>
+          )}
+        </>
+      );
+    },
+    facts: ({ p, lang }) =>
+      [
+        [L(lang, 'Медианы соединяют вершину с серединой противоположной стороны и пересекаются в одной точке M (центр тяжести).', 'Medians join a vertex to the midpoint of the opposite side and meet at M, the centroid.'), L(lang, 'Точка M делит каждую медиану в отношении 2 : 1, считая от вершины.', 'M splits each median 2 : 1 from the vertex.')],
+        [L(lang, 'Биссектрисы делят углы пополам и пересекаются в точке I — центре вписанной окружности.', 'Bisectors halve the angles and meet at I, the centre of the inscribed circle.'), L(lang, 'Биссектриса делит сторону пропорционально прилежащим сторонам.', 'A bisector splits the side in the ratio of the adjacent sides.')],
+        [L(lang, 'Высоты опущены перпендикулярно на стороны и пересекаются в ортоцентре H.', 'Altitudes drop at right angles and meet at the orthocentre H.'), L(lang, 'У тупоугольного треугольника H лежит снаружи — проверь!', 'In an obtuse triangle H lies outside: try it!')],
+        [L(lang, 'Серединные перпендикуляры к сторонам пересекаются в точке O — центре описанной окружности.', 'Perpendicular bisectors meet at O, the centre of the circumscribed circle.'), L(lang, 'O одинаково удалена от всех трёх вершин.', 'O is equally far from all three vertices.')],
+      ][p.m - 1],
+  },
+  incircle: {
+    pts: { A: [-5, -3], B: [4.5, -3], C: [-1, 3.5] },
+    render: ({ pts }) => {
+      const { A, B, C } = pts;
+      const I = incenter(A, B, C);
+      const O = circum(A, B, C);
+      return (
+        <>
+          <circle cx={sx(O.c[0])} cy={sy(O.c[1])} r={O.r * U} fill="rgba(229,72,77,0.05)" stroke={C2} strokeWidth={2} />
+          <Poly ps={[A, B, C]} fill="rgba(142,78,198,0.10)" stroke={INK} w={2.5} />
+          <circle cx={sx(I.c[0])} cy={sy(I.c[1])} r={I.r * U} fill="rgba(47,91,255,0.08)" stroke={C1} strokeWidth={2} />
+          <Seg a={I.c} b={foot(I.c, A, B)} c={C1} dash />
+          <Seg a={O.c} b={A} c={C2} dash />
+          <circle cx={sx(I.c[0])} cy={sy(I.c[1])} r={4} fill={C1} />
+          <circle cx={sx(O.c[0])} cy={sy(O.c[1])} r={4} fill={C2} />
+          <Txt at={I.c} c={C1}>r</Txt>
+          <Txt at={O.c} c={C2}>R</Txt>
+        </>
+      );
+    },
+    tex: ({ pts }) => {
+      const { A, B, C } = pts;
+      return `r = \\frac{S}{p} = ${n(incenter(A, B, C).r)}, \\quad R = \\frac{abc}{4S} = ${n(circum(A, B, C).r)}`;
+    },
+    facts: ({ lang }) => [L(lang, 'Синяя окружность вписана: касается всех сторон, центр — пересечение биссектрис.', 'Blue is inscribed: it touches every side; its centre is where the bisectors meet.'), L(lang, 'Красная описана: проходит через вершины, центр — пересечение серединных перпендикуляров.', 'Red is circumscribed: through the vertices; its centre is where the perpendicular bisectors meet.'), L(lang, 'У прямоугольного треугольника центр описанной окружности — середина гипотенузы.', 'In a right triangle the circumcentre is the midpoint of the hypotenuse.')],
+  },
+  'chord-tangent': {
+    noAxes: true,
+    pts: { P: [6.5, 1], A: [-2.12, 2.12], B: [-2.12, -2.12] },
+    constrain: (k, pt) => (k === 'P' ? pt : onCircle([0, 0], 3)(k, pt)),
+    render: ({ pts }) => {
+      const O: Pt = [0, 0];
+      const R = 3;
+      const P = pts.P;
+      const d = dist(O, P);
+      const th = Math.atan2(P[1], P[0]);
+      const tang = d > R ? [1, -1].map((s) => [R * Math.cos(th + s * Math.acos(R / d)), R * Math.sin(th + s * Math.acos(R / d))] as Pt) : [];
+      const M = mid(pts.A, pts.B);
+      return (
+        <>
+          <circle cx={sx(0)} cy={sy(0)} r={R * U} fill="rgba(142,78,198,0.06)" stroke={INK} strokeWidth={2} />
+          <circle cx={sx(0)} cy={sy(0)} r={4} fill={INK} />
+          <Txt at={O} dx={-16} dy={18}>O</Txt>
+          {tang.map((T, i) => (
+            <g key={i}>
+              <Seg a={P} b={T} c={C1} w={2.5} />
+              <Seg a={O} b={T} c={GREY} dash />
+              <Arc v={T} a={O} b={P} c={C1} r={12} label={false} />
+              <circle cx={sx(T[0])} cy={sy(T[1])} r={4} fill={C1} />
+            </g>
+          ))}
+          <Seg a={pts.A} b={pts.B} c={C2} w={2.5} />
+          <Seg a={O} b={M} c={C2} dash />
+          {dist(pts.A, pts.B) > 0.3 && <Arc v={M} a={O} b={pts.A} c={C2} r={10} label={false} />}
+        </>
+      );
+    },
+    facts: ({ pts, lang }) => {
+      const d = dist([0, 0], pts.P);
+      return [
+        d > 3 ? `${L(lang, 'Отрезки касательных из одной точки равны', 'Tangent segments from one point are equal')}: PT = √(OP² − R²) = √(${n(d * d)} − 9) = ${n(Math.sqrt(d * d - 9))}` : L(lang, 'Точка P внутри круга — касательных из неё нет.', 'P is inside the circle: no tangents from it.'),
+        L(lang, 'Касательная перпендикулярна радиусу, проведённому в точку касания.', 'A tangent is perpendicular to the radius at the point of contact.'),
+        `${L(lang, 'Хорда AB', 'Chord AB')} = ${n(dist(pts.A, pts.B))}; ${L(lang, 'перпендикуляр из центра делит её пополам', 'the perpendicular from the centre halves it')}.`,
+      ];
+    },
+  },
+  thales: {
+    noAxes: true,
+    pts: { R: [6, 3.5] },
+    sliders: [
+      { k: 'tilt', ru: 'Наклон параллельных прямых', en: 'Tilt of the parallel lines', min: 40, max: 140, step: 5, v: 110 },
+      { k: 's', ru: 'Шаг на нижнем луче', en: 'Step on the lower ray', min: 1, max: 4, step: 0.25, v: 3 },
+    ],
+    render: ({ pts, p }) => {
+      const O: Pt = [-7, -3.5];
+      const u = [pts.R[0] - O[0], pts.R[1] - O[1]];
+      const D = [Math.cos((p.tilt * Math.PI) / 180), Math.sin((p.tilt * Math.PI) / 180)];
+      const Bs: Pt[] = [];
+      const As: Pt[] = [];
+      for (let i = 1; i <= 3; i++) {
+        const Ai: Pt = [O[0] + i * p.s, O[1]];
+        // A + μD = O + λu
+        const det = D[0] * -u[1] - D[1] * -u[0];
+        const lam = (D[0] * (Ai[1] - O[1]) - D[1] * (Ai[0] - O[0])) / -det;
+        As.push(Ai);
+        Bs.push([O[0] + lam * u[0], O[1] + lam * u[1]]);
+      }
+      return (
+        <>
+          <Seg a={O} b={[7.5, -3.5]} w={2.5} />
+          <Seg a={O} b={pts.R} w={2.5} />
+          {As.map((a, i) => (
+            <g key={i}>
+              <Seg a={a} b={Bs[i]} c={[C1, C2, C3][i]} w={2} />
+              <circle cx={sx(a[0])} cy={sy(a[1])} r={4} fill={INK} />
+              <circle cx={sx(Bs[i][0])} cy={sy(Bs[i][1])} r={4} fill={INK} />
+              <Txt at={a} dx={-4} dy={20}>A{i + 1}</Txt>
+              <Txt at={Bs[i]} dx={-26}>B{i + 1}</Txt>
+            </g>
+          ))}
+          <Txt at={O} dx={-6} dy={20}>O</Txt>
+        </>
+      );
+    },
+    facts: ({ pts, p, lang }) => {
+      const u = dist([-7, -3.5], pts.R);
+      void u;
+      return [L(lang, `OA₁ = A₁A₂ = A₂A₃ = ${n(p.s)} — и на другой стороне отрезки тоже равны: теорема Фалеса.`, `OA₁ = A₁A₂ = A₂A₃ = ${n(p.s)}, so the segments on the other side are equal too: Thales’ theorem.`), L(lang, 'Параллельные прямые отсекают на сторонах угла пропорциональные отрезки (обобщённая теорема Фалеса).', 'Parallel lines cut the sides of an angle into proportional segments.'), L(lang, 'Двигай точку R и меняй наклон — равенство сохраняется.', 'Drag R and change the tilt: the equality stays.')];
+    },
+  },
+  midline: {
+    pts: { A: [-6, -3], B: [-1, 3.5], C: [5, -3] },
+    render: ({ pts }) => {
+      const { A, B, C } = pts;
+      const M = mid(A, B);
+      const N = mid(B, C);
+      return (
+        <>
+          <Poly ps={[A, B, C]} fill="rgba(142,78,198,0.08)" stroke={INK} w={2.5} />
+          <Seg a={A} b={C} c={C1} w={4} />
+          <Seg a={M} b={N} c={C2} w={4} />
+          <circle cx={sx(M[0])} cy={sy(M[1])} r={5} fill={C2} />
+          <circle cx={sx(N[0])} cy={sy(N[1])} r={5} fill={C2} />
+          <Txt at={M} c={C2} dx={-24}>M</Txt>
+          <Txt at={N} c={C2}>N</Txt>
+        </>
+      );
+    },
+    tex: ({ pts }) => `MN = \\frac{AC}{2} = \\frac{${n(dist(pts.A, pts.C))}}{2} = ${n(dist(pts.A, pts.C) / 2)}`,
+    facts: ({ lang }) => [L(lang, 'Средняя линия соединяет середины двух сторон.', 'A midline joins the midpoints of two sides.'), L(lang, 'Она параллельна третьей стороне и равна её половине.', 'It is parallel to the third side and half as long.'), L(lang, 'Средняя линия отсекает треугольник, подобный исходному с k = ½ — его площадь в 4 раза меньше.', 'It cuts off a similar triangle with k = ½, a quarter of the area.')],
+  },
+  trapezoid: {
+    pts: { A: [-6, -3], B: [6, -3], C: [3, 2], D: [-3, 2] },
+    constrain: (k, pt) => [Math.max(-7.5, Math.min(7.5, pt[0])), k === 'A' || k === 'B' ? -3 : 2],
+    render: ({ pts }) => {
+      const { A, B, C, D } = pts;
+      const M = mid(A, D);
+      const N = mid(B, C);
+      const O = lineX(A, C, B, D);
+      return (
+        <>
+          <Poly ps={[A, B, C, D]} fill="rgba(142,78,198,0.10)" stroke={INK} w={2.5} />
+          <Seg a={M} b={N} c={C2} w={3.5} />
+          <Seg a={A} b={C} c={GREY} dash />
+          <Seg a={B} b={D} c={GREY} dash />
+          <Seg a={D} b={[D[0], -3]} c={C1} dash />
+          <Txt at={[D[0], -0.5]} c={C1}>h = 5</Txt>
+          {O && <circle cx={sx(O[0])} cy={sy(O[1])} r={4} fill={GREY} />}
+        </>
+      );
+    },
+    tex: ({ pts }) => {
+      const a = dist(pts.A, pts.B);
+      const b = dist(pts.C, pts.D);
+      return `m = \\frac{a + b}{2} = ${n((a + b) / 2)}, \\quad S = \\frac{a + b}{2} \\cdot h = ${n(((a + b) / 2) * 5)}`;
+    },
+    facts: ({ pts, lang }) => {
+      const iso = Math.abs(dist(pts.A, pts.D) - dist(pts.B, pts.C)) < 0.05;
+      return [`${L(lang, 'Основания', 'Bases')}: a = ${n(dist(pts.A, pts.B))}, b = ${n(dist(pts.C, pts.D))}`, L(lang, 'Средняя линия (красная) параллельна основаниям и равна их полусумме.', 'The midline (red) is parallel to the bases and equals their half-sum.'), iso ? L(lang, 'Трапеция равнобедренная: боковые стороны и диагонали равны.', 'An isosceles trapezoid: equal legs and equal diagonals.') : L(lang, 'Сделай боковые стороны равными — получится равнобедренная трапеция.', 'Make the legs equal to get an isosceles trapezoid.')];
+    },
+  },
+  parallelogram: {
+    pts: { A: [-5, -2.5], B: [3, -2.5], D: [-2, 2.5] },
+    render: ({ pts }) => {
+      const { A, B, D } = pts;
+      const C: Pt = [B[0] + D[0] - A[0], B[1] + D[1] - A[1]];
+      const O = mid(A, C);
+      return (
+        <>
+          <Poly ps={[A, B, C, D]} fill="rgba(142,78,198,0.10)" stroke={INK} w={2.5} />
+          <Seg a={A} b={C} c={C1} w={2} />
+          <Seg a={B} b={D} c={C2} w={2} />
+          <circle cx={sx(O[0])} cy={sy(O[1])} r={5} fill={C5} />
+          <Arc v={A} a={B} b={D} c={C3} r={24} />
+          <Arc v={B} a={C} b={A} c={C4} r={24} />
+          <Txt at={C} dx={10}>C</Txt>
+          <Txt at={O} c={C5}>O</Txt>
+        </>
+      );
+    },
+    tex: ({ pts }) => {
+      const { A, B, D } = pts;
+      const S = Math.abs((B[0] - A[0]) * (D[1] - A[1]) - (B[1] - A[1]) * (D[0] - A[0]));
+      return `S = ab\\sin\\alpha = ${n(S)}`;
+    },
+    facts: ({ pts, lang }) => {
+      const { A, B, D } = pts;
+      const C: Pt = [B[0] + D[0] - A[0], B[1] + D[1] - A[1]];
+      const right = Math.abs(deg(A, B, D) - 90) < 0.5;
+      const eq = Math.abs(dist(A, B) - dist(A, D)) < 0.05;
+      return [L(lang, 'Диагонали делятся точкой пересечения O пополам', 'The diagonals bisect each other at O') + `: AO = ${n(dist(A, C) / 2)}, BO = ${n(dist(B, D) / 2)}`, L(lang, 'Соседние углы в сумме 180°, противоположные равны.', 'Neighbouring angles add to 180°, opposite ones are equal.'), right && eq ? L(lang, 'Это квадрат!', 'It is a square!') : right ? L(lang, 'Это прямоугольник: диагонали равны.', 'A rectangle: equal diagonals.') : eq ? L(lang, 'Это ромб: диагонали перпендикулярны.', 'A rhombus: perpendicular diagonals.') : L(lang, 'Сделай угол прямым или стороны равными.', 'Make a right angle or equal sides.')];
+    },
+  },
+  sector: {
+    noAxes: true,
+    sliders: [
+      { k: 'R', ru: 'Радиус R', en: 'Radius R', min: 1, max: 4.5, step: 0.5, v: 4 },
+      { k: 'a', ru: 'Центральный угол α, °', en: 'Central angle α, °', min: 10, max: 360, step: 5, v: 120 },
+    ],
+    render: ({ p }) => {
+      const c: Pt = [-1.5, 0];
+      const a = (p.a * Math.PI) / 180;
+      const P0: Pt = [c[0] + p.R, 0];
+      const P1: Pt = [c[0] + p.R * Math.cos(a), p.R * Math.sin(a)];
+      const path = p.a >= 360 ? '' : `M ${sx(c[0])} ${sy(0)} L ${sx(P0[0])} ${sy(0)} A ${p.R * U} ${p.R * U} 0 ${p.a > 180 ? 1 : 0} 0 ${sx(P1[0])} ${sy(P1[1])} Z`;
+      return (
+        <>
+          <circle cx={sx(c[0])} cy={sy(0)} r={p.R * U} fill="none" stroke={GREY} strokeWidth={1.5} strokeDasharray="5 5" />
+          {p.a >= 360 ? <circle cx={sx(c[0])} cy={sy(0)} r={p.R * U} fill="rgba(142,78,198,0.25)" stroke={C4} strokeWidth={3} /> : <path d={path} fill="rgba(142,78,198,0.25)" stroke={C4} strokeWidth={2.5} />}
+          {p.a < 360 && <path d={`M ${sx(P0[0])} ${sy(0)} A ${p.R * U} ${p.R * U} 0 ${p.a > 180 ? 1 : 0} 0 ${sx(P1[0])} ${sy(P1[1])}`} fill="none" stroke={C2} strokeWidth={5} />}
+          <circle cx={sx(c[0])} cy={sy(0)} r={4} fill={INK} />
+          <Txt at={[c[0] + 0.3, 0.3]} c={C4}>α = {p.a}°</Txt>
+        </>
+      );
+    },
+    tex: ({ p }) => `l = \\frac{\\pi R \\alpha}{180^\\circ} = ${n((Math.PI * p.R * p.a) / 180)}, \\quad S = \\frac{\\pi R^2 \\alpha}{360^\\circ} = ${n((Math.PI * p.R * p.R * p.a) / 360)}`,
+    facts: ({ p, lang }) => [L(lang, 'Красная дуга — часть окружности, фиолетовый сектор — часть круга.', 'The red arc is part of the circle, the purple sector part of the disc.'), `${L(lang, 'Доля круга', 'Share of the disc')}: ${p.a}/360 = ${n(p.a / 360, 3)}`, `${L(lang, 'В радианах', 'In radians')}: α = ${n((p.a * Math.PI) / 180, 3)}, ${L(lang, 'тогда', 'so')} l = Rα, S = R²α/2`],
+  },
+  transform2d: {
+    pts: { A: [1, 1], B: [4, 1], C: [2, 3.5], V: [-4, -2] },
+    sliders: [
+      { k: 'm', ru: '1 перенос на вектор, 2 поворот, 3 гомотетия', en: '1 translation, 2 rotation, 3 dilation', min: 1, max: 3, step: 1, v: 2 },
+      { k: 'phi', ru: 'Угол поворота φ, °', en: 'Rotation angle φ, °', min: -180, max: 180, step: 15, v: 90 },
+      { k: 'k', ru: 'Коэффициент гомотетии k', en: 'Dilation factor k', min: -2, max: 2, step: 0.25, v: -1 },
+    ],
+    render: ({ pts, p }) => {
+      const ks = ['A', 'B', 'C'];
+      const ph = (p.phi * Math.PI) / 180;
+      const f = (q: Pt): Pt => (p.m === 1 ? [q[0] + pts.V[0], q[1] + pts.V[1]] : p.m === 2 ? [q[0] * Math.cos(ph) - q[1] * Math.sin(ph), q[0] * Math.sin(ph) + q[1] * Math.cos(ph)] : [q[0] * p.k, q[1] * p.k]);
+      return (
+        <>
+          {p.m === 1 && <Seg a={[0, 0]} b={pts.V} c={C5} w={3} arrow />}
+          {p.m !== 1 && <circle cx={sx(0)} cy={sy(0)} r={6} fill={C2} />}
+          {ks.map((k) => (
+            <Seg key={k} a={pts[k]} b={f(pts[k])} c="#B9BCC4" dash w={1.5} />
+          ))}
+          <Poly ps={ks.map((k) => pts[k])} fill="rgba(47,91,255,0.15)" stroke={C1} w={3} />
+          <Poly ps={ks.map((k) => f(pts[k]))} fill="rgba(142,78,198,0.18)" stroke={C4} w={3} />
+          {ks.map((k) => (
+            <Txt key={k} at={f(pts[k])} c={C4}>{k}′</Txt>
+          ))}
+        </>
+      );
+    },
+    facts: ({ p, lang }) =>
+      p.m === 1
+        ? [L(lang, 'Параллельный перенос: все точки сдвигаются на один и тот же вектор V.', 'Translation: every point moves by the same vector V.'), L(lang, 'Это движение — расстояния и углы сохраняются.', 'It is an isometry: lengths and angles are kept.')]
+        : p.m === 2
+          ? [L(lang, `Поворот вокруг точки O на ${p.phi}°: каждая точка остаётся на том же расстоянии от O.`, `Rotation about O by ${p.phi}°: every point keeps its distance to O.`), L(lang, 'Поворот на 180° — это центральная симметрия.', 'A 180° turn is point symmetry.')]
+          : [L(lang, `Гомотетия с центром O и k = ${n(p.k)}: расстояния от O умножаются на |k|.`, `Dilation about O with k = ${n(p.k)} multiplies distances from O by |k|.`), L(lang, `Фигура подобна исходной, площадь меняется в k² = ${n(p.k * p.k)} раза. При k < 0 — переворот через O.`, `The image is similar; the area changes by k² = ${n(p.k * p.k)}. With k < 0 it flips through O.`)],
+  },
+  venn: {
+    noAxes: true,
+    sliders: [
+      { k: 'a', ru: 'Только в A', en: 'Only in A', min: 0, max: 20, step: 1, v: 8 },
+      { k: 'ab', ru: 'И в A, и в B', en: 'In A and B', min: 0, max: 20, step: 1, v: 5 },
+      { k: 'b', ru: 'Только в B', en: 'Only in B', min: 0, max: 20, step: 1, v: 6 },
+      { k: 'o', ru: 'Ни в A, ни в B', en: 'In neither', min: 0, max: 20, step: 1, v: 3 },
+      { k: 'h', ru: 'Подсветить: 1 A∪B, 2 A∩B, 3 A\\B, 4 B\\A', en: 'Highlight: 1 A∪B, 2 A∩B, 3 A\\B, 4 B\\A', min: 1, max: 4, step: 1, v: 2 },
+    ],
+    render: ({ p }) => {
+      const r = 3 * U;
+      const ax = sx(-1.6);
+      const bx = sx(1.6);
+      const cy = sy(0);
+      const hl = 'rgba(142,78,198,0.45)';
+      return (
+        <>
+          <defs>
+            <clipPath id="vennA"><circle cx={ax} cy={cy} r={r} /></clipPath>
+            <clipPath id="vennB"><circle cx={bx} cy={cy} r={r} /></clipPath>
+            <mask id="notB"><rect x="0" y="0" width={VW} height={VH} fill="white" /><circle cx={bx} cy={cy} r={r} fill="black" /></mask>
+            <mask id="notA"><rect x="0" y="0" width={VW} height={VH} fill="white" /><circle cx={ax} cy={cy} r={r} fill="black" /></mask>
+          </defs>
+          <rect x={sx(-7)} y={sy(4.4)} width={14 * U} height={8.8 * U} rx={12} fill="#F6F5F1" stroke={GREY} />
+          {p.h === 1 && (
+            <>
+              <circle cx={ax} cy={cy} r={r} fill={hl} />
+              <circle cx={bx} cy={cy} r={r} fill={hl} />
+            </>
+          )}
+          {p.h === 2 && <circle cx={bx} cy={cy} r={r} fill={hl} clipPath="url(#vennA)" />}
+          {p.h === 3 && <circle cx={ax} cy={cy} r={r} fill={hl} mask="url(#notB)" />}
+          {p.h === 4 && <circle cx={bx} cy={cy} r={r} fill={hl} mask="url(#notA)" />}
+          <circle cx={ax} cy={cy} r={r} fill="none" stroke={C1} strokeWidth={3} />
+          <circle cx={bx} cy={cy} r={r} fill="none" stroke={C2} strokeWidth={3} />
+          <Txt at={[-4.3, 2.6]} c={C1} size={22}>A</Txt>
+          <Txt at={[3.6, 2.6]} c={C2} size={22}>B</Txt>
+          <Txt at={[-3.1, 0]} dx={0} dy={8} size={24}>{p.a}</Txt>
+          <Txt at={[-0.25, 0]} dx={0} dy={8} size={24}>{p.ab}</Txt>
+          <Txt at={[2.6, 0]} dx={0} dy={8} size={24}>{p.b}</Txt>
+          <Txt at={[5.6, -3.6]} dx={0} dy={8} size={20}>{p.o}</Txt>
+        </>
+      );
+    },
+    tex: ({ p }) => `|A \\cup B| = |A| + |B| - |A \\cap B| = ${p.a + p.ab} + ${p.b + p.ab} - ${p.ab} = ${p.a + p.b + p.ab}`,
+    facts: ({ p, lang }) => [`|A| = ${p.a + p.ab}, |B| = ${p.b + p.ab}, |A ∩ B| = ${p.ab}`, `|A \\ B| = ${p.a}, |B \\ A| = ${p.b}; ${L(lang, 'всего элементов', 'all elements')}: ${p.a + p.b + p.ab + p.o}`, L(lang, 'Пересечение считали дважды — поэтому его вычитают.', 'The overlap was counted twice, so it is subtracted once.')],
+  },
+  'sine-law': {
+    pts: { A: [-5, -2.5], B: [4.5, -2.5], C: [-0.5, 3] },
+    render: ({ pts }) => {
+      const { A, B, C } = pts;
+      const O = circum(A, B, C);
+      return (
+        <>
+          <circle cx={sx(O.c[0])} cy={sy(O.c[1])} r={O.r * U} fill="none" stroke={GREY} strokeWidth={1.5} strokeDasharray="5 5" />
+          <Poly ps={[A, B, C]} fill="rgba(142,78,198,0.10)" stroke={INK} w={2.5} />
+          <Arc v={A} a={B} b={C} c={C1} />
+          <Arc v={B} a={C} b={A} c={C2} />
+          <Arc v={C} a={A} b={B} c={C3} />
+          <Seg a={O.c} b={C} c={C4} dash />
+          <Txt at={mid(O.c, C)} c={C4}>R</Txt>
+          <Txt at={mid(B, C)} c={C1}>a</Txt>
+          <Txt at={mid(A, C)} c={C2} dx={-20}>b</Txt>
+          <Txt at={mid(A, B)} c={C3} dy={20}>c</Txt>
+        </>
+      );
+    },
+    tex: ({ pts }) => {
+      const { A, B, C } = pts;
+      const a = dist(B, C);
+      const sA = Math.sin((deg(A, B, C) * Math.PI) / 180);
+      return `\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R = ${n(a / sA)}`;
+    },
+    facts: ({ pts, lang }) => {
+      const { A, B, C } = pts;
+      const r = (x: number, ang: number) => n(x / Math.sin((ang * Math.PI) / 180));
+      return [`a / sin A = ${r(dist(B, C), deg(A, B, C))}, b / sin B = ${r(dist(A, C), deg(B, A, C))}, c / sin C = ${r(dist(A, B), deg(C, A, B))}`, L(lang, 'Все три отношения равны диаметру описанной окружности.', 'All three ratios equal the diameter of the circumcircle.'), `${L(lang, 'Теорема косинусов', 'Law of cosines')}: c² = a² + b² − 2ab·cos C`];
+    },
+  },
+  'tri-ineq': {
+    noAxes: true,
+    sliders: [
+      { k: 'a', ru: 'Сторона a', en: 'Side a', min: 1, max: 8, step: 0.5, v: 4 },
+      { k: 'b', ru: 'Сторона b', en: 'Side b', min: 1, max: 8, step: 0.5, v: 3 },
+      { k: 'c', ru: 'Сторона c (основание)', en: 'Side c (base)', min: 1, max: 10, step: 0.5, v: 6 },
+    ],
+    render: ({ p, lang }) => {
+      const A: Pt = [-p.c / 2, -2.5];
+      const B: Pt = [p.c / 2, -2.5];
+      // C: |AC| = b, |BC| = a
+      const x = (p.b * p.b - p.a * p.a + p.c * p.c) / (2 * p.c);
+      const y2 = p.b * p.b - x * x;
+      const ok = p.a + p.b > p.c && p.a + p.c > p.b && p.b + p.c > p.a;
+      const C: Pt | null = y2 > 0 ? [A[0] + x, -2.5 + Math.sqrt(y2)] : null;
+      return (
+        <>
+          <circle cx={sx(A[0])} cy={sy(A[1])} r={p.b * U} fill="none" stroke={C2} strokeDasharray="5 5" />
+          <circle cx={sx(B[0])} cy={sy(B[1])} r={p.a * U} fill="none" stroke={C1} strokeDasharray="5 5" />
+          <Seg a={A} b={B} c={C3} w={4} />
+          {ok && C ? (
+            <>
+              <Poly ps={[A, B, C]} fill="rgba(48,164,108,0.15)" stroke={INK} w={2.5} />
+              <circle cx={sx(C[0])} cy={sy(C[1])} r={5} fill={INK} />
+            </>
+          ) : (
+            <Txt at={[-3.5, 3.6]} c={C2} size={18}>
+              {L(lang, 'Окружности не пересекаются — треугольника нет', 'The circles do not meet: no triangle')}
+            </Txt>
+          )}
+        </>
+      );
+    },
+    tex: ({ p }) => `${n(p.a)} + ${n(p.b)} ${p.a + p.b > p.c ? '>' : '\\le'} ${n(p.c)}`,
+    facts: ({ p, lang }) => {
+      const ok = p.a + p.b > p.c && p.a + p.c > p.b && p.b + p.c > p.a;
+      return [ok ? L(lang, 'Треугольник существует: каждая сторона меньше суммы двух других.', 'The triangle exists: every side is shorter than the other two together.') : L(lang, 'Треугольника нет: одна сторона не меньше суммы двух других.', 'No triangle: one side is at least the sum of the other two.'), L(lang, 'Проверять достаточно самую большую сторону.', 'It is enough to check the longest side.'), L(lang, 'Пунктиры — все точки на расстоянии a и b от концов основания; вершина там, где они пересекаются.', 'The dashed circles hold every point a and b away; the apex is where they meet.')];
+    },
+  },
+  distributive: {
+    noAxes: true,
+    sliders: [
+      { k: 'a', ru: 'a', en: 'a', min: 1, max: 4, step: 0.5, v: 3 },
+      { k: 'b', ru: 'b', en: 'b', min: 1, max: 6, step: 0.5, v: 4 },
+      { k: 'c', ru: 'c', en: 'c', min: 1, max: 5, step: 0.5, v: 2.5 },
+    ],
+    render: ({ p }) => {
+      const x0 = -(p.b + p.c) / 2;
+      const y0 = p.a / 2;
+      return (
+        <>
+          <rect x={sx(x0)} y={sy(y0)} width={p.b * U} height={p.a * U} fill={C1} fillOpacity={0.7} stroke="#fff" strokeWidth={3} />
+          <rect x={sx(x0 + p.b)} y={sy(y0)} width={p.c * U} height={p.a * U} fill={C2} fillOpacity={0.7} stroke="#fff" strokeWidth={3} />
+          <text x={sx(x0 + p.b / 2)} y={sy(0) + 6} textAnchor="middle" fontSize={20} fontWeight={700} fill="#fff">ab</text>
+          <text x={sx(x0 + p.b + p.c / 2)} y={sy(0) + 6} textAnchor="middle" fontSize={20} fontWeight={700} fill="#fff">ac</text>
+          <Txt at={[x0 + p.b / 2, y0]} dx={-6} dy={-10} c={C1}>b = {n(p.b)}</Txt>
+          <Txt at={[x0 + p.b + p.c / 2, y0]} dx={-6} dy={-10} c={C2}>c = {n(p.c)}</Txt>
+          <Txt at={[x0, 0]} dx={-58} dy={6}>a = {n(p.a)}</Txt>
+        </>
+      );
+    },
+    tex: ({ p }) => `a(b + c) = ab + ac: \\; ${n(p.a)} \\cdot ${n(p.b + p.c)} = ${n(p.a * p.b)} + ${n(p.a * p.c)} = ${n(p.a * (p.b + p.c))}`,
+    facts: ({ lang }) => [L(lang, 'Площадь большого прямоугольника равна сумме площадей двух частей — так работает раскрытие скобок.', 'The big area equals the two parts: that is how brackets open.'), L(lang, 'Обратно: ab + ac = a(b + c) — вынесение общего множителя за скобки.', 'Backwards: ab + ac = a(b + c), taking out a common factor.'), L(lang, 'Если перед скобкой минус, знаки внутри меняются: −(b − c) = −b + c.', 'A minus in front flips the signs inside: −(b − c) = −b + c.')],
+  },
+  'diff-squares': {
+    noAxes: true,
+    sliders: [
+      { k: 'a', ru: 'a', en: 'a', min: 2, max: 5, step: 0.5, v: 4 },
+      { k: 'b', ru: 'b', en: 'b', min: 0.5, max: 3.5, step: 0.5, v: 1.5 },
+    ],
+    render: ({ p }) => {
+      const b = Math.min(p.b, p.a - 0.5);
+      const x0 = -7;
+      const y0 = p.a / 2;
+      const rx = 1.5;
+      return (
+        <>
+          {/* a² with the b² corner cut out */}
+          <rect x={sx(x0)} y={sy(y0)} width={(p.a - b) * U} height={p.a * U} fill={C1} fillOpacity={0.7} stroke="#fff" strokeWidth={2} />
+          <rect x={sx(x0 + p.a - b)} y={sy(y0 - b)} width={b * U} height={(p.a - b) * U} fill={C2} fillOpacity={0.7} stroke="#fff" strokeWidth={2} />
+          <rect x={sx(x0 + p.a - b)} y={sy(y0)} width={b * U} height={b * U} fill="none" stroke={GREY} strokeDasharray="4 4" />
+          <text x={sx(x0 + p.a / 2)} y={sy(y0) - 8} textAnchor="middle" fontSize={14} fill={INK}>a² − b²</text>
+          {/* the same pieces stacked: one rectangle (a − b) wide and (a + b) tall */}
+          <rect x={sx(rx)} y={sy((p.a + b) / 2)} width={(p.a - b) * U} height={p.a * U} fill={C1} fillOpacity={0.7} stroke="#fff" strokeWidth={2} />
+          <rect x={sx(rx)} y={sy((p.a + b) / 2 - p.a)} width={(p.a - b) * U} height={b * U} fill={C2} fillOpacity={0.7} stroke="#fff" strokeWidth={2} />
+          <text x={sx(rx + (p.a - b) / 2)} y={sy((p.a + b) / 2) - 8} textAnchor="middle" fontSize={14} fill={INK}>(a − b)(a + b)</text>
+          <text x={sx(-0.25)} y={sy(0) + 8} textAnchor="middle" fontSize={26} fill={INK}>=</text>
+        </>
+      );
+    },
+    tex: ({ p }) => {
+      const b = Math.min(p.b, p.a - 0.5);
+      return `a^2 - b^2 = (a - b)(a + b): \\; ${n(p.a * p.a)} - ${n(b * b)} = ${n(p.a - b)} \\cdot ${n(p.a + b)} = ${n(p.a * p.a - b * b)}`;
+    },
+    facts: ({ lang }) => [L(lang, 'Из квадрата a² вырезали квадрат b², а красную полоску переставили вбок — вышел прямоугольник (a − b)(a + b).', 'Cut b² out of a² and move the red strip aside: you get an (a − b)(a + b) rectangle.'), L(lang, 'Так считают устно: 49 · 51 = 50² − 1² = 2499.', 'Mental maths: 49 · 51 = 50² − 1² = 2499.'), L(lang, 'Разложение на множители — это и есть обратный путь от суммы к произведению.', 'Factoring is the way back from a sum to a product.')],
+  },
+  units: {
+    noAxes: true,
+    sliders: [{ k: 'v', ru: 'Длина, мм', en: 'Length, mm', min: 1, max: 1500, step: 1, v: 125 }],
+    render: ({ p }) => {
+      const short = p.v <= 150;
+      const scale = short ? 0.09 : 0.009; // world units per mm
+      const len = p.v * scale;
+      const x0 = -6.75;
+      const ticks = short ? 150 : 150; // 15 cm or 1.5 m
+      return (
+        <>
+          <rect x={sx(x0)} y={sy(1.2)} width={13.5 * U} height={1.4 * U} rx={6} fill="#F4E6C8" stroke="#C8A86A" />
+          {Array.from({ length: ticks + 1 }, (_, i) => {
+            const x = x0 + i * 0.09;
+            const big = short ? i % 10 === 0 : i % 10 === 0;
+            const mid5 = i % 5 === 0;
+            return <line key={i} x1={sx(x)} x2={sx(x)} y1={sy(1.2)} y2={sy(1.2) + (big ? 22 : mid5 ? 15 : 8)} stroke="#6B5530" strokeWidth={big ? 1.5 : 0.8} />;
+          })}
+          {Array.from({ length: 16 }, (_, i) => (
+            <text key={i} x={sx(x0 + i * 0.9) + 2} y={sy(1.2) + 36} fontSize={11} fill="#6B5530">{short ? i : i * 10}</text>
+          ))}
+          <text x={sx(x0 + 13.2)} y={sy(1.2) + 36} fontSize={11} fill="#6B5530">{short ? 'см' : 'см'}</text>
+          <rect x={sx(x0)} y={sy(-0.4)} width={Math.min(13.5, len) * U} height={0.7 * U} rx={6} fill={C1} />
+          <text x={sx(x0) + 6} y={sy(-0.4) + 0.5 * U} fontSize={14} fontWeight={700} fill="#fff">{p.v} мм</text>
+        </>
+      );
+    },
+    tex: ({ p }) => `${p.v}\\text{ мм} = ${n(p.v / 10)}\\text{ см} = ${n(p.v / 100)}\\text{ дм} = ${n(p.v / 1000, 3)}\\text{ м}`,
+    facts: ({ lang }) => [L(lang, '1 см = 10 мм, 1 дм = 10 см, 1 м = 100 см = 1000 мм, 1 км = 1000 м.', '1 cm = 10 mm, 1 dm = 10 cm, 1 m = 100 cm = 1000 mm, 1 km = 1000 m.'), L(lang, 'Масса: 1 кг = 1000 г, 1 т = 1000 кг. Время: 1 ч = 60 мин = 3600 с.', 'Mass: 1 kg = 1000 g, 1 t = 1000 kg. Time: 1 h = 60 min = 3600 s.'), L(lang, 'Площадь: 1 м² = 100 дм² = 10 000 см² — степень «единицы» возводится в квадрат!', 'Area: 1 m² = 100 dm² = 10,000 cm²: the factor gets squared!')],
+  },
+  scale: {
+    noAxes: true,
+    sliders: [
+      { k: 'N', ru: 'Масштаб 1 : N (тысяч)', en: 'Scale 1 : N (thousands)', min: 1, max: 100, step: 1, v: 25 },
+      { k: 'l', ru: 'Расстояние на карте, см', en: 'Map distance, cm', min: 1, max: 12, step: 0.5, v: 6 },
+    ],
+    render: ({ p }) => {
+      const A: Pt = [-6, -1];
+      const B: Pt = [-6 + p.l, 1.5];
+      return (
+        <>
+          <rect x={sx(-7.2)} y={sy(3.8)} width={14.4 * U} height={7.4 * U} rx={12} fill="#EAF3E6" stroke="#A9C9A0" />
+          <path d={`M ${sx(-7)} ${sy(-2.5)} C ${sx(-3)} ${sy(-1)}, ${sx(0)} ${sy(-3)}, ${sx(7)} ${sy(-1.5)}`} fill="none" stroke="#7FB2E5" strokeWidth={10} strokeLinecap="round" />
+          <Seg a={A} b={B} c={C2} w={4} />
+          <circle cx={sx(A[0])} cy={sy(A[1])} r={7} fill={C2} />
+          <circle cx={sx(B[0])} cy={sy(B[1])} r={7} fill={C2} />
+          <Txt at={A} dx={-10} dy={22}>A</Txt>
+          <Txt at={B}>B</Txt>
+          <rect x={sx(-6.8)} y={sy(-3.2)} width={2 * U} height={8} fill={INK} />
+          <rect x={sx(-4.8)} y={sy(-3.2)} width={2 * U} height={8} fill="#fff" stroke={INK} />
+          <text x={sx(-6.8)} y={sy(-3.2) + 22} fontSize={11} fill={INK}>0</text>
+          <text x={sx(-2.9)} y={sy(-3.2) + 22} fontSize={11} fill={INK}>{n((2 * p.N * 1000) / 100000, 2)} км</text>
+        </>
+      );
+    },
+    tex: ({ p }) => `${n(p.l)}\\text{ см} \\cdot ${p.N * 1000} = ${n(p.l * p.N * 1000)}\\text{ см} = ${n((p.l * p.N * 1000) / 100000, 3)}\\text{ км}`,
+    facts: ({ p, lang }) => [L(lang, `Масштаб 1 : ${p.N * 1000} — 1 см на карте равен ${p.N * 1000} см = ${n((p.N * 1000) / 100000, 3)} км на местности.`, `Scale 1 : ${p.N * 1000}: 1 cm on the map is ${n((p.N * 1000) / 100000, 3)} km on the ground.`), L(lang, 'Чем больше N, тем мельче карта и тем больше места на ней помещается.', 'The bigger N, the smaller the map scale and the more ground it covers.'), L(lang, 'Площади меняются в N² раз!', 'Areas change N² times!')],
   },
 };
 

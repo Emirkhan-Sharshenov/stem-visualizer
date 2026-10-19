@@ -76,7 +76,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-frac-of', subject: 'mathematics', grade: 5, topics: ['m5-fractions', 'm6-fraction-mult'], title: t('Дробь от числа', 'Fraction of a number'),
+    id: 'm-frac-of', subject: 'mathematics', grade: 5, topics: ['m5-fractions', 'm6-fraction-mult', 'm6-fraction-of-number'], title: t('Дробь от числа', 'Fraction of a number'),
     make: (r) => {
       const q = int(r, 3, 9);
       const p = int(r, 1, q - 1);
@@ -252,7 +252,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
   },
   /* ===== grade 7 ===== */
   {
-    id: 'm-expr-value', subject: 'mathematics', grade: 7, topics: ['m7-expressions'], title: t('Значение выражения', 'Evaluating an expression'),
+    id: 'm-expr-value', subject: 'mathematics', grade: 7, topics: ['m7-expressions', 'm6-brackets'], title: t('Значение выражения', 'Evaluating an expression'),
     make: (r) => {
       const a = nz(r, -6, 8);
       const b = nz(r, -6, 8);
@@ -289,7 +289,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-short-mult', subject: 'mathematics', grade: 7, topics: ['m7-short-mult'], title: t('Формулы сокращённого умножения', 'Special products'),
+    id: 'm-short-mult', subject: 'mathematics', grade: 7, topics: ['m7-short-mult', 'm7-factoring'], title: t('Формулы сокращённого умножения', 'Special products'),
     make: (r) => {
       const base = pick(r, [20, 30, 40, 50, 60, 70, 80, 90, 100]);
       const d = int(r, 1, 4);
@@ -319,7 +319,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-angles', subject: 'mathematics', grade: 7, topics: ['m7-geo-angles', 'm7-parallel', 'm5-lines-angles'], title: t('Смежные и вертикальные углы', 'Adjacent and vertical angles'),
+    id: 'm-angles', subject: 'mathematics', grade: 7, topics: ['m7-geo-angles', 'm7-parallel', 'm5-lines-angles', 'm6-perpendicular'], title: t('Смежные и вертикальные углы', 'Adjacent and vertical angles'),
     make: (r) => {
       const a = int(r, 20, 160);
       const kind = int(r, 0, 2);
@@ -329,7 +329,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-triangle-angles', subject: 'mathematics', grade: 7, topics: ['m7-angle-sum', 'm7-isosceles', 'm7-triangle-equality'], title: t('Углы треугольника', 'Angles of a triangle'),
+    id: 'm-triangle-angles', subject: 'mathematics', grade: 7, topics: ['m7-angle-sum', 'm7-isosceles', 'm7-triangle-equality', 'm5-triangles'], title: t('Углы треугольника', 'Angles of a triangle'),
     make: (r) => {
       if (int(r, 0, 1)) {
         const a = int(r, 20, 90);
@@ -420,7 +420,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-stats', subject: 'mathematics', grade: 8, topics: ['m8-statistics'], title: t('Среднее, медиана, мода', 'Mean, median, mode'),
+    id: 'm-stats', subject: 'mathematics', grade: 8, topics: ['m8-statistics', 'm5-mean', 'm9-statistics'], title: t('Среднее, медиана, мода', 'Mean, median, mode'),
     make: (r) => {
       const k = pick(r, [5, 7]);
       const xs = Array.from({ length: k }, () => int(r, 1, 20));
@@ -616,7 +616,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-coord-sym', subject: 'mathematics', grade: 6, topics: ['m6-coordinates', 'm9-motions'], title: t('Симметрия точек', 'Symmetric points'),
+    id: 'm-coord-sym', subject: 'mathematics', grade: 6, topics: ['m6-coordinates', 'm9-motions', 'm6-symmetry'], title: t('Симметрия точек', 'Symmetric points'),
     make: (r) => {
       const x = nz(r, -9, 9);
       let y = nz(r, -9, 9);
@@ -734,7 +734,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-extremum', subject: 'mathematics', grade: 11, topics: ['m11-derivative-use'], title: t('Экстремумы', 'Extrema'),
+    id: 'm-extremum', subject: 'mathematics', grade: 11, topics: ['m11-derivative-use', 'm11-function-study'], title: t('Экстремумы', 'Extrema'),
     make: (r) => {
       const a = int(r, 1, 5);
       const max = int(r, 0, 1) === 1;
@@ -766,7 +766,7 @@ export const MATH_PROBLEMS: ProblemGen[] = [
     },
   },
   {
-    id: 'm-exp-eq', subject: 'mathematics', grade: 11, topics: ['m11-exponential'], title: t('Показательное уравнение', 'Exponential equation'),
+    id: 'm-exp-eq', subject: 'mathematics', grade: 11, topics: ['m11-exponential', 'm11-exp-equations'], title: t('Показательное уравнение', 'Exponential equation'),
     make: (r) => {
       const a = pick(r, [2, 3, 5]);
       const m = int(r, 2, a === 2 ? 7 : 4);
@@ -809,6 +809,331 @@ export const MATH_PROBLEMS: ProblemGen[] = [
       const y = int(r, -4, 4);
       const z = int(r, -4, 4);
       return { prompt: t(`Найди расстояние между точками A(${num(x)}; ${num(y)}; ${num(z)}) и B(${num(x + a)}; ${num(y - b)}; ${num(z + c)}).`, `Find the distance between A(${num(x)}, ${num(y)}, ${num(z)}) and B(${num(x + a)}, ${num(y - b)}, ${num(z + c)}).`), answer: d, wrong: [a + b + c, d * d, round(Math.sqrt(a * a + b * b), 2)], solution: t(`AB = √(${a}² + ${b}² + ${c}²) = √${d * d} = ${d}`, `AB = √(${a * a} + ${b * b} + ${c * c}) = ${d}`) };
+    },
+  },
+  /* ===== added topics ===== */
+  {
+    id: 'm-rounding', subject: 'mathematics', grade: 5, topics: ['m5-rounding'], title: t('Округление', 'Rounding'),
+    make: (r) => {
+      const x = int(r, 1001, 98999);
+      const place = pick(r, [10, 100, 1000]);
+      const down = Math.floor(x / place) * place;
+      const ans = x - down >= place / 2 ? down + place : down;
+      const name = place === 10 ? t('десятков', 'tens') : place === 100 ? t('сотен', 'hundreds') : t('тысяч', 'thousands');
+      return { prompt: t(`Округли ${x} до ${name.ru}.`, `Round ${x} to the nearest ${name.en}.`), answer: ans, wrong: [ans === down ? down + place : down, Math.round(x / (place / 10)) * (place / 10), x - (x % place) + place * 2, ans + place], solution: t(`Первая отбрасываемая цифра ${Math.floor((x % place) / (place / 10))}: ${x - down >= place / 2 ? '5 или больше — округляем вверх' : 'меньше 5 — округляем вниз'}: ${ans}`, `Look at the next digit: ${x - down >= place / 2 ? '5 or more, round up' : 'below 5, round down'}: ${ans}`) };
+    },
+  },
+  {
+    id: 'm-units', subject: 'mathematics', grade: 5, topics: ['m5-units'], title: t('Перевод единиц', 'Converting units'),
+    make: (r) => {
+      const kind = int(r, 0, 3);
+      if (kind === 0) {
+        const m = int(r, 2, 9);
+        const cm = int(r, 1, 99);
+        return { prompt: t(`Сколько сантиметров в ${m} м ${cm} см?`, `How many centimetres are in ${m} m ${cm} cm?`), answer: m * 100 + cm, unit: U.cm, wrong: [m * 10 + cm, m * 1000 + cm, m + cm], solution: t(`1 м = 100 см: ${m} · 100 + ${cm} = ${m * 100 + cm} см`, `1 m = 100 cm: ${m * 100 + cm} cm`) };
+      }
+      if (kind === 1) {
+        const kg = int(r, 2, 15);
+        const g = int(r, 1, 999);
+        return { prompt: t(`Сколько граммов в ${kg} кг ${g} г?`, `How many grams are in ${kg} kg ${g} g?`), answer: kg * 1000 + g, unit: t('г', 'g'), wrong: [kg * 100 + g, kg + g, kg * 10000 + g], solution: t(`1 кг = 1000 г: ${kg * 1000 + g} г`, `1 kg = 1000 g: ${kg * 1000 + g} g`) };
+      }
+      if (kind === 2) {
+        const h = int(r, 1, 5);
+        const mi = int(r, 1, 59);
+        return { prompt: t(`Сколько минут в ${h} ч ${mi} мин?`, `How many minutes are in ${h} h ${mi} min?`), answer: h * 60 + mi, unit: t('мин', 'min'), wrong: [h * 100 + mi, h * 10 + mi, h * 3600 + mi], solution: t(`1 ч = 60 мин: ${h} · 60 + ${mi} = ${h * 60 + mi}`, `1 h = 60 min: ${h * 60 + mi}`) };
+      }
+      const m2 = int(r, 2, 9);
+      return { prompt: t(`Сколько квадратных сантиметров в ${m2} м²?`, `How many cm² are in ${m2} m²?`), answer: m2 * 10000, unit: U.cm2, wrong: [m2 * 100, m2 * 1000, m2 * 100000], solution: t(`1 м² = 100 см · 100 см = 10 000 см²: ${m2 * 10000} см²`, `1 m² = 10,000 cm²: ${m2 * 10000} cm²`) };
+    },
+  },
+  {
+    id: 'm-motion', subject: 'mathematics', grade: 5, topics: ['m5-motion'], title: t('Встречное движение', 'Moving towards each other'),
+    make: (r) => {
+      const v1 = int(r, 3, 12) * 5;
+      const v2 = int(r, 3, 12) * 5;
+      const tt = int(r, 2, 6);
+      const S = (v1 + v2) * tt;
+      if (int(r, 0, 1)) return { prompt: t(`Из двух городов, расстояние между которыми ${S} км, навстречу выехали машины со скоростями ${v1} и ${v2} км/ч. Через сколько часов они встретятся?`, `Two cars ${S} km apart drive towards each other at ${v1} and ${v2} km/h. When do they meet?`), answer: tt, unit: t('ч', 'h'), wrong: [round(S / Math.abs(v1 - v2 || 1), 2), round(S / v1, 2), S / (v1 + v2) * 2], solution: t(`Скорость сближения ${v1} + ${v2} = ${v1 + v2} км/ч; t = ${S} : ${v1 + v2} = ${tt} ч`, `Closing speed ${v1 + v2} km/h; t = ${S} ÷ ${v1 + v2} = ${tt} h`) };
+      const vf = Math.max(v1, v2) + 10;
+      const vs = Math.min(v1, v2);
+      const gap = (vf - vs) * tt;
+      return { prompt: t(`Велосипедист едет со скоростью ${vs} км/ч, за ним в ${gap} км мотоциклист со скоростью ${vf} км/ч. Через сколько часов мотоциклист догонит велосипедиста?`, `A cyclist rides at ${vs} km/h; ${gap} km behind, a motorbike follows at ${vf} km/h. When does it catch up?`), answer: tt, unit: t('ч', 'h'), wrong: [round(gap / (vf + vs), 2), round(gap / vs, 2), tt * 2], solution: t(`Догоняет со скоростью ${vf} − ${vs} = ${vf - vs} км/ч; t = ${gap} : ${vf - vs} = ${tt} ч`, `It gains ${vf - vs} km/h: t = ${tt} h`) };
+    },
+  },
+  {
+    id: 'm-mixed', subject: 'mathematics', grade: 5, topics: ['m5-mixed'], title: t('Смешанные числа', 'Mixed numbers'),
+    make: (r) => {
+      const d = int(r, 3, 9);
+      const w = int(r, 1, 7);
+      const k = int(r, 1, d - 1);
+      const top = w * d + k;
+      if (int(r, 0, 1)) return { prompt: t(`Выдели целую часть: ${top}/${d}`, `Write ${top}/${d} as a mixed number.`), answer: `${w} ${k}/${d}`, wrong: [`${w + 1} ${k}/${d}`, `${w} ${d - k}/${d}`, `${k} ${w}/${d}`, `${w} ${k}/${top}`, `${w + 2} ${k}/${d}`, `${w} ${k}/${d + 1}`], solution: t(`${top} : ${d} = ${w} (ост. ${k}), значит ${w} ${k}/${d}`, `${top} ÷ ${d} = ${w} r ${k}: ${w} ${k}/${d}`) };
+      return { prompt: t(`Запиши неправильной дробью: ${w} ${k}/${d}`, `Write ${w} ${k}/${d} as an improper fraction.`), answer: `${top}/${d}`, wrong: [`${w + k}/${d}`, `${w * k}/${d}`, `${top}/${d + w}`, `${w * d}/${d}`], solution: t(`(${w} · ${d} + ${k}) / ${d} = ${top}/${d}`, `(${w} · ${d} + ${k}) / ${d} = ${top}/${d}`) };
+    },
+  },
+  {
+    id: 'm-scale', subject: 'mathematics', grade: 6, topics: ['m6-scale'], title: t('Масштаб', 'Scale'),
+    make: (r) => {
+      const N = pick(r, [10000, 25000, 50000, 100000, 200000, 500000]);
+      const l = int(r, 2, 12);
+      const km = (l * N) / 100000;
+      return { prompt: t(`Масштаб карты 1 : ${N}. Расстояние на карте ${l} см. Каково расстояние на местности в км?`, `Map scale 1 : ${N}. The map distance is ${l} cm. What is the real distance in km?`), answer: km, unit: t('км', 'km'), wrong: [km * 10, km / 10, round((l * N) / 1000, 2)], solution: t(`${l} · ${N} = ${l * N} см = ${String(km).replace('.', ',')} км`, `${l} · ${N} = ${l * N} cm = ${km} km`) };
+    },
+  },
+  {
+    id: 'm-modulus', subject: 'mathematics', grade: 6, topics: ['m6-modulus', 'm10-abs-equations'], title: t('Модуль', 'Absolute value'),
+    make: (r) => {
+      const a = nz(r, -9, 9);
+      const b = int(r, 1, 9);
+      if (int(r, 0, 1)) {
+        const x = nz(r, -15, 15);
+        const y = nz(r, -15, 15);
+        return { prompt: t(`Вычисли: |${num(x)}| + |${num(y)}|`, `Work out |${num(x)}| + |${num(y)}|`), answer: Math.abs(x) + Math.abs(y), wrong: [x + y === Math.abs(x) + Math.abs(y) ? x + y + 1 : x + y, Math.abs(x + y) === Math.abs(x) + Math.abs(y) ? Math.abs(x + y) + 2 : Math.abs(x + y), -(Math.abs(x) + Math.abs(y))], solution: t(`|${num(x)}| = ${Math.abs(x)}, |${num(y)}| = ${Math.abs(y)}, сумма ${Math.abs(x) + Math.abs(y)}`, `${Math.abs(x)} + ${Math.abs(y)} = ${Math.abs(x) + Math.abs(y)}`) };
+      }
+      const ans = (u: number, v: number) => `${num(Math.min(u, v))}; ${num(Math.max(u, v))}`;
+      return { prompt: t(`Реши уравнение |x ${sg(-a)}| = ${b}`, `Solve |x ${sg(-a)}| = ${b}`), answer: ans(a - b, a + b), wrong: [ans(-a - b, -a + b), ans(a + b, a + b + 2), ans(b - a, b + a), ans(a, b)], solution: t(`x ${sg(-a)} = ${b} или x ${sg(-a)} = −${b}: x = ${num(a + b)} или x = ${num(a - b)}`, `x ${sg(-a)} = ±${b}: x = ${num(a + b)} or ${num(a - b)}`) };
+    },
+  },
+  {
+    id: 'm-sets', subject: 'mathematics', grade: 6, topics: ['m6-sets'], title: t('Круги Эйлера', 'Venn diagrams'),
+    make: (r) => {
+      const both = int(r, 2, 10);
+      const a = both + int(r, 3, 15);
+      const b = both + int(r, 3, 15);
+      return { prompt: t(`В классе ${a} учеников ходят на футбол, ${b} — на шахматы, ${both} — и туда, и туда. Сколько учеников ходят хотя бы в одну секцию?`, `${a} pupils play football, ${b} play chess, ${both} do both. How many do at least one?`), answer: a + b - both, wrong: [a + b, a + b - 2 * both, a + b + both], solution: t(`|A ∪ B| = ${a} + ${b} − ${both} = ${a + b - both}: тех, кто ходит в обе, посчитали дважды.`, `${a} + ${b} − ${both} = ${a + b - both}: the overlap was counted twice.`) };
+    },
+  },
+  {
+    id: 'm-monomial', subject: 'mathematics', grade: 7, topics: ['m7-monomials'], title: t('Одночлены', 'Monomials'),
+    make: (r) => {
+      const c1 = int(r, 2, 7);
+      const c2 = nz(r, -6, 6);
+      const p1 = int(r, 1, 5);
+      const p2 = int(r, 1, 5);
+      const q = int(r, 1, 4);
+      const sup = (k: number) => (k === 1 ? '' : String(k).replace(/\d/g, (ch) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(ch)]));
+      const show = (c: number, x: number, y: number) => `${c === 1 ? '' : c === -1 ? '−' : num(c)}a${sup(x)}b${sup(y)}`;
+      return { prompt: t(`Упрости: ${show(c1, p1, 1)} · (${show(c2, p2, q)})`, `Simplify ${show(c1, p1, 1)} · (${show(c2, p2, q)})`), answer: show(c1 * c2, p1 + p2, q + 1), wrong: [show(c1 + c2, p1 + p2, q + 1), show(c1 * c2, p1 * p2, q), show(c1 * c2, p1 + p2, q), show(-c1 * c2, p1 + p2, q + 1), show(c1 * c2, p1 + p2 + 1, q + 1), show(c1 * c2, p1 + p2, q + 2)], solution: t(`Коэффициенты: ${c1} · (${num(c2)}) = ${num(c1 * c2)}; показатели складываем: a^${p1 + p2}, b^${q + 1}`, `Multiply the numbers, add the exponents.`) };
+    },
+  },
+  {
+    id: 'm-tri-ineq', subject: 'mathematics', grade: 7, topics: ['m7-triangle-inequality'], title: t('Неравенство треугольника', 'Triangle inequality'),
+    make: (r) => {
+      const ok = (a: number, b: number, c: number) => a + b > c && a + c > b && b + c > a;
+      const triple = (good: boolean): [number, number, number] => {
+        for (;;) {
+          const x = int(r, 2, 15);
+          const y = int(r, 2, 15);
+          const z = int(r, 2, 15);
+          if (ok(x, y, z) === good) return [x, y, z];
+        }
+      };
+      const g = triple(true);
+      const ws = new Set<string>();
+      while (ws.size < 3) ws.add(triple(false).join(', '));
+      return { prompt: t('Из каких трёх отрезков можно сложить треугольник?', 'Which three sticks make a triangle?'), answer: g.join(', '), wrong: [...ws], solution: t(`${g.join(', ')}: самая длинная сторона ${Math.max(...g)} меньше суммы двух других ${g.reduce((s, x) => s + x, 0) - Math.max(...g)}.`, `The longest side ${Math.max(...g)} is less than the other two together.`) };
+    },
+  },
+  {
+    id: 'm-frac-eq', subject: 'mathematics', grade: 8, topics: ['m8-fractional-equations'], title: t('Дробное уравнение', 'Rational equation'),
+    make: (r) => {
+      const a = int(r, 1, 9);
+      if (int(r, 0, 1)) return { prompt: t(`Реши уравнение (x² − ${a * a}) / (x − ${a}) = 0`, `Solve (x² − ${a * a}) / (x − ${a}) = 0`), answer: `x = −${a}`, wrong: [`x = ${a}`, `x = ±${a}`, `x = ${a * a}`, 'нет корней'], solution: t(`Числитель равен нулю при x = ±${a}, но x = ${a} обнуляет знаменатель — посторонний корень. Ответ: x = −${a}.`, `The top is zero at ±${a}, but ${a} kills the denominator: x = −${a}.`) };
+      const b = int(r, 2, 9);
+      const x = a * b;
+      return { prompt: t(`Реши уравнение ${x}/x = ${b}`, `Solve ${x}/x = ${b}`), answer: `x = ${a}`, wrong: [`x = ${x * b}`, `x = ${b}`, `x = ${x - b}`, `x = ${a + 1}`, `x = ${x + b}`], solution: t(`x = ${x} : ${b} = ${a}, и x ≠ 0 — подходит.`, `x = ${x} ÷ ${b} = ${a}, and x ≠ 0.`) };
+    },
+  },
+  {
+    id: 'm-tangent', subject: 'mathematics', grade: 8, topics: ['m8-tangent-circle', 'm7-circle-construct'], title: t('Отрезок касательной', 'Tangent length'),
+    make: (r) => {
+      const [a0, b0, c0] = pick(r, [[3, 4, 5], [5, 12, 13], [8, 15, 17], [6, 8, 10], [7, 24, 25]]);
+      const k = int(r, 1, 3);
+      const [R, T, d] = [a0 * k, b0 * k, c0 * k];
+      return { prompt: t(`Радиус окружности ${R}, расстояние от точки P до центра ${d}. Найди длину отрезка касательной из P.`, `The radius is ${R} and P is ${d} from the centre. Find the tangent length from P.`), answer: T, wrong: [d - R, round(Math.sqrt(d * d + R * R), 2), (d + R) / 2 === T ? T + 1 : (d + R) / 2], solution: t(`Радиус ⟂ касательной: PT = √(${d}² − ${R}²) = √${T * T} = ${T}`, `Radius ⟂ tangent: PT = √(${d * d} − ${R * R}) = ${T}`) };
+    },
+  },
+  {
+    id: 'm-midline', subject: 'mathematics', grade: 8, topics: ['m8-thales-midline'], title: t('Средняя линия', 'Midline'),
+    make: (r) => {
+      const a = int(r, 4, 30);
+      const b = int(r, 2, 20);
+      if (int(r, 0, 1)) return { prompt: t(`Сторона треугольника ${2 * a} см. Найди среднюю линию, параллельную ей.`, `A side is ${2 * a} cm. Find the midline parallel to it.`), answer: a, unit: U.cm, wrong: [2 * a * 2, a / 2, 2 * a], solution: t(`Средняя линия равна половине стороны: ${2 * a} : 2 = ${a} см`, `Half the side: ${a} cm`) };
+      const B = a + 2 * b;
+      return { prompt: t(`Основания трапеции ${a} и ${B} см. Найди её среднюю линию.`, `A trapezoid has bases ${a} and ${B} cm. Find its midline.`), answer: (a + B) / 2, unit: U.cm, wrong: [a + B, B - a, (B - a) / 2], solution: t(`m = (a + b)/2 = (${a} + ${B})/2 = ${(a + B) / 2} см`, `m = (a + b)/2 = ${(a + B) / 2} cm`) };
+    },
+  },
+  {
+    id: 'm-centroid', subject: 'mathematics', grade: 8, topics: ['m8-remarkable-points'], title: t('Точка пересечения медиан', 'The centroid'),
+    make: (r) => {
+      const m = 3 * int(r, 2, 15);
+      if (int(r, 0, 1)) return { prompt: t(`Медиана треугольника ${m} см. На каком расстоянии от вершины её пересекают другие медианы?`, `A median is ${m} cm. How far from the vertex do the other medians cross it?`), answer: (2 * m) / 3, unit: U.cm, wrong: [m / 2, m / 3, (3 * m) / 4], solution: t(`Медианы делятся 2 : 1 от вершины: ${m} · 2/3 = ${(2 * m) / 3} см`, `Medians split 2 : 1 from the vertex: ${(2 * m) / 3} cm`) };
+      const [a, b, c] = pick(r, [[3, 4, 5], [6, 8, 10], [5, 12, 13], [9, 12, 15]]);
+      return { prompt: t(`Катеты прямоугольного треугольника ${a} и ${b}. Найди радиус описанной окружности.`, `The legs are ${a} and ${b}. Find the circumradius.`), answer: c / 2, wrong: [c, (a + b - c) / 2, (a + b) / 2], solution: t(`Гипотенуза ${c}; центр описанной окружности — её середина: R = ${String(c / 2).replace('.', ',')}`, `Hypotenuse ${c}; R = ${c / 2}`) };
+    },
+  },
+  {
+    id: 'm-biquad', subject: 'mathematics', grade: 9, topics: ['m9-biquadratic'], title: t('Биквадратное уравнение', 'Biquadratic equation'),
+    make: (r) => {
+      const a = int(r, 1, 4);
+      let b = int(r, 2, 6);
+      if (b === a) b++;
+      const ans = `±${a}; ±${b}`;
+      return { prompt: t(`Реши уравнение x⁴ − ${a * a + b * b}x² + ${a * a * b * b} = 0`, `Solve x⁴ − ${a * a + b * b}x² + ${a * a * b * b} = 0`), answer: ans, wrong: [`${a * a}; ${b * b}`, `±${a * a}; ±${b * b}`, `${a}; ${b}`, `±${a + b}`], solution: t(`t = x²: t² − ${a * a + b * b}t + ${a * a * b * b} = 0 ⇒ t = ${a * a} или ${b * b} ⇒ x = ${ans}`, `t = x² gives t = ${a * a} or ${b * b}, so x = ${ans}`) };
+    },
+  },
+  {
+    id: 'm-dot', subject: 'mathematics', grade: 9, topics: ['m9-dot-product'], title: t('Скалярное произведение', 'Dot product'),
+    make: (r) => {
+      const x1 = nz(r, -6, 6);
+      const y1 = nz(r, -6, 6);
+      if (int(r, 0, 1)) {
+        const x2 = nz(r, -6, 6);
+        const y2 = nz(r, -6, 6);
+        const d = x1 * x2 + y1 * y2;
+        return { prompt: t(`Найди скалярное произведение векторов a⃗{${num(x1)}; ${num(y1)}} и b⃗{${num(x2)}; ${num(y2)}}.`, `Find a⃗ · b⃗ for a⃗(${num(x1)}, ${num(y1)}) and b⃗(${num(x2)}, ${num(y2)}).`), answer: d, wrong: [x1 * y2 + y1 * x2 === d ? d + 1 : x1 * y2 + y1 * x2, x1 * x2 - y1 * y2 === d ? d - 2 : x1 * x2 - y1 * y2, (x1 + x2) * (y1 + y2) === d ? d + 3 : (x1 + x2) * (y1 + y2)], solution: t(`x₁x₂ + y₁y₂ = ${num(x1 * x2)} ${sg(y1 * y2)} = ${num(d)}`, `x₁x₂ + y₁y₂ = ${num(d)}`) };
+      }
+      const k = nz(r, -4, 4);
+      // b = (k*y1, m): a·b = 0 → x1*k*y1 + y1*m = 0 → m = -k*x1
+      return { prompt: t(`При каком m векторы a⃗{${num(x1)}; ${num(y1)}} и b⃗{${num(k * y1)}; m} перпендикулярны?`, `For which m are a⃗(${num(x1)}, ${num(y1)}) and b⃗(${num(k * y1)}, m) perpendicular?`), answer: -k * x1, wrong: [k * x1, -k * y1 === -k * x1 ? -k * x1 + 1 : -k * y1, k * y1 === -k * x1 ? k * y1 + 2 : k * y1], solution: t(`a⃗ · b⃗ = ${num(x1)} · ${num(k * y1)} + ${num(y1)}·m = 0 ⇒ m = ${num(-k * x1)}`, `Set the dot product to zero: m = ${num(-k * x1)}`) };
+    },
+  },
+  {
+    id: 'm-sector', subject: 'mathematics', grade: 9, topics: ['m9-arc-sector'], title: t('Сектор и дуга', 'Sector and arc'),
+    make: (r) => {
+      const [al, fr] = pick(r, [[30, 12], [45, 8], [60, 6], [90, 4], [120, 3], [180, 2]] as [number, number][]);
+      const R = fr * int(r, 1, 3);
+      if (int(r, 0, 1)) {
+        const k = (R * R) / fr;
+        const w = (x: number) => `${x}π`;
+        return { prompt: t(`Найди площадь сектора радиуса ${R} с центральным углом ${al}°.`, `Find the area of a sector with radius ${R} and angle ${al}°.`), answer: w(k), wrong: [w(R * R), w((2 * R) / fr), w(k * 2), w(k / 2), w(2 * R), w(k + R), w(k * 3)], solution: t(`S = πR² · ${al}/360 = ${R * R}π / ${fr} = ${k}π`, `S = πR²·${al}/360 = ${k}π`) };
+      }
+      const L2 = (2 * R) / fr;
+      const w = (x: number) => (x === 1 ? 'π' : Number.isInteger(x) ? `${x}π` : `${String(x).replace('.', ',')}π`);
+      return { prompt: t(`Найди длину дуги окружности радиуса ${R} с центральным углом ${al}°.`, `Find the arc length for radius ${R} and angle ${al}°.`), answer: w(L2), wrong: [w(2 * R), w((R * R) / fr), w(L2 * 2), w(R), w(L2 / 2), w(R * R), w(L2 + 1), w(L2 * 3)], solution: t(`l = 2πR · ${al}/360 = ${2 * R}π / ${fr} = ${w(L2)}`, `l = 2πR·${al}/360 = ${w(L2)}`) };
+    },
+  },
+  {
+    id: 'm-graph-shift', subject: 'mathematics', grade: 9, topics: ['m9-graph-transform'], title: t('Сдвиг графика', 'Shifting a graph'),
+    make: (r) => {
+      const m = nz(r, -6, 6);
+      const k = nz(r, -6, 6);
+      const ans = (x: number, y: number) => `(${num(x)}; ${num(y)})`;
+      return { prompt: t(`Где вершина параболы y = (x ${sg(-m)})² ${sg(k)}?`, `Where is the vertex of y = (x ${sg(-m)})² ${sg(k)}?`), answer: ans(m, k), wrong: [ans(-m, k), ans(m, -k), ans(-m, -k)], solution: t(`y = (x − m)² + n — это x², сдвинутая на m вправо и на n вверх: вершина ${ans(m, k)}`, `x² moved m right and n up: vertex ${ans(m, k)}`) };
+    },
+  },
+  {
+    id: 'm-region', subject: 'mathematics', grade: 9, topics: ['m9-ineq-two-vars'], title: t('Точка в области', 'Point in a region'),
+    make: (r) => {
+      const k = nz(r, -3, 3);
+      const b = int(r, -4, 4);
+      const ptsIn: string[] = [];
+      const ptsOut: string[] = [];
+      for (let i = 0; i < 40 && (ptsIn.length < 1 || ptsOut.length < 3); i++) {
+        const x = int(r, -4, 4);
+        const y = int(r, -8, 8);
+        const s = `(${num(x)}; ${num(y)})`;
+        if (y > k * x + b) {
+          if (!ptsIn.includes(s)) ptsIn.push(s);
+        } else if (y < k * x + b && !ptsOut.includes(s)) ptsOut.push(s);
+      }
+      const yes = ptsIn[0] ?? `(0; ${num(b + 1)})`;
+      const no = [...ptsOut, `(0; ${num(b - 1)})`, `(0; ${num(b - 2)})`, `(0; ${num(b - 3)})`].filter((v, i, a) => a.indexOf(v) === i && v !== yes);
+      return { prompt: t(`Какая точка удовлетворяет неравенству y > ${k === 1 ? '' : k === -1 ? '−' : num(k)}x ${sg(b)}?`, `Which point satisfies y > ${num(k)}x ${sg(b)}?`), answer: yes, wrong: no.slice(0, 3), solution: t(`Подставляем x и сравниваем y с ${num(k)}x ${sg(b)}: подходит только ${yes} — точка выше прямой.`, `Plug in x: only ${yes} lies above the line.`) };
+    },
+  },
+  {
+    id: 'm-irrational', subject: 'mathematics', grade: 10, topics: ['m10-irrational-equations'], title: t('Иррациональное уравнение', 'Radical equation'),
+    make: (r) => {
+      const a = int(r, -9, 9);
+      const b = int(r, 1, 9);
+      return { prompt: t(`Реши уравнение √(x ${sg(a)}) = ${b}`, `Solve √(x ${sg(a)}) = ${b}`), answer: b * b - a, wrong: [b - a, b * b + a, b * b], solution: t(`Возводим в квадрат: x ${sg(a)} = ${b * b} ⇒ x = ${num(b * b - a)}. Проверка: √${b * b} = ${b} ✓`, `Square both sides: x = ${num(b * b - a)}; check: √${b * b} = ${b}`) };
+    },
+  },
+  {
+    id: 'm-inverse', subject: 'mathematics', grade: 10, topics: ['m10-inverse-function', 'm7-function-concept'], title: t('Обратная функция', 'Inverse function'),
+    make: (r) => {
+      const k = nz(r, -5, 5);
+      const b = int(r, -9, 9);
+      const x = nz(r, -6, 6);
+      const c = k * x + b;
+      return { prompt: t(`f(x) = ${k === 1 ? '' : k === -1 ? '−' : num(k)}x ${sg(b)}. Найди f⁻¹(${num(c)}).`, `f(x) = ${num(k)}x ${sg(b)}. Find f⁻¹(${num(c)}).`), answer: x, wrong: [k * c + b === x ? x + 1 : k * c + b, round((c + b) / k, 2) === x ? x - 1 : round((c + b) / k, 2), -x], solution: t(`f⁻¹(${num(c)}) — такое x, что ${num(k)}x ${sg(b)} = ${num(c)}: x = ${num(x)}`, `The x with f(x) = ${num(c)}: x = ${num(x)}`) };
+    },
+  },
+  {
+    id: 'm-arcsin', subject: 'mathematics', grade: 10, topics: ['m10-arcsin', 'm10-trig-inequalities'], title: t('Арксинус и арккосинус', 'Arcsine and arccosine'),
+    make: (r) => {
+      const all: [string, string][] = [
+        ['arcsin(1/2)', 'π/6'], ['arcsin(√2/2)', 'π/4'], ['arcsin(√3/2)', 'π/3'], ['arcsin 1', 'π/2'], ['arcsin 0', '0'], ['arcsin(−1/2)', '−π/6'],
+        ['arccos(1/2)', 'π/3'], ['arccos 0', 'π/2'], ['arccos(−1/2)', '2π/3'], ['arccos(−1)', 'π'], ['arccos(√3/2)', 'π/6'], ['arccos(−√2/2)', '3π/4'],
+      ];
+      const [q, a] = pick(r, all);
+      const pool = [...new Set(all.map((x) => x[1]))].filter((x) => x !== a);
+      const i = int(r, 0, pool.length - 1);
+      return { prompt: t(`Вычисли ${q}.`, `Work out ${q}.`), answer: a, wrong: [pool[i], pool[(i + 2) % pool.length], pool[(i + 4) % pool.length]], solution: t(`${q} — угол из ${q.startsWith('arcsin') ? '[−π/2; π/2]' : '[0; π]'}, ${q.startsWith('arcsin') ? 'синус' : 'косинус'} которого равен числу в скобках: ${a}`, `${q} is the angle in ${q.startsWith('arcsin') ? '[−π/2, π/2]' : '[0, π]'} with that ${q.startsWith('arcsin') ? 'sine' : 'cosine'}: ${a}`) };
+    },
+  },
+  {
+    id: 'm-bezout', subject: 'mathematics', grade: 10, topics: ['m10-polynomials'], title: t('Теорема Безу', 'Bezout’s theorem'),
+    make: (r) => {
+      const b = int(r, -5, 5);
+      const c = int(r, -9, 9);
+      const d = int(r, -9, 9);
+      const a = nz(r, -3, 3);
+      const P = (x: number) => x ** 3 + b * x * x + c * x + d;
+      return { prompt: t(`Найди остаток от деления P(x) = x³ ${sg(b)}x² ${sg(c)}x ${sg(d)} на (x ${sg(-a)}).`, `Find the remainder of x³ ${sg(b)}x² ${sg(c)}x ${sg(d)} divided by (x ${sg(-a)}).`), answer: P(a), wrong: [P(-a) === P(a) ? P(a) + 1 : P(-a), d === P(a) ? d - 1 : d, P(a) + a], solution: t(`По теореме Безу остаток равен P(${num(a)}) = ${num(P(a))}`, `By Bezout the remainder is P(${num(a)}) = ${num(P(a))}`) };
+    },
+  },
+  {
+    id: 'm-platonic', subject: 'mathematics', grade: 10, topics: ['m10-regular-polyhedra'], title: t('Правильные многогранники', 'Regular polyhedra'),
+    make: (r) => {
+      const rows: [string, string, number, number, number][] = [
+        ['тетраэдра', 'a tetrahedron', 4, 6, 4], ['куба', 'a cube', 8, 12, 6], ['октаэдра', 'an octahedron', 6, 12, 8], ['додекаэдра', 'a dodecahedron', 20, 30, 12], ['икосаэдра', 'an icosahedron', 12, 30, 20],
+      ];
+      const [ru, en, V, E, F] = pick(r, rows);
+      const what = int(r, 0, 2);
+      const ask = [t('вершин', 'vertices'), t('рёбер', 'edges'), t('граней', 'faces')][what];
+      const ans = [V, E, F][what];
+      return { prompt: t(`Сколько ${ask.ru} у ${ru}?`, `How many ${ask.en} does ${en} have?`), answer: ans, wrong: [...new Set([V, E, F, ans + 2, ans * 2].filter((x) => x !== ans))].slice(0, 3), solution: t(`У ${ru}: вершин ${V}, рёбер ${E}, граней ${F}; ${V} − ${E} + ${F} = 2.`, `V = ${V}, E = ${E}, F = ${F}; V − E + F = 2.`) };
+    },
+  },
+  {
+    id: 'm-cube-diag', subject: 'mathematics', grade: 10, topics: ['m10-sections', 'm10-parallel-space'], title: t('Диагонали куба', 'Cube diagonals'),
+    make: (r) => {
+      const a = int(r, 2, 12);
+      if (int(r, 0, 1)) return { prompt: t(`Ребро куба ${a}. Найди диагональ куба.`, `A cube has edge ${a}. Find its space diagonal.`), answer: `${a}√3`, wrong: [`${a}√2`, `${3 * a}`, `${a * a}√3`], solution: t(`d² = a² + a² + a² = 3a² ⇒ d = a√3 = ${a}√3`, `d² = 3a², so d = ${a}√3`) };
+      return { prompt: t(`Ребро куба ${a}. Найди площадь его сечения через диагонали двух противоположных граней.`, `A cube has edge ${a}. Find the area of the section through the diagonals of two opposite faces.`), answer: `${a * a}√2`, wrong: [`${a * a}`, `${a * a}√3`, `${2 * a * a}`], solution: t(`Сечение — прямоугольник a × a√2: S = ${a} · ${a}√2 = ${a * a}√2`, `It is an a × a√2 rectangle: S = ${a * a}√2`) };
+    },
+  },
+  {
+    id: 'm-expect', subject: 'mathematics', grade: 11, topics: ['m11-statistics'], title: t('Математическое ожидание', 'Expected value'),
+    make: (r) => {
+      const vals = [int(r, 0, 5), int(r, 6, 10), int(r, 11, 20)];
+      const ps = pick(r, [[0.2, 0.5, 0.3], [0.5, 0.3, 0.2], [0.1, 0.6, 0.3], [0.4, 0.4, 0.2], [0.25, 0.5, 0.25]]);
+      const E = round(vals.reduce((s, v, i) => s + v * ps[i], 0), 3);
+      return { prompt: t(`Случайная величина X принимает значения ${vals.join(', ')} с вероятностями ${ps.map((x) => String(x).replace('.', ',')).join(', ')}. Найди E(X).`, `X takes ${vals.join(', ')} with probabilities ${ps.join(', ')}. Find E(X).`), answer: E, wrong: [round(vals.reduce((s, v) => s + v, 0) / 3, 2), round(vals.reduce((s, v, i) => s + v * ps[2 - i], 0), 3), vals[1]], solution: t(`E(X) = ${vals.map((v, i) => `${v} · ${String(ps[i]).replace('.', ',')}`).join(' + ')} = ${String(E).replace('.', ',')}`, `E(X) = Σ xᵢpᵢ = ${E}`) };
+    },
+  },
+  {
+    id: 'm-frustum', subject: 'mathematics', grade: 11, topics: ['m11-frustum'], title: t('Объём усечённого конуса', 'Frustum volume'),
+    make: (r) => {
+      const R = int(r, 3, 6);
+      const rr = int(r, 1, R - 1);
+      const h = 3 * int(r, 1, 3);
+      const V = (h * (R * R + R * rr + rr * rr)) / 3;
+      const w = (x: number) => `${x}π`;
+      return { prompt: t(`Радиусы оснований усечённого конуса ${R} и ${rr}, высота ${h}. Найди объём.`, `A frustum of a cone has radii ${R} and ${rr} and height ${h}. Find its volume.`), answer: w(V), wrong: [w((h * (R * R + rr * rr)) / 3), w(h * (R * R + R * rr + rr * rr)), w((h * (R + rr) ** 2) / 3)], solution: t(`V = πh/3 · (R² + Rr + r²) = π · ${h}/3 · (${R * R} + ${R * rr} + ${rr * rr}) = ${V}π`, `V = πh/3·(R² + Rr + r²) = ${V}π`) };
+    },
+  },
+  {
+    id: 'm-revolution', subject: 'mathematics', grade: 11, topics: ['m11-rotation-solids'], title: t('Тело вращения', 'Solid of revolution'),
+    make: (r) => {
+      const a = int(r, 2, 9);
+      const b = int(r, 2, 9);
+      const w = (x: number) => `${x}π`;
+      if (int(r, 0, 1)) return { prompt: t(`Прямоугольник ${a} × ${b} вращают вокруг стороны длины ${a}. Найди объём полученного тела.`, `An ${a} × ${b} rectangle spins about its side ${a}. Find the volume.`), answer: w(b * b * a), wrong: [w(a * a * b), w(2 * a * b), w((b * b * a) / 3), w(b * a), w(2 * b * b * a)], solution: t(`Получается цилиндр: высота ${a}, радиус ${b}. V = πr²h = ${b * b * a}π`, `A cylinder with h = ${a}, r = ${b}: V = ${b * b * a}π`) };
+      const h = 3 * a;
+      return { prompt: t(`Прямоугольный треугольник с катетами ${h} и ${b} вращают вокруг катета ${h}. Найди объём тела.`, `A right triangle with legs ${h} and ${b} spins about the leg ${h}. Find the volume.`), answer: w(b * b * a), wrong: [w(b * b * h), w(h * h * b / 3), w(2 * b * a), w(b * a), w(2 * b * b * a)], solution: t(`Получается конус: h = ${h}, r = ${b}. V = ⅓πr²h = ${b * b * a}π`, `A cone with h = ${h}, r = ${b}: V = ${b * b * a}π`) };
     },
   },
 ];

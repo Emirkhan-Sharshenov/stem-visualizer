@@ -26,6 +26,7 @@ export const MATH_5 = [
         ['Порядок действий', 'Order of operations', 'Сначала скобки, потом степени, затем умножение и деление слева направо, в конце сложение и вычитание.', 'Brackets first, then powers, then multiplication and division left to right, then addition and subtraction.'],
       ],
       formula: 'a(b + c) = ab + ac',
+      sim: { geom: 'distributive' },
     },
     {
       id: 'm5-powers-expr',
@@ -37,6 +38,7 @@ export const MATH_5 = [
         ['Формулы', 'Formulas', 'Путь s = v · t, периметр прямоугольника P = 2(a + b) — это буквенные выражения.', 'Distance s = v · t and the perimeter P = 2(a + b) are expressions with letters.'],
       ],
       formula: 'a^2 = a \\cdot a, \\quad a^3 = a \\cdot a \\cdot a',
+      sim: { graph: 'power' },
     },
     {
       id: 'm5-equations',
@@ -48,6 +50,43 @@ export const MATH_5 = [
         ['Проверка', 'Checking', 'Подставь найденный корень в уравнение: обе части должны совпасть.', 'Substitute the root back: both sides must match.'],
       ],
       formula: 'x + 15 = 40 \\;\\Rightarrow\\; x = 25',
+      sim: { graph: 'linear' },
+    },
+    {
+      id: 'm5-rounding',
+      title: ['Округление и прикидка', 'Rounding and estimating'],
+      intro: ['Округлить — заменить число близким «круглым». Это нужно, чтобы быстро прикинуть ответ и заметить грубую ошибку.', 'To round is to swap a number for a nearby round one, to estimate fast and catch big mistakes.'],
+      points: [
+        ['Правило', 'The rule', 'Смотрим на первую отбрасываемую цифру: 0–4 — оставляем как есть, 5–9 — прибавляем единицу. 3 470 ≈ 3 500 (до сотен).', 'Look at the first dropped digit: 0–4 keep, 5–9 add one. 3,470 ≈ 3,500 to the hundreds.'],
+        ['Прикидка', 'Estimating', '298 · 51 ≈ 300 · 50 = 15 000 — точный ответ 15 198 должен быть рядом.', '298 · 51 ≈ 300 · 50 = 15,000, so the exact 15,198 should be close.'],
+        ['Знак ≈', 'The ≈ sign', 'Читается «приближённо равно». Округлённое значение — не точное, а удобное.', 'Read “approximately equal”: a rounded value is handy, not exact.'],
+      ],
+      formula: '3\\,470 \\approx 3\\,500',
+      sim: { graph: 'number-line' },
+    },
+    {
+      id: 'm5-units',
+      title: ['Величины и единицы измерения', 'Quantities and units'],
+      intro: ['Длину, массу, время и площадь измеряют в разных единицах. Переводить их нужно перед любым расчётом.', 'Length, mass, time and area have their own units, and you convert them before any calculation.'],
+      points: [
+        ['Длина', 'Length', '1 см = 10 мм, 1 дм = 10 см, 1 м = 100 см, 1 км = 1000 м.', '1 cm = 10 mm, 1 dm = 10 cm, 1 m = 100 cm, 1 km = 1000 m.'],
+        ['Масса и время', 'Mass and time', '1 кг = 1000 г, 1 т = 1000 кг; 1 ч = 60 мин, 1 мин = 60 с, сутки = 24 ч.', '1 kg = 1000 g, 1 t = 1000 kg; 1 h = 60 min, 1 min = 60 s, a day = 24 h.'],
+        ['Площадь', 'Area', '1 м² = 100 дм² = 10 000 см²: при переводе площади множитель возводится в квадрат.', '1 m² = 100 dm² = 10,000 cm²: for area the factor is squared.'],
+      ],
+      formula: '1\\text{ м} = 100\\text{ см} = 1000\\text{ мм}',
+      sim: { geom: 'units' },
+    },
+    {
+      id: 'm5-motion',
+      title: ['Задачи на движение', 'Motion problems'],
+      intro: ['Расстояние, скорость и время связаны одной формулой. Если двое движутся, считают скорость сближения или удаления.', 'Distance, speed and time are linked by one formula; with two movers we use the closing or separating speed.'],
+      points: [
+        ['Главная формула', 'The key formula', 's = v · t, отсюда v = s : t и t = s : v.', 's = v · t, so v = s ÷ t and t = s ÷ v.'],
+        ['Навстречу', 'Towards each other', 'Скорость сближения равна сумме скоростей: v₁ + v₂. Время встречи t = s : (v₁ + v₂).', 'The closing speed is v₁ + v₂, so they meet after t = s ÷ (v₁ + v₂).'],
+        ['Вдогонку', 'A chase', 'Скорость сближения — разность скоростей: догонит через t = s : (v₂ − v₁), если v₂ > v₁.', 'The closing speed is v₂ − v₁: caught after t = s ÷ (v₂ − v₁) when v₂ > v₁.'],
+      ],
+      formula: 's = v \\cdot t',
+      sim: { graph: 'motion' },
     },
   ]),
   section(M, 5, 'fractions', ['Обыкновенные дроби', 'Fractions'], [
@@ -73,6 +112,19 @@ export const MATH_5 = [
         ['Частая ошибка', 'A common mistake', 'Нельзя складывать знаменатели: 1/4 + 1/4 = 2/4, а не 2/8.', 'Never add the denominators: 1/4 + 1/4 = 2/4, not 2/8.'],
       ],
       formula: '\\frac{a}{n} + \\frac{b}{n} = \\frac{a + b}{n}',
+      sim: { geom: 'fraction-pie' },
+    },
+    {
+      id: 'm5-mixed',
+      title: ['Смешанные числа', 'Mixed numbers'],
+      intro: ['Неправильную дробь удобно записать смешанным числом: целая часть и правильная дробь. 7/3 = 2⅓.', 'An improper fraction is easier to read as a mixed number: 7/3 = 2⅓.'],
+      points: [
+        ['Выделение целой части', 'Taking out wholes', 'Делим числитель на знаменатель с остатком: 17 : 5 = 3 (ост. 2), значит 17/5 = 3 2/5.', 'Divide with remainder: 17 ÷ 5 = 3 r 2, so 17/5 = 3 2/5.'],
+        ['Обратно', 'Back again', '3 2/5 = (3 · 5 + 2)/5 = 17/5.', '3 2/5 = (3 · 5 + 2)/5 = 17/5.'],
+        ['Сложение', 'Adding', 'Целые складываем с целыми, дроби с дробями: 2⅓ + 1⅓ = 3⅔.', 'Wholes with wholes, fractions with fractions: 2⅓ + 1⅓ = 3⅔.'],
+      ],
+      formula: '\\frac{17}{5} = 3\\frac{2}{5}',
+      sim: { geom: 'fraction-pie' },
     },
   ]),
   section(M, 5, 'decimals', ['Десятичные дроби и проценты', 'Decimals and percentages'], [
@@ -99,6 +151,18 @@ export const MATH_5 = [
       ],
       formula: 'p\\% \\text{ от } a = a \\cdot \\frac{p}{100}',
       sim: { geom: 'percent-grid' },
+    },
+    {
+      id: 'm5-mean',
+      title: ['Среднее арифметическое и диаграммы', 'Mean and charts'],
+      intro: ['Среднее арифметическое — «выравненное» значение ряда чисел. Диаграммы помогают увидеть данные с одного взгляда.', 'The mean is the “levelled out” value of a list, and charts show data at a glance.'],
+      points: [
+        ['Как найти', 'How to find it', 'Сложить все числа и разделить на их количество: (4 + 7 + 5) : 3 = 5⅓.', 'Add all the numbers and divide by how many there are.'],
+        ['Столбчатая диаграмма', 'Bar chart', 'Высота столбика показывает значение — удобно сравнивать.', 'Bar height shows the value, handy for comparing.'],
+        ['Круговая диаграмма', 'Pie chart', 'Показывает доли целого: весь круг — 100%.', 'Shows parts of a whole: the full circle is 100%.'],
+      ],
+      formula: '\\bar{x} = \\frac{x_1 + x_2 + \\ldots + x_n}{n}',
+      sim: { graph: 'stats' },
     },
   ]),
   section(M, 5, 'geometry', ['Наглядная геометрия', 'Basic geometry'], [
@@ -136,6 +200,18 @@ export const MATH_5 = [
       ],
       formula: 'V = a \\cdot b \\cdot c',
       sim: { solid: 'cuboid' },
+    },
+    {
+      id: 'm5-triangles',
+      title: ['Треугольники и их виды', 'Kinds of triangles'],
+      intro: ['Треугольник — три точки, соединённые отрезками. Его различают по углам и по сторонам.', 'A triangle joins three points; we sort triangles by their angles and their sides.'],
+      points: [
+        ['По углам', 'By angles', 'Остроугольный — все углы острые, прямоугольный — есть угол 90°, тупоугольный — есть тупой угол.', 'Acute: all angles acute; right: a 90° angle; obtuse: one obtuse angle.'],
+        ['По сторонам', 'By sides', 'Разносторонний, равнобедренный (две стороны равны) и равносторонний (все три равны).', 'Scalene, isosceles (two equal sides) and equilateral (all three equal).'],
+        ['Периметр', 'Perimeter', 'P = a + b + c — сумма длин всех сторон.', 'P = a + b + c, the sum of all sides.'],
+      ],
+      formula: 'P = a + b + c',
+      sim: { geom: 'triangle' },
     },
   ]),
 ];

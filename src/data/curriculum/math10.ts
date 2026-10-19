@@ -54,6 +54,30 @@ export const MATH_10 = [
       formula: '\\cos x = a \\;\\Rightarrow\\; x = \\pm\\arccos a + 2\\pi n',
       sim: { moment: 'moment_trig_circle' },
     },
+    {
+      id: 'm10-arcsin',
+      title: ['Арксинус, арккосинус, арктангенс', 'Arcsine, arccosine, arctangent'],
+      intro: ['Обратные тригонометрические функции отвечают на вопрос «какой угол дал этот синус».', 'Inverse trig functions answer “which angle gives this sine?”'],
+      points: [
+        ['Арксинус', 'Arcsine', 'arcsin a — угол из [−π/2; π/2], синус которого равен a (|a| ≤ 1). arcsin ½ = π/6.', 'arcsin a is the angle in [−π/2, π/2] with sine a; arcsin ½ = π/6.'],
+        ['Арккосинус', 'Arccosine', 'arccos a — угол из [0; π] с косинусом a. arccos(−½) = 2π/3.', 'arccos a is the angle in [0, π] with cosine a; arccos(−½) = 2π/3.'],
+        ['Связь', 'Links', 'arcsin(−a) = −arcsin a, arccos(−a) = π − arccos a.', 'arcsin(−a) = −arcsin a, arccos(−a) = π − arccos a.'],
+      ],
+      formula: '\\sin(\\arcsin a) = a,\\; |a| \\le 1',
+      sim: { graph: 'trig-ineq' },
+    },
+    {
+      id: 'm10-trig-inequalities',
+      title: ['Тригонометрические неравенства', 'Trigonometric inequalities'],
+      intro: ['Неравенства вида sin x > a решают по единичной окружности или графику: находят дугу, где условие выполняется.', 'Solve sin x > a on the unit circle or graph: find the arc where it holds.'],
+      points: [
+        ['Через окружность', 'On the circle', 'Отмечаем прямую y = a и берём дугу выше неё: arcsin a < x < π − arcsin a.', 'Draw y = a and take the arc above it: arcsin a < x < π − arcsin a.'],
+        ['Период', 'Period', 'К ответу добавляем 2πk: синус и косинус повторяются.', 'Add 2πk: sine and cosine repeat.'],
+        ['Особые случаи', 'Special cases', 'sin x > 1 — решений нет; sin x ≤ 1 — любое x.', 'sin x > 1 has no solutions; sin x ≤ 1 holds for every x.'],
+      ],
+      formula: '\\sin x > a \\iff \\arcsin a + 2\\pi k < x < \\pi - \\arcsin a + 2\\pi k',
+      sim: { graph: 'trig-ineq' },
+    },
   ]),
   section(M, 10, 'alg-roots', ['Алгебра: корни и степени', 'Algebra: roots and powers'], [
     {
@@ -80,6 +104,54 @@ export const MATH_10 = [
       formula: 'a^{\\frac{m}{n}} = \\sqrt[n]{a^m}',
       sim: { graph: 'power' },
     },
+    {
+      id: 'm10-irrational-equations',
+      title: ['Иррациональные уравнения', 'Radical equations'],
+      intro: ['В иррациональном уравнении переменная стоит под корнем. Обе части возводят в степень, а потом обязательно проверяют корни.', 'Here x sits under a root: raise both sides to a power, then always check the roots.'],
+      points: [
+        ['Возведение в квадрат', 'Squaring', '√(x + 3) = x − 3 ⇒ x + 3 = (x − 3)², отсюда x = 1 или x = 6.', '√(x + 3) = x − 3 gives x + 3 = (x − 3)², so x = 1 or 6.'],
+        ['Проверка', 'Checking', 'При возведении в квадрат появляются посторонние корни: x = 1 не подходит (справа −2), ответ x = 6.', 'Squaring adds extraneous roots: x = 1 fails (the right side is −2), so x = 6.'],
+        ['Условия', 'Conditions', 'Подкоренное выражение ≥ 0, а правая часть равенства √f = g должна быть ≥ 0.', 'The radicand ≥ 0, and in √f = g the side g must be ≥ 0.'],
+      ],
+      formula: '\\sqrt{f(x)} = g(x) \\iff f(x) = g^2(x),\\; g(x) \\ge 0',
+      sim: { graph: 'sqrt' },
+    },
+    {
+      id: 'm10-inverse-function',
+      title: ['Обратная функция', 'Inverse functions'],
+      intro: ['Обратная функция «отменяет» исходную: если f(2) = 5, то f⁻¹(5) = 2. Её график — отражение в прямой y = x.', 'An inverse undoes the function: if f(2) = 5 then f⁻¹(5) = 2; its graph mirrors in y = x.'],
+      points: [
+        ['Когда существует', 'When it exists', 'Только у монотонной функции: каждое значение принимается один раз.', 'Only for a monotonic function, taking each value once.'],
+        ['Как найти', 'How to find it', 'Выразить x через y и поменять буквы: y = 2x + 1 ⇒ x = (y − 1)/2 ⇒ f⁻¹(x) = (x − 1)/2.', 'Solve for x and swap letters: y = 2x + 1 gives f⁻¹(x) = (x − 1)/2.'],
+        ['Пары', 'Pairs', 'x² (x ≥ 0) и √x, eˣ и ln x, sin x и arcsin x.', 'x² (x ≥ 0) and √x, eˣ and ln x, sin x and arcsin x.'],
+      ],
+      formula: 'f^{-1}(f(x)) = x',
+      sim: { graph: 'inverse' },
+    },
+    {
+      id: 'm10-abs-equations',
+      title: ['Уравнения и неравенства с модулем', 'Equations with absolute value'],
+      intro: ['Модуль раскрывают по определению: отдельно для случаев, когда выражение под ним неотрицательно и отрицательно.', 'Open the modulus by definition, separately for a non-negative and a negative inside.'],
+      points: [
+        ['Простейшее', 'The simplest', '|x − 3| = 5 ⇒ x − 3 = 5 или x − 3 = −5 ⇒ x = 8 или x = −2.', '|x − 3| = 5 gives x = 8 or x = −2.'],
+        ['Неравенства', 'Inequalities', '|x| < a ⇔ −a < x < a; |x| > a ⇔ x < −a или x > a.', '|x| < a means −a < x < a; |x| > a means x < −a or x > a.'],
+        ['Графически', 'Graphically', 'y = a|x − b| + c — «уголок» с вершиной в точке (b; c).', 'y = a|x − b| + c is a corner at (b, c).'],
+      ],
+      formula: '|x - a| = b \\iff x = a \\pm b,\\; b \\ge 0',
+      sim: { graph: 'abs' },
+    },
+    {
+      id: 'm10-polynomials',
+      title: ['Многочлены. Теорема Безу', 'Polynomials. Bezout’s theorem'],
+      intro: ['Многочлены делят «уголком», как числа. Теорема Безу связывает корни с делителями многочлена.', 'Polynomials divide by long division like numbers; Bezout links roots to factors.'],
+      points: [
+        ['Теорема Безу', 'Bezout’s theorem', 'Остаток от деления P(x) на (x − a) равен P(a).', 'The remainder of P(x) ÷ (x − a) is P(a).'],
+        ['Следствие', 'Corollary', 'Если P(a) = 0, то P(x) делится на (x − a): a — корень.', 'If P(a) = 0, then (x − a) divides P(x): a is a root.'],
+        ['Целые корни', 'Whole roots', 'Целые корни многочлена с целыми коэффициентами — среди делителей свободного члена.', 'Whole roots of an integer polynomial divide its constant term.'],
+      ],
+      formula: 'P(x) = (x - a)Q(x) + P(a)',
+      sim: { graph: 'cubic' },
+    },
   ]),
   section(M, 10, 'geo-space', ['Геометрия: стереометрия', 'Geometry: solid geometry'], [
     {
@@ -102,7 +174,7 @@ export const MATH_10 = [
         ['Прямая и плоскость', 'A line and a plane', 'Прямая параллельна плоскости, если она параллельна какой-нибудь прямой в этой плоскости.', 'A line is parallel to a plane if it is parallel to some line in that plane.'],
         ['Параллельные плоскости', 'Parallel planes', 'Две плоскости параллельны, если две пересекающиеся прямые одной параллельны другой.', 'Two planes are parallel if two crossing lines of one are parallel to the other.'],
       ],
-      sim: { solid: 'cuboid' },
+      sim: { solid: 'cube' },
     },
     {
       id: 'm10-perpendicular-space',
@@ -127,6 +199,30 @@ export const MATH_10 = [
       ],
       formula: 'V - E + F = 2',
       sim: { solid: 'prism' },
+    },
+    {
+      id: 'm10-regular-polyhedra',
+      title: ['Правильные многогранники', 'Regular polyhedra'],
+      intro: ['Правильный многогранник — все грани одинаковые правильные многоугольники и в каждой вершине сходится одно число рёбер. Их ровно пять.', 'All faces are equal regular polygons and every vertex looks the same; there are exactly five.'],
+      points: [
+        ['Пятёрка', 'The five', 'Тетраэдр, куб, октаэдр, додекаэдр, икосаэдр.', 'Tetrahedron, cube, octahedron, dodecahedron, icosahedron.'],
+        ['Формула Эйлера', 'Euler’s formula', 'В − Р + Г = 2 для любого выпуклого многогранника.', 'V − E + F = 2 for any convex polyhedron.'],
+        ['Почему пять', 'Why five', 'Сумма углов граней при вершине должна быть меньше 360° — подходят только эти сочетания.', 'Face angles at a vertex must total under 360°, and only these combinations fit.'],
+      ],
+      formula: '\\text{В} - \\text{Р} + \\text{Г} = 2',
+      sim: { solid: 'platonic' },
+    },
+    {
+      id: 'm10-sections',
+      title: ['Сечения многогранников', 'Cross-sections of polyhedra'],
+      intro: ['Сечение — фигура, которая получается, если разрезать тело плоскостью. Сечения куба бывают от треугольника до шестиугольника.', 'A cross-section is what a plane cut leaves; a cube gives anything from a triangle to a hexagon.'],
+      points: [
+        ['Как строить', 'How to build', 'Находим точки пересечения плоскости с рёбрами и соединяем те, что лежат в одной грани.', 'Find where the plane meets the edges and join points lying in one face.'],
+        ['Параллельные грани', 'Parallel faces', 'Плоскость пересекает параллельные грани по параллельным отрезкам.', 'A plane cuts parallel faces along parallel segments.'],
+        ['Куб', 'The cube', 'Через три вершины — правильный треугольник, через середину диагонали — правильный шестиугольник.', 'Through three vertices: an equilateral triangle; through the centre: a regular hexagon.'],
+      ],
+      formula: 'S_{\\text{сеч}}',
+      sim: { solid: 'cube' },
     },
   ]),
 ];

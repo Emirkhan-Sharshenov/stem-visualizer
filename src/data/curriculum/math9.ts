@@ -52,6 +52,42 @@ export const MATH_9 = [
       ],
       sim: { graph: 'system' },
     },
+    {
+      id: 'm9-graph-transform',
+      title: ['Преобразования графиков функций', 'Graph transformations'],
+      intro: ['Зная график y = f(x), легко построить y = k·f(x − m) + n: его сдвигают, растягивают и отражают.', 'Knowing y = f(x), you get y = k·f(x − m) + n by shifting, stretching and flipping.'],
+      points: [
+        ['Сдвиги', 'Shifts', 'f(x − m) — сдвиг на m вправо, f(x) + n — на n вверх.', 'f(x − m) moves m right, f(x) + n moves n up.'],
+        ['Растяжение', 'Stretch', 'k·f(x) растягивает график от оси x в k раз; при k < 0 он ещё и отражается.', 'k·f(x) stretches by k from the x-axis and flips when k < 0.'],
+        ['Модуль', 'Modulus', '|f(x)| отражает вверх всё, что ниже оси x.', '|f(x)| flips up whatever is below the x-axis.'],
+      ],
+      formula: 'y = k\\,f(x - m) + n',
+      sim: { graph: 'transform' },
+    },
+    {
+      id: 'm9-ineq-two-vars',
+      title: ['Неравенства с двумя переменными и их системы', 'Inequalities in two variables'],
+      intro: ['Решение неравенства с x и y — не число, а целая область на плоскости. Система — пересечение таких областей.', 'Solving an inequality in x and y gives a region of the plane; a system is where regions overlap.'],
+      points: [
+        ['Полуплоскость', 'Half-plane', 'y > kx + b — все точки выше прямой; y < kx + b — ниже.', 'y > kx + b is everything above the line, y < kx + b below.'],
+        ['Круг', 'Disc', 'x² + y² ≤ r² — круг радиуса r с центром в начале координат.', 'x² + y² ≤ r² is a disc of radius r about the origin.'],
+        ['Граница', 'Border', 'При нестрогом знаке граница входит в решение и рисуется сплошной, при строгом — пунктиром.', 'With ≤ or ≥ the border counts (solid), with < or > it does not (dashed).'],
+      ],
+      formula: '\\begin{cases} y \\ge k_1 x + b_1 \\\\ y \\le k_2 x + b_2 \\end{cases}',
+      sim: { graph: 'region' },
+    },
+    {
+      id: 'm9-biquadratic',
+      title: ['Целые уравнения. Биквадратные уравнения', 'Polynomial and biquadratic equations'],
+      intro: ['Уравнения высоких степеней часто сводятся к квадратным заменой переменной или разложением на множители.', 'Higher-degree equations often reduce to quadratics by a substitution or by factoring.'],
+      points: [
+        ['Биквадратное', 'Biquadratic', 'ax⁴ + bx² + c = 0. Замена t = x² даёт квадратное at² + bt + c = 0.', 'ax⁴ + bx² + c = 0; put t = x² to get at² + bt + c = 0.'],
+        ['Обратная замена', 'Back-substitution', 'x² = t имеет корни только при t ≥ 0: x = ±√t.', 'x² = t has roots only when t ≥ 0: x = ±√t.'],
+        ['Разложение', 'Factoring', 'x³ − 4x = x(x − 2)(x + 2) = 0 ⇒ x = 0; ±2.', 'x³ − 4x = x(x − 2)(x + 2) = 0, so x = 0 or ±2.'],
+      ],
+      formula: 'ax^4 + bx^2 + c = 0,\\; t = x^2',
+      sim: { graph: 'cubic' },
+    },
   ]),
   section(M, 9, 'alg-sequences', ['Алгебра: прогрессии, комбинаторика, вероятность', 'Algebra: sequences, counting, probability'], [
     {
@@ -88,6 +124,7 @@ export const MATH_9 = [
         ['Размещения и сочетания', 'Arrangements and combinations', 'Aₙᵏ = n!/(n − k)! — порядок важен; Cₙᵏ = n!/(k!(n − k)!) — порядок не важен.', 'Aₙᵏ = n!/(n − k)! when order matters; Cₙᵏ = n!/(k!(n − k)!) when it doesn’t.'],
       ],
       formula: 'C_n^k = \\frac{n!}{k!\\,(n - k)!}',
+      sim: { graph: 'dice' },
     },
     {
       id: 'm9-probability',
@@ -100,6 +137,18 @@ export const MATH_9 = [
       ],
       formula: 'P(A) = \\frac{m}{n}',
       sim: { graph: 'dice' },
+    },
+    {
+      id: 'm9-statistics',
+      title: ['Статистика: частота, среднее, медиана, размах', 'Statistics: frequency, mean, median, range'],
+      intro: ['Статистика описывает набор данных несколькими числами. Каждое отвечает на свой вопрос.', 'Statistics sums a data set up in a few numbers, each answering its own question.'],
+      points: [
+        ['Среднее и медиана', 'Mean and median', 'Среднее — сумма, делённая на количество; медиана — середина упорядоченного ряда. Медиана устойчива к выбросам.', 'The mean is the sum over the count; the median is the middle of the sorted list and ignores outliers.'],
+        ['Мода и размах', 'Mode and range', 'Мода — самое частое значение, размах — разница между наибольшим и наименьшим.', 'The mode is the most frequent value, the range is max minus min.'],
+        ['Дисперсия', 'Variance', 'Среднее квадратов отклонений от среднего: показывает разброс.', 'The mean of squared deviations: it measures spread.'],
+      ],
+      formula: 'D = \\frac{1}{n}\\sum (x_i - \\bar{x})^2',
+      sim: { graph: 'stats' },
     },
   ]),
   section(M, 9, 'geo-vectors', ['Геометрия: векторы, координаты, решение треугольников', 'Geometry: vectors, coordinates, solving triangles'], [
@@ -138,7 +187,7 @@ export const MATH_9 = [
         ['Площадь через синус', 'Area with sine', 'S = ½ ab sin C.', 'S = ½ ab sin C.'],
       ],
       formula: 'c^2 = a^2 + b^2 - 2ab\\cos C, \\quad \\frac{a}{\\sin A} = 2R',
-      sim: { geom: 'triangle' },
+      sim: { geom: 'sine-law' },
     },
     {
       id: 'm9-regular-polygons',
@@ -161,7 +210,31 @@ export const MATH_9 = [
         ['Центральная симметрия и поворот', 'Point symmetry and rotation', 'Центральная симметрия — поворот на 180° вокруг точки.', 'Point symmetry is a rotation by 180° about a point.'],
         ['Параллельный перенос', 'Translation', 'Все точки сдвигаются на один и тот же вектор.', 'Every point moves by the same vector.'],
       ],
-      sim: { geom: 'symmetry' },
+      sim: { geom: 'transform2d' },
+    },
+    {
+      id: 'm9-dot-product',
+      title: ['Скалярное произведение векторов', 'Dot product'],
+      intro: ['Скалярное произведение — число, которое знает про длины векторов и угол между ними.', 'The dot product is a number that knows both lengths and the angle between the vectors.'],
+      points: [
+        ['Определение', 'Definition', 'a⃗ · b⃗ = |a⃗| · |b⃗| · cos φ.', 'a⃗ · b⃗ = |a⃗| · |b⃗| · cos φ.'],
+        ['В координатах', 'In coordinates', 'a⃗ · b⃗ = x₁x₂ + y₁y₂.', 'a⃗ · b⃗ = x₁x₂ + y₁y₂.'],
+        ['Перпендикулярность', 'Perpendicular', 'Векторы перпендикулярны тогда и только тогда, когда их скалярное произведение равно нулю.', 'Vectors are perpendicular exactly when the dot product is zero.'],
+      ],
+      formula: '\\vec a \\cdot \\vec b = x_1 x_2 + y_1 y_2 = |\\vec a||\\vec b|\\cos\\varphi',
+      sim: { geom: 'vectors' },
+    },
+    {
+      id: 'm9-arc-sector',
+      title: ['Длина дуги и площадь сектора', 'Arc length and sector area'],
+      intro: ['Дуга — часть окружности, сектор — часть круга. Их размеры пропорциональны центральному углу.', 'An arc is part of a circle, a sector part of a disc; both are proportional to the central angle.'],
+      points: [
+        ['Длина дуги', 'Arc length', 'l = πRα/180°: доля α/360 от длины окружности 2πR.', 'l = πRα/180°, the share α/360 of the circumference 2πR.'],
+        ['Площадь сектора', 'Sector area', 'S = πR²α/360°.', 'S = πR²α/360°.'],
+        ['В радианах', 'In radians', 'l = Rα и S = R²α/2 — поэтому радианы так удобны.', 'l = Rα and S = R²α/2: that is why radians are handy.'],
+      ],
+      formula: 'l = \\frac{\\pi R \\alpha}{180^\\circ}, \\quad S = \\frac{\\pi R^2 \\alpha}{360^\\circ}',
+      sim: { geom: 'sector' },
     },
   ]),
 ];

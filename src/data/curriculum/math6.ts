@@ -14,6 +14,7 @@ export const MATH_6 = [
         ['Простые и составные', 'Prime and composite', 'Простое число имеет ровно два делителя: 2, 3, 5, 7, 11… Составное раскладывается на простые множители: 60 = 2² · 3 · 5.', 'A prime has exactly two divisors: 2, 3, 5, 7, 11… A composite splits into primes: 60 = 2² · 3 · 5.'],
       ],
       formula: '60 = 2^2 \\cdot 3 \\cdot 5',
+      sim: { geom: 'rectangle' },
     },
     {
       id: 'm6-gcd-lcm',
@@ -25,6 +26,7 @@ export const MATH_6 = [
         ['Связь', 'The link', 'НОД(a; b) · НОК(a; b) = a · b. Взаимно простые числа имеют НОД = 1.', 'GCD · LCM = a · b. Coprime numbers have GCD 1.'],
       ],
       formula: '\\text{НОД}(a, b) \\cdot \\text{НОК}(a, b) = a \\cdot b',
+      sim: { geom: 'venn' },
     },
   ]),
   section(M, 6, 'fractions', ['Действия с обыкновенными дробями', 'Operations with fractions'], [
@@ -63,6 +65,19 @@ export const MATH_6 = [
         ['Дробь от числа', 'A fraction of a number', 'Чтобы найти 2/5 от 30, умножаем: 30 · 2/5 = 12.', 'To find 2/5 of 30 multiply: 30 · 2/5 = 12.'],
       ],
       formula: '\\frac{a}{b} : \\frac{c}{d} = \\frac{a}{b} \\cdot \\frac{d}{c}',
+      sim: { geom: 'fraction-pie' },
+    },
+    {
+      id: 'm6-fraction-of-number',
+      title: ['Нахождение дроби от числа и числа по дроби', 'Fraction of a number and back'],
+      intro: ['Две главные задачи на дроби: найти часть от числа и найти число по его части.', 'The two key fraction problems: a part of a number, and the number from its part.'],
+      points: [
+        ['Дробь от числа', 'Fraction of a number', 'Умножаем число на дробь: 3/4 от 60 = 60 · 3/4 = 45.', 'Multiply the number by the fraction: 3/4 of 60 = 45.'],
+        ['Число по дроби', 'Number from a fraction', 'Делим известную часть на дробь: 45 — это 3/4 числа, значит число = 45 : 3/4 = 60.', 'Divide the known part by the fraction: 45 ÷ 3/4 = 60.'],
+        ['Проценты', 'Percents', 'Это те же задачи: 20% = 1/5.', 'Percent problems are the same: 20% = 1/5.'],
+      ],
+      formula: '\\frac{m}{n}\\text{ от } a = a \\cdot \\frac{m}{n}',
+      sim: { geom: 'fraction-pie' },
     },
   ]),
   section(M, 6, 'ratios', ['Отношения и пропорции', 'Ratios and proportions'], [
@@ -76,6 +91,7 @@ export const MATH_6 = [
         ['Масштаб', 'Scale', 'Масштаб 1 : 50 000 — 1 см на карте означает 500 м на местности.', 'A 1 : 50 000 scale means 1 cm on the map is 500 m on the ground.'],
       ],
       formula: '\\frac{a}{b} = \\frac{c}{d} \\;\\Rightarrow\\; ad = bc',
+      sim: { geom: 'percent-grid' },
     },
     {
       id: 'm6-proportional',
@@ -88,6 +104,18 @@ export const MATH_6 = [
       ],
       formula: 'y = kx, \\quad y = \\frac{k}{x}',
       sim: { graph: 'proportional' },
+    },
+    {
+      id: 'm6-scale',
+      title: ['Масштаб', 'Scale'],
+      intro: ['Масштаб показывает, во сколько раз расстояние на карте меньше настоящего.', 'Scale tells how many times smaller a map distance is than the real one.'],
+      points: [
+        ['Запись', 'Notation', 'Масштаб 1 : 100 000 — 1 см на карте равен 100 000 см = 1 км на местности.', '1 : 100,000 means 1 cm on the map is 1 km on the ground.'],
+        ['Расчёт', 'Calculating', 'Расстояние на местности = расстояние на карте · N.', 'Real distance = map distance · N.'],
+        ['Площадь', 'Area', 'Площади на карте меньше в N² раз.', 'Map areas are N² times smaller.'],
+      ],
+      formula: '1 : N',
+      sim: { geom: 'scale' },
     },
   ]),
   section(M, 6, 'rational', ['Положительные и отрицательные числа', 'Positive and negative numbers'], [
@@ -125,6 +153,31 @@ export const MATH_6 = [
         ['Подобные слагаемые', 'Like terms', 'Складываем их коэффициенты: 3a + 5a − a = 7a.', 'Add their coefficients: 3a + 5a − a = 7a.'],
       ],
       formula: 'ax = b \\;\\Rightarrow\\; x = \\frac{b}{a}',
+      sim: { graph: 'linear' },
+    },
+    {
+      id: 'm6-modulus',
+      title: ['Модуль числа', 'Absolute value'],
+      intro: ['Модуль — расстояние от числа до нуля на координатной прямой. Поэтому он не бывает отрицательным.', 'The absolute value is the distance from zero, so it is never negative.'],
+      points: [
+        ['Определение', 'Definition', '|5| = 5, |−5| = 5, |0| = 0.', '|5| = 5, |−5| = 5, |0| = 0.'],
+        ['Противоположные числа', 'Opposites', 'У чисел a и −a модули равны: они на одинаковом расстоянии от нуля.', 'a and −a have equal moduli: the same distance from zero.'],
+        ['Сравнение', 'Comparing', 'Из двух отрицательных больше то, у которого модуль меньше: −3 > −7.', 'Of two negatives, the one with the smaller modulus is larger: −3 > −7.'],
+      ],
+      formula: '|a| = \\begin{cases} a, & a \\ge 0 \\\\ -a, & a < 0 \\end{cases}',
+      sim: { graph: 'number-line' },
+    },
+    {
+      id: 'm6-brackets',
+      title: ['Раскрытие скобок. Подобные слагаемые', 'Opening brackets. Like terms'],
+      intro: ['Скобки раскрывают по распределительному закону, а одинаковые буквенные части складывают.', 'Brackets open by the distributive law, and terms with the same letters are combined.'],
+      points: [
+        ['Плюс перед скобками', 'Plus in front', 'Скобки просто опускаем: a + (b − c) = a + b − c.', 'Just drop them: a + (b − c) = a + b − c.'],
+        ['Минус перед скобками', 'Minus in front', 'Знаки внутри меняются: a − (b − c) = a − b + c.', 'Signs inside flip: a − (b − c) = a − b + c.'],
+        ['Подобные слагаемые', 'Like terms', '5x − 2x + x = 4x: складываем коэффициенты.', '5x − 2x + x = 4x: add the coefficients.'],
+      ],
+      formula: 'a(b + c) = ab + ac',
+      sim: { geom: 'distributive' },
     },
   ]),
   section(M, 6, 'plane', ['Координатная плоскость и окружность', 'The coordinate plane and the circle'], [
@@ -150,6 +203,42 @@ export const MATH_6 = [
       ],
       formula: 'C = 2\\pi r, \\quad S = \\pi r^2',
       sim: { geom: 'circle' },
+    },
+    {
+      id: 'm6-perpendicular',
+      title: ['Перпендикулярные и параллельные прямые', 'Perpendicular and parallel lines'],
+      intro: ['Две прямые на плоскости либо пересекаются, либо параллельны. Пересекающиеся под прямым углом — перпендикулярны.', 'Two lines in a plane either cross or are parallel; crossing at a right angle means perpendicular.'],
+      points: [
+        ['Перпендикуляр', 'Perpendicular', 'a ⊥ b, если угол между ними 90°. Строят угольником.', 'a ⊥ b when they meet at 90°, drawn with a set square.'],
+        ['Параллельные', 'Parallel', 'a ∥ b — не пересекаются, сколько их ни продолжай.', 'a ∥ b never meet, however far they go.'],
+        ['Расстояние', 'Distance', 'Расстояние от точки до прямой — длина перпендикуляра.', 'The distance from a point to a line is the length of the perpendicular.'],
+      ],
+      formula: 'a \\perp b, \\quad a \\parallel b',
+      sim: { geom: 'parallel' },
+    },
+    {
+      id: 'm6-symmetry',
+      title: ['Осевая и центральная симметрия', 'Line and point symmetry'],
+      intro: ['Симметрия — отражение, при котором фигура переходит в равную себе. Её много в природе и архитектуре.', 'Symmetry is a reflection that maps a figure to an equal one; nature and buildings are full of it.'],
+      points: [
+        ['Осевая', 'Line symmetry', 'Точки симметричны относительно прямой, если она перпендикулярна отрезку между ними и делит его пополам.', 'Points are symmetric in a line when it is the perpendicular bisector of the segment between them.'],
+        ['Центральная', 'Point symmetry', 'Точка O — середина отрезка между симметричными точками.', 'O is the midpoint between symmetric points.'],
+        ['Примеры', 'Examples', 'Бабочка и буква А — осевая симметрия, буква N и параллелограмм — центральная.', 'A butterfly and the letter A have line symmetry, N and a parallelogram point symmetry.'],
+      ],
+      formula: '(x;\\,y) \\to (-x;\\,y)',
+      sim: { geom: 'symmetry' },
+    },
+    {
+      id: 'm6-sets',
+      title: ['Множества. Круги Эйлера', 'Sets. Venn diagrams'],
+      intro: ['Множество — набор предметов, объединённых общим признаком. Круги Эйлера помогают считать элементы.', 'A set is a collection sharing a feature, and Venn diagrams help count its elements.'],
+      points: [
+        ['Пересечение', 'Intersection', 'A ∩ B — элементы, которые есть и в A, и в B.', 'A ∩ B holds what is in both A and B.'],
+        ['Объединение', 'Union', 'A ∪ B — элементы хотя бы одного из множеств.', 'A ∪ B holds what is in at least one of them.'],
+        ['Подсчёт', 'Counting', '|A ∪ B| = |A| + |B| − |A ∩ B|: общих посчитали дважды.', '|A ∪ B| = |A| + |B| − |A ∩ B|: the shared ones were counted twice.'],
+      ],
+      formula: '|A \\cup B| = |A| + |B| - |A \\cap B|',
+      sim: { geom: 'venn' },
     },
   ]),
 ];

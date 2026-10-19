@@ -14,6 +14,7 @@ export const MATH_7 = [
         ['Доказательство тождеств', 'Proving identities', 'Преобразуем одну часть, пока она не совпадёт с другой.', 'Transform one side until it matches the other.'],
       ],
       formula: 'a(b - c) = ab - ac',
+      sim: { geom: 'distributive' },
     },
     {
       id: 'm7-linear-equation',
@@ -25,6 +26,7 @@ export const MATH_7 = [
         ['Пример', 'Example', 'В двух классах 58 учеников, в одном на 4 больше: x + (x + 4) = 58 ⇒ x = 27.', 'Two classes have 58 pupils, one has 4 more: x + (x + 4) = 58 ⇒ x = 27.'],
       ],
       formula: 'ax = b \\;\\Rightarrow\\; x = \\frac{b}{a}, \\; a \\ne 0',
+      sim: { graph: 'linear' },
     },
     {
       id: 'm7-linear-function',
@@ -60,6 +62,7 @@ export const MATH_7 = [
         ['Вынесение множителя', 'Factoring out', 'Общий множитель выносим за скобки: 6x² − 9x = 3x(2x − 3).', 'Take the common factor outside: 6x² − 9x = 3x(2x − 3).'],
       ],
       formula: '(a + b)(c + d) = ac + ad + bc + bd',
+      sim: { geom: 'distributive' },
     },
     {
       id: 'm7-short-mult',
@@ -84,6 +87,42 @@ export const MATH_7 = [
       ],
       formula: '\\begin{cases} a_1x + b_1y = c_1 \\\\ a_2x + b_2y = c_2 \\end{cases}',
       sim: { graph: 'system' },
+    },
+    {
+      id: 'm7-monomials',
+      title: ['Одночлены', 'Monomials'],
+      intro: ['Одночлен — произведение чисел, переменных и их степеней: 3a²b. Его приводят к стандартному виду.', 'A monomial is a product of numbers, variables and powers, like 3a²b, written in standard form.'],
+      points: [
+        ['Стандартный вид', 'Standard form', 'Сначала числовой множитель, затем буквы со степенями: 2a · 3ab = 6a²b.', 'The number first, then letters with powers: 2a · 3ab = 6a²b.'],
+        ['Степень одночлена', 'Degree', 'Сумма показателей всех переменных: у 6a²b степень 3.', 'The sum of the exponents: 6a²b has degree 3.'],
+        ['Умножение', 'Multiplying', 'Коэффициенты перемножаем, показатели одинаковых букв складываем.', 'Multiply the numbers, add the exponents of equal letters.'],
+      ],
+      formula: '2a \\cdot 3ab = 6a^2b',
+      sim: { geom: 'distributive' },
+    },
+    {
+      id: 'm7-factoring',
+      title: ['Разложение многочленов на множители', 'Factoring polynomials'],
+      intro: ['Разложить на множители — записать многочлен произведением. Это упрощает дроби и решает уравнения.', 'To factor is to write a polynomial as a product, which simplifies fractions and solves equations.'],
+      points: [
+        ['Общий множитель', 'Common factor', '6x² − 9x = 3x(2x − 3).', '6x² − 9x = 3x(2x − 3).'],
+        ['Группировка', 'Grouping', 'ax + ay + bx + by = a(x + y) + b(x + y) = (x + y)(a + b).', 'ax + ay + bx + by = (x + y)(a + b).'],
+        ['Формулы', 'Formulas', 'x² − 25 = (x − 5)(x + 5); x² + 6x + 9 = (x + 3)².', 'x² − 25 = (x − 5)(x + 5); x² + 6x + 9 = (x + 3)².'],
+      ],
+      formula: 'a^2 - b^2 = (a - b)(a + b)',
+      sim: { geom: 'diff-squares' },
+    },
+    {
+      id: 'm7-function-concept',
+      title: ['Функция. Область определения и значения', 'Functions, domain and range'],
+      intro: ['Функция — правило, по которому каждому x соответствует ровно одно y. Её задают формулой, таблицей или графиком.', 'A function gives exactly one y for each x, by a formula, a table or a graph.'],
+      points: [
+        ['Аргумент и значение', 'Input and output', 'x — аргумент (независимая переменная), y = f(x) — значение функции.', 'x is the input, y = f(x) the output.'],
+        ['Область определения', 'Domain', 'Все x, при которых формула имеет смысл: у √x это x ≥ 0, у 1/x — x ≠ 0.', 'All x where the formula makes sense: x ≥ 0 for √x, x ≠ 0 for 1/x.'],
+        ['График', 'Graph', 'Все точки (x; f(x)). Вертикальная прямая пересекает график функции не больше одного раза.', 'All points (x, f(x)); a vertical line meets it at most once.'],
+      ],
+      formula: 'y = f(x)',
+      sim: { graph: 'sqrt' },
     },
   ]),
   section(M, 7, 'geo-basics', ['Геометрия: начальные сведения и треугольники', 'Geometry: basics and triangles'], [
@@ -119,7 +158,7 @@ export const MATH_7 = [
         ['Биссектриса и высота', 'Bisector and altitude', 'Биссектриса делит угол пополам, высота — перпендикуляр из вершины к противоположной стороне.', 'A bisector halves the angle; an altitude is the perpendicular from a vertex to the opposite side.'],
         ['Свойство', 'The property', 'В равнобедренном треугольнике медиана к основанию является и биссектрисой, и высотой.', 'In an isosceles triangle the median to the base is also the bisector and the altitude.'],
       ],
-      sim: { geom: 'triangle' },
+      sim: { geom: 'triangle-lines' },
     },
     {
       id: 'm7-parallel',
@@ -156,6 +195,30 @@ export const MATH_7 = [
         ['Признаки равенства', 'Congruence tests', 'По гипотенузе и катету, по гипотенузе и острому углу.', 'By hypotenuse and a leg, or hypotenuse and an acute angle.'],
       ],
       sim: { geom: 'right-trig' },
+    },
+    {
+      id: 'm7-triangle-inequality',
+      title: ['Неравенство треугольника', 'The triangle inequality'],
+      intro: ['Не из любых трёх отрезков можно сложить треугольник: каждая сторона должна быть меньше суммы двух других.', 'Not every three sticks make a triangle: each side must be shorter than the other two together.'],
+      points: [
+        ['Правило', 'The rule', 'a < b + c, b < a + c, c < a + b. Достаточно проверить самую длинную сторону.', 'a < b + c, b < a + c, c < a + b; checking the longest side is enough.'],
+        ['Почему', 'Why', 'Прямая — кратчайший путь: идти через третью вершину всегда дальше.', 'A straight line is shortest; going via the third vertex is always longer.'],
+        ['Стороны и углы', 'Sides and angles', 'Против большей стороны лежит больший угол.', 'The larger side faces the larger angle.'],
+      ],
+      formula: 'c < a + b',
+      sim: { geom: 'tri-ineq' },
+    },
+    {
+      id: 'm7-circle-construct',
+      title: ['Окружность. Построения циркулем и линейкой', 'Circles and compass constructions'],
+      intro: ['Окружность — все точки на одном расстоянии от центра. С циркулем и линейкой строят середину отрезка, биссектрису, перпендикуляр.', 'A circle is every point at one distance from the centre; with compass and ruler we build midpoints, bisectors and perpendiculars.'],
+      points: [
+        ['Элементы', 'Parts', 'Радиус, диаметр (два радиуса), хорда — отрезок между точками окружности.', 'Radius, diameter (two radii), chord: a segment between two points of the circle.'],
+        ['Середина отрезка', 'Midpoint', 'Две дуги одного радиуса из концов отрезка; прямая через их пересечения делит отрезок пополам.', 'Two equal arcs from the ends; the line through their crossings halves the segment.'],
+        ['Касательная', 'Tangent', 'Прямая с одной общей точкой с окружностью; она перпендикулярна радиусу.', 'A line touching at one point, perpendicular to the radius.'],
+      ],
+      formula: 'd = 2r',
+      sim: { geom: 'chord-tangent' },
     },
   ]),
 ];

@@ -75,6 +75,7 @@ export const MATH_8 = [
         ['Свойства', 'Rules', 'Все свойства степеней верны и для целых показателей.', 'All the power rules hold for integer exponents too.'],
       ],
       formula: 'a^{-n} = \\frac{1}{a^n}, \\quad a^0 = 1',
+      sim: { graph: 'power' },
     },
     {
       id: 'm8-statistics',
@@ -86,7 +87,19 @@ export const MATH_8 = [
         ['Мода и размах', 'Mode and range', 'Мода — самое частое значение, размах — разница между наибольшим и наименьшим.', 'The mode is the most frequent value; the range is the largest minus the smallest.'],
       ],
       formula: '\\bar{x} = \\frac{x_1 + x_2 + \\ldots + x_n}{n}',
-      sim: { moment: 'moment_gauss' },
+      sim: { graph: 'stats' },
+    },
+    {
+      id: 'm8-fractional-equations',
+      title: ['Дробные рациональные уравнения', 'Rational equations'],
+      intro: ['В таких уравнениях переменная стоит в знаменателе. Решаем, умножая на общий знаменатель, и проверяем, что он не равен нулю.', 'Here x sits in a denominator: multiply by the common denominator and check it is not zero.'],
+      points: [
+        ['Алгоритм', 'Steps', 'Найти общий знаменатель, умножить на него обе части, решить целое уравнение.', 'Find the common denominator, multiply through, solve the whole equation.'],
+        ['Проверка', 'Checking', 'Корни, обращающие знаменатель в ноль, — посторонние, их выбрасываем.', 'Roots that make a denominator zero are extraneous and must go.'],
+        ['Пример', 'Example', '(x² − 4)/(x − 2) = 0 ⇒ x = ±2, но x ≠ 2, ответ x = −2.', '(x² − 4)/(x − 2) = 0 gives x = ±2, but x ≠ 2, so x = −2.'],
+      ],
+      formula: '\\frac{P(x)}{Q(x)} = 0 \\iff P(x) = 0,\\; Q(x) \\ne 0',
+      sim: { graph: 'hyperbola' },
     },
   ]),
   section(M, 8, 'geo-quadrilaterals', ['Геометрия: четырёхугольники и площади', 'Geometry: quadrilaterals and areas'], [
@@ -101,7 +114,7 @@ export const MATH_8 = [
         ['Сумма углов', 'Angle sum', 'У любого выпуклого четырёхугольника 360°, у n-угольника — 180°(n − 2).', 'Any convex quadrilateral has 360°; an n-gon has 180°(n − 2).'],
       ],
       formula: '180^\\circ (n - 2)',
-      sim: { geom: 'quadrilateral' },
+      sim: { geom: 'parallelogram' },
     },
     {
       id: 'm8-trapezoid',
@@ -113,7 +126,7 @@ export const MATH_8 = [
         ['Равнобедренная трапеция', 'Isosceles trapezoid', 'Боковые стороны равны, углы при основании равны, диагонали равны.', 'Equal legs, equal base angles and equal diagonals.'],
       ],
       formula: 'm = \\frac{a + b}{2}',
-      sim: { geom: 'quadrilateral' },
+      sim: { geom: 'trapezoid' },
     },
     {
       id: 'm8-areas',
@@ -139,6 +152,18 @@ export const MATH_8 = [
       ],
       formula: 'c^2 = a^2 + b^2',
       sim: { moment: 'moment_pythagoras' },
+    },
+    {
+      id: 'm8-thales-midline',
+      title: ['Теорема Фалеса. Средняя линия треугольника', 'Thales’ theorem and the midline'],
+      intro: ['Параллельные прямые делят стороны угла на пропорциональные отрезки. Отсюда — свойства средней линии.', 'Parallel lines cut the sides of an angle proportionally, which gives the midline property.'],
+      points: [
+        ['Теорема Фалеса', 'Thales’ theorem', 'Если на одной стороне угла отложены равные отрезки и через концы проведены параллельные, то и на другой стороне отрезки равны.', 'Equal segments on one side of an angle with parallels through their ends give equal segments on the other.'],
+        ['Средняя линия', 'Midline', 'Соединяет середины двух сторон, параллельна третьей и равна её половине.', 'It joins two midpoints, runs parallel to the third side and is half as long.'],
+        ['Деление отрезка', 'Dividing a segment', 'Так делят отрезок на любое число равных частей циркулем и линейкой.', 'This splits a segment into any number of equal parts with compass and ruler.'],
+      ],
+      formula: 'MN \\parallel AC, \\quad MN = \\frac{AC}{2}',
+      sim: { geom: 'thales' },
     },
   ]),
   section(M, 8, 'geo-similarity', ['Геометрия: подобие и окружность', 'Geometry: similarity and the circle'], [
@@ -187,7 +212,31 @@ export const MATH_8 = [
         ['Описанная', 'Circumcircle', 'Центр — точка пересечения серединных перпендикуляров к сторонам. У прямоугольного треугольника он в середине гипотенузы.', 'Its centre is where the perpendicular bisectors meet; for a right triangle, the midpoint of the hypotenuse.'],
         ['Четырёхугольники', 'Quadrilaterals', 'Вписать окружность можно, если суммы противоположных сторон равны; описать — если сумма противоположных углов 180°.', 'A circle fits inside if opposite sides add up equally; one passes through the vertices if opposite angles add to 180°.'],
       ],
-      sim: { geom: 'circle-angles' },
+      sim: { geom: 'incircle' },
+    },
+    {
+      id: 'm8-tangent-circle',
+      title: ['Касательная к окружности', 'Tangent to a circle'],
+      intro: ['Касательная имеет с окружностью одну общую точку. С ней связаны красивые равенства отрезков и углов.', 'A tangent shares one point with the circle and brings neat equalities of segments and angles.'],
+      points: [
+        ['Перпендикулярность', 'Right angle', 'Касательная перпендикулярна радиусу, проведённому в точку касания.', 'The tangent is perpendicular to the radius at the point of contact.'],
+        ['Отрезки касательных', 'Tangent segments', 'Из одной точки к окружности проводят две касательные — их отрезки равны.', 'Two tangents from one point have equal segments.'],
+        ['Длина', 'Length', 'PT² = PO² − R² по теореме Пифагора.', 'PT² = PO² − R² by Pythagoras.'],
+      ],
+      formula: 'PT = \\sqrt{PO^2 - R^2}',
+      sim: { geom: 'chord-tangent' },
+    },
+    {
+      id: 'm8-remarkable-points',
+      title: ['Четыре замечательные точки треугольника', 'Four notable points of a triangle'],
+      intro: ['Медианы, биссектрисы, высоты и серединные перпендикуляры треугольника пересекаются каждые в одной точке.', 'Medians, bisectors, altitudes and perpendicular bisectors each meet at a single point.'],
+      points: [
+        ['Центроид', 'Centroid', 'Медианы пересекаются в точке, делящей их 2 : 1 от вершины, — центр тяжести.', 'Medians meet at the centre of mass, splitting them 2 : 1 from the vertex.'],
+        ['Центры окружностей', 'Circle centres', 'Биссектрисы — в центре вписанной окружности, серединные перпендикуляры — в центре описанной.', 'Bisectors meet at the incentre, perpendicular bisectors at the circumcentre.'],
+        ['Ортоцентр', 'Orthocentre', 'Высоты (или их продолжения) пересекаются в ортоцентре.', 'Altitudes (or their extensions) meet at the orthocentre.'],
+      ],
+      formula: 'AM : MM_1 = 2 : 1',
+      sim: { geom: 'triangle-lines' },
     },
   ]),
 ];

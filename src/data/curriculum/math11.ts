@@ -67,6 +67,18 @@ export const MATH_11 = [
       formula: '\\int_a^b f(x)\\,dx = F(b) - F(a)',
       sim: { graph: 'integral' },
     },
+    {
+      id: 'm11-function-study',
+      title: ['Исследование функции и построение графика', 'Analysing and sketching a function'],
+      intro: ['Производная позволяет построить график без таблицы: где функция растёт, где падает, где у неё вершины.', 'The derivative sketches a graph without a table: where it rises, falls and turns.'],
+      points: [
+        ['План', 'Plan', 'Область определения, нули, f′(x), промежутки монотонности, экстремумы, значения в них.', 'Domain, zeros, f′(x), rising/falling intervals, extrema and their values.'],
+        ['Знак производной', 'Sign of f′', 'f′ > 0 — растёт, f′ < 0 — убывает; смена знака + → − — максимум.', 'f′ > 0 rises, f′ < 0 falls; + to − is a maximum.'],
+        ['Пример', 'Example', 'f(x) = x³ − 3x: f′ = 3x² − 3 = 0 ⇒ x = ±1; max в −1, min в 1.', 'f(x) = x³ − 3x: f′ = 0 at x = ±1; max at −1, min at 1.'],
+      ],
+      formula: 'f\'(x_0) = 0',
+      sim: { graph: 'cubic' },
+    },
   ]),
   section(M, 11, 'alg-exp-log', ['Алгебра: показательная и логарифмическая функции', 'Algebra: exponentials and logarithms'], [
     {
@@ -117,6 +129,30 @@ export const MATH_11 = [
       formula: 'P(AB) = P(A) \\cdot P(B)',
       sim: { graph: 'dice' },
     },
+    {
+      id: 'm11-exp-equations',
+      title: ['Показательные уравнения и неравенства', 'Exponential equations and inequalities'],
+      intro: ['Главный приём — привести обе части к одному основанию и приравнять показатели.', 'The main trick: write both sides with one base and compare the exponents.'],
+      points: [
+        ['Одно основание', 'One base', '2^(x+1) = 32 = 2⁵ ⇒ x + 1 = 5 ⇒ x = 4.', '2^(x+1) = 32 = 2⁵ gives x = 4.'],
+        ['Замена', 'Substitution', '4ˣ − 3·2ˣ − 4 = 0: t = 2ˣ > 0, t² − 3t − 4 = 0 ⇒ t = 4 ⇒ x = 2.', '4ˣ − 3·2ˣ − 4 = 0: t = 2ˣ > 0 gives t = 4, x = 2.'],
+        ['Неравенства', 'Inequalities', 'При a > 1 знак сохраняется, при 0 < a < 1 — меняется: (½)ˣ > ¼ ⇔ x < 2.', 'For a > 1 keep the sign, for 0 < a < 1 flip it: (½)ˣ > ¼ means x < 2.'],
+      ],
+      formula: 'a^{f(x)} = a^{g(x)} \\iff f(x) = g(x)',
+      sim: { graph: 'exp' },
+    },
+    {
+      id: 'm11-statistics',
+      title: ['Статистика и случайные величины', 'Statistics and random variables'],
+      intro: ['Случайная величина принимает значения с определёнными вероятностями. Её описывают средним (ожиданием) и разбросом.', 'A random variable takes values with given probabilities, described by its mean and its spread.'],
+      points: [
+        ['Математическое ожидание', 'Expected value', 'E(X) = x₁p₁ + x₂p₂ + … — «среднее в долгую». Для кубика E = 3,5.', 'E(X) = x₁p₁ + x₂p₂ + …, the long-run average; a die gives 3.5.'],
+        ['Дисперсия', 'Variance', 'D(X) — среднее квадратов отклонений от E(X); σ = √D — стандартное отклонение.', 'D(X) is the mean squared deviation; σ = √D is the standard deviation.'],
+        ['Закон больших чисел', 'Law of large numbers', 'При многих опытах среднее результатов приближается к E(X).', 'Over many trials the average tends to E(X).'],
+      ],
+      formula: 'E(X) = \\sum x_i p_i',
+      sim: { graph: 'stats' },
+    },
   ]),
   section(M, 11, 'geo-solids', ['Геометрия: тела вращения и объёмы', 'Geometry: solids of revolution and volumes'], [
     {
@@ -166,6 +202,30 @@ export const MATH_11 = [
       ],
       formula: 'V_{\\text{пир}} = \\frac{1}{3} S h',
       sim: { solid: 'pyramid' },
+    },
+    {
+      id: 'm11-frustum',
+      title: ['Усечённые пирамида и конус', 'Frustums'],
+      intro: ['Если от пирамиды или конуса отрезать верхушку плоскостью, параллельной основанию, получится усечённое тело.', 'Cut the top off a pyramid or cone parallel to the base and you get a frustum.'],
+      points: [
+        ['Объём', 'Volume', 'V = h/3 · (S₁ + √(S₁S₂) + S₂) — для пирамиды; для конуса V = πh/3 · (R² + Rr + r²).', 'V = h/3 · (S₁ + √(S₁S₂) + S₂); for a cone V = πh/3 · (R² + Rr + r²).'],
+        ['Поверхность', 'Surface', 'Боковая поверхность усечённого конуса: π(R + r)l, где l — образующая.', 'Lateral area of a frustum of a cone: π(R + r)l with slant l.'],
+        ['Связь', 'Link', 'Это разность двух подобных тел: большого и отрезанного маленького.', 'It is the difference of two similar solids: the big one and the cut-off top.'],
+      ],
+      formula: 'V = \\frac{\\pi h}{3}(R^2 + Rr + r^2)',
+      sim: { solid: 'frustum' },
+    },
+    {
+      id: 'm11-rotation-solids',
+      title: ['Тела вращения', 'Solids of revolution'],
+      intro: ['Цилиндр, конус и шар получаются вращением плоской фигуры вокруг оси.', 'A cylinder, a cone and a ball come from spinning a flat figure about an axis.'],
+      points: [
+        ['Какие фигуры', 'Which figures', 'Прямоугольник вокруг стороны — цилиндр, прямоугольный треугольник вокруг катета — конус, полукруг вокруг диаметра — шар.', 'A rectangle about a side makes a cylinder, a right triangle about a leg a cone, a semicircle about its diameter a ball.'],
+        ['Осевое сечение', 'Axial section', 'Разрез через ось: у цилиндра — прямоугольник, у конуса — равнобедренный треугольник, у шара — круг.', 'A cut through the axis: a rectangle, an isosceles triangle, a disc.'],
+        ['Объём через интеграл', 'Volume by integral', 'V = π∫ f²(x) dx — так выводят все формулы объёмов тел вращения.', 'V = π∫ f²(x) dx gives every volume of revolution.'],
+      ],
+      formula: 'V = \\pi \\int_a^b f^2(x)\\,dx',
+      sim: { solid: 'rotation' },
     },
   ]),
 ];

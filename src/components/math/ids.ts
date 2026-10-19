@@ -16,7 +16,15 @@ export type GraphId =
   | 'tangent'
   | 'integral'
   | 'exp'
-  | 'log';
+  | 'log'
+  | 'abs'
+  | 'transform'
+  | 'cubic'
+  | 'region'
+  | 'stats'
+  | 'inverse'
+  | 'trig-ineq'
+  | 'motion';
 
 export type GeomId =
   | 'fraction-pie'
@@ -35,6 +43,22 @@ export type GeomId =
   | 'circle-angles'
   | 'vectors'
   | 'polygon'
-  | 'symmetry';
+  | 'symmetry'
+  | 'triangle-lines'
+  | 'incircle'
+  | 'chord-tangent'
+  | 'thales'
+  | 'midline'
+  | 'trapezoid'
+  | 'parallelogram'
+  | 'sector'
+  | 'transform2d'
+  | 'venn'
+  | 'sine-law'
+  | 'tri-ineq'
+  | 'distributive'
+  | 'diff-squares'
+  | 'units'
+  | 'scale';
 
-export type SolidId = 'cuboid' | 'prism' | 'pyramid' | 'cylinder' | 'sphere';
+export type SolidId = 'cuboid' | 'prism' | 'pyramid' | 'cylinder' | 'sphere' | 'cube' | 'platonic' | 'frustum' | 'rotation';
