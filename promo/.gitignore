@@ -2,3 +2,10 @@ node_modules/
 out/
 public/models/
 public/rec/
+
+# third series: raw TTS takes, and soundtracks rebuilt by scripts/motion-music.mjs
+public/vo3/raw/
+public/music-trailer.wav
+public/music-slides.wav
+public/music-labs.wav
+public/music-math.wav

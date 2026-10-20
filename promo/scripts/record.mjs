@@ -10,9 +10,6 @@ import path from 'path';
 
 const BASE = process.env.BASE || 'http://localhost:4173';
 const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const W = 432;
-const H = 768;
-const DSF = 2.5;
 const FPS = 30;
 const OUT = path.resolve('public/rec');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -71,12 +68,16 @@ const VIRTUAL_TIME = () => {
   };
 };
 
-async function record(name, url, script, init) {
+/** opts.desktop: a 1440×900 laptop screen at 1.5× instead of the phone */
+async function record(name, url, script, init, opts = {}) {
+  const W = opts.desktop ? 1440 : 432;
+  const H = opts.desktop ? 900 : 768;
+  const DSF = opts.desktop ? 1.5 : 2.5;
   const browser = await puppeteer.launch({
     executablePath: CHROME,
     headless: true,
     args: [`--force-device-scale-factor=${DSF}`, '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--hide-scrollbars', '--lang=ru-RU'],
-    defaultViewport: { width: W, height: H, deviceScaleFactor: DSF, isMobile: true, hasTouch: true },
+    defaultViewport: { width: W, height: H, deviceScaleFactor: DSF, isMobile: !opts.desktop, hasTouch: !opts.desktop },
   });
   const page = await browser.newPage();
   await page.evaluateOnNewDocument(VIRTUAL_TIME);
@@ -171,7 +172,10 @@ async function record(name, url, script, init) {
     },
     async tapAt(x, y, after = 500) {
       taps.push({ f: frame, x, y, kind: 'tap' });
-      await page.touchscreen.tap(x, y);
+      if (opts.desktop) {
+        await page.mouse.move(x, y);
+        await page.mouse.click(x, y);
+      } else await page.touchscreen.tap(x, y);
       await frames(after / 1000);
     },
     async tap(text, opts = {}) {
@@ -218,17 +222,70 @@ async function record(name, url, script, init) {
     async drag(x1, y1, x2, y2, ms = 900) {
       const n = Math.max(2, Math.round((ms / 1000) * FPS));
       taps.push({ f: frame, x: x1, y: y1, kind: 'down' });
-      await page.touchscreen.touchStart(x1, y1);
+      const pointer = opts.desktop
+        ? { start: async (x, y) => (await page.mouse.move(x, y), page.mouse.down()), move: (x, y) => page.mouse.move(x, y), end: () => page.mouse.up() }
+        : { start: (x, y) => page.touchscreen.touchStart(x, y), move: (x, y) => page.touchscreen.touchMove(x, y), end: () => page.touchscreen.touchEnd() };
+      await pointer.start(x1, y1);
       for (let i = 1; i <= n; i++) {
         const k = ease(i / n);
         const x = x1 + (x2 - x1) * k;
         const y = y1 + (y2 - y1) * k;
-        await page.touchscreen.touchMove(x, y);
+        await pointer.move(x, y);
         taps.push({ f: frame, x, y, kind: 'move' });
         await shot();
       }
-      await page.touchscreen.touchEnd();
+      await pointer.end();
       taps.push({ f: frame, x: x2, y: y2, kind: 'up' });
+    },
+    /** move a slider smoothly to a value, frame by frame, with a finger on it */
+    async sweepRange(index, to, ms = 1200, scope = 'main') {
+      const n = Math.max(2, Math.round((ms / 1000) * FPS));
+      const from = await page.evaluate((i, sc) => Number(document.querySelectorAll(sc + ' input[type=range]')[i].value), index, scope);
+      for (let k = 1; k <= n; k++) {
+        const v = from + (to - from) * ease(k / n);
+        const r = await page.evaluate(
+          (i, v, sc) => {
+            const el = document.querySelectorAll(sc + ' input[type=range]')[i];
+            const step = Number(el.step) || 1;
+            const val = Math.round(v / step) * step;
+            const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+            set.call(el, String(val));
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            const b = el.getBoundingClientRect();
+            const kk = (val - Number(el.min)) / (Number(el.max) - Number(el.min));
+            return { x: b.left + b.width * kk, y: b.top + b.height / 2 };
+          },
+          index,
+          v,
+          scope,
+        );
+        taps.push({ f: frame, x: r.x, y: r.y, kind: k === 1 ? 'down' : k === n ? 'up' : 'move' });
+        await shot();
+      }
+    },
+    /** click a button by its text without scrolling to it (it may be off screen) */
+    async press(text, scope = 'main', exact = false) {
+      const ok = await page.evaluate(
+        (t, sc, ex) => {
+          const el = [...document.querySelectorAll(sc + ' button')].find((b) => (ex ? b.innerText.trim() === t : b.innerText.includes(t)));
+          el?.click();
+          return !!el;
+        },
+        text,
+        scope,
+        exact,
+      );
+      if (!ok) throw new Error('no button: ' + text);
+    },
+    /** scroll an inner scroll box (a dialog, a side panel) smoothly */
+    async scrollEl(src, dy, ms = 700) {
+      const n = Math.max(1, Math.round((ms / 1000) * FPS));
+      const from = await page.evaluate((s) => new Function(s)().scrollTop, src);
+      for (let i = 1; i <= n; i++) {
+        await page.evaluate((s, y) => (new Function(s)().scrollTop = y), src, from + dy * ease(i / n));
+        await shot();
+      }
     },
     async setRange(index, value) {
       const r = await page.evaluate(
@@ -254,13 +311,288 @@ async function record(name, url, script, init) {
   try {
     await script(h);
   } finally {
-    fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({ name, fps: FPS, w: W, h: H, frames: frame, taps, marks }, null, 1));
+    fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({ name, fps: FPS, w: W, h: H, dsf: DSF, frames: frame, taps, marks }, null, 1));
     console.log(`${name}: ${frame} frames (${(frame / FPS).toFixed(1)} s) in ${((Date.now() - t0) / 1000).toFixed(0)} s, marks ${Object.keys(marks).join(',')}`);
     await browser.close();
   }
 }
 
+
+/** opens a textbook topic quietly (not recorded): subject chip → grade chip → topic */
+async function openTopic(h, subject, grade, title) {
+  for (const t of [subject, grade, title]) {
+    const ok = await h.page.evaluate((t) => {
+      const b = [...document.querySelectorAll('main button')].find((e) => e.innerText.trim().startsWith(t));
+      b?.click();
+      return !!b;
+    }, t);
+    if (!ok) throw new Error('no button: ' + t);
+    await h.settle(1200);
+  }
+  await h.settle(2500);
+}
+const CANVAS = `return document.querySelector('main canvas')`;
+
 const CLIPS = {
+
+  /* ---------- third series ---------- */
+
+  // three throws at 30°, 45° and 60°: 45° flies farthest, 30° and 60° land together
+  async proj() {
+    await record('proj', '/#/app?lab=projectile', async (h) => {
+      await h.reveal(CANVAS, null, 0.1, 10);
+      await h.settle(600);
+      h.mark('start');
+      await h.sleep(500);
+      await h.sweepRange(1, 30, 900);
+      await h.press('Бросить');
+      h.mark('t30');
+      await h.sleep(2600);
+      await h.sweepRange(1, 60, 1000);
+      await h.press('Бросить');
+      h.mark('t60');
+      await h.sleep(3700);
+      await h.sweepRange(1, 45, 700);
+      await h.press('Бросить');
+      h.mark('t45');
+      await h.sleep(3000);
+      h.mark('end');
+    });
+  },
+
+  // a function typed as in a notebook, then its parameters dragged live
+  async plot() {
+    await record('plot', '/#/app?lab=plotter', async (h) => {
+      await h.reveal(CANVAS, null, 0.1, 10);
+      await h.settle(600);
+      h.mark('start');
+      await h.sleep(400);
+      await h.press('a*sin(b*x) + c');
+      await h.sleep(900);
+      h.mark('sin');
+      await h.sweepRange(1, 3, 1400);
+      await h.sweepRange(0, 3, 1200);
+      await h.sweepRange(2, 1, 900);
+      h.mark('cubic');
+      await h.press('x^3 - 3x');
+      await h.sleep(800);
+      await h.page.evaluate(() => [...document.querySelectorAll('main label')].find((l) => l.innerText.includes('производную'))?.querySelector('input')?.click());
+      h.mark('deriv');
+      await h.sleep(2200);
+      h.mark('end');
+    });
+  },
+
+  // amylase: warm to 37 °C (fastest), then overheat until it denatures
+  async enz() {
+    await record('enz', '/#/app?lab=enzymes', async (h) => {
+      await h.reveal(CANVAS, null, 0.1, 10);
+      await h.settle(600);
+      h.mark('start');
+      await h.sleep(800);
+      await h.sweepRange(2, 9, 900);
+      await h.sweepRange(0, 37, 1300);
+      h.mark('opt');
+      await h.sleep(2200);
+      await h.sweepRange(0, 75, 1600);
+      h.mark('hot');
+      await h.sleep(2600);
+      h.mark('end');
+    });
+  },
+
+  // zinc | copper: close the circuit, electrons run, then magnesium for a bigger voltage
+  async galv() {
+    await record('galv', '/#/app?lab=galvanic', async (h) => {
+      await h.reveal(`return document.querySelector('main svg')`, null, 0.12, 10);
+      await h.settle(600);
+      h.mark('start');
+      await h.sleep(700);
+      await h.press('Замкнуть цепь');
+      h.mark('closed');
+      await h.sleep(3200);
+      await h.page.evaluate(() => [...document.querySelectorAll('main button')].find((b) => b.innerText.trim() === 'Mg')?.click());
+      h.mark('mg');
+      await h.sleep(2800);
+      h.mark('end');
+    });
+  },
+
+  // balance an equation: the coefficients are read from the game's own answer key
+  async game() {
+    const src = fs.readFileSync(path.resolve('../src/components/games/BalanceGame.tsx'), 'utf8');
+    const KEY = {};
+    for (const m of src.matchAll(/\[\[([^\]]*)\], \[([^\]]*)\], \[([^\]]*)\]\]/g)) {
+      const list = (x) => x.split(',').map((t) => t.trim().replace(/'/g, ''));
+      KEY[[...list(m[1]), '>', ...list(m[2])].join(' ')] = m[3].split(',').map(Number);
+    }
+    await record('game', '/#/app?lab=games', async (h) => {
+      await h.page.evaluate(() => [...document.querySelectorAll('main button')].find((b) => b.innerText.includes('Играть'))?.click());
+      await h.settle(1500);
+      h.mark('start');
+      for (let round = 0; round < 3; round++) {
+        await h.sleep(round ? 500 : 900);
+        const formulas = await h.page.evaluate(() => {
+          const plain = (t) => t.replace(/[₀-₉]/g, (d) => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(d))).replace(/^\d+/, '');
+          const plus = [...document.querySelectorAll('main button')].filter((b) => b.getAttribute('aria-label') === '+');
+          return plus.map((b) => plain(b.parentElement.innerText.replace(/[+−\n\s]/g, '')));
+        });
+        // the arrow sits between reactants and products: try every split against the key
+        let coef = null;
+        for (let k = 1; k < formulas.length && !coef; k++) coef = KEY[[...formulas.slice(0, k), '>', ...formulas.slice(k)].join(' ')] ?? null;
+        if (!coef) throw new Error('unknown equation ' + formulas.join(' '));
+        for (let i = 0; i < coef.length; i++)
+          for (let n = 1; n < coef[i]; n++)
+            await h.tapEl(`const p = [...document.querySelectorAll('main button')].filter(b => b.getAttribute('aria-label') === '+'); return p[a]`, i, 260);
+        await h.sleep(250);
+        await h.tap('Готово', { after: 900 });
+        h.mark('solved' + round);
+      }
+      await h.sleep(600);
+      h.mark('end');
+    });
+  },
+
+  // incircle and circumcircle follow a vertex as it is dragged
+  async geo() {
+    await record('geo', '/#/app', async (h) => {
+      await openTopic(h, 'Математика', '8 класс', 'Вписанная и описанная');
+      const svg = `return [...document.querySelectorAll('main svg')].find(s => s.querySelectorAll('circle[r="8"]').length >= 3)`;
+      await h.reveal(svg, null, 0.12, 10);
+      await h.settle(500);
+      h.mark('start');
+      await h.sleep(700);
+      const handle = (i) => h.rect(`const s = [...document.querySelectorAll('main svg')].find(s => s.querySelectorAll('circle[r="8"]').length >= 3); return [...s.querySelectorAll('circle[r="8"]')].sort((p, q) => p.getBoundingClientRect().top - q.getBoundingClientRect().top)[a]`, i);
+      let c = await handle(0);
+      await h.drag(c.x, c.y, c.x - 110, c.y + 40, 1500);
+      h.mark('drag1');
+      await h.sleep(300);
+      c = await handle(0);
+      await h.drag(c.x, c.y, c.x + 170, c.y - 30, 1700);
+      await h.sleep(300);
+      c = await handle(2);
+      await h.drag(c.x, c.y, c.x - 60, c.y + 30, 1200);
+      await h.sleep(900);
+      h.mark('end');
+    });
+  },
+
+  // graph transformations: shift right, up, stretch, then switch the base function
+  async shift() {
+    await record('shift', '/#/app', async (h) => {
+      await openTopic(h, 'Математика', '9 класс', 'Преобразования графиков');
+      await h.reveal(CANVAS, null, 0.1, 10);
+      await h.settle(500);
+      h.mark('start');
+      await h.sleep(500);
+      await h.sweepRange(2, -2, 1300);
+      await h.sweepRange(3, 2, 1100);
+      await h.sweepRange(1, 3, 1000);
+      h.mark('sin');
+      await h.sweepRange(0, 5, 700);
+      await h.sweepRange(1, -2, 1300);
+      await h.sleep(800);
+      h.mark('end');
+    });
+  },
+
+  // cube cross-sections: the plane slides, the section changes shape
+  async cube() {
+    await record('cube', '/#/app', async (h) => {
+      await openTopic(h, 'Математика', '10 класс', 'Сечения многогранников');
+      await h.reveal(CANVAS, null, 0.1, 10);
+      await h.settle(800);
+      h.mark('start');
+      await h.sleep(500);
+      await h.sweepRange(2, 0.15, 1300);
+      await h.sweepRange(2, 0.85, 1700);
+      h.mark('diag');
+      await h.sweepRange(1, 2, 400);
+      await h.sweepRange(2, 0.3, 1400);
+      const c = await h.rect(CANVAS);
+      await h.drag(c.x - 60, c.y, c.x + 90, c.y + 20, 1300);
+      await h.sleep(600);
+      h.mark('end');
+    });
+  },
+
+  // a solid of revolution grows as the angle turns to 360°
+  async spin() {
+    await record('spin', '/#/app', async (h) => {
+      await openTopic(h, 'Математика', '11 класс', 'Тела вращения');
+      await h.reveal(CANVAS, null, 0.1, 10);
+      await h.settle(800);
+      await h.setRange(1, 20);
+      await h.settle(300);
+      h.mark('start');
+      await h.sleep(400);
+      await h.sweepRange(1, 360, 2400);
+      h.mark('cone');
+      await h.sweepRange(0, 3, 500);
+      await h.sweepRange(1, 40, 600);
+      await h.sweepRange(1, 360, 1800);
+      h.mark('sphere');
+      await h.sleep(900);
+      h.mark('end');
+    });
+  },
+
+  // the topic test: pick answers, see the feedback
+  async quiz() {
+    await record('quiz', '/#/app', async (h) => {
+      await openTopic(h, 'Математика', '9 класс', 'Преобразования графиков');
+      await h.reveal(`return [...document.querySelectorAll('main button')].find(b => b.innerText.includes('Начать тест'))`, null, 0.5, 10);
+      await h.press('Начать тест');
+      await h.settle(1200);
+      await h.reveal(`return [...document.querySelectorAll('main h2, main h3, main p')].find(e => /вопрос/i.test(e.innerText)) || document.querySelector('main')`, null, 0.12, 10).catch(() => {});
+      await h.settle(400);
+      h.mark('start');
+      await h.sleep(900);
+      for (let q = 0; q < 2; q++) {
+        // the right option comes from the quiz's own data on the button
+        const opts = await h.page.evaluate(() => [...document.querySelectorAll('main button')].filter((b) => b.innerText.trim().length > 0 && b.getBoundingClientRect().height > 40 && !/тест|Далее|Следующ|Учебник|Презентация|наставника|понял/i.test(b.innerText)).length);
+        if (!opts) break;
+        await h.tapEl(`return [...document.querySelectorAll('main button')].filter(b => b.innerText.trim().length > 0 && b.getBoundingClientRect().height > 40 && !/тест|Далее|Следующ|Учебник|Презентация|наставника|понял/i.test(b.innerText))[a]`, q % 2, 1500);
+        h.mark('a' + q);
+        await h.page.evaluate(() => [...document.querySelectorAll('main button')].find((b) => /Далее|Следующий/.test(b.innerText))?.click());
+        await h.sleep(500);
+      }
+      h.mark('end');
+    });
+  },
+
+  // laptop: the presentation dialog, flipping through templates
+  async deck() {
+    await record(
+      'deck',
+      '/#/app',
+      async (h) => {
+        await openTopic(h, 'Биология', '8 класс', 'Сердце');
+        await h.press('Презентация');
+        await h.settle(7000);
+        h.mark('start');
+        await h.sleep(1200);
+        const tile = (name) => `return [...document.querySelectorAll('[role=dialog] button')].find(b => b.lastElementChild?.textContent?.trim() === '${name}')`;
+        for (const name of ['Журнал', 'Деловой', 'Карточки', 'Детский', 'Шаги', 'Наука']) {
+          const r = await h.rect(tile(name));
+          if (!r) continue;
+          if (r.top < 120 || r.top + r.h > 820) {
+            await h.scrollEl(`const el = [...document.querySelectorAll('[role=dialog] *')].find(e => e.scrollHeight > e.clientHeight + 20 && /auto|scroll/.test(getComputedStyle(e).overflowY) && e.contains(new Function(${JSON.stringify(tile(name))})())); return el`, r.top - 420, 500);
+          }
+          await h.tapEl(tile(name), null, 1500);
+          h.mark(name);
+        }
+        // flip through the slides of the last template
+        for (let i = 0; i < 4; i++) {
+          await h.page.keyboard.press('ArrowRight');
+          await h.sleep(700);
+        }
+        h.mark('end');
+      },
+      null,
+      { desktop: true },
+    );
+  },
   // a tour: landing → textbook topic with a live model → labs and builders
   async overview() {
     await record('overview', '/', async (h) => {

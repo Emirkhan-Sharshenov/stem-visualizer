@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { continueRender, delayRender, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { continueRender, delayRender, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 
 export const FPS = 30;
 export const BAR = (60 / 128) * 4 * FPS; // 56.25 frames
@@ -19,13 +19,14 @@ export const COL = {
 export const SANS = 'Inter, "Segoe UI", system-ui, sans-serif';
 export const SERIF = 'Newsreader, Georgia, serif';
 
-/** Waits for the web fonts before frames are captured */
+/** Waits for the fonts before frames are captured */
 export function useFonts() {
   const [handle] = useState(() => delayRender('fonts'));
   useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=block';
+    // saved locally by scripts/fonts.mjs, so a render never waits on the network
+    link.href = staticFile('fonts/fonts.css');
     document.head.appendChild(link);
     const done = () => continueRender(handle);
     link.onload = () => document.fonts.ready.then(done);
