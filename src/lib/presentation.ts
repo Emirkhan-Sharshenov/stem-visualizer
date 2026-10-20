@@ -1238,8 +1238,8 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
 
 export const fileName = (s: string) => `${s.replace(/[\\/:*?"<>|«»]/g, '').replace(/\s+/g, ' ').trim().slice(0, 80) || 'presentation'}.pptx`;
 
-/** writes the .pptx; pptxgenjs loads only when someone downloads */
-export async function downloadPptx(slides: SlideWithNotes[], style: DesignStyle, theme: Theme, images: Images, name: string, deck: string, author?: string, brand?: Branding) {
+/** builds the .pptx; pptxgenjs loads only when someone downloads */
+export async function buildPptx(slides: SlideWithNotes[], style: DesignStyle, theme: Theme, images: Images, deck: string, author?: string, brand?: Branding) {
   const { default: PptxGenJS } = await import('pptxgenjs');
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
@@ -1266,5 +1266,35 @@ export async function downloadPptx(slides: SlideWithNotes[], style: DesignStyle,
     if (sl.notes) s.addNotes(sl.notes);
   });
 
-  await pptx.writeFile({ fileName: name });
+  return (await pptx.write({ outputType: 'blob' })) as Blob;
+}
+
+const PPTX_TYPE = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+export const isPhone = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+/** Telegram, Instagram, TikTok and other in-app browsers can't save files at all */
+export const inAppBrowser = () => /Instagram|FBAN|FBAV|Telegram|TikTok|musical_ly|Line\/|VKClient|WhatsApp|; wv\)/i.test(navigator.userAgent);
+
+/** saves the file; on phones it must run straight from a tap, since the share sheet needs one */
+export async function saveFile(blob: Blob, name: string) {
+  const file = new File([blob], name, { type: PPTX_TYPE });
+  if (isPhone() && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') return;
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  // Safari reads the blob after the click returns, so the link has to outlive it
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 60_000);
 }

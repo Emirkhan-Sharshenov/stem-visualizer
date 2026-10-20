@@ -6,7 +6,7 @@ import { sectionsFor } from '../../data/curriculum';
 import { usePlan } from '../../lib/plan';
 import { useSession } from '../../lib/supabase';
 import {
-  ACCENTS, accentFor, Branding, EndLayoutId, HeaderId, IntroLayoutId, PointLayoutId, QuizLayoutId, SummaryLayoutId, TEMPLATES, buildSlides, LESSON_PARTS, LessonPart, Slide, DecorId, DEFAULT_STYLE, DesignStyle, FONT_PAIRS, FontPairId, ScaleId, TitleLayoutId, downloadPptx, fileName, Images, Img, iconsUsed, layoutSlide, NO_IMAGES, Photo, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
+  ACCENTS, accentFor, Branding, EndLayoutId, HeaderId, IntroLayoutId, PointLayoutId, QuizLayoutId, SummaryLayoutId, TEMPLATES, buildSlides, LESSON_PARTS, LessonPart, Slide, DecorId, DEFAULT_STYLE, DesignStyle, FONT_PAIRS, FontPairId, ScaleId, TitleLayoutId, buildPptx, saveFile, isPhone, inAppBrowser, fileName, Images, Img, iconsUsed, layoutSlide, NO_IMAGES, Photo, Part, Run, SLIDE_H, SLIDE_W, SlideWithNotes, Theme, ThemeId, themeFor, THEMES,
 } from '../../lib/presentation';
 import type { PhotoCandidate } from '../../lib/illustrations';
 
@@ -241,6 +241,8 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   const [current, setCurrent] = useState(0);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  // phones: the file is built first, then a second tap opens the share sheet
+  const [ready, setReady] = useState<Blob | null>(null);
 
   // teacher extras switch on by default for teachers
   useEffect(() => {
@@ -373,15 +375,32 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   const download = async () => {
     if (!plan.pro) return upgrade();
     if (waiting || !slides.length) return;
-    setBusy(true);
-    try {
-      await downloadPptx(slides, style, theme, all, fileName(deck), deck, user?.email ?? undefined, brandOn);
+    if (ready) {
+      await saveFile(ready, fileName(deck));
+      setReady(null);
       setDone(true);
       setTimeout(() => setDone(false), 2500);
+      return;
+    }
+    setBusy(true);
+    try {
+      const blob = await buildPptx(slides, style, theme, all, deck, user?.email ?? undefined, brandOn);
+      if (isPhone()) setReady(blob);
+      else {
+        await saveFile(blob, fileName(deck));
+        setDone(true);
+        setTimeout(() => setDone(false), 2500);
+      }
+    } catch (e) {
+      console.error(e);
+      alert(L('Не получилось собрать презентацию. Попробуйте ещё раз.', 'Could not build the presentation. Please try again.'));
     } finally {
       setBusy(false);
     }
   };
+  // any change makes the prepared file stale
+  useEffect(() => setReady(null), [slides, style, theme, all, brandOn, deck]);
+  const inApp = inAppBrowser();
 
   const Row: React.FC<{ on: boolean; onClick: () => void; label: string; hint?: string; locked?: boolean }> = ({ on, onClick, label, hint, locked }) => (
     <button onClick={locked ? upgrade : onClick} className="w-full flex items-start gap-2.5 text-left py-1.5 cursor-pointer group">
@@ -587,15 +606,19 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
         </div>
 
         <footer className="flex flex-wrap items-center gap-3 px-5 py-3.5 border-t border-line bg-surface">
-          <p className="text-xs text-ink-3 flex-1 min-w-[200px]">{L('Файл .pptx открывается в PowerPoint, Google Slides и Keynote — его можно редактировать.', 'The .pptx opens in PowerPoint, Google Slides and Keynote, and stays editable.')}</p>
+          {inApp && plan.pro ? (
+            <p className="text-xs flex-1 min-w-[200px] text-amber-700 dark:text-amber-400">{L('Встроенный браузер приложения может не сохранять файлы. Если не скачается — откройте сайт в Safari или Chrome (меню ⋯ → «Открыть в браузере»).', 'In-app browsers may not save files. If nothing downloads, open the site in Safari or Chrome (⋯ menu → Open in browser).')}</p>
+          ) : (
+            <p className="text-xs text-ink-3 flex-1 min-w-[200px]">{ready ? L('Файл готов — нажмите «Сохранить» и выберите «Сохранить в Файлы» или нужное приложение.', 'The file is ready: tap Save and pick Save to Files or an app.') : L('Файл .pptx открывается в PowerPoint, Google Slides и Keynote — его можно редактировать.', 'The .pptx opens in PowerPoint, Google Slides and Keynote, and stays editable.')}</p>
+          )}
           <button
             onClick={download}
             disabled={busy || (plan.pro && waiting) || !slides.length}
             className="h-11 px-5 rounded-lg text-sm font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-60 transition-transform active:scale-[0.98]"
-            style={{ background: plan.pro ? '#2F5BFF' : '#16171A', color: '#fff' }}
+            style={{ background: ready ? '#16A34A' : plan.pro ? '#2F5BFF' : '#16171A', color: '#fff' }}
           >
             {busy || (plan.pro && waiting) ? <Loader2 className="w-4 h-4 animate-spin" /> : done ? <Check className="w-4 h-4" /> : plan.pro ? <Download className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
-            {done ? L('Скачано', 'Downloaded') : plan.pro && waiting ? L('Готовим картинки…', 'Preparing pictures…') : plan.pro ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}
+            {done ? L('Скачано', 'Downloaded') : ready ? L('Сохранить файл', 'Save file') : busy ? L('Собираем…', 'Building…') : plan.pro && waiting ? L('Готовим картинки…', 'Preparing pictures…') : plan.pro ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}
           </button>
         </footer>
       </div>
