@@ -298,7 +298,8 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     };
   }, [onClose]);
 
-  const theme = themeFor(style.theme, topic.subject, style.accent);
+  // one object per look, or every render would count as a change and throw away the prepared file
+  const theme = useMemo(() => themeFor(style.theme, topic.subject, style.accent), [style.theme, topic.subject, style.accent]);
   const deck = whole && teacher && section ? section.title[lang] : topic.title[lang];
   const useSection = whole && teacher && !!section;
   const built = useMemo(

@@ -1,16 +1,39 @@
 import React, { lazy, Suspense, useState } from 'react';
-import { Brain, Calculator, FlaskConical, Grid3x3, Trophy } from 'lucide-react';
+import { Brain, Calculator, FlaskConical, Grid3x3, Layers, Swords, Trophy } from 'lucide-react';
 import { useProgress } from '../../lib/progress';
 import type { Lang } from './common';
+import { parseDuel } from './Duel';
 
 const BalanceGame = lazy(() => import('./BalanceGame'));
 const MemoryGame = lazy(() => import('./MemoryGame'));
 const MathSprint = lazy(() => import('./MathSprint'));
 const ElementHunt = lazy(() => import('./ElementHunt'));
+const FormulaCards = lazy(() => import('./FormulaCards'));
+const Duel = lazy(() => import('./Duel'));
 
-type GameId = 'balance' | 'memory' | 'sprint' | 'elements';
+type GameId = 'duel' | 'cards' | 'balance' | 'memory' | 'sprint' | 'elements';
 
 const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: React.ReactNode; color: string; subject: { ru: string; en: string }; title: { ru: string; en: string }; text: { ru: string; en: string }; time: { ru: string; en: string } }[] = [
+  {
+    id: 'duel',
+    record: (g) => (g.duel ? Math.floor(g.duel / 100) : 0),
+    icon: <Swords className="w-7 h-7" />,
+    color: '#F76B15',
+    subject: { ru: 'С другом', en: 'With a friend' },
+    title: { ru: 'Дуэль по ссылке', en: 'Duel by link' },
+    text: { ru: 'Реши 10 задач на скорость и отправь ссылку другу: ему достанутся те же задачи. Кто решит больше и быстрее?', en: 'Solve 10 problems fast and send a friend the link: they get the same ones. Who solves more, faster?' },
+    time: { ru: '≈ 1 минута', en: '≈ 1 minute' },
+  },
+  {
+    id: 'cards',
+    record: (g) => g.cards ?? 0,
+    icon: <Layers className="w-7 h-7" />,
+    color: '#0EA5A4',
+    subject: { ru: 'Все предметы', en: 'All subjects' },
+    title: { ru: 'Карточки формул', en: 'Formula cards' },
+    text: { ru: 'Вспомни формулу по теме и переверни карточку. Интервальное повторение: забытое вернётся сегодня, выученное — через неделю.', en: 'Recall the formula for a topic and flip the card. Spaced repetition: forgotten cards return today, learnt ones in a week.' },
+    time: { ru: '10 карточек', en: '10 cards' },
+  },
   {
     id: 'balance',
     record: (g) => g.balance ?? 0,
@@ -54,9 +77,11 @@ const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: 
 ];
 
 /** short arcade games for practice; every game gives XP for the league */
-export const GamesPage: React.FC<{ lang: Lang }> = ({ lang }) => {
+export const GamesPage: React.FC<{ lang: Lang; duel?: string | null }> = ({ lang, duel }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
-  const [game, setGame] = useState<GameId | null>(null);
+  // a duel link opens straight into the challenge
+  const [challenge] = useState(() => parseDuel(duel ?? null));
+  const [game, setGame] = useState<GameId | null>(challenge ? 'duel' : null);
   const p = useProgress();
   const records = p.games ?? {};
   const exit = () => setGame(null);
@@ -64,6 +89,8 @@ export const GamesPage: React.FC<{ lang: Lang }> = ({ lang }) => {
   if (game)
     return (
       <Suspense fallback={<div className="h-[60vh] rounded-xl bg-muted animate-pulse" />}>
+        {game === 'duel' && <Duel lang={lang} onExit={exit} challenge={challenge} />}
+        {game === 'cards' && <FormulaCards lang={lang} onExit={exit} />}
         {game === 'balance' && <BalanceGame lang={lang} onExit={exit} />}
         {game === 'memory' && <MemoryGame lang={lang} onExit={exit} />}
         {game === 'sprint' && <MathSprint lang={lang} onExit={exit} />}

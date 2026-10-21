@@ -136,6 +136,8 @@ export default function App({ lang, setLang }: AppProps) {
     const lab = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('lab') as VisualMode | null;
     return lab && LINKABLE.includes(lab) ? lab : 'textbook';
   });
+  // a duel link (#/app?lab=games&duel=…) is read before the address is tidied up below
+  const [duelParam] = useState(() => new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('duel'));
   // keep the address in sync so the current section can be shared
   useEffect(() => {
     if (!LINKABLE.includes(currentMode)) return;
@@ -503,7 +505,7 @@ export default function App({ lang, setLang }: AppProps) {
                 </div>
               );
             })()}
-            {currentMode === 'games' && <GamesPage lang={lang} />}
+            {currentMode === 'games' && <GamesPage lang={lang} duel={duelParam} />}
             {currentMode === 'formulas' && <FormulasPage lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'rating' && <RatingPage lang={lang} />}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}
