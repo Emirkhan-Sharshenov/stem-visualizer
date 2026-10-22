@@ -12,6 +12,8 @@ export interface CardData {
   sub?: string;
   /** right and wrong answers, drawn as green and red squares */
   marks?: boolean[];
+  /** figures in a 2-column grid under the result, e.g. a year in numbers */
+  stats?: { value: string; label: string }[];
   /** a closing line, e.g. "Сможешь лучше?" */
   call?: string;
   color: string;
@@ -132,6 +134,27 @@ export async function drawCard(d: CardData): Promise<Blob> {
       g.fill();
     });
     y += rows * (s + gap) + 40;
+  }
+  if (d.stats?.length) {
+    const cw = 420;
+    const ch = 170;
+    const gap = 24;
+    const x0 = (W - (2 * cw + gap)) / 2;
+    y += 20;
+    d.stats.slice(0, 6).forEach((st, k) => {
+      const x = x0 + (k % 2) * (cw + gap);
+      const yy = y + Math.floor(k / 2) * (ch + gap);
+      roundRect(g, x, yy, cw, ch, 28);
+      g.fillStyle = 'rgba(255,255,255,0.07)';
+      g.fill();
+      g.fillStyle = '#fff';
+      g.font = font(900, 72);
+      g.fillText(st.value, x + cw / 2, yy + 92);
+      g.fillStyle = 'rgba(255,255,255,0.7)';
+      g.font = font(600, 32);
+      g.fillText(st.label, x + cw / 2, yy + 140);
+    });
+    y += Math.ceil(Math.min(6, d.stats.length) / 2) * (ch + gap);
   }
   if (d.call) {
     g.font = font(800, 72);

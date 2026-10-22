@@ -1,16 +1,20 @@
-import React, { useMemo } from 'react';
-import { Flame } from 'lucide-react';
+import React, { lazy, Suspense, useState } from 'react';
+import { Flame, Sparkles } from 'lucide-react';
 import { TOPICS } from '../../data/curriculum';
 import { badges, dayStreak, useProgress } from '../../lib/progress';
 import { useSession } from '../../lib/supabase';
 import { StudyPlan } from './StudyPlan';
 import { StudentClasses } from '../teacher/TeacherPage';
+import { Certificates } from './Certificates';
+
+const YearRecap = lazy(() => import('./YearRecap'));
 
 type Lang = 'ru' | 'en';
 const SUBJ = [
   { id: 'physics', ru: 'Физика', en: 'Physics', color: '#E5484D' },
   { id: 'chemistry', ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   { id: 'biology', ru: 'Биология', en: 'Biology', color: '#F5A524' },
+  { id: 'mathematics', ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
 ];
 
 /** The learner's progress: streak, per-subject completion by grade, quiz stats and badges */
@@ -26,6 +30,7 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
   const avg = quizzes.length ? Math.round((quizzes.reduce((s, q) => s + q.best / q.total, 0) / quizzes.length) * 100) : 0;
   const preds = Object.values(p.predictions);
   const predOk = preds.filter((x) => x.ok).length;
+  const [recap, setRecap] = useState(false);
 
   // last 28 days activity
   const days = Array.from({ length: 28 }, (_, i) => {
@@ -55,6 +60,22 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
           ))}
         </div>
       </header>
+
+      {new Set(p.days).size >= 3 && (
+        <button onClick={() => setRecap(true)} className="lift text-left rounded-2xl p-5 flex items-center gap-4 cursor-pointer" style={{ background: 'linear-gradient(120deg,#2F5BFF,#8E4EC6 60%,#F76B15)', color: '#fff' }}>
+          <Sparkles className="w-8 h-8 shrink-0" />
+          <span className="flex-1">
+            <span className="block font-serif text-2xl leading-tight">{L('Твой год в STEM Visualizer', 'Your year in STEM Visualizer')}</span>
+            <span className="block text-sm opacity-85">{L('Дни, темы, задачи и кто ты как ученик — в сторис', 'Days, topics, problems and your learner type, as stories')}</span>
+          </span>
+          <span className="text-2xl">→</span>
+        </button>
+      )}
+      {recap && (
+        <Suspense fallback={null}>
+          <YearRecap lang={lang} progress={p} onClose={() => setRecap(false)} />
+        </Suspense>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 anim-stagger">
         <div className="rounded-xl bg-surface border border-line p-4">
@@ -144,6 +165,8 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
       <StudentClasses lang={lang} onOpenTopic={onOpenTopic} compact />
 
       <StudyPlan lang={lang} onOpenTopic={onOpenTopic} />
+
+      <Certificates lang={lang} progress={p} />
 
       <section>
         <h2 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
