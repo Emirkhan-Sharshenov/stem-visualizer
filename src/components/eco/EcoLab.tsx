@@ -9,7 +9,7 @@ const COL = { grass: '#30A46C', rabbit: '#5B8CFF', fox: '#F76B15' };
 const Slider: React.FC<{ label: string; value: number; min: number; max: number; step: number; left: string; right: string; onChange: (v: number) => void }> = ({ label, value, min, max, step: st, left, right, onChange }) => (
   <label className="flex flex-col gap-1">
     <span className="text-xs text-ink-2">{label}</span>
-    <input type="range" min={min} max={max} step={st} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+    <input type="range" min={min} max={max} step={st} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
     <span className="flex justify-between text-[11px] text-ink-3">
       <span>{left}</span>
       <span>{right}</span>

@@ -257,7 +257,7 @@ export const BiologyDeepZoom: React.FC<BiologyDeepZoomProps> = ({ lang, onSelect
                   max={100}
                   value={gradient}
                   onChange={(e) => setGradient(Number(e.target.value))}
-                  className="mt-2 w-full accent-[#2F5BFF] cursor-pointer"
+                  className="mt-2 w-full accent-accent cursor-pointer"
                 />
               </div>
               {level === 'atp_rotor' && (

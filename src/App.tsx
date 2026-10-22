@@ -1,3 +1,4 @@
+import { useTheme } from './lib/theme';
 import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { VisualMode, Milestone } from './types/stem';
 import { INITIAL_MILESTONES } from './data/concepts';
@@ -130,6 +131,8 @@ interface AppProps {
 }
 
 export default function App({ lang, setLang }: AppProps) {
+  // the light lab layer re-colours the labs (drawn for the night) only in the white theme
+  const [theme] = useTheme();
   // deep links like #/app?lab=chemlab open a section directly (handy for social posts)
   const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'rating', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher', 'projectile', 'plotter', 'enzymes', 'galvanic', 'games'];
   const [currentMode, setCurrentMode] = useState<VisualMode>(() => {
@@ -254,7 +257,7 @@ export default function App({ lang, setLang }: AppProps) {
   const crumb = currentMode !== 'textbook' ? LAB_CRUMBS[currentMode] : undefined;
 
   return (
-    <div className="lab-light page-light min-h-screen flex flex-col font-sans pb-14 lg:pb-0">
+    <div className={`${theme === 'light' ? 'lab-light ' : ''}page-light min-h-screen flex flex-col font-sans pb-14 lg:pb-0`}>
       <Navbar
         currentMode={currentMode}
         onSelectMode={(mode) => {

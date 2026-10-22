@@ -100,7 +100,7 @@ export const PhotoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {value} {unit}
         </span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => on(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => on(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
     </label>
   );
 

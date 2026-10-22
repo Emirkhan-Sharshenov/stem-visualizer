@@ -1,0 +1,100 @@
+/* HeroUI v3 variables for the STEM Lab theme (kept in step with storybook-lab/src/themes/stem-lab.css), in two modes:
+   data-theme="stem-lab"       white: clean lab bench, deep cyan accent that stays readable on white
+   data-theme="stem-lab-dark"  night: deep navy, glowing cyan readouts, violet particles
+   Only theme variables are set here; component styles stay HeroUI's. */
+
+@layer base {
+  [data-theme="stem-lab"],
+  [data-theme="stem-lab-dark"] {
+    --radius: 0.75rem;
+    --field-radius: 0.75rem;
+    /* signature colours shared by both modes */
+    --lab-cyan: oklch(0.86 0.14 210);   /* #39E1FF, the glow */
+    --lab-violet: oklch(0.58 0.24 285); /* #7B5CFF, particles and XP */
+  }
+
+  [data-theme="stem-lab"] {
+    color-scheme: light;
+    --background: oklch(0.985 0.004 240);          /* #F7F9FC */
+    --foreground: oklch(0.2 0.035 260);            /* deep navy ink */
+    --surface: oklch(1 0 0);
+    --surface-foreground: var(--foreground);
+    --surface-secondary: oklch(0.97 0.008 240);
+    --surface-secondary-foreground: var(--foreground);
+    --surface-tertiary: oklch(0.95 0.012 240);
+    --surface-tertiary-foreground: var(--foreground);
+    --overlay: oklch(1 0 0);
+    --overlay-foreground: var(--foreground);
+    --muted: oklch(0.52 0.03 255);
+    --default: oklch(0.95 0.01 240);
+    --default-foreground: var(--foreground);
+    --accent: oklch(0.55 0.13 222);                /* deep cyan, AA on white */
+    --accent-foreground: oklch(1 0 0);
+    --success: oklch(0.6 0.16 155);
+    --success-foreground: oklch(1 0 0);
+    --warning: oklch(0.78 0.16 72);
+    --warning-foreground: var(--foreground);
+    --danger: oklch(0.6 0.22 25);
+    --danger-foreground: oklch(1 0 0);
+    --field-background: oklch(1 0 0);
+    --field-foreground: var(--foreground);
+    --field-placeholder: var(--muted);
+    --segment: oklch(1 0 0);
+    --segment-foreground: var(--foreground);
+    --border: oklch(0.91 0.012 245);
+    --separator: oklch(0.93 0.01 245);
+    --focus: var(--accent);
+    --link: var(--accent);
+    --backdrop: rgba(11, 18, 32, 0.45);
+    /* readouts on white: ink with a cyan tint, no glow */
+    --readout: oklch(0.45 0.12 225);
+    --readout-glow: transparent;
+    --stage: oklch(0.97 0.012 235);               /* the area around a model */
+  }
+
+  [data-theme="stem-lab-dark"] {
+    color-scheme: dark;
+    --background: oklch(0.13 0.03 265);            /* #070B16 */
+    --foreground: oklch(0.92 0.03 260);            /* #DDE6FF */
+    --surface: oklch(0.19 0.04 265);               /* #111A30 */
+    --surface-foreground: var(--foreground);
+    --surface-secondary: oklch(0.23 0.045 265);
+    --surface-secondary-foreground: var(--foreground);
+    --surface-tertiary: oklch(0.27 0.05 265);
+    --surface-tertiary-foreground: var(--foreground);
+    --overlay: oklch(0.21 0.045 265);
+    --overlay-foreground: var(--foreground);
+    --muted: oklch(0.66 0.05 262);
+    --default: oklch(0.25 0.045 265);
+    --default-foreground: var(--foreground);
+    --accent: var(--lab-cyan);
+    --accent-foreground: oklch(0.16 0.04 250);     /* dark ink on the glowing cyan */
+    --success: oklch(0.75 0.17 155);
+    --success-foreground: oklch(0.16 0.04 250);
+    --warning: oklch(0.8 0.15 75);
+    --warning-foreground: oklch(0.16 0.04 250);
+    --danger: oklch(0.56 0.2 25);                  /* deep enough for white text (AA) */
+    --danger-foreground: oklch(0.98 0 0);
+    --field-background: oklch(0.21 0.045 265);
+    --field-foreground: var(--foreground);
+    --field-placeholder: var(--muted);
+    --segment: oklch(0.27 0.05 265);
+    --segment-foreground: var(--foreground);
+    --border: oklch(0.3 0.06 265);
+    --separator: oklch(0.26 0.05 265);
+    --focus: var(--accent);
+    --link: var(--accent);
+    --backdrop: rgba(2, 4, 10, 0.7);
+    --readout: var(--lab-cyan);
+    --readout-glow: color-mix(in oklab, var(--lab-cyan) 55%, transparent);
+    --stage: oklch(0.11 0.03 265);
+    --surface-shadow: 0 0 0 1px var(--border);
+    --overlay-shadow: 0 18px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border);
+  }
+}
+
+@theme inline {
+  --color-lab-cyan: var(--lab-cyan);
+  --color-lab-violet: var(--lab-violet);
+  --color-readout: var(--readout);
+}

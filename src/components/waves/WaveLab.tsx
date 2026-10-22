@@ -242,7 +242,7 @@ export const WaveLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {value.toFixed(step < 1 ? 1 : 0)} {unit}
         </span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => on(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => on(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
     </label>
   );
 
@@ -306,7 +306,7 @@ export const WaveLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             )}
             {scene === 'two' && (
               <label className="inline-flex items-center gap-2 text-sm text-ink-2 cursor-pointer ml-1">
-                <input type="checkbox" checked={anti} onChange={(e) => setAnti(e.target.checked)} className="w-4 h-4 accent-[#2F5BFF]" />
+                <input type="checkbox" checked={anti} onChange={(e) => setAnti(e.target.checked)} className="w-4 h-4 accent-accent" />
                 {L('Источники в противофазе', 'Sources in antiphase')}
               </label>
             )}

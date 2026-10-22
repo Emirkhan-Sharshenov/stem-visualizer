@@ -192,11 +192,11 @@ export const MoleculeBuilder: React.FC<{ lang: Lang }> = ({ lang }) => {
             </div>
             <div className="flex flex-wrap gap-4 text-sm">
               <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={showLP} onChange={(e) => setShowLP(e.target.checked)} className="w-4 h-4 accent-[#2F5BFF]" />
+                <input type="checkbox" checked={showLP} onChange={(e) => setShowLP(e.target.checked)} className="w-4 h-4 accent-accent" />
                 {L('Неподелённые пары', 'Lone pairs')}
               </label>
               <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={showDipole} onChange={(e) => setShowDipole(e.target.checked)} className="w-4 h-4 accent-[#2F5BFF]" />
+                <input type="checkbox" checked={showDipole} onChange={(e) => setShowDipole(e.target.checked)} className="w-4 h-4 accent-accent" />
                 {L('Дипольный момент', 'Dipole')}
               </label>
             </div>

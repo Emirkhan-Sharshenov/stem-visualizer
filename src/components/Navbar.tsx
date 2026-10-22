@@ -4,7 +4,9 @@ import { LogoMark } from './brand/Logo';
 import { Search, User, BookOpen, FlaskConical, Target, Flame, Trophy, Gamepad2 } from 'lucide-react';
 import { dayStreak, useProgress } from '../lib/progress';
 import { signOut, useSession } from '../lib/supabase';
-import { LogOut, Crown, Users, GraduationCap } from 'lucide-react';
+import { LogOut, Crown, Users, GraduationCap, Moon, Sun } from 'lucide-react';
+import { Button } from '@heroui/react';
+import { useTheme } from '../lib/theme';
 import { usePlan } from '../lib/plan';
 
 interface NavbarProps {
@@ -130,6 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               ))}
             </div>
 
+            <ThemeSwitch lang={lang} />
             <AccountButton lang={lang} onSelect={onSelectMode} />
           </div>
         </div>
@@ -214,5 +217,16 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => 
         </div>
       )}
     </div>
+  );
+};
+
+/** night lab ↔ white */
+const ThemeSwitch: React.FC<{ lang: 'ru' | 'en' }> = ({ lang }) => {
+  const [mode, setMode] = useTheme();
+  const label = mode === 'dark' ? (lang === 'ru' ? 'Светлая тема' : 'Light theme') : lang === 'ru' ? 'Ночная тема' : 'Night theme';
+  return (
+    <Button isIconOnly size="sm" variant="ghost" aria-label={label} onPress={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
+      {mode === 'dark' ? <Sun className="w-4 h-4" strokeWidth={1.75} /> : <Moon className="w-4 h-4" strokeWidth={1.75} />}
+    </Button>
   );
 };

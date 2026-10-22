@@ -124,7 +124,7 @@ export const Timeline: React.FC<{ lang: 'ru' | 'en'; tl: TimelineApi; marks?: Ti
             value={tl.time}
             onChange={(e) => tl.seek(Number(e.target.value))}
             aria-label={lang === 'ru' ? 'Шкала времени' : 'Timeline'}
-            className="w-full accent-[#2F5BFF] cursor-pointer"
+            className="w-full accent-accent cursor-pointer"
           />
           {marks.map((m) => (
             <button

@@ -399,7 +399,7 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               ] as const
             ).map(([k, label]) => (
               <label key={k} className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={show[k]} onChange={(e) => setShow({ ...show, [k]: e.target.checked })} className="w-4 h-4 accent-[#2F5BFF]" />
+                <input type="checkbox" checked={show[k]} onChange={(e) => setShow({ ...show, [k]: e.target.checked })} className="w-4 h-4 accent-accent" />
                 {label}
               </label>
             ))}
@@ -423,7 +423,7 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {(tool === 'plus' || tool === 'minus') && (
             <div className="bg-surface border border-line rounded-xl p-4">
               <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">{L('Величина нового заряда', 'New charge size')}</h3>
-              <input type="range" min={0.5} max={5} step={0.5} value={mag} onChange={(e) => setMag(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+              <input type="range" min={0.5} max={5} step={0.5} value={mag} onChange={(e) => setMag(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
               <div className="text-sm font-mono text-ink">{mag} {L('нКл', 'nC')}</div>
             </div>
           )}
@@ -441,7 +441,7 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                   const q = Number(e.target.value) || (sel.q > 0 ? 0.5 : -0.5);
                   change(charges.map((c) => (c.id === sel.id ? { ...c, q } : c)));
                 }}
-                className="w-full accent-[#2F5BFF] cursor-pointer"
+                className="w-full accent-accent cursor-pointer"
               />
               <div className="flex justify-between text-sm font-mono">
                 <span style={{ color: sel.q > 0 ? POS : NEG }}>q = {sel.q > 0 ? '+' : ''}{sel.q} {L('нКл', 'nC')}</span>

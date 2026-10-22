@@ -228,7 +228,7 @@ export const SectionTests: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
       <div className="flex flex-wrap items-end justify-between gap-3">
         <Picker lang={lang} p={picker} />
         <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="accent-[#2F5BFF] w-4 h-4" />
+          <input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="accent-accent w-4 h-4" />
           <Clock className="w-4 h-4" strokeWidth={1.75} />
           {L('На время (1 мин на вопрос)', 'Timed (1 min per question)')}
         </label>

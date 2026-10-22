@@ -480,7 +480,7 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
               ))}
             </div>
             <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer select-none">
-              <input type="checkbox" checked={trails} onChange={(e) => setTrails(e.target.checked)} className="w-4 h-4 accent-[#2F5BFF]" />
+              <input type="checkbox" checked={trails} onChange={(e) => setTrails(e.target.checked)} className="w-4 h-4 accent-accent" />
               {L('Следы орбит', 'Orbit trails')}
             </label>
             {sceneId === 'three' && (
@@ -525,7 +525,7 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
                     {fmt(launchV, 1)} {L('км/с', 'km/s')}
                   </span>
                 </span>
-                <input type="range" min={5} max={13} step={0.1} value={launchV} onChange={(e) => setLaunchV(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+                <input type="range" min={5} max={13} step={0.1} value={launchV} onChange={(e) => setLaunchV(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
               </label>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button onClick={() => setLaunchV(Math.round(Math.sqrt(EARTH_MU / (EARTH_R + 200)) * 10) / 10)} className="rounded-lg bg-muted px-2 py-1.5 text-left hover:bg-hover cursor-pointer">

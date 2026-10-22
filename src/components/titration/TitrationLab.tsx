@@ -242,14 +242,14 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           </div>
           <label className="flex items-center gap-3 text-xs text-ink-2">
             {L('Скорость крана', 'Tap speed')}
-            <input type="range" min={0.2} max={4} step={0.2} value={rate} onChange={(e) => setRate(Number(e.target.value))} className="flex-1 max-w-[200px] accent-[#2F5BFF] cursor-pointer" />
+            <input type="range" min={0.2} max={4} step={0.2} value={rate} onChange={(e) => setRate(Number(e.target.value))} className="flex-1 max-w-[200px] accent-accent cursor-pointer" />
           </label>
 
           <div className="bg-surface border border-line rounded-xl p-3">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Кривая титрования', 'Titration curve')}</h3>
               <label className="inline-flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer">
-                <input type="checkbox" checked={theory} onChange={(e) => setTheory(e.target.checked)} className="w-3.5 h-3.5 accent-[#2F5BFF]" />
+                <input type="checkbox" checked={theory} onChange={(e) => setTheory(e.target.checked)} className="w-3.5 h-3.5 accent-accent" />
                 {L('теория', 'theory')}
               </label>
             </div>

@@ -276,7 +276,7 @@ const Slider: React.FC<{ label: string; value: number; min: number; max: number;
         {num(value, step < 1 ? 1 : 0)} {unit}
       </span>
     </span>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
   </label>
 );
 
@@ -547,7 +547,7 @@ export const CircuitLab: React.FC<{ lang: Lang }> = ({ lang }) => {
 
       <div className="flex flex-wrap items-center gap-3">
         <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer select-none">
-          <input type="checkbox" checked={electrons} onChange={(e) => setElectrons(e.target.checked)} className="w-4 h-4 accent-[#2F5BFF]" />
+          <input type="checkbox" checked={electrons} onChange={(e) => setElectrons(e.target.checked)} className="w-4 h-4 accent-accent" />
           {electrons ? L('Показаны электроны (движутся от − к +)', 'Showing electrons (− to +)') : L('Показать движение электронов вместо направления тока', 'Show electrons instead of current direction')}
         </label>
         <button onClick={() => load(presetId)} className="ml-auto h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">

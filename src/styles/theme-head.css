@@ -1,0 +1,153 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "./stem-lab-heroui.css";
+
+/* STEM Lab theme ("night lab"), two modes chosen by data-theme on <html>:
+   stem-lab       white lab bench, deep cyan accent readable on white
+   stem-lab-dark  deep navy night, glowing cyan, violet particles
+   The site's own tokens (paper, surface, ink, line, accent…) read these variables, so every page follows
+   the switch; HeroUI components read the matching variables from stem-lab-heroui.css. */
+
+:root,
+[data-theme="stem-lab"] {
+  --sv-paper: #F7F9FC;
+  --sv-surface: #FFFFFF;
+  --sv-muted: #EEF2F7;
+  --sv-hover: #E4EAF2;
+  --sv-line: #DCE3EC;
+  --sv-line-strong: #C5CFDC;
+  --sv-ink: #0F1A2E;
+  --sv-ink-2: #55627A;
+  --sv-ink-3: #7C889E;
+  --sv-accent: #0784A8;
+  --sv-accent-hover: #066E8D;
+  --sv-accent-active: #055A73;
+  --sv-accent-soft: #E3F5FA;
+  /* text on a filled accent button */
+  --sv-on-accent: #FFFFFF;
+  --sv-stage: #0A1022;
+  --sv-stage-line: #1C2742;
+  --sv-lift-shadow: 0 12px 28px -14px rgba(15, 26, 46, 0.3);
+  --sv-scroll: #C5CFDC;
+}
+
+[data-theme="stem-lab-dark"] {
+  --sv-paper: #070B16;
+  --sv-surface: #0F1729;
+  --sv-muted: #141E35;
+  --sv-hover: #1B2742;
+  --sv-line: #1F2B47;
+  --sv-line-strong: #2C3B5E;
+  --sv-ink: #DDE6FF;
+  --sv-ink-2: #9AA7C7;
+  --sv-ink-3: #74819F;
+  --sv-accent: #39E1FF;
+  --sv-accent-hover: #6FE9FF;
+  --sv-accent-active: #1FC8E8;
+  --sv-accent-soft: #0E2A3D;
+  --sv-on-accent: #04101E;
+  --sv-stage: #050912;
+  --sv-stage-line: #1A2440;
+  --sv-lift-shadow: 0 0 0 1px #2C3B5E, 0 14px 30px -12px rgba(57, 225, 255, 0.28);
+  --sv-scroll: #2C3B5E;
+}
+
+/* fonts as real CSS variables (other rules below read them) */
+@theme {
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* display face for headings (the classes stay font-serif across the code) */
+  --font-serif: 'Unbounded', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+
+@theme inline {
+  --color-paper: var(--sv-paper);
+  --color-surface: var(--sv-surface);
+  --color-muted: var(--sv-muted);
+  --color-hover: var(--sv-hover);
+  --color-line: var(--sv-line);
+  --color-line-strong: var(--sv-line-strong);
+  --color-ink: var(--sv-ink);
+  --color-ink-2: var(--sv-ink-2);
+  --color-ink-3: var(--sv-ink-3);
+  --color-accent: var(--sv-accent);
+  --color-accent-hover: var(--sv-accent-hover);
+  --color-accent-active: var(--sv-accent-active);
+  --color-accent-soft: var(--sv-accent-soft);
+  --color-stage: var(--sv-stage);
+  --color-stage-line: var(--sv-stage-line);
+
+  --color-physics: #E5484D;
+  --color-chemistry: #30A46C;
+  --color-biology: #F5A524;
+  --color-math: #8E4EC6;
+}
+
+@layer base {
+  html {
+    background-color: var(--sv-paper);
+  }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--sv-paper);
+    color: var(--sv-ink);
+  }
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1;
+  }
+  /* the display face is wide: headings get a touch tighter tracking */
+  .font-serif {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* running text and quotes once set in the old serif read better in the text face (Unbounded has no italic);
+   unlayered, so it wins over the font-serif utility */
+p.font-serif,
+.font-serif.italic,
+blockquote.font-serif {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+/* ---------- night mode: colours written for a light page get their night versions ---------- */
+[data-theme="stem-lab-dark"] {
+  /* filled accent buttons carry inline white text; on the glowing cyan the text goes dark */
+  & :is(.bg-accent, .bg-accent-hover, .hover\:bg-accent-hover:hover) {
+    color: var(--sv-on-accent) !important;
+  }
+  & :is(.bg-accent, .bg-accent-hover) :is(svg, span, b, strong) {
+    color: inherit !important;
+  }
+  /* pastel status panels → tinted glass */
+  & .bg-\[\#EAF6EF\], & .bg-\[\#EEF8F2\] { background-color: rgba(48, 164, 108, 0.16) !important; }
+  & .bg-\[\#FDF0EF\], & .bg-\[\#FFF4F0\], & .bg-\[\#FFE9E1\] { background-color: rgba(229, 72, 77, 0.16) !important; }
+  & .bg-\[\#FFF8E8\], & .bg-\[\#FFF4DA\], & .bg-\[\#FFF4DC\] { background-color: rgba(245, 165, 36, 0.14) !important; }
+  & .bg-\[\#FFE7B3\], & .bg-\[\#FFDB8F\] { background-color: rgba(245, 165, 36, 0.24) !important; }
+  & .bg-\[\#FDEEF5\] { background-color: rgba(214, 64, 159, 0.16) !important; }
+  & .bg-\[\#EEF3FF\] { background-color: rgba(57, 225, 255, 0.1) !important; }
+  & .bg-\[\#FCFCFA\] { background-color: var(--sv-surface) !important; }
+  & .border-\[\#F3D9A4\] { border-color: rgba(245, 165, 36, 0.4) !important; }
+  /* dark status text written for pastel panels → bright versions */
+  & .text-\[\#1E7A4C\] { color: #5BE0A0 !important; }
+  & .text-\[\#CC2F35\] { color: #FF8A8E !important; }
+  & .text-\[\#8A4B0F\], & .text-\[\#B5651D\], & .text-\[\#7A4A00\] { color: #FFC266 !important; }
+  /* the near-black "ink" buttons would vanish on navy */
+  & .bg-ink, & .bg-\[\#16171A\] { background-color: #DDE6FF !important; color: #070B16 !important; }
+  & .bg-ink *, & .bg-\[\#16171A\] * { color: inherit !important; }
+  & .border-ink { border-color: #DDE6FF !important; }
+  ::selection { background: var(--sv-accent); color: var(--sv-on-accent); }
+
+  /* the labs are drawn with Tailwind's slate greys and a few neutral darks: at night they turn navy */
+  --color-slate-950: #070B16;
+  --color-slate-900: #0F1729;
+  --color-slate-800: #1F2B47;
+  --color-slate-700: #2C3B5E;
+  & .bg-\[\#0B0D12\] { background-color: #070B16 !important; }
+  & .bg-\[\#0F1115\], & .bg-\[\#111214\] { background-color: #0A1122 !important; }
+  & .bg-\[\#17181B\] { background-color: #0F1729 !important; }
+  & .bg-\[\#1A1C21\] { background-color: #121B30 !important; }
+  & .bg-\[\#26282D\] { background-color: #1F2B47 !important; }
+  & :is(.border-\[\#2c2f36\], .border-\[\#24262B\], .border-\[\#26282D\]) { border-color: #22305A !important; }
+}

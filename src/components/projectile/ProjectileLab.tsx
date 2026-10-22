@@ -242,7 +242,7 @@ export const ProjectileLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {value} {unit}
         </span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => set(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" disabled={!!flying} />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => set(Number(e.target.value))} className="w-full accent-accent cursor-pointer" disabled={!!flying} />
     </label>
   );
 
@@ -293,7 +293,7 @@ export const ProjectileLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           ))}
         </div>
         <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={drag} onChange={(e) => setDrag(e.target.checked)} className="accent-[#2F5BFF]" />
+          <input type="checkbox" checked={drag} onChange={(e) => setDrag(e.target.checked)} className="accent-accent" />
           {L('Сопротивление воздуха', 'Air drag')}
         </label>
         <div className="flex gap-2">

@@ -184,7 +184,7 @@ const TestRunner: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = 
             </div>
           </div>
           <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer mt-5">
-            <input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="accent-[#2F5BFF] w-4 h-4" />
+            <input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="accent-accent w-4 h-4" />
             <Clock className="w-4 h-4" strokeWidth={1.75} />
             {L(`На время (${count} мин)`, `Timed (${count} min)`)}
           </label>

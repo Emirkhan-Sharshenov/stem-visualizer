@@ -144,16 +144,16 @@ export const KineticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Температура', 'Temperature')} <span className="font-mono text-ink">{kelvin} K</span>
               </span>
-              <input type="range" min={1.2} max={6} step={0.1} value={params.T} onChange={(e) => set({ T: Number(e.target.value) })} className="w-full accent-[#2F5BFF] cursor-pointer" />
+              <input type="range" min={1.2} max={6} step={0.1} value={params.T} onChange={(e) => set({ T: Number(e.target.value) })} className="w-full accent-accent cursor-pointer" />
             </label>
             <label className="flex flex-col gap-1">
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Объём сосуда (давление)', 'Vessel volume (pressure)')} <span className="font-mono text-ink">{Math.round((params.width / MAX_W) * 100)}%</span>
               </span>
-              <input type="range" min={200} max={MAX_W} step={10} value={params.width} onChange={(e) => set({ width: Number(e.target.value) })} className="w-full accent-[#2F5BFF] cursor-pointer" />
+              <input type="range" min={200} max={MAX_W} step={10} value={params.width} onChange={(e) => set({ width: Number(e.target.value) })} className="w-full accent-accent cursor-pointer" />
             </label>
             <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer">
-              <input type="checkbox" checked={params.catalyst} onChange={(e) => set({ catalyst: e.target.checked })} className="w-4 h-4 accent-[#2F5BFF]" />
+              <input type="checkbox" checked={params.catalyst} onChange={(e) => set({ catalyst: e.target.checked })} className="w-4 h-4 accent-accent" />
               {L('Добавить катализатор', 'Add a catalyst')}
             </label>
           </div>

@@ -306,13 +306,13 @@ export const SelectionLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Сколько птиц охотится', 'How many birds hunt')} <span className="font-mono text-ink">{Math.round(strength * 100)}%</span>
               </span>
-              <input type="range" min={0} max={0.9} step={0.05} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+              <input type="range" min={0} max={0.9} step={0.05} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
             </label>
             <label className="flex flex-col gap-1">
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Частота мутаций', 'Mutation rate')} <span className="font-mono text-ink">{(mu * 100).toFixed(1)}%</span>
               </span>
-              <input type="range" min={0} max={0.02} step={0.001} value={mu} onChange={(e) => setMu(Number(e.target.value))} className="w-full accent-[#2F5BFF] cursor-pointer" />
+              <input type="range" min={0} max={0.02} step={0.001} value={mu} onChange={(e) => setMu(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
             </label>
           </div>
 

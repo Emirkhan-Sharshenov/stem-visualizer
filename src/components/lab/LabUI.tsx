@@ -31,7 +31,7 @@ export const Slider: React.FC<{
       step={step}
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
-      className="mt-2 w-full accent-[#2F5BFF] cursor-pointer"
+      className="mt-2 w-full accent-accent cursor-pointer"
     />
   </label>
 );

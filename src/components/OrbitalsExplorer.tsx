@@ -404,7 +404,7 @@ const Slider: React.FC<{ label: string; value: number; min: number; max: number;
       <span className="text-ink">{label}</span>
       <span className="font-mono text-ink">{format(value)}</span>
     </div>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-2 w-full accent-[#2F5BFF] cursor-pointer" />
+    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-2 w-full accent-accent cursor-pointer" />
   </div>
 );
 
