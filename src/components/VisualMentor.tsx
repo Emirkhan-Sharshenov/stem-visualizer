@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUp, Bot, Crown, RotateCcw, X } from 'lucide-react';
-import { topicById } from '../data/curriculum';
+import { ArrowUp, Bot, Camera, Crown, RotateCcw, X } from 'lucide-react';
+import { topicById, TOPICS } from '../data/curriculum';
 import type { Topic } from '../data/curriculum/types';
 import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, MENTOR_URL, usePlan } from '../lib/plan';
 import { useMentorTopic } from '../lib/mentorTopic';
@@ -14,6 +14,40 @@ interface Msg {
   role: 'user' | 'mentor';
   text: string;
   upgrade?: boolean;
+  /** a photo of a problem the learner sent (a small data URL for the chat) */
+  image?: string;
+  /** the textbook topic the mentor recognised in the photo */
+  topicId?: string;
+}
+
+/** shrinks a photo to 1280 px on the long side as JPEG, small enough to send */
+async function shrinkPhoto(file: File): Promise<{ url: string; data: string }> {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k);
+  c.height = Math.round(bmp.height * k);
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+  bmp.close();
+  const url = c.toDataURL('image/jpeg', 0.82);
+  return { url, data: url.slice(url.indexOf(',') + 1) };
+}
+
+/** the topic whose title shares the most word stems with the mentor's hint */
+function findTopic(hint: string) {
+  const stems = (s: string) => s.toLowerCase().replace(/ё/g, 'е').split(/[^a-zа-я0-9]+/).filter((w) => w.length > 2).map((w) => w.slice(0, 5));
+  const want = new Set(stems(hint));
+  let best: Topic | undefined;
+  let score = 0;
+  for (const t of TOPICS) {
+    const words = stems(`${t.title.ru} ${t.title.en}`);
+    const hit = words.filter((w) => want.has(w)).length / Math.sqrt(words.length + 1);
+    if (hit > score) {
+      score = hit;
+      best = t;
+    }
+  }
+  return score > 0.3 ? best : undefined;
 }
 
 interface VisualMentorProps {
@@ -241,8 +275,10 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [left, setLeft] = useState<number | null>(null);
+  const [photo, setPhoto] = useState<{ url: string; data: string } | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   // what is on screen right now: the section, a problem, the state of a lab
   const page = usePageContext();
@@ -265,18 +301,20 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
   }, [isOpen]);
 
   const send = async (text?: string) => {
-    const q = (text ?? question).trim();
+    const shot = photo;
+    const q = (text ?? question).trim() || (shot ? L('Реши задачу с фото', 'Solve the problem in the photo') : '');
     if (!q || loading) return;
-    const history = messages.filter((m) => !m.upgrade).slice(-6);
-    setMessages((m) => [...m, { role: 'user', text: q }]);
+    const history = messages.filter((m) => !m.upgrade).map(({ role, text }) => ({ role, text })).slice(-6);
+    setMessages((m) => [...m, { role: 'user', text: q, image: shot?.url }]);
     setQuestion('');
+    setPhoto(null);
     setLoading(true);
     try {
       const auth = await authHeaders();
       const res = await fetch(MENTOR_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ question: q, lang, topic: topic ? topicContext(topic, lang) : null, history, page: { where: page.where, details: page.details.slice(0, 1800) } }),
+        body: JSON.stringify({ question: q, lang, topic: topic ? topicContext(topic, lang) : null, history, page: { where: page.where, details: page.details.slice(0, 1800) }, image: shot ? { mime: 'image/jpeg', data: shot.data } : undefined }),
       });
       const leftHeader = res.headers.get('X-Mentor-Left');
       if (leftHeader !== null) setLeft(leftHeader === 'Infinity' ? null : Number(leftHeader));
@@ -301,7 +339,8 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
         return;
       }
       const data = await res.json();
-      setMessages((m) => [...m, { role: 'mentor', text: data.answer || L('Не получилось ответить. Попробуй ещё раз.', 'Could not answer. Try again.') }]);
+      const found = typeof data.topic === 'string' ? findTopic(data.topic) : undefined;
+      setMessages((m) => [...m, { role: 'mentor', text: data.answer || L('Не получилось ответить. Попробуй ещё раз.', 'Could not answer. Try again.'), topicId: found?.id }]);
     } catch {
       setMessages((m) => [...m, { role: 'mentor', text: L('Нет связи с сервером. Проверь интернет и попробуй ещё раз.', 'Cannot reach the server. Check your connection and try again.') }]);
     } finally {
@@ -369,19 +408,37 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
                   {c}
                 </button>
               ))}
+              <button onClick={() => camera.current?.click()} className="self-start inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-accent-soft text-accent font-medium hover:bg-accent/15 transition-colors cursor-pointer">
+                <Camera className="w-4 h-4" strokeWidth={1.75} /> {L('Сфотографировать задачу из учебника', 'Snap a problem from your textbook')}
+              </button>
             </div>
           </div>
         )}
         {messages.map((m, i) =>
           m.role === 'user' ? (
-            <div key={i} className="self-end max-w-[85%] min-w-0 rounded-2xl rounded-tr-sm bg-accent px-4 py-2.5 text-[14.5px] leading-relaxed whitespace-pre-wrap break-words" style={{ color: '#fff' }}>
-              {m.text}
+            <div key={i} className="self-end max-w-[85%] min-w-0 flex flex-col items-end gap-1.5">
+              {m.image && <img src={m.image} alt={L('Фото задачи', 'Photo of the problem')} className="max-h-48 rounded-xl border border-line object-contain" />}
+              <div className="rounded-2xl rounded-tr-sm bg-accent px-4 py-2.5 text-[14.5px] leading-relaxed whitespace-pre-wrap break-words" style={{ color: '#fff' }}>
+                {m.text}
+              </div>
             </div>
           ) : (
             <div key={i} className="self-start max-w-[94%] min-w-0 flex flex-col gap-2">
               <div className={`min-w-0 rounded-2xl rounded-tl-sm border px-4 py-3 text-[14.5px] leading-[1.65] text-ink ${m.upgrade ? 'bg-[#FFF8E8] border-[#F3D9A4]' : 'bg-surface border-line'}`}>
                 <Rich text={m.text} lang={lang} />
               </div>
+              {m.topicId && topicById(m.topicId) && (
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('open-topic', { detail: m.topicId }));
+                    onClose();
+                  }}
+                  className="self-start inline-flex items-center gap-1.5 min-h-9 py-1.5 px-3.5 rounded-lg bg-accent-soft hover:bg-accent/15 text-accent text-sm font-medium text-left cursor-pointer"
+                >
+                  <Eye className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+                  {L('Открыть тему и модель', 'Open the topic and model')}: {topicById(m.topicId)!.title[lang]}
+                </button>
+              )}
               {m.upgrade && (
                 <button
                   onClick={() => {
@@ -407,7 +464,43 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
       </div>
 
       <div className="p-3 border-t border-line bg-surface shrink-0">
+        {photo && (
+          <div className="mb-2 flex items-center gap-2">
+            <img src={photo.url} alt="" className="h-16 rounded-lg border border-line object-cover" />
+            <span className="text-xs text-ink-2 flex-1">{L('Фото задачи прикреплено. Можно дописать вопрос.', 'Photo attached. You can add a question.')}</span>
+            <button onClick={() => setPhoto(null)} aria-label={L('Убрать фото', 'Remove photo')} className="w-7 h-7 rounded-md text-ink-3 hover:text-ink hover:bg-hover flex items-center justify-center cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+        <input
+          ref={camera}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (!f) return;
+            try {
+              setPhoto(await shrinkPhoto(f));
+              input.current?.focus();
+            } catch {
+              alert(L('Не получилось открыть фото. Попробуй другое.', 'Could not open the photo. Try another one.'));
+            }
+          }}
+        />
         <div className="flex items-end gap-2 rounded-xl border border-line bg-paper focus-within:border-accent px-3 py-2">
+          <button
+            onClick={() => camera.current?.click()}
+            disabled={loading}
+            aria-label={L('Сфотографировать задачу', 'Take a photo of a problem')}
+            title={L('Сфотографируй задачу — разберу по шагам', 'Snap a problem and I will solve it step by step')}
+            className="w-8 h-8 rounded-lg text-ink-2 hover:text-accent hover:bg-accent-soft flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-40"
+          >
+            <Camera className="w-[18px] h-[18px]" strokeWidth={1.75} />
+          </button>
           <textarea
             ref={input}
             rows={1}
@@ -424,7 +517,7 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
           />
           <button
             onClick={() => send()}
-            disabled={!question.trim() || loading}
+            disabled={(!question.trim() && !photo) || loading}
             aria-label={L('Отправить', 'Send')}
             className="w-8 h-8 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-40 flex items-center justify-center shrink-0 cursor-pointer disabled:cursor-not-allowed"
             style={{ color: '#fff' }}

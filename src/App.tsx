@@ -171,9 +171,13 @@ export default function App({ lang, setLang }: AppProps) {
       window.scrollTo(0, 0);
     };
     window.addEventListener('open-mode', openMode);
+    // and a textbook topic, e.g. the one the mentor recognised in a photo of a problem
+    const onTopic = (e: Event) => openTopic((e as CustomEvent<string>).detail);
+    window.addEventListener('open-topic', onTopic);
     return () => {
       window.removeEventListener('open-pro', open);
       window.removeEventListener('open-mode', openMode);
+      window.removeEventListener('open-topic', onTopic);
     };
   }, []);
 
