@@ -1,7 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, RotateCcw, Timer, Trophy, Zap } from 'lucide-react';
+import { ArrowLeft, Image, RotateCcw, Timer, Trophy, Zap } from 'lucide-react';
 import { Confetti } from '../fx/Confetti';
 import { progress, useProgress } from '../../lib/progress';
+import { SITE, shareCard, useCard } from '../../lib/shareCard';
+
+/** names and colours for the story picture of each game */
+const STORY: Record<string, { ru: string; en: string; color: string }> = {
+  sprint: { ru: 'Устный счёт', en: 'Mental maths', color: '#2F5BFF' },
+  balance: { ru: 'Уравняй реакцию', en: 'Balance the equation', color: '#30A46C' },
+  elements: { ru: 'Охота на элементы', en: 'Element hunt', color: '#E5484D' },
+  cards: { ru: 'Карточки формул', en: 'Formula cards', color: '#0EA5A4' },
+};
 
 export type Lang = 'ru' | 'en';
 
@@ -69,6 +78,9 @@ export const GameOver: React.FC<{ lang: Lang; id: string; score: number; xp: num
     progress.recordGame(id, score, xp);
   }, [id, score, xp]);
   const record = score > before && score > 0;
+  const kind = STORY[id] ?? (id.startsWith('memory') ? { ru: 'Мемо: формулы', en: 'Memory: formulas', color: '#8E4EC6' } : null);
+  const card = useCard(kind ? { kicker: kind[lang], big: String(score), sub: record ? L('Новый рекорд!', 'New record!') : lines[0], call: L('Побьёшь мой рекорд?', 'Can you beat it?'), color: kind.color } : null);
+  const story = () => card && kind && shareCard(card, L(`${kind.ru} в STEM Visualizer: ${score} очков. Побьёшь? https://${SITE}/#/app?lab=games`, `${kind.en} in STEM Visualizer: ${score} points. Can you beat it? https://${SITE}/#/app?lab=games`), `stem-${id}.png`);
   return (
     <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-6 sm:p-8 flex flex-col items-center text-center gap-3 anim-page">
       {record && <Confetti count={48} />}
@@ -91,6 +103,11 @@ export const GameOver: React.FC<{ lang: Lang; id: string; score: number; xp: num
           {L('Другие игры', 'Other games')}
         </button>
       </div>
+      {kind && (
+        <button onClick={story} disabled={!card} className="h-10 px-4 rounded-lg text-sm font-medium text-ink-2 hover:text-ink hover:bg-muted inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+          <Image className="w-4 h-4" /> {L('Картинка результата в сторис', 'Result picture for stories')}
+        </button>
+      )}
     </div>
   );
 };

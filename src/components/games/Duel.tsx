@@ -1,68 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, Delete, Send, Swords, Trophy, X } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { Copy, Image, Send, Swords, Trophy } from 'lucide-react';
 import { Confetti } from '../fx/Confetti';
 import { progress } from '../../lib/progress';
+import { shareCard, useCard } from '../../lib/shareCard';
 import { GameBar, Lang } from './common';
+import { COUNT, ProblemRun, problems } from './ProblemRun';
 
 /* Duel by link: ten problems made from one seed, so a friend who opens the link gets exactly the same ones.
    The link carries the seed and the challenger's result; nothing goes through a server. */
 
-const COUNT = 10;
 const NAME_KEY = 'stem-duel-name';
-
-/** a small seeded generator (mulberry32) */
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** ten problems that get harder: arithmetic, percents, powers, equations, physics and geometry one-liners */
-function problems(seed: number, lang: Lang): { q: string; a: number }[] {
-  const r = rng(seed);
-  const n = (a: number, b: number) => a + Math.floor(r() * (b - a + 1));
-  const ru = lang === 'ru';
-  const sup = '⁰¹²³⁴⁵';
-  const make = (kind: number, v: number): { q: string; a: number } => {
-    switch (kind) {
-      case 0: {
-        const a = n(12, 89), b = n(6, 49), x = n(6, 19), y = n(3, 9);
-        return v === 0 ? { q: `${a} + ${b}`, a: a + b } : v === 1 ? { q: `${a + b} − ${b}`, a } : { q: `${x} × ${y}`, a: x * y };
-      }
-      case 1: {
-        const p = [10, 15, 20, 25, 30, 40, 50, 75][n(0, 7)], x = [40, 60, 80, 120, 160, 200, 240, 360][n(0, 7)], k = n(11, 25);
-        return v === 0 ? { q: `${p}% ${ru ? 'от' : 'of'} ${x}`, a: (p * x) / 100 } : { q: `${k}²`, a: k * k };
-      }
-      case 2: {
-        const x = n(2, 12), k = n(2, 9), b = n(1, 30);
-        return { q: `${k}x + ${b} = ${k * x + b},  x = ?`, a: x };
-      }
-      case 3: {
-        const t = n(2, 6), s = n(3, 15) * t, m = n(2, 12), a = n(2, 5);
-        return v === 0
-          ? { q: ru ? `${s} м за ${t} с: v = ? м/с` : `${s} m in ${t} s: v = ? m/s`, a: s / t }
-          : { q: ru ? `m = ${m} кг, a = ${a} м/с²: F = ? Н` : `m = ${m} kg, a = ${a} m/s²: F = ? N`, a: m * a };
-      }
-      case 4: {
-        const [a, b, c] = [[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17], [9, 12, 15]][n(0, 4)];
-        const x = n(3, 8) * 10, y = n(2, 5) * 10;
-        return v === 0
-          ? { q: ru ? `Катеты ${a} и ${b}: гипотенуза = ?` : `Legs ${a} and ${b}: hypotenuse = ?`, a: c }
-          : { q: ru ? `Углы треугольника ${x}° и ${y}°: третий = ?` : `Triangle angles ${x}° and ${y}°: third = ?`, a: 180 - x - y };
-      }
-      default: {
-        const a = n(2, 5), b = n(2, 3);
-        return { q: `${a}${sup[b]} + ${b}${sup[a]}`, a: a ** b + b ** a };
-      }
-    }
-  };
-  return [0, 0, 1, 1, 2, 2, 3, 3, 4, 5].map((kind) => make(kind, n(0, 2)));
-}
 
 export interface DuelChallenge {
   seed: number;
@@ -86,13 +33,10 @@ export const Duel: React.FC<{ lang: Lang; onExit: () => void; challenge?: DuelCh
   const [rival, setRival] = useState(challenge ?? null);
   const list = useMemo(() => problems(seed, lang), [seed, lang]);
   const [phase, setPhase] = useState<'intro' | 'play' | 'done'>('intro');
-  const [i, setI] = useState(0);
-  const [right, setRight] = useState(0);
-  const [input, setInput] = useState('');
-  const [flash, setFlash] = useState<'idle' | 'right' | 'wrong'>('idle');
-  const [t0, setT0] = useState(0);
-  const [now, setNow] = useState(0);
+  const [run, setRun] = useState(0);
+  const [marks, setMarks] = useState<boolean[]>([]);
   const [secs, setSecs] = useState(0);
+  const right = marks.filter(Boolean).length;
   const [name, setName] = useState(() => {
     try {
       return localStorage.getItem(NAME_KEY) ?? '';
@@ -101,50 +45,23 @@ export const Duel: React.FC<{ lang: Lang; onExit: () => void; challenge?: DuelCh
     }
   });
   const [copied, setCopied] = useState(false);
-  const field = useRef<HTMLInputElement>(null);
   const paid = useRef(false);
 
-  useEffect(() => {
-    if (phase !== 'play') return;
-    const id = setInterval(() => setNow(performance.now()), 200);
-    return () => clearInterval(id);
-  }, [phase]);
-  useEffect(() => field.current?.focus(), [i, phase]);
-
   const begin = () => {
-    setI(0);
-    setRight(0);
-    setInput('');
-    setT0(performance.now());
-    setNow(performance.now());
+    setRun((r) => r + 1);
     setPhase('play');
     paid.current = false;
   };
-  const submit = () => {
-    if (input.trim() === '' || input === '-') return;
-    const ok = Math.abs(Number(input.replace(',', '.')) - list[i].a) < 1e-9;
-    const r = right + (ok ? 1 : 0);
-    setRight(r);
-    setFlash(ok ? 'right' : 'wrong');
-    setTimeout(() => setFlash('idle'), 300);
-    setInput('');
-    if (i + 1 < COUNT) setI(i + 1);
-    else {
-      const s = Math.round((performance.now() - t0) / 1000);
-      setSecs(s);
-      setPhase('done');
-      if (!paid.current) {
-        paid.current = true;
-        // the game record is a score that ranks like the duel: answers first, then speed
-        progress.recordGame('duel', Math.max(0, r * 100 - s), r * 4 + (rival && beats({ right: r, secs: s }, rival) ? 10 : 0));
-      }
+  const finish = (m: boolean[], s: number) => {
+    const r = m.filter(Boolean).length;
+    setMarks(m);
+    setSecs(s);
+    setPhase('done');
+    if (!paid.current) {
+      paid.current = true;
+      // the game record is a score that ranks like the duel: answers first, then speed
+      progress.recordGame('duel', Math.max(0, r * 100 - s), r * 4 + (rival && beats({ right: r, secs: s }, rival) ? 10 : 0));
     }
-  };
-  const press = (k: string) => {
-    if (k === 'del') setInput((s) => s.slice(0, -1));
-    else if (k === 'ok') submit();
-    else if (k === '-') setInput((s) => (s.startsWith('-') ? s.slice(1) : '-' + s));
-    else setInput((s) => (s.length < 6 ? s + k : s));
   };
   const me = { seed, right, secs, name: name.trim() || L('Друг', 'A friend') };
   const share = async () => {
@@ -171,6 +88,12 @@ export const Duel: React.FC<{ lang: Lang; onExit: () => void; challenge?: DuelCh
       prompt(L('Скопируй ссылку', 'Copy the link'), url);
     }
   };
+  const card = useCard(
+    phase === 'done'
+      ? { kicker: L('Дуэль · 10 задач', 'Duel · 10 problems'), big: `${right}/${COUNT}`, sub: L(`за ${secs} с`, `in ${secs} s`), marks, call: L('Сможешь лучше?', 'Can you beat it?'), color: '#F76B15' }
+      : null,
+  );
+  const story = () => card && shareCard(card, L(`Мой результат в дуэли STEM Visualizer: ${right}/${COUNT} за ${secs} с. Сможешь лучше? ${duelLink(me)}`, `My STEM Visualizer duel: ${right}/${COUNT} in ${secs} s. Can you beat it? ${duelLink(me)}`), 'stem-duel.png');
   const newDuel = () => {
     setSeed(Math.floor(Math.random() * 1e9));
     setRival(null);
@@ -235,6 +158,9 @@ export const Duel: React.FC<{ lang: Lang; onExit: () => void; challenge?: DuelCh
           <button onClick={share} className="h-11 rounded-lg bg-accent hover:bg-accent-hover font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
             {copied ? <Copy className="w-4 h-4" /> : <Send className="w-4 h-4" />} {copied ? L('Ссылка скопирована', 'Link copied') : rival ? L('Отправить ответный вызов', 'Send it back') : L('Вызвать друга', 'Challenge a friend')}
           </button>
+          <button onClick={story} disabled={!card} className="h-11 rounded-lg border border-line hover:bg-muted text-sm font-medium text-ink inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+            <Image className="w-4 h-4" /> {L('Картинка в сторис', 'Story picture')}
+          </button>
           <button onClick={newDuel} className="h-11 rounded-lg border border-line hover:bg-muted text-sm text-ink cursor-pointer">
             {L('Новая дуэль', 'New duel')}
           </button>
@@ -246,41 +172,7 @@ export const Duel: React.FC<{ lang: Lang; onExit: () => void; challenge?: DuelCh
     );
   }
 
-  const p = list[i];
-  const elapsed = Math.max(0, Math.round((now - t0) / 1000));
-  return (
-    <div className="flex flex-col gap-4 max-w-xl mx-auto w-full">
-      <GameBar lang={lang} title={L('Дуэль', 'Duel')} onExit={onExit} score={right} extra={<span className="font-mono text-sm text-ink-2">{i + 1}/{COUNT} · {elapsed} с</span>} />
-      <div className={`rounded-2xl border-2 bg-surface p-6 flex flex-col items-center gap-4 transition-colors ${flash === 'right' ? 'border-[#30A46C] bg-[#EAF6EF]' : flash === 'wrong' ? 'border-[#E5484D] bg-[#FDF0EF] anim-wrong' : 'border-line'}`}>
-        <div className="flex gap-1">
-          {list.map((_, k) => (
-            <span key={k} className={`w-2 h-2 rounded-full ${k < i ? 'bg-accent' : k === i ? 'bg-ink' : 'bg-muted'}`} />
-          ))}
-        </div>
-        <div key={p.q} className="font-serif text-3xl sm:text-4xl text-ink text-center anim-q">{p.q}</div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-          className="w-full flex justify-center"
-        >
-          <input ref={field} value={input} onChange={(e) => setInput(e.target.value.replace(/[^0-9,.\-]/g, '').slice(0, 7))} inputMode="none" className="w-48 h-14 text-center font-mono text-3xl rounded-xl border border-line bg-paper outline-none focus:border-accent" aria-label={L('Ответ', 'Answer')} />
-        </form>
-        <div className="grid grid-cols-3 gap-2 w-full max-w-xs">
-          {['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', 'del'].map((k) => (
-            <button key={k} type="button" onClick={() => press(k)} className="h-12 rounded-xl border border-line bg-paper hover:bg-muted active:scale-95 transition-transform text-xl font-mono text-ink cursor-pointer flex items-center justify-center">
-              {k === 'del' ? <Delete className="w-5 h-5" /> : k === '-' ? '±' : k}
-            </button>
-          ))}
-          <button type="button" onClick={() => press('ok')} className="col-span-3 h-12 rounded-xl bg-accent hover:bg-accent-hover text-base font-medium cursor-pointer inline-flex items-center justify-center gap-1.5" style={{ color: '#fff' }}>
-            {flash === 'wrong' ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />} {L('Ответить', 'Answer')}
-          </button>
-        </div>
-        <p className="text-xs text-ink-3">{L('Ответ можно дать один раз — потом сразу следующая задача.', 'One answer per problem, then the next one.')}</p>
-      </div>
-    </div>
-  );
+  return <ProblemRun key={run} lang={lang} title={L('Дуэль', 'Duel')} list={list} onExit={onExit} onDone={finish} />;
 };
 
 export default Duel;

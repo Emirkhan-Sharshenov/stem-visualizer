@@ -102,7 +102,7 @@ export type Slide =
   | { k: 'summary'; label: string; title: string; items: { title: string; text: string; icon: IconName }[] }
   | { k: 'quiz'; label: string; q: string; options: string[] }
   | { k: 'answers'; title: string; items: { letter: string; text: string }[] }
-  | { k: 'end'; title: string; subtitle: string }
+  | { k: 'end'; title: string; subtitle: string; credit?: string }
   | { k: 'goals'; title: string; know: string[]; can: string[] }
   | { k: 'warmup'; title: string; items: string[] }
   | { k: 'terms'; title: string; items: { term: string; text: string }[] }
@@ -404,7 +404,7 @@ export function buildSlides(o: BuildOptions): SlideWithNotes[] {
       prompts: [L('Сегодня я узнал…', 'Today I learned…'), L('Было трудно…', 'It was hard to…'), L('Хочу спросить…', 'I want to ask…')],
       notes: note(L('Попросите поднять карточку цвета светофора или показать пальцами 1–3.', 'Ask for a traffic-light card or 1–3 fingers.')),
     });
-  if (parts.has('end')) slides.push({ k: 'end', title: L('Спасибо за внимание!', 'Thank you!'), subtitle: L('Ваши вопросы?', 'Any questions?') });
+  if (parts.has('end')) slides.push({ k: 'end', title: L('Спасибо за внимание!', 'Thank you!'), subtitle: L('Ваши вопросы?', 'Any questions?'), credit: L('Интерактивные модели к уроку: stem-visualizer.pages.dev', 'Interactive models for the lesson: stem-visualizer.pages.dev') });
   return slides;
 }
 
@@ -1211,6 +1211,8 @@ export function layoutSlide(sl: Slide, c: LayoutCtx): { bg: string; prims: Prim[
     case 'end': {
       bg = T.heroBg;
       const EL = S.end ?? 'center';
+      // where the class can open the models after the lesson
+      if (sl.credit) text(M, SLIDE_H - 0.75, SLIDE_W - 2 * M, 0.4, sl.credit, 12, T.heroMuted, 'body', { align: 'right', valign: 'middle', alpha: 0.85 });
       if (EL === 'split') {
         rect(0, 0, SLIDE_W * 0.42, SLIDE_H, A);
         text(0, 0.5, SLIDE_W * 0.42, 6.5, '?', 300, ON, 'head', { align: 'center', valign: 'middle', alpha: 0.9 });

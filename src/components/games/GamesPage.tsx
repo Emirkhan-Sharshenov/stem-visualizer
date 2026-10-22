@@ -1,19 +1,29 @@
 import React, { lazy, Suspense, useState } from 'react';
-import { Brain, Calculator, FlaskConical, Grid3x3, Layers, Swords, Trophy } from 'lucide-react';
+import { Brain, CalendarDays, Calculator, Flame, FlaskConical, Grid3x3, Layers, Swords, Trophy } from 'lucide-react';
 import { useProgress } from '../../lib/progress';
 import type { Lang } from './common';
-import { parseDuel } from './Duel';
+import { Duel, parseDuel } from './Duel';
+import { Daily, dailyDone } from './Daily';
 
 const BalanceGame = lazy(() => import('./BalanceGame'));
 const MemoryGame = lazy(() => import('./MemoryGame'));
 const MathSprint = lazy(() => import('./MathSprint'));
 const ElementHunt = lazy(() => import('./ElementHunt'));
 const FormulaCards = lazy(() => import('./FormulaCards'));
-const Duel = lazy(() => import('./Duel'));
 
-type GameId = 'duel' | 'cards' | 'balance' | 'memory' | 'sprint' | 'elements';
+type GameId = 'daily' | 'duel' | 'cards' | 'balance' | 'memory' | 'sprint' | 'elements';
 
 const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: React.ReactNode; color: string; subject: { ru: string; en: string }; title: { ru: string; en: string }; text: { ru: string; en: string }; time: { ru: string; en: string } }[] = [
+  {
+    id: 'daily',
+    record: (g) => g.daily ?? 0,
+    icon: <CalendarDays className="w-7 h-7" />,
+    color: '#2F5BFF',
+    subject: { ru: 'Каждый день', en: 'Every day' },
+    title: { ru: 'Вызов дня', en: 'Daily challenge' },
+    text: { ru: '10 задач — одни и те же для всех в мире сегодня. Одна попытка, серия дней и результат, которым можно похвастаться.', en: 'Ten problems, the same for everyone in the world today. One try, a streak of days and a result to show off.' },
+    time: { ru: '1 попытка в день', en: 'one try a day' },
+  },
   {
     id: 'duel',
     record: (g) => (g.duel ? Math.floor(g.duel / 100) : 0),
@@ -77,11 +87,11 @@ const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: 
 ];
 
 /** short arcade games for practice; every game gives XP for the league */
-export const GamesPage: React.FC<{ lang: Lang; duel?: string | null }> = ({ lang, duel }) => {
+export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boolean }> = ({ lang, duel, daily }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   // a duel link opens straight into the challenge
   const [challenge] = useState(() => parseDuel(duel ?? null));
-  const [game, setGame] = useState<GameId | null>(challenge ? 'duel' : null);
+  const [game, setGame] = useState<GameId | null>(challenge ? 'duel' : daily ? 'daily' : null);
   const p = useProgress();
   const records = p.games ?? {};
   const exit = () => setGame(null);
@@ -89,6 +99,7 @@ export const GamesPage: React.FC<{ lang: Lang; duel?: string | null }> = ({ lang
   if (game)
     return (
       <Suspense fallback={<div className="h-[60vh] rounded-xl bg-muted animate-pulse" />}>
+        {game === 'daily' && <Daily lang={lang} onExit={exit} />}
         {game === 'duel' && <Duel lang={lang} onExit={exit} challenge={challenge} />}
         {game === 'cards' && <FormulaCards lang={lang} onExit={exit} />}
         {game === 'balance' && <BalanceGame lang={lang} onExit={exit} />}
@@ -115,7 +126,12 @@ export const GamesPage: React.FC<{ lang: Lang; duel?: string | null }> = ({ lang
                 <span className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6" style={{ color: '#fff' }}>
                   {g.icon}
                 </span>
-                {rec > 0 && (
+                {g.id === 'daily' && !dailyDone() && (
+                  <span className="ml-auto inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-white/90 text-xs font-medium text-ink animate-pulse">
+                    <Flame className="w-3.5 h-3.5 text-[#F76B15]" /> {L('новый вызов', 'new today')}
+                  </span>
+                )}
+                {rec > 0 && !(g.id === 'daily' && !dailyDone()) && (
                   <span className="ml-auto inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-white/90 text-xs font-medium text-ink">
                     <Trophy className="w-3.5 h-3.5 text-[#F5A524]" /> {L('рекорд', 'best')} {rec}
                   </span>
