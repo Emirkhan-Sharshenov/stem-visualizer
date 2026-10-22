@@ -140,6 +140,46 @@ export class ThreeStage {
     };
   }
 
+  /**
+   * The visible model as a GLB for viewing in the room (AR): a copy of the scene without lights, scaled so its
+   * largest side is `size` metres and standing on the floor. Geometry and materials are shared, not copied.
+   */
+  async exportGlb(size = 0.4): Promise<Blob> {
+    const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
+    const root = new THREE.Group();
+    for (const c of this.scene.children) if (!(c as THREE.Light).isLight && !(c as THREE.Camera).isCamera && c.visible) root.add(c.clone(true));
+    // sprites, lines and sky domes (seen from inside) have no place in a room model
+    const drop: THREE.Object3D[] = [];
+    root.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+      if ((o as THREE.Sprite).isSprite || (o as THREE.Line).isLine || (m && !Array.isArray(m) && m.side === THREE.BackSide)) drop.push(o);
+    });
+    drop.forEach((o) => o.removeFromParent());
+    // size by the solid parts, so a cloud of particles around them does not shrink the model
+    const box = new THREE.Box3();
+    root.updateMatrixWorld(true);
+    root.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh && o.visible) box.expandByObject(o);
+    });
+    if (box.isEmpty()) box.setFromObject(root);
+    else {
+      // a backdrop of stars or dust far bigger than the model is scenery, not part of it
+      const big = box.getSize(new THREE.Vector3()).length() * 3;
+      const far: THREE.Object3D[] = [];
+      root.traverse((o) => {
+        if ((o as THREE.Points).isPoints && new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()).length() > big) far.push(o);
+      });
+      far.forEach((o) => o.removeFromParent());
+    }
+    const dim = box.getSize(new THREE.Vector3());
+    const s = size / Math.max(dim.x, dim.y, dim.z, 1e-6);
+    const centre = box.getCenter(new THREE.Vector3());
+    root.scale.setScalar(s);
+    root.position.set(-centre.x * s, -box.min.y * s, -centre.z * s);
+    const glb = await new GLTFExporter().parseAsync(root, { binary: true, onlyVisible: true });
+    return new Blob([glb as ArrayBuffer], { type: 'model/gltf-binary' });
+  }
+
   dispose() {
     cancelAnimationFrame(this.frame);
     this.observer.disconnect();

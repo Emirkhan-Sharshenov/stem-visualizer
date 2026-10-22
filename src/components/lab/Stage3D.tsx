@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Move3d, RotateCcw, X } from 'lucide-react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Box, Move3d, RotateCcw, X } from 'lucide-react';
 import { PartInfo, StageOptions, ThreeStage } from '../../lib/three/ThreeStage';
+
+const ArView = lazy(() => import('./ArView'));
 
 interface Stage3DProps {
   lang: 'ru' | 'en';
@@ -25,6 +27,7 @@ export const Stage3D: React.FC<Stage3DProps> = ({ lang, options, onReady, onGoTo
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const [hintVisible, setHintVisible] = useState(true);
+  const [ar, setAr] = useState(false);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -89,6 +92,21 @@ export const Stage3D: React.FC<Stage3DProps> = ({ lang, options, onReady, onGoTo
         >
           <RotateCcw className="w-4 h-4" strokeWidth={1.75} />
         </button>
+      )}
+
+      {/* See the model in the room */}
+      <button
+        onClick={() => setAr(true)}
+        aria-label={lang === 'ru' ? 'Посмотреть в комнате' : 'View in your room'}
+        title={lang === 'ru' ? 'Посмотреть в комнате (AR)' : 'View in your room (AR)'}
+        className={`absolute top-3 ${onReset ? 'right-[52px]' : 'right-3'} z-10 h-8 px-2.5 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[#B5B8C0] hover:text-white inline-flex items-center gap-1.5 text-[12px] font-medium cursor-pointer`}
+      >
+        <Box className="w-4 h-4" strokeWidth={1.75} /> {lang === 'ru' ? 'В комнате' : 'AR'}
+      </button>
+      {ar && stageRef.current && (
+        <Suspense fallback={null}>
+          <ArView lang={lang} load={() => stageRef.current!.exportGlb()} onClose={() => setAr(false)} />
+        </Suspense>
       )}
 
       {/* Info card */}
