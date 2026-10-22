@@ -139,7 +139,7 @@ export default function App({ lang, setLang }: AppProps) {
   // duel and daily links (#/app?lab=games&duel=… / &daily=1) are read before the address is tidied up below
   const [gameLink] = useState(() => {
     const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
-    return { duel: q.get('duel'), daily: q.has('daily') };
+    return { duel: q.get('duel'), daily: q.has('daily'), live: q.get('live') };
   });
   // keep the address in sync so the current section can be shared
   useEffect(() => {
@@ -508,7 +508,7 @@ export default function App({ lang, setLang }: AppProps) {
                 </div>
               );
             })()}
-            {currentMode === 'games' && <GamesPage lang={lang} duel={gameLink.duel} daily={gameLink.daily} />}
+            {currentMode === 'games' && <GamesPage lang={lang} duel={gameLink.duel} daily={gameLink.daily} live={gameLink.live} />}
             {currentMode === 'formulas' && <FormulasPage lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'rating' && <RatingPage lang={lang} />}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}

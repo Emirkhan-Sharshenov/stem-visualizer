@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState } from 'react';
-import { Brain, CalendarDays, Calculator, Flame, FlaskConical, Grid3x3, Layers, Swords, Trophy } from 'lucide-react';
+import { Brain, CalendarDays, Radio, Calculator, Flame, FlaskConical, Grid3x3, Layers, Swords, Trophy } from 'lucide-react';
 import { useProgress } from '../../lib/progress';
 import type { Lang } from './common';
 import { Duel, parseDuel } from './Duel';
@@ -10,10 +10,21 @@ const MemoryGame = lazy(() => import('./MemoryGame'));
 const MathSprint = lazy(() => import('./MathSprint'));
 const ElementHunt = lazy(() => import('./ElementHunt'));
 const FormulaCards = lazy(() => import('./FormulaCards'));
+const LiveQuiz = lazy(() => import('./LiveQuiz'));
 
-type GameId = 'daily' | 'duel' | 'cards' | 'balance' | 'memory' | 'sprint' | 'elements';
+type GameId = 'live' | 'daily' | 'duel' | 'cards' | 'balance' | 'memory' | 'sprint' | 'elements';
 
 const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: React.ReactNode; color: string; subject: { ru: string; en: string }; title: { ru: string; en: string }; text: { ru: string; en: string }; time: { ru: string; en: string } }[] = [
+  {
+    id: 'live',
+    record: (g) => g.live ?? 0,
+    icon: <Radio className="w-7 h-7" />,
+    color: '#8E4EC6',
+    subject: { ru: 'Для класса', en: 'For the class' },
+    title: { ru: 'Живой квиз', en: 'Live quiz' },
+    text: { ru: 'Учитель выводит код на проектор, класс отвечает с телефонов на время. Таблица лидеров после каждого вопроса и пьедестал в конце.', en: 'The teacher shows a code on the projector, the class answers from phones against the clock. A leaderboard after every question and a podium at the end.' },
+    time: { ru: 'вместе на уроке', en: 'together in class' },
+  },
   {
     id: 'daily',
     record: (g) => g.daily ?? 0,
@@ -87,11 +98,11 @@ const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: 
 ];
 
 /** short arcade games for practice; every game gives XP for the league */
-export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boolean }> = ({ lang, duel, daily }) => {
+export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boolean; live?: string | null }> = ({ lang, duel, daily, live }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   // a duel link opens straight into the challenge
   const [challenge] = useState(() => parseDuel(duel ?? null));
-  const [game, setGame] = useState<GameId | null>(challenge ? 'duel' : daily ? 'daily' : null);
+  const [game, setGame] = useState<GameId | null>(live ? 'live' : challenge ? 'duel' : daily ? 'daily' : null);
   const p = useProgress();
   const records = p.games ?? {};
   const exit = () => setGame(null);
@@ -99,6 +110,7 @@ export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boo
   if (game)
     return (
       <Suspense fallback={<div className="h-[60vh] rounded-xl bg-muted animate-pulse" />}>
+        {game === 'live' && <LiveQuiz lang={lang} onExit={exit} code={live && /^\d{5}$/.test(live) ? live : undefined} />}
         {game === 'daily' && <Daily lang={lang} onExit={exit} />}
         {game === 'duel' && <Duel lang={lang} onExit={exit} challenge={challenge} />}
         {game === 'cards' && <FormulaCards lang={lang} onExit={exit} />}
