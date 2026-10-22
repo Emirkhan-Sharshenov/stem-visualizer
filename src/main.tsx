@@ -10,10 +10,12 @@ import {navigate, useRoute} from './router';
 import type {Lang} from './i18n/landing';
 import './index.css';
 import {initCloudSync} from './lib/cloudSync';
+import {initPwa} from './lib/push';
 import {completeAuthRedirect} from './lib/supabase';
 import {ResetPassword} from './pages/ResetPassword';
 
 initCloudSync();
+initPwa();
 
 // returning from an e-mail link or Google: finish sign-in, then route and leave a note for the page
 completeAuthRedirect().then((r) => {

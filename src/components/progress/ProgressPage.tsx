@@ -6,6 +6,7 @@ import { useSession } from '../../lib/supabase';
 import { StudyPlan } from './StudyPlan';
 import { StudentClasses } from '../teacher/TeacherPage';
 import { Certificates } from './Certificates';
+import { Reminders } from '../Reminders';
 
 const YearRecap = lazy(() => import('./YearRecap'));
 
@@ -163,6 +164,8 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
       </section>
 
       <StudentClasses lang={lang} onOpenTopic={onOpenTopic} compact />
+
+      <Reminders lang={lang} />
 
       <StudyPlan lang={lang} onOpenTopic={onOpenTopic} />
 

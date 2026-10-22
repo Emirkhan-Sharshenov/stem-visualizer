@@ -4,6 +4,7 @@ import { Confetti } from '../fx/Confetti';
 import { progress } from '../../lib/progress';
 import { SITE, shareCard, useCard } from '../../lib/shareCard';
 import { GameBar, Lang } from './common';
+import { Reminders } from '../Reminders';
 import { COUNT, ProblemRun, problems } from './ProblemRun';
 
 /* The daily challenge: the same ten problems for everyone in the world today (the seed is the UTC date),
@@ -149,6 +150,8 @@ export const Daily: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onEx
           </>
         )}
       </div>
+      {/* right after a result is when a reminder makes the most sense */}
+      {res && <Reminders lang={lang} compact />}
     </div>
   );
 };
