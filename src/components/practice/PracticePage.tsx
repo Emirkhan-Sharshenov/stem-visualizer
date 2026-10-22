@@ -1,3 +1,5 @@
+import { Check as CheckBox } from '../ui/Check';
+import { Button } from '@heroui/react';
 import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Clock, Eye, Sparkles, X } from 'lucide-react';
 import { PREDICTIONS, Prediction } from '../../data/practice/predictions';
@@ -37,10 +39,10 @@ const Challenge: React.FC<{ lang: Lang; p: Prediction; onNext?: () => void; onBa
   };
   return (
     <div className="flex flex-col gap-5">
-      <button onClick={onBack} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="self-start text-sm" onPress={() => onBack()}>
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
         {L('Все задания', 'All challenges')}
-      </button>
+      </Button>
       <div>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
           <span className="w-2 h-2 rounded-full" style={{ background: SUBJECTS[p.subject].color }} />
@@ -84,14 +86,14 @@ const Challenge: React.FC<{ lang: Lang; p: Prediction; onNext?: () => void; onBa
               </p>
               <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">{p.explain[lang]}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button onClick={() => onOpenTopic(p.topicId)} className="h-9 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-sm text-ink cursor-pointer">
+                <Button variant="outline" className="text-sm" onPress={() => onOpenTopic(p.topicId)}>
                   {L('Читать тему', 'Read the topic')}
-                </button>
+                </Button>
                 {onNext && (
-                  <button onClick={onNext} className="h-9 px-3 rounded-lg bg-accent hover:bg-accent-hover text-sm inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+                  <Button className="text-sm" onPress={() => onNext()}>
                     {L('Следующее', 'Next')}
                     <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -124,10 +126,10 @@ const TestRunner: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = 
   if (run) {
     return (
       <div className="flex flex-col gap-4 max-w-3xl">
-        <button onClick={() => setRun(null)} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+        <Button variant="ghost" className="self-start text-sm" onPress={() => setRun(null)}>
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           {L('Настройки теста', 'Test settings')}
-        </button>
+        </Button>
         <Quiz
           key={run.seed}
           lang={lang}
@@ -156,9 +158,9 @@ const TestRunner: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = 
           <p className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">{L('Предмет', 'Subject')}</p>
           <div className="flex flex-wrap gap-2">
             {Object.entries(SUBJECTS).map(([id, s]) => (
-              <button key={id} onClick={() => setSubject(id)} className={chip(subject === id)} style={subject === id ? { color: '#fff' } : undefined}>
+              <Button key={id} size="sm" variant={subject === id ? 'primary' : 'outline'} onPress={() => setSubject(id)}>
                 {s[lang]}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -166,9 +168,9 @@ const TestRunner: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = 
           <p className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">{L('Классы', 'Grades')}</p>
           <div className="flex flex-wrap gap-2">
             {GRADE_RANGES.map((g) => (
-              <button key={g.id} onClick={() => setRange(g.id)} className={chip(range === g.id)} style={range === g.id ? { color: '#fff' } : undefined}>
+              <Button key={g.id} size="sm" variant={range === g.id ? 'primary' : 'outline'} onPress={() => setRange(g.id)}>
                 {g[lang]}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -177,28 +179,20 @@ const TestRunner: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = 
             <p className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">{L('Вопросов', 'Questions')}</p>
             <div className="flex gap-2">
               {[10, 20, 30].map((n) => (
-                <button key={n} onClick={() => setCount(n)} className={chip(count === n)} style={count === n ? { color: '#fff' } : undefined}>
+                <Button key={n} size="sm" variant={count === n ? 'primary' : 'outline'} onPress={() => setCount(n)}>
                   {n}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
-          <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer mt-5">
-            <input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="accent-accent w-4 h-4" />
-            <Clock className="w-4 h-4" strokeWidth={1.75} />
-            {L(`На время (${count} мин)`, `Timed (${count} min)`)}
-          </label>
+          <CheckBox checked={timed} onChange={(v) => setTimed(v)} className="mt-5"><Clock className="w-4 h-4" strokeWidth={1.75} />{L(`На время (${count} мин)`, `Timed (${count} min)`)}</CheckBox>
         </div>
-        <button
-          onClick={() => {
+        <Button size="lg" className="self-start text-sm font-medium" onPress={() => {
             const seed = Date.now() % 100000;
             setRun({ seed, qs: practiceTest(subject, GRADE_RANGES.find((g) => g.id === range)!.r, count, seed) });
-          }}
-          className="self-start h-11 px-6 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer"
-          style={{ color: '#fff' }}
-        >
+          }}>
           {L('Начать тест', 'Start the test')}
-        </button>
+        </Button>
       </div>
       <aside className="bg-surface border border-line rounded-xl p-5">
         <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Последние результаты', 'Recent results')}</h3>
@@ -249,10 +243,10 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         <div>
           <h1 className="font-serif text-[36px] leading-tight text-ink">{L('Практикум', 'Practice')}</h1>
           <p className="mt-1 text-[15px] text-ink-2 max-w-2xl">{L('Проверь, понимаешь ли ты, а не просто помнишь. Сначала предскажи результат — потом опыт покажет правду.', 'Check that you understand, not just remember. Predict the result first, then the experiment shows the truth.')}</p>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: 'formulas' }))} className="mt-3 h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:border-accent hover:text-accent cursor-pointer">
+          <Button variant="outline" className="mt-3 text-sm" onPress={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: 'formulas' }))}>
             <span className="font-serif italic">ƒ</span>
             {L('Шпаргалка формул для ОРТ', 'Formula sheet for exams')}
-          </button>
+          </Button>
         </div>
         <div className="flex gap-3">
           <div className="rounded-xl bg-surface border border-line px-4 py-2">
@@ -284,9 +278,9 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
             ['ort', L('Пробный ОРТ ★', 'Mock ORT ★')],
           ] as [Tab, string][]
         ).map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm whitespace-nowrap cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
+          <Button variant={tab === id ? 'outline' : 'ghost'} className={`text-sm whitespace-nowrap ${tab === id ? 'font-medium' : ''}`} key={id} onPress={() => setTab(id)}>
             {label}
-          </button>
+          </Button>
         ))}
       </div>
 

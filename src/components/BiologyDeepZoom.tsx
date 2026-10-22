@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Pause, Play } from 'lucide-react';
@@ -186,16 +188,10 @@ export const BiologyDeepZoom: React.FC<BiologyDeepZoomProps> = ({ lang, onSelect
         </div>
         <div className="flex p-1 rounded-lg bg-muted border border-line overflow-x-auto">
           {LEVELS.map((l, i) => (
-            <button
-              key={l.id}
-              onClick={() => l.id !== level && goTo(l.id)}
-              className={`shrink-0 h-9 px-3 rounded-md text-sm inline-flex items-center gap-2 transition-colors cursor-pointer ${
-                level === l.id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
-              }`}
-            >
+            <Button variant={level === l.id ? 'outline' : 'ghost'} className={`shrink-0 text-sm ${level === l.id ? 'font-medium' : ''}`} key={l.id} onPress={() => l.id !== level && goTo(l.id)}>
               <span className="font-mono text-xs text-ink-3">{i + 1}</span>
               {l.label[lang]}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -251,14 +247,7 @@ export const BiologyDeepZoom: React.FC<BiologyDeepZoomProps> = ({ lang, onSelect
                   <span className="text-ink">{lang === 'ru' ? 'Протонный градиент' : 'Proton gradient'}</span>
                   <span className="font-mono text-ink">{gradient}%</span>
                 </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={gradient}
-                  onChange={(e) => setGradient(Number(e.target.value))}
-                  className="mt-2 w-full accent-accent cursor-pointer"
-                />
+                <RangeSlider value={gradient} onChange={(v) => setGradient(v)} min={0} max={100} className="mt-2" />
               </div>
               {level === 'atp_rotor' && (
                 <div className="grid grid-cols-2 gap-3">
@@ -279,13 +268,10 @@ export const BiologyDeepZoom: React.FC<BiologyDeepZoomProps> = ({ lang, onSelect
           <section className="bg-surface border border-line rounded-xl p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Что на экране' : 'On screen'}</h3>
-              <button
-                onClick={() => setRunning((r) => !r)}
-                className="h-8 px-2.5 rounded-md border border-line bg-surface hover:bg-muted text-sm text-ink inline-flex items-center gap-1.5 cursor-pointer"
-              >
+              <Button variant="outline" size="sm" className="text-sm" onPress={() => setRunning((r) => !r)}>
                 {running ? <Pause className="w-3.5 h-3.5" strokeWidth={1.75} /> : <Play className="w-3.5 h-3.5" strokeWidth={1.75} />}
                 {running ? (lang === 'ru' ? 'Пауза' : 'Pause') : lang === 'ru' ? 'Пуск' : 'Play'}
-              </button>
+              </Button>
             </div>
             <ul className="mt-3 flex flex-col">
               {legend.map((item) => (

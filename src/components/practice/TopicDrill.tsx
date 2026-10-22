@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Flame, X } from 'lucide-react';
 import { topicById } from '../../data/curriculum';
@@ -34,10 +35,10 @@ export const TopicDrill: React.FC<{ lang: Lang; topicId: string; onBack: () => v
   if (!q) {
     return (
       <div className="flex flex-col gap-3 max-w-3xl">
-        <button onClick={onBack} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+        <Button variant="ghost" className="self-start text-sm" onPress={() => onBack()}>
           <ArrowLeft className="w-4 h-4" />
           {L('Назад', 'Back')}
-        </button>
+        </Button>
         <p className="text-ink-2">{L('По этой теме пока мало материала для заданий.', 'Not enough material in this topic for exercises yet.')}</p>
       </div>
     );
@@ -56,10 +57,10 @@ export const TopicDrill: React.FC<{ lang: Lang; topicId: string; onBack: () => v
 
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
-      <button onClick={onBack} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="self-start text-sm" onPress={() => onBack()}>
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
         {L('Все задачи', 'All problems')}
-      </button>
+      </Button>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="text-xs text-ink-3">
@@ -108,23 +109,19 @@ export const TopicDrill: React.FC<{ lang: Lang; topicId: string; onBack: () => v
             </div>
             <div className="flex justify-between gap-2">
               {onOpenTopic ? (
-                <button onClick={() => onOpenTopic(topicId)} className="h-10 px-3 rounded-lg border border-line bg-surface text-sm text-ink cursor-pointer">
+                <Button variant="outline" className="text-sm" onPress={() => onOpenTopic(topicId)}>
                   {L('Открыть тему', 'Open the topic')}
-                </button>
+                </Button>
               ) : (
                 <span />
               )}
-              <button
-                onClick={() => {
+              <Button className="text-sm font-medium" onPress={() => {
                   setAnswer(null);
                   setK((n) => n + 1);
-                }}
-                className="h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer"
-                style={{ color: '#fff' }}
-              >
+                }}>
                 {L('Следующее задание', 'Next')}
                 <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-              </button>
+              </Button>
             </div>
           </>
         )}

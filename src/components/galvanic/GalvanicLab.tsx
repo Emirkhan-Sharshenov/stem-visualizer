@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button, Tooltip } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Power, RotateCcw } from 'lucide-react';
 import { Formula } from '../Formula';
@@ -197,9 +199,9 @@ export const GalvanicLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <span className="text-xs text-ink-2">{label as string}</span>
             <div className="flex flex-wrap gap-1">
               {METALS.map((m) => (
-                <button key={m.sym} onClick={() => (set as (m: Metal) => void)(m)} title={`${lang === 'ru' ? m.ru : m.en}, E° = ${m.e0} В`} className={`w-10 h-9 rounded-md border text-sm font-medium cursor-pointer ${(cur as Metal).sym === m.sym ? 'border-accent bg-accent-soft text-accent' : 'border-line text-ink hover:bg-muted'}`}>
+                <Button aria-label={`${lang === 'ru' ? m.ru : m.en}, E° = ${m.e0} В`} variant="outline" className={`w-10 text-sm font-medium ${(cur as Metal).sym === m.sym ? 'text-accent' : 'text-ink'}`} key={m.sym} onPress={() => (set as (m: Metal) => void)(m)}>
                   {m.sym}
-                </button>
+                </Button>
               ))}
             </div>
             <label className="flex flex-col gap-1">
@@ -207,17 +209,17 @@ export const GalvanicLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                 <span>{L('концентрация ионов', 'ion concentration')}</span>
                 <span className="font-mono">{n(c0[side as 'l' | 'r'], 3)} М</span>
               </span>
-              <input type="range" min={-3} max={0} step={0.1} value={Math.log10(c0[side as 'l' | 'r'])} onChange={(e) => setC0({ ...c0, [side as string]: 10 ** Number(e.target.value) })} className="w-full accent-[#30A46C] cursor-pointer" />
+              <RangeSlider value={Math.log10(c0[side as 'l' | 'r'])} onChange={(v) => setC0({ ...c0, [side as string]: 10 ** v })} min={-3} max={0} step={0.1} color="#30A46C" />
             </label>
           </div>
         ))}
         <div className="flex gap-2">
-          <button onClick={() => setClosed(!closed)} className={`flex-1 h-10 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer ${closed ? 'border border-line text-ink hover:bg-muted' : 'bg-accent hover:bg-accent-hover'}`} style={closed ? undefined : { color: '#fff' }}>
+          <Button variant={closed ? 'outline' : 'primary'} className="flex-1 text-sm font-medium" onPress={() => setClosed(!closed)} style={closed ? undefined : { color: '#fff' }}>
             <Power className="w-4 h-4" /> {closed ? L('Разомкнуть цепь', 'Open the circuit') : L('Замкнуть цепь', 'Close the circuit')}
-          </button>
-          <button onClick={() => { setConc({ ...c0 }); setCharge(0); }} title={L('Свежий элемент', 'Fresh cell')} className="w-10 h-10 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer">
+          </Button>
+          <Tooltip><Tooltip.Trigger><Button aria-label={L('Свежий элемент', 'Fresh cell')} variant="outline" isIconOnly className="w-10" onPress={() => { setConc({ ...c0 }); setCharge(0); }}>
             <RotateCcw className="w-4 h-4 text-ink-2" />
-          </button>
+          </Button></Tooltip.Trigger><Tooltip.Content>{L('Свежий элемент', 'Fresh cell')}</Tooltip.Content></Tooltip>
         </div>
         <div className="border-t border-line pt-3 flex flex-col gap-2 text-sm text-ink-2">
           <div className="overflow-x-auto text-ink">

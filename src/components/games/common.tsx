@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Image, RotateCcw, Timer, Trophy, Zap } from 'lucide-react';
 import { Confetti } from '../fx/Confetti';
@@ -42,9 +43,9 @@ export function useCountdown(seconds: number, running: boolean, onEnd: () => voi
 export const GameBar: React.FC<{ lang: Lang; title: string; onExit: () => void; left?: number; total?: number; score: number; extra?: React.ReactNode }> = ({ lang, title, onExit, left, total, score, extra }) => (
   <div className="flex flex-col gap-2">
     <div className="flex items-center gap-3">
-      <button onClick={onExit} className="inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="text-sm" onPress={() => onExit()}>
         <ArrowLeft className="w-4 h-4" /> {lang === 'ru' ? 'Все игры' : 'All games'}
-      </button>
+      </Button>
       <h2 className="font-serif text-xl text-ink ml-1 hidden sm:block">{title}</h2>
       <div className="ml-auto flex items-center gap-2">
         {extra}
@@ -96,17 +97,17 @@ export const GameOver: React.FC<{ lang: Lang; id: string; score: number; xp: num
       ))}
       <p className="text-sm text-[#1E7A4C] font-medium">+{Math.min(60, Math.round(xp)) + (record && before > 0 ? 5 : 0)} XP</p>
       <div className="flex gap-2 mt-2">
-        <button onClick={onAgain} className="h-11 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+        <Button size="lg" className="text-sm font-medium" onPress={() => onAgain()}>
           <RotateCcw className="w-4 h-4" /> {L('Ещё раз', 'Play again')}
-        </button>
-        <button onClick={onExit} className="h-11 px-5 rounded-lg border border-line hover:bg-muted text-sm text-ink cursor-pointer">
+        </Button>
+        <Button variant="outline" size="lg" className="text-sm" onPress={() => onExit()}>
           {L('Другие игры', 'Other games')}
-        </button>
+        </Button>
       </div>
       {kind && (
-        <button onClick={story} disabled={!card} className="h-10 px-4 rounded-lg text-sm font-medium text-ink-2 hover:text-ink hover:bg-muted inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+        <Button variant="ghost" className="text-sm font-medium" onPress={() => story()} isDisabled={!card}>
           <Image className="w-4 h-4" /> {L('Картинка результата в сторис', 'Result picture for stories')}
-        </button>
+        </Button>
       )}
     </div>
   );

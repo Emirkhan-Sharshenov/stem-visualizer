@@ -1,5 +1,6 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Dialog } from '../ui/Dialog';
 import { Image, X } from 'lucide-react';
 import { topicById } from '../../data/curriculum';
 import type { Progress } from '../../lib/progress';
@@ -190,8 +191,8 @@ export const YearRecap: React.FC<{ lang: Lang; progress: Progress; onClose: () =
     color: '#8E4EC6',
   });
 
-  return createPortal(
-    <div className="fixed inset-0 z-[95] bg-black flex items-center justify-center" role="dialog" aria-modal>
+  return (
+    <Dialog onClose={onClose} label={L('Твой год в STEM Visualizer', 'Your year in STEM Visualizer')} size="full" className="p-0 bg-black flex items-center justify-center">
       <div className="relative w-full h-full sm:w-[420px] sm:h-[min(860px,94vh)] sm:rounded-3xl overflow-hidden text-center" style={{ color: '#fff', background: last ? '#0A0D18' : slides[i].bg, transition: 'background 600ms' }}>
         {/* progress bars */}
         <style>{'@keyframes recap-fill{from{width:0}to{width:100%}}'}</style>
@@ -206,9 +207,9 @@ export const YearRecap: React.FC<{ lang: Lang; progress: Progress; onClose: () =
             </div>
           ))}
         </div>
-        <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="absolute top-6 right-3 z-20 w-9 h-9 rounded-full bg-black/25 flex items-center justify-center cursor-pointer">
+        <Button variant="ghost" isIconOnly className="absolute top-6 right-3 z-20 w-9" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
           <X className="w-5 h-5" />
-        </button>
+        </Button>
 
         {!last ? (
           <div
@@ -241,17 +242,16 @@ export const YearRecap: React.FC<{ lang: Lang; progress: Progress; onClose: () =
                 </div>
               ))}
             </div>
-            <button onClick={() => card && shareCard(card, L(`Мой год в STEM Visualizer: ${s.days} дней учёбы, ${s.topics} тем, ${s.problems} задач. Я — ${per.ru} ${per.icon} https://${SITE}`, `My year in STEM Visualizer: ${s.days} days, ${s.topics} topics, ${s.problems} problems. I am ${per.en} ${per.icon} https://${SITE}`), 'stem-my-year.png')} disabled={!card} className="mt-2 h-12 px-6 rounded-xl bg-white text-[#16171A] font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-50">
+            <Button variant="ghost" size="lg" className="mt-2 font-medium" onPress={() => card && shareCard(card, L(`Мой год в STEM Visualizer: ${s.days} дней учёбы, ${s.topics} тем, ${s.problems} задач. Я — ${per.ru} ${per.icon} https://${SITE}`, `My year in STEM Visualizer: ${s.days} days, ${s.topics} topics, ${s.problems} problems. I am ${per.en} ${per.icon} https://${SITE}`), 'stem-my-year.png')} isDisabled={!card}>
               <Image className="w-5 h-5" /> {L('Поделиться в сторис', 'Share to stories')}
-            </button>
-            <button onClick={() => setI(0)} className="text-sm text-white/70 hover:text-white cursor-pointer">
+            </Button>
+            <Button variant="ghost" className="text-sm" onPress={() => setI(0)}>
               {L('Посмотреть ещё раз', 'Watch again')}
-            </button>
+            </Button>
           </div>
         )}
       </div>
-    </div>,
-    document.body,
+    </Dialog>
   );
 };
 

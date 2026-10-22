@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { InfoCard, Legend, Metric, Panel, Segmented, Slider, Tip, Toggle } from './lab/LabUI';
 
@@ -216,12 +217,9 @@ export const MomentNeuronActionPotential: React.FC<MomentNeuronActionPotentialPr
         <Panel>
           <div className="flex flex-col gap-4">
             <Slider label={lang === 'ru' ? 'Сила стимула' : 'Stimulus strength'} value={stimulus} min={0} max={30} step={1} format={(v) => `+${v} ${lang === 'ru' ? 'мВ' : 'mV'}`} onChange={setStimulus} />
-            <button
-              onClick={stimulate}
-              className="h-10 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
-            >
+            <Button className="text-sm font-medium" onPress={() => stimulate()}>
               {lang === 'ru' ? 'Стимулировать' : 'Stimulate'}
-            </button>
+            </Button>
             {resultText && <Tip lang={lang}>{resultText[lang]}</Tip>}
             <Toggle label={lang === 'ru' ? 'Миелиновая оболочка' : 'Myelin sheath'} checked={myelin} onChange={setMyelin} />
             <Slider label={lang === 'ru' ? 'Замедление' : 'Playback speed'} value={speed} min={0.25} max={2} step={0.25} format={(v) => `${v}×`} onChange={setSpeed} />

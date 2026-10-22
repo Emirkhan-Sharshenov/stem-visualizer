@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import { Formula } from './Formula';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
@@ -723,37 +725,22 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
 
         {/* Controls: Play/Pause, Reset, Labels Toggle */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowLabels(!showLabels)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-              showLabels
-                ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40 hover:bg-cyan-500/30'
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
-            }`}
-          >
+          <Button variant="outline" size="sm" className={`text-xs font-bold ${showLabels ? 'text-cyan-400' : 'text-slate-400'}`} onPress={() => setShowLabels(!showLabels)}>
             {showLabels
               ? (lang === 'ru' ? 'Подписи элементов ВКЛ' : 'Labels ON')
               : (lang === 'ru' ? 'Подписи элементов ВЫКЛ' : 'Labels OFF')}
-          </button>
+          </Button>
 
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
-            title={isPlaying ? L('Пауза', 'Pause') : L('Пуск', 'Play')}
-          >
+          <Button aria-label={isPlaying ? L('Пауза', 'Pause') : L('Пуск', 'Play')} variant="secondary" onPress={() => setIsPlaying(!isPlaying)}>
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 text-emerald-400" />}
-          </button>
+          </Button>
 
-          <button
-            onClick={() => {
+          <Button aria-label={lang === 'ru' ? 'Сброс' : 'Reset'} variant="secondary" onPress={() => {
               setSlider1(50);
               setSlider2(50);
-            }}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
-            title={lang === 'ru' ? 'Сброс' : 'Reset'}
-          >
+            }}>
             <RotateCcw className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -763,17 +750,9 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
           {lang === 'ru' ? 'Опыты:' : 'Experiments:'}
         </span>
         {experimentsList.map((exp) => (
-          <button
-            key={exp.id}
-            onClick={() => setActiveExp(exp.id)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer border ${
-              activeExp === exp.id
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/20'
-                : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-800'
-            }`}
-          >
+          <Button variant="outline" size="sm" className={`text-xs font-medium whitespace-nowrap ${activeExp === exp.id ? 'text-cyan-300' : 'text-slate-400'}`} key={exp.id} onPress={() => setActiveExp(exp.id)}>
             {lang === 'ru' ? exp.labelRu : exp.labelEn}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -821,15 +800,7 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
                 : `+${Math.round(slider1 * 0.8 + 20)}e`}
             </span>
           </div>
-          <input
-            type="range"
-            min={5}
-            max={100}
-            step={1}
-            value={slider1}
-            onChange={(e) => setSlider1(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
-          />
+          <RangeSlider value={slider1} onChange={(v) => setSlider1(v)} min={5} max={100} step={1} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -869,15 +840,7 @@ export const PhysicsLaboratoryEngine: React.FC<PhysicsLaboratoryEngineProps> = (
                 : `${(slider2 * 0.1 + 2).toFixed(1)} МэВ`}
             </span>
           </div>
-          <input
-            type="range"
-            min={5}
-            max={100}
-            step={1}
-            value={slider2}
-            onChange={(e) => setSlider2(Number(e.target.value))}
-            className="w-full accent-amber-400 cursor-pointer"
-          />
+          <RangeSlider value={slider2} onChange={(v) => setSlider2(v)} min={5} max={100} step={1} />
         </div>
       </div>
 

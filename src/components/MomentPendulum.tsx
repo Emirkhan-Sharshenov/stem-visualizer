@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, Activity } from 'lucide-react';
@@ -171,18 +173,12 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all cursor-pointer"
-          >
+          <Button variant="secondary" onPress={() => setIsPlaying(!isPlaying)}>
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 text-emerald-400" />}
-          </button>
-          <button
-            onClick={handleReset}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all cursor-pointer"
-          >
+          </Button>
+          <Button variant="secondary" onPress={() => handleReset()}>
             <RotateCcw className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -198,15 +194,7 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
             <span className="text-slate-400">{lang === 'ru' ? 'Длина нити (L):' : 'String Length (L):'}</span>
             <span className="font-mono text-cyan-400 font-bold">{(length / 100).toFixed(2)} m</span>
           </div>
-          <input
-            type="range"
-            min={80}
-            max={220}
-            step={5}
-            value={length}
-            onChange={(e) => setLength(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
-          />
+          <RangeSlider value={length} onChange={(v) => setLength(v)} min={80} max={220} step={5} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -215,24 +203,15 @@ export const MomentPendulum: React.FC<MomentPendulumProps> = ({ lang }) => {
             <span className="font-mono text-emerald-400 font-bold">{gravity} m/s²</span>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setGravity(9.8)}
-              className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${gravity === 9.8 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
-            >
+            <Button variant="outline" size="sm" className={`text-xs font-mono ${gravity === 9.8 ? 'text-cyan-400' : 'text-slate-400'}`} onPress={() => setGravity(9.8)}>
               {lang === 'ru' ? 'Земля (9.8)' : 'Earth (9.8)'}
-            </button>
-            <button
-              onClick={() => setGravity(1.62)}
-              className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${gravity === 1.62 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
-            >
+            </Button>
+            <Button variant="outline" size="sm" className={`text-xs font-mono ${gravity === 1.62 ? 'text-cyan-400' : 'text-slate-400'}`} onPress={() => setGravity(1.62)}>
               {lang === 'ru' ? 'Луна (1.62)' : 'Moon (1.62)'}
-            </button>
-            <button
-              onClick={() => setGravity(24.79)}
-              className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${gravity === 24.79 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
-            >
+            </Button>
+            <Button variant="outline" size="sm" className={`text-xs font-mono ${gravity === 24.79 ? 'text-cyan-400' : 'text-slate-400'}`} onPress={() => setGravity(24.79)}>
               {lang === 'ru' ? 'Юпитер (24.8)' : 'Jupiter (24.8)'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -232,34 +234,17 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
           {/* Mode Switcher */}
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-              <button
-                onClick={() => setMode('gravity')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  mode === 'gravity' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
-                }`}
-              >
+              <Button variant={mode === 'gravity' ? 'primary' : 'ghost'} size="sm" className="text-xs font-semibold" onPress={() => setMode('gravity')}>
                 {lang === 'ru' ? 'Гравитация' : 'Gravity'}
-              </button>
-              <button
-                onClick={() => setMode('coulomb')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  mode === 'coulomb' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
-                }`}
-              >
+              </Button>
+              <Button variant={mode === 'coulomb' ? 'primary' : 'ghost'} size="sm" className="text-xs font-semibold" onPress={() => setMode('coulomb')}>
                 {lang === 'ru' ? 'Кулон (Заряды)' : 'Coulomb (Charges)'}
-              </button>
+              </Button>
             </div>
 
-            <button
-              onClick={() => setIsSimulatingOrbit(!isSimulatingOrbit)}
-              className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition-colors cursor-pointer ${
-                isSimulatingOrbit
-                  ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
-            >
+            <Button variant="outline" size="sm" className={`text-xs ${isSimulatingOrbit ? 'text-cyan-400' : 'text-slate-400'}`} onPress={() => setIsSimulatingOrbit(!isSimulatingOrbit)}>
               {isSimulatingOrbit ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -284,24 +269,15 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
           {/* Quick distance mutators */}
           <div className="absolute bottom-4 left-4 flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 backdrop-blur-md p-1.5 rounded-xl shadow-lg">
             <span className="text-[10px] text-slate-400 font-mono px-2">r:</span>
-            <button
-              onClick={() => setDistance(Math.max(4, distance / 2))}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 font-mono cursor-pointer"
-            >
+            <Button variant="secondary" size="sm" className="text-xs font-mono" onPress={() => setDistance(Math.max(4, distance / 2))}>
               0.5x
-            </button>
-            <button
-              onClick={() => setDistance(10)}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-mono cursor-pointer"
-            >
+            </Button>
+            <Button variant="secondary" size="sm" className="text-xs font-mono" onPress={() => setDistance(10)}>
               1x (10)
-            </button>
-            <button
-              onClick={() => setDistance(Math.min(22, distance * 2))}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 font-mono cursor-pointer"
-            >
+            </Button>
+            <Button variant="secondary" size="sm" className="text-xs font-mono" onPress={() => setDistance(Math.min(22, distance * 2))}>
               2x (Double)
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -312,14 +288,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
               <span>{mode === 'gravity' ? (lang === 'ru' ? 'Масса M₁' : 'Mass M₁') : (lang === 'ru' ? 'Заряд Q₁' : 'Charge Q₁')}</span>
               <span className="font-mono text-cyan-400">{mode === 'gravity' ? m1 : q1}</span>
             </div>
-            <input
-              type="range"
-              min={mode === 'gravity' ? 10 : -5}
-              max={mode === 'gravity' ? 120 : 5}
-              value={mode === 'gravity' ? m1 : q1}
-              onChange={(e) => mode === 'gravity' ? setM1(Number(e.target.value)) : setQ1(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={mode === 'gravity' ? m1 : q1} onChange={(v) => mode === 'gravity' ? setM1(v) : setQ1(v)} min={mode === 'gravity' ? 10 : -5} max={mode === 'gravity' ? 120 : 5} />
           </div>
 
           <div>
@@ -327,14 +296,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
               <span>{mode === 'gravity' ? (lang === 'ru' ? 'Масса M₂' : 'Mass M₂') : (lang === 'ru' ? 'Заряд Q₂' : 'Charge Q₂')}</span>
               <span className="font-mono text-cyan-400">{mode === 'gravity' ? m2 : q2}</span>
             </div>
-            <input
-              type="range"
-              min={mode === 'gravity' ? 5 : -5}
-              max={mode === 'gravity' ? 60 : 5}
-              value={mode === 'gravity' ? m2 : q2}
-              onChange={(e) => mode === 'gravity' ? setM2(Number(e.target.value)) : setQ2(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={mode === 'gravity' ? m2 : q2} onChange={(v) => mode === 'gravity' ? setM2(v) : setQ2(v)} min={mode === 'gravity' ? 5 : -5} max={mode === 'gravity' ? 60 : 5} />
           </div>
 
           <div>
@@ -342,15 +304,7 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
               <span>{lang === 'ru' ? 'Расстояние r' : 'Distance r'}</span>
               <span className="font-mono text-amber-400">{distance.toFixed(1)}</span>
             </div>
-            <input
-              type="range"
-              min="4"
-              max="22"
-              step="0.5"
-              value={distance}
-              onChange={(e) => setDistance(Number(e.target.value))}
-              className="w-full accent-amber-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={distance} onChange={(v) => setDistance(v)} min={4} max={22} step={0.5} />
           </div>
         </div>
       </div>
@@ -398,14 +352,10 @@ export const GravityCoulombExplorer: React.FC<GravityCoulombProps> = ({
           </div>
 
           {/* Simulate & Reveal Button */}
-          <button
-            onClick={handleRevealPrediction}
-            disabled={!predictionAnswer}
-            className="w-full py-2.5 rounded-xl text-xs font-bold bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <Button size="sm" fullWidth className="text-xs font-bold" onPress={() => handleRevealPrediction()} isDisabled={!predictionAnswer}>
             <Sparkles className="w-4 h-4" />
             {lang === 'ru' ? 'SIMULATE & ПРОВЕРИТЬ' : 'SIMULATE & VERIFY'}
-          </button>
+          </Button>
 
           {/* Revealed Feedback */}
           {predictionRevealed && (

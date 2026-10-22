@@ -1,3 +1,6 @@
+import { Check } from '../ui/Check';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { Formula } from '../Formula';
@@ -242,7 +245,7 @@ export const WaveLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {value.toFixed(step < 1 ? 1 : 0)} {unit}
         </span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => on(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+      <RangeSlider value={value} onChange={(v) => on(v)} min={min} max={max} step={step} />
     </label>
   );
 
@@ -291,24 +294,21 @@ export const WaveLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => setRun(!run)} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => setRun(!run)}>
               {run ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {run ? L('Пауза', 'Pause') : L('Пуск', 'Run')}
-            </button>
+            </Button>
             {scene !== 'doppler' && (
               <div className="flex p-0.5 rounded-lg bg-muted border border-line text-sm">
                 {[false, true].map((v) => (
-                  <button key={String(v)} onClick={() => setIntensity(v)} className={`h-8 px-3 rounded-md cursor-pointer ${intensity === v ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2'}`}>
+                  <Button variant={intensity === v ? 'outline' : 'ghost'} size="sm" className={`${intensity === v ? 'font-medium' : ''}`} key={String(v)} onPress={() => setIntensity(v)}>
                     {v ? L('Интенсивность', 'Intensity') : L('Волны', 'Waves')}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
             {scene === 'two' && (
-              <label className="inline-flex items-center gap-2 text-sm text-ink-2 cursor-pointer ml-1">
-                <input type="checkbox" checked={anti} onChange={(e) => setAnti(e.target.checked)} className="w-4 h-4 accent-accent" />
-                {L('Источники в противофазе', 'Sources in antiphase')}
-              </label>
+              <Check checked={anti} onChange={(v) => setAnti(v)} className="ml-1">{L('Источники в противофазе', 'Sources in antiphase')}</Check>
             )}
           </div>
         </div>

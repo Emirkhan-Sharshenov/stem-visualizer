@@ -1,3 +1,6 @@
+import { Check } from '../ui/Check';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button, Tooltip } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Crosshair, Play, RotateCcw, Trash2 } from 'lucide-react';
 import { Formula } from '../Formula';
@@ -242,7 +245,7 @@ export const ProjectileLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {value} {unit}
         </span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => set(Number(e.target.value))} className="w-full accent-accent cursor-pointer" disabled={!!flying} />
+      <RangeSlider value={value} onChange={(v) => set(v)} min={min} max={max} step={step} isDisabled={!!flying} />
     </label>
   );
 
@@ -292,26 +295,23 @@ export const ProjectileLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             </button>
           ))}
         </div>
-        <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={drag} onChange={(e) => setDrag(e.target.checked)} className="accent-accent" />
-          {L('Сопротивление воздуха', 'Air drag')}
-        </label>
+        <Check checked={drag} onChange={(v) => setDrag(v)}>{L('Сопротивление воздуха', 'Air drag')}</Check>
         <div className="flex gap-2">
-          <button onClick={launch} disabled={!!flying} className="flex-1 h-10 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60" style={{ color: '#fff' }}>
+          <Button className="flex-1 text-sm font-medium" onPress={() => launch()} isDisabled={!!flying}>
             <Play className="w-4 h-4" /> {L('Бросить', 'Launch')}
-          </button>
-          <button onClick={() => setShots([])} title={L('Стереть траектории', 'Clear')} className="w-10 h-10 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer">
+          </Button>
+          <Tooltip><Tooltip.Trigger><Button aria-label={L('Стереть траектории', 'Clear')} variant="outline" isIconOnly className="w-10" onPress={() => setShots([])}>
             <Trash2 className="w-4 h-4 text-ink-2" />
-          </button>
+          </Button></Tooltip.Trigger><Tooltip.Content>{L('Стереть траектории', 'Clear')}</Tooltip.Content></Tooltip>
         </div>
-        <button onClick={target ? () => { setTarget(null); setScore({ hits: 0, tries: 0 }); } : newTarget} className="h-9 rounded-lg border border-line hover:bg-muted text-sm text-ink inline-flex items-center justify-center gap-1.5 cursor-pointer">
+        <Button variant="outline" className="text-sm" onPress={target ? () => { setTarget(null); setScore({ hits: 0, tries: 0 }); } : newTarget}>
           {target ? <RotateCcw className="w-4 h-4" /> : <Crosshair className="w-4 h-4" />}
           {target ? L('Убрать цель', 'Remove target') : L('Игра: попади в цель', 'Game: hit the target')}
-        </button>
+        </Button>
         {target && (
-          <button onClick={newTarget} className="text-xs text-accent hover:underline cursor-pointer self-start">
+          <Button variant="ghost" size="sm" className="text-xs self-start" onPress={() => newTarget()}>
             {L('Новая цель', 'New target')}
-          </button>
+          </Button>
         )}
         <div className="border-t border-line pt-3 flex flex-col gap-2 text-sm text-ink-2">
           <div className="overflow-x-auto text-ink">

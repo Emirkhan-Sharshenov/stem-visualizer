@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Zap, Play, Pause, RotateCcw, AlertTriangle, Lightbulb } from 'lucide-react';
@@ -259,16 +261,9 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
         <canvas ref={canvasRef} width={800} height={320} className="block w-full h-auto max-h-[480px] object-contain" />
         
         {/* Switch toggle overlay button */}
-        <button
-          onClick={() => setSwitchClosed(!switchClosed)}
-          className={`absolute top-4 left-4 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
-            switchClosed
-              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'
-              : 'bg-rose-500/20 text-rose-400 border-rose-500/40 hover:bg-rose-500/30'
-          }`}
-        >
+        <Button variant="outline" size="sm" className={`absolute top-4 left-4 text-xs font-bold ${switchClosed ? 'text-emerald-400' : 'text-rose-400'}`} onPress={() => setSwitchClosed(!switchClosed)}>
           {switchClosed ? (lang === 'ru' ? 'Ключ замкнут (Ток течет)' : 'Switch Closed') : (lang === 'ru' ? 'Ключ разомкнут (Цепь разорвана)' : 'Switch Open')}
-        </button>
+        </Button>
       </div>
 
       {/* Interactive Sliders */}
@@ -278,15 +273,7 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
             <span className="text-slate-400">{lang === 'ru' ? 'Напряжение источника (U):' : 'Source Voltage (V):'}</span>
             <span className="font-mono text-cyan-400 font-bold">{voltage} V</span>
           </div>
-          <input
-            type="range"
-            min={1}
-            max={36}
-            step={1}
-            value={voltage}
-            onChange={(e) => setVoltage(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
-          />
+          <RangeSlider value={voltage} onChange={(v) => setVoltage(v)} min={1} max={36} step={1} />
           <span className="text-[10px] text-slate-500">
             {lang === 'ru' ? 'Увеличивает разность потенциалов — электрическое поле толкает электроны быстрее!' : 'Increases potential difference — pushing electrons with greater electric field!'}
           </span>
@@ -297,15 +284,7 @@ export const MomentCircuit: React.FC<MomentCircuitProps> = ({ lang }) => {
             <span className="text-slate-400">{lang === 'ru' ? 'Сопротивление резистора (R):' : 'Resistance (R):'}</span>
             <span className="font-mono text-amber-400 font-bold">{resistance} Ω</span>
           </div>
-          <input
-            type="range"
-            min={1}
-            max={20}
-            step={1}
-            value={resistance}
-            onChange={(e) => setResistance(Number(e.target.value))}
-            className="w-full accent-amber-400 cursor-pointer"
-          />
+          <RangeSlider value={resistance} onChange={(v) => setResistance(v)} min={1} max={20} step={1} />
           <span className="text-[10px] text-slate-500">
             {lang === 'ru' ? 'Ионы решетки мешают движению электронов, превращая энергию движения в тепло (Q = I²Rt)' : 'Lattice ions obstruct electron flow, converting drift kinetic energy into Joule heating (Q = I²Rt)'}
           </span>

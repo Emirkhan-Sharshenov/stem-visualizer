@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useState } from 'react';
 import { ArrowLeft, Calculator, Clock, ListChecks, Timer, Trophy } from 'lucide-react';
 import { ORT_FORMATS, OrtFormat, ortExam, Question } from '../../lib/quiz';
@@ -38,10 +39,10 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
   if (run && plan.pro) {
     return (
       <div className="flex flex-col gap-4 max-w-3xl">
-        <button onClick={() => setRun(null)} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+        <Button variant="ghost" className="self-start text-sm" onPress={() => setRun(null)}>
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           {L('Выйти из экзамена', 'Leave the exam')}
-        </button>
+        </Button>
         <Quiz
           key={run.seed}
           lang={lang}
@@ -117,9 +118,9 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
               {ORT.minutes} {L('минут', 'minutes')}
             </span>
           </div>
-          <button onClick={start} className="self-start h-11 px-6 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+          <Button size="lg" className="self-start text-sm font-medium" onPress={() => start()}>
             {L('Начать экзамен', 'Start the exam')}
-          </button>
+          </Button>
         </div>
         <aside className="bg-surface border border-line rounded-xl p-5">
           <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Мои попытки', 'My attempts')}</h3>

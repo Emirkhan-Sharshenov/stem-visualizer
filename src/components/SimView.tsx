@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { lazy, Suspense } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { VisualMode } from '../types/stem';
@@ -60,13 +61,10 @@ const SimInner: React.FC<SimViewProps> = ({ sim, title, formula, lang, onLaunchS
       <div className="lab-stage relative rounded-xl overflow-hidden px-6 py-14 flex flex-col items-center text-center gap-4">
         <div className="absolute inset-0 tech-grid opacity-60" />
         <p className="relative font-serif text-xl text-[#EDEDED]">{lang === 'ru' ? 'Эта тема разбирается в 3D-лаборатории' : 'This topic has a 3D lab'}</p>
-        <button
-          onClick={() => onLaunchSimulation?.(sim.lab)}
-          className="relative inline-flex items-center gap-2 h-11 px-5 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
-        >
+        <Button size="lg" className="relative text-sm font-medium" onPress={() => onLaunchSimulation?.(sim.lab)}>
           {lang === 'ru' ? 'Открыть 3D-лабораторию' : 'Open the 3D lab'}
           <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-        </button>
+        </Button>
       </div>
     );
   }

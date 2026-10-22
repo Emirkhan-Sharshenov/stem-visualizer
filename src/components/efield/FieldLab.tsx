@@ -1,3 +1,6 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Check } from '../ui/Check';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Hand, Minus, Plus, RotateCcw, Trash2, Zap } from 'lucide-react';
 import { Charge, coulomb, fieldAt, fieldLines, H, preset, PresetId, W } from './field';
@@ -373,22 +376,19 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           </div>
           <div className="flex flex-wrap gap-2">
             {TOOLS.map((t) => (
-              <button key={t.id} onClick={() => setTool(t.id)} className={btn(tool === t.id)} style={tool === t.id ? { color: '#fff' } : undefined}>
+              <Button key={t.id} size="sm" variant={tool === t.id ? 'primary' : 'outline'} onPress={() => setTool(t.id)}>
                 {t.icon}
                 {L(t.ru, t.en)}
-              </button>
+              </Button>
             ))}
-            <button
-              onClick={() => {
+            <Button variant="outline" className="text-sm" onPress={() => {
                 probes.current = [];
                 change([]);
                 setSelected(null);
-              }}
-              className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer"
-            >
+              }}>
               <RotateCcw className="w-4 h-4" />
               {L('Очистить', 'Clear')}
-            </button>
+            </Button>
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-ink-2">
             {(
@@ -398,10 +398,7 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                 ['vectors', L('Векторы E', 'E vectors')],
               ] as const
             ).map(([k, label]) => (
-              <label key={k} className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={show[k]} onChange={(e) => setShow({ ...show, [k]: e.target.checked })} className="w-4 h-4 accent-accent" />
-                {label}
-              </label>
+              <Check checked={show[k]} onChange={(v) => setShow({ ...show, [k]: v })}>{label}</Check>
             ))}
           </div>
         </div>
@@ -423,7 +420,7 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {(tool === 'plus' || tool === 'minus') && (
             <div className="bg-surface border border-line rounded-xl p-4">
               <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">{L('Величина нового заряда', 'New charge size')}</h3>
-              <input type="range" min={0.5} max={5} step={0.5} value={mag} onChange={(e) => setMag(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+              <RangeSlider value={mag} onChange={(v) => setMag(v)} min={0.5} max={5} step={0.5} />
               <div className="text-sm font-mono text-ink">{mag} {L('нКл', 'nC')}</div>
             </div>
           )}
@@ -431,24 +428,16 @@ export const FieldLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {sel && tool === 'move' && (
             <div className="bg-surface border border-line rounded-xl p-4">
               <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">{L('Выбранный заряд', 'Selected charge')}</h3>
-              <input
-                type="range"
-                min={-5}
-                max={5}
-                step={0.5}
-                value={sel.q}
-                onChange={(e) => {
-                  const q = Number(e.target.value) || (sel.q > 0 ? 0.5 : -0.5);
+              <RangeSlider value={sel.q} onChange={(v) => {
+                  const q = v || (sel.q > 0 ? 0.5 : -0.5);
                   change(charges.map((c) => (c.id === sel.id ? { ...c, q } : c)));
-                }}
-                className="w-full accent-accent cursor-pointer"
-              />
+                }} min={-5} max={5} step={0.5} />
               <div className="flex justify-between text-sm font-mono">
                 <span style={{ color: sel.q > 0 ? POS : NEG }}>q = {sel.q > 0 ? '+' : ''}{sel.q} {L('нКл', 'nC')}</span>
-                <button onClick={() => { change(charges.filter((c) => c.id !== sel.id)); setSelected(null); }} className="text-ink-2 hover:text-ink inline-flex items-center gap-1 cursor-pointer">
+                <Button variant="ghost" onPress={() => { change(charges.filter((c) => c.id !== sel.id)); setSelected(null); }}>
                   <Trash2 className="w-3.5 h-3.5" />
                   {L('удалить', 'delete')}
-                </button>
+                </Button>
               </div>
             </div>
           )}

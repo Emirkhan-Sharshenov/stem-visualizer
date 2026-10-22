@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button, Tooltip } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { ClipboardList, FlaskConical, RotateCcw, Thermometer } from 'lucide-react';
 import { Formula } from '../Formula';
@@ -207,7 +209,7 @@ export const EnzymeLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {n(value)} {unit}
         </span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => set(Number(e.target.value))} className="w-full cursor-pointer" style={{ accentColor: accent }} />
+      <RangeSlider value={value} onChange={(v) => set(v)} min={min} max={max} step={step} color={accent} />
     </label>
   );
 
@@ -277,12 +279,12 @@ export const EnzymeLab: React.FC<{ lang: Lang }> = ({ lang }) => {
         {slider('pH', pH, setPH, 1, 12, 0.1, '', '#2F5BFF')}
         {slider(L('Концентрация субстрата', 'Substrate amount'), S, setS, 0, 20, 0.5, L('усл. ед.', 'units'), '#F5A524')}
         <div className="flex gap-2">
-          <button onClick={() => setLog([...log.slice(-9), { enz: lang === 'ru' ? enz.ru : enz.en, T, pH, S, v }])} className="flex-1 h-10 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+          <Button className="flex-1 text-sm font-medium" onPress={() => setLog([...log.slice(-9), { enz: lang === 'ru' ? enz.ru : enz.en, T, pH, S, v }])}>
             <ClipboardList className="w-4 h-4" /> {L('Записать замер', 'Record')}
-          </button>
-          <button onClick={() => { setDead(false); refill(); }} title={L('Новая пробирка', 'New tube')} className="h-10 px-3 rounded-lg border border-line hover:bg-muted inline-flex items-center gap-1.5 text-sm text-ink cursor-pointer">
+          </Button>
+          <Tooltip><Tooltip.Trigger><Button aria-label={L('Новая пробирка', 'New tube')} variant="outline" className="text-sm" onPress={() => { setDead(false); refill(); }}>
             <FlaskConical className="w-4 h-4" /> <RotateCcw className="w-3.5 h-3.5" />
-          </button>
+          </Button></Tooltip.Trigger><Tooltip.Content>{L('Новая пробирка', 'New tube')}</Tooltip.Content></Tooltip>
         </div>
         <div className="border-t border-line pt-3 flex flex-col gap-2 text-sm text-ink-2">
           <p>

@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Copy, Flame, Image, Send } from 'lucide-react';
 import { Confetti } from '../fx/Confetti';
@@ -131,12 +132,12 @@ export const Daily: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onEx
             </p>
             <p className="text-xs text-ink-3">{L(`Новый вызов через ${left}`, `Next challenge in ${left}`)}</p>
             <div className="w-full mt-2 grid grid-cols-2 gap-2">
-              <button onClick={shareText} className="h-11 rounded-lg bg-accent hover:bg-accent-hover font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+              <Button size="lg" className="font-medium" onPress={() => shareText()}>
                 {copied ? <Copy className="w-4 h-4" /> : <Send className="w-4 h-4" />} {copied ? L('Скопировано', 'Copied') : L('Поделиться', 'Share')}
-              </button>
-              <button onClick={() => card && shareCard(card, text, `stem-daily-${day}.png`)} disabled={!card} className="h-11 rounded-lg border border-line hover:bg-muted text-sm font-medium text-ink inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+              </Button>
+              <Button variant="outline" size="lg" className="text-sm font-medium" onPress={() => card && shareCard(card, text, `stem-daily-${day}.png`)} isDisabled={!card}>
                 <Image className="w-4 h-4" /> {L('В сторис', 'Story')}
-              </button>
+              </Button>
             </div>
           </>
         ) : (
@@ -144,9 +145,9 @@ export const Daily: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onEx
             <h3 className="font-serif text-2xl text-ink">{L('10 задач, одни на весь мир', 'Ten problems, the same for everyone')}</h3>
             <p className="text-ink-2">{L('Сегодня все решают одно и то же. Попытка одна, время идёт. Решай каждый день, чтобы не потерять серию.', 'Everyone solves the same set today. One try, against the clock. Play daily to keep your streak.')}</p>
             {streak > 0 && <p className="text-sm font-medium text-[#F76B15] inline-flex items-center gap-1"><Flame className="w-4 h-4" /> {L(`Серия ${streak} — не прерви её!`, `Streak ${streak}: keep it going!`)}</p>}
-            <button onClick={() => setPlaying(true)} className="mt-2 h-12 px-6 rounded-xl bg-accent hover:bg-accent-hover font-medium cursor-pointer" style={{ color: '#fff' }}>
+            <Button size="lg" className="mt-2 font-medium" onPress={() => setPlaying(true)}>
               {L('Начать', 'Start')}
-            </button>
+            </Button>
           </>
         )}
       </div>

@@ -1,3 +1,5 @@
+import { Check as CheckBox } from '../ui/Check';
+import { Button } from '@heroui/react';
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, BookOpen, Check, Clock, Sun } from 'lucide-react';
 import { Section, sectionsFor, SUBJECTS, Topic, gradesFor } from '../../data/curriculum';
@@ -38,9 +40,9 @@ const Picker: React.FC<{ lang: Lang; p: ReturnType<typeof usePicker> }> = ({ lan
     </div>
     <div className="flex flex-wrap gap-1.5">
       {p.grades.map((g) => (
-        <button key={g} onClick={() => p.setGrade(g)} className={`h-8 px-3 rounded-md text-sm border cursor-pointer ${p.grade === g ? 'bg-surface border-accent text-accent font-medium' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}>
+        <Button variant="outline" size="sm" className={`text-sm ${p.grade === g ? 'text-accent font-medium' : 'text-ink-2'}`} key={g} onPress={() => p.setGrade(g)}>
           {g} {lang === 'ru' ? 'класс' : 'grade'}
-        </button>
+        </Button>
       ))}
     </div>
   </div>
@@ -67,7 +69,7 @@ export const DailyCard: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
   })();
   return (
     <section className="rounded-xl border border-line overflow-hidden bg-surface">
-      <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style={{ background: 'linear-gradient(90deg, #FFF4DA, #FDF8EE)' }}>
+      <div className="sv-warm-band px-5 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="w-10 h-10 rounded-full bg-[#F5A524] flex items-center justify-center" style={{ color: '#fff' }}>
             <Sun className="w-5 h-5" strokeWidth={2} />
@@ -87,9 +89,9 @@ export const DailyCard: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
           </span>
         ) : (
           !run && (
-            <button onClick={() => setRun(true)} className="h-10 px-5 rounded-lg bg-[#F5A524] hover:brightness-95 text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+            <Button variant="ghost" className="text-sm font-medium" onPress={() => setRun(true)}>
               {L('Ответить', 'Answer')}
-            </button>
+            </Button>
           )
         )}
       </div>
@@ -109,10 +111,10 @@ const TopicRun: React.FC<{ lang: Lang; topic: Topic; onBack: () => void; onOpenT
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
-      <button onClick={onBack} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="self-start text-sm" onPress={() => onBack()}>
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
         {L('Все темы', 'All topics')}
-      </button>
+      </Button>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="text-xs text-ink-3">
@@ -120,10 +122,10 @@ const TopicRun: React.FC<{ lang: Lang; topic: Topic; onBack: () => void; onOpenT
           </span>
           <h2 className="font-serif text-[28px] leading-tight text-ink">{topic.title[lang]}</h2>
         </div>
-        <button onClick={() => onOpenTopic(topic.id)} className="h-9 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-sm text-ink inline-flex items-center gap-1.5 cursor-pointer">
+        <Button variant="outline" className="text-sm" onPress={() => onOpenTopic(topic.id)}>
           <BookOpen className="w-4 h-4" strokeWidth={1.75} />
           {L('Читать тему', 'Read the topic')}
-        </button>
+        </Button>
       </div>
       <Quiz key={attempt} lang={lang} questions={questionsForTopic(topic, 10, attempt)} onFinish={(s, t) => progress.recordQuiz(topic.id, s, t)} onRetry={() => setAttempt((a) => a + 1)} onOpenTopic={onOpenTopic} />
     </div>
@@ -198,10 +200,10 @@ export const SectionTests: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
     const qs = sectionTest(run.section, run.seed);
     return (
       <div className="flex flex-col gap-4 max-w-3xl">
-        <button onClick={() => setRun(null)} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+        <Button variant="ghost" className="self-start text-sm" onPress={() => setRun(null)}>
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           {L('Все разделы', 'All sections')}
-        </button>
+        </Button>
         <div>
           <span className="text-xs text-ink-3">
             {L('Тематический тест', 'Section test')} · {qs.length} {L('вопросов', 'questions')}
@@ -227,11 +229,7 @@ export const SectionTests: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <Picker lang={lang} p={picker} />
-        <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="accent-accent w-4 h-4" />
-          <Clock className="w-4 h-4" strokeWidth={1.75} />
-          {L('На время (1 мин на вопрос)', 'Timed (1 min per question)')}
-        </label>
+        <CheckBox checked={timed} onChange={(v) => setTimed(v)}><Clock className="w-4 h-4" strokeWidth={1.75} />{L('На время (1 мин на вопрос)', 'Timed (1 min per question)')}</CheckBox>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 anim-stagger">
         {sections.map((sec) => {

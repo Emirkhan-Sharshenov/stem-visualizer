@@ -1,3 +1,6 @@
+import { Check } from './ui/Check';
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, FastForward, Clock, Zap, HelpCircle } from 'lucide-react';
@@ -225,23 +228,14 @@ export const MomentDiffusion: React.FC<MomentDiffusionProps> = ({ lang }) => {
 
           {/* Controls: Play/Pause & Reset */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                isPlaying ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
-              }`}
-            >
+            <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-            </button>
+            </Button>
 
-            <button
-              onClick={initSimulation}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white cursor-pointer"
-              title={lang === 'ru' ? 'Капнуть краску заново' : 'Reset drop'}
-            >
+            <Button aria-label={lang === 'ru' ? 'Капнуть краску заново' : 'Reset drop'} variant="outline" onPress={() => initSimulation()}>
               <RotateCcw className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -256,17 +250,9 @@ export const MomentDiffusion: React.FC<MomentDiffusionProps> = ({ lang }) => {
               { val: 1.0, label: lang === 'ru' ? '1.0x (Реал)' : '1.0x (Real)' },
               { val: 2.0, label: '2.0x' },
             ].map((ts) => (
-              <button
-                key={ts.val}
-                onClick={() => setTimeScale(ts.val)}
-                className={`px-2.5 py-1 rounded-lg font-mono font-bold transition-all cursor-pointer ${
-                  timeScale === ts.val
-                    ? 'bg-cyan-500 text-slate-950 shadow-md scale-105'
-                    : 'bg-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
+              <Button variant={timeScale === ts.val ? 'primary' : 'secondary'} size="sm" className="font-mono font-bold" key={ts.val} onPress={() => setTimeScale(ts.val)}>
                 {ts.label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -306,36 +292,13 @@ export const MomentDiffusion: React.FC<MomentDiffusionProps> = ({ lang }) => {
                 {temperature} K ({temperature - 273}°C — {temperature < 320 ? (lang === 'ru' ? 'Холодная' : 'Cold') : (lang === 'ru' ? 'Кипяток' : 'Hot')})
               </span>
             </div>
-            <input
-              type="range"
-              min="275"
-              max="373"
-              value={temperature}
-              onChange={(e) => setTemperature(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={temperature} onChange={(v) => setTemperature(v)} min={275} max={373} />
           </div>
 
           <div className="flex items-center gap-4 pt-4 sm:pt-0">
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-              <input
-                type="checkbox"
-                checked={showWaterMolecules}
-                onChange={(e) => setShowWaterMolecules(e.target.checked)}
-                className="rounded accent-cyan-400"
-              />
-              {lang === 'ru' ? 'Показать молекулы воды' : 'Show Water Molecules'}
-            </label>
+            <Check checked={showWaterMolecules} onChange={(v) => setShowWaterMolecules(v)}>{lang === 'ru' ? 'Показать молекулы воды' : 'Show Water Molecules'}</Check>
 
-            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-              <input
-                type="checkbox"
-                checked={showTraces}
-                onChange={(e) => setShowTraces(e.target.checked)}
-                className="rounded accent-cyan-400"
-              />
-              {lang === 'ru' ? 'Траектории частиц' : 'Show Particle Trails'}
-            </label>
+            <Check checked={showTraces} onChange={(v) => setShowTraces(v)}>{lang === 'ru' ? 'Траектории частиц' : 'Show Particle Trails'}</Check>
           </div>
         </div>
       </div>

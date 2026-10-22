@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { Lang } from '../i18n/landing';
@@ -39,10 +40,10 @@ const SOURCES: { name: string; what: { ru: string; en: string }; license: string
 export const Credits: React.FC<{ lang: Lang; onBack: () => void }> = ({ lang, onBack }) => (
   <div className="min-h-screen bg-paper text-ink">
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="text-sm" onPress={() => onBack()}>
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
         {lang === 'ru' ? 'Назад' : 'Back'}
-      </button>
+      </Button>
       <h1 className="mt-6 font-serif text-4xl">{lang === 'ru' ? 'О проекте и источники' : 'About and sources'}</h1>
       <p className="mt-3 text-[16px] leading-relaxed text-ink-2">
         {lang === 'ru'

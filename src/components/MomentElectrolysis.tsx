@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Zap, Play, Pause, RotateCcw } from 'lucide-react';
@@ -270,26 +272,15 @@ export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) 
             <span className="text-slate-400">{lang === 'ru' ? 'Напряжение источника тока:' : 'Electrolysis Voltage:'}</span>
             <span className="font-mono text-cyan-400 font-bold">{voltage} V</span>
           </div>
-          <input
-            type="range"
-            min={1}
-            max={18}
-            step={1}
-            value={voltage}
-            onChange={(e) => setVoltage(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
-          />
+          <RangeSlider value={voltage} onChange={(v) => setVoltage(v)} min={1} max={18} step={1} />
           <span className="text-[10px] text-slate-500">
             {lang === 'ru' ? 'Выше напряжение → мощнее электрическое поле → ионы Cu²⁺ и Cl⁻ мчатся к электродам быстрее!' : 'Higher voltage → stronger electric field → ions migrate to electrodes faster!'}
           </span>
         </div>
 
-        <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 border border-slate-800 text-slate-200 hover:bg-slate-800 transition-all cursor-pointer"
-        >
+        <Button variant="outline" size="sm" className="text-xs font-bold" onPress={() => setIsPlaying(!isPlaying)}>
           {isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}
-        </button>
+        </Button>
       </div>
     </div>
   );

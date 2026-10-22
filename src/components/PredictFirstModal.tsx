@@ -1,3 +1,5 @@
+import { Button, Modal } from '@heroui/react';
+import { Dialog } from './ui/Dialog';
 import React, { useState } from 'react';
 import { PREDICTION_CHALLENGES } from '../data/concepts';
 import { Sparkles, X, Check, HelpCircle, ArrowRight } from 'lucide-react';
@@ -39,14 +41,8 @@ export const PredictFirstModal: React.FC<PredictFirstModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[rgba(17,17,17,0.45)] animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl flex flex-col gap-5 text-slate-100 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-        >
-          <X className="w-4 h-4" />
-        </button>
+    <Dialog onClose={onClose} label={lang === 'ru' ? 'Сначала представь' : 'Predict first'} className="max-w-xl flex flex-col gap-5 text-slate-100">
+        <Modal.CloseTrigger />
 
         <div className="flex items-center gap-2.5">
           <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -88,14 +84,10 @@ export const PredictFirstModal: React.FC<PredictFirstModalProps> = ({
 
         {/* Action Button */}
         {!isRevealed ? (
-          <button
-            onClick={handleReveal}
-            disabled={!selectedOptionId}
-            className="w-full py-3 rounded-2xl text-xs font-bold bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-          >
+          <Button size="lg" fullWidth className="text-xs font-bold" onPress={() => handleReveal()} isDisabled={!selectedOptionId}>
             <Sparkles className="w-4 h-4" />
             <span>{lang === 'ru' ? 'РАСКРЫТЬ МОДЕЛЬ (REVEAL)' : 'REVEAL SCIENTIFIC MODEL'}</span>
-          </button>
+          </Button>
         ) : (
           <div className="flex flex-col gap-4">
             {/* Feedback result */}
@@ -122,16 +114,12 @@ export const PredictFirstModal: React.FC<PredictFirstModalProps> = ({
               </p>
             </div>
 
-            <button
-              onClick={handleApplyAndClose}
-              className="w-full py-3 rounded-2xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all"
-            >
+            <Button size="lg" fullWidth className="text-xs font-bold" onPress={() => handleApplyAndClose()}>
               <span>{lang === 'ru' ? 'ПРИМЕНИТЬ К 3D СЦЕНЕ' : 'APPLY TO 3D SCENE'}</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         )}
-      </div>
-    </div>
+    </Dialog>
   );
 };

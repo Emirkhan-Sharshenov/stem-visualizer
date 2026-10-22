@@ -1,3 +1,6 @@
+import { Choice } from '../ui/Choice';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button, Tooltip } from '@heroui/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pause, Play, SkipBack, StepBack, StepForward } from 'lucide-react';
 
@@ -97,59 +100,34 @@ export const Timeline: React.FC<{ lang: 'ru' | 'en'; tl: TimelineApi; marks?: Ti
   return (
     <div className={`rounded-xl px-3 py-2.5 ${dark ? 'bg-[#1A1C21]/95 border border-[#2c2f36]' : 'bg-surface border border-line'}`}>
       <div className="flex items-center gap-1">
-        <button className={btn} aria-label={lang === 'ru' ? 'В начало' : 'Restart'} title={lang === 'ru' ? 'В начало' : 'Restart'} onClick={() => tl.seek(0)}>
+        <Button isIconOnly size="sm" variant="ghost" aria-label={lang === 'ru' ? 'В начало' : 'Restart'} onPress={() => tl.seek(0)}>
           <SkipBack className="w-4 h-4" strokeWidth={1.75} />
-        </button>
-        <button className={btn} aria-label={lang === 'ru' ? 'Назад' : 'Back'} title={lang === 'ru' ? 'Назад' : 'Back'} onClick={() => tl.seek(tl.timeRef.current - step)}>
+        </Button>
+        <Button isIconOnly size="sm" variant="ghost" aria-label={lang === 'ru' ? 'Назад' : 'Back'} onPress={() => tl.seek(tl.timeRef.current - step)}>
           <StepBack className="w-4 h-4" strokeWidth={1.75} />
-        </button>
-        <button
-          onClick={tl.toggle}
-          aria-label={tl.playing ? (lang === 'ru' ? 'Пауза' : 'Pause') : lang === 'ru' ? 'Пуск' : 'Play'}
-          className="w-9 h-9 rounded-full bg-accent hover:bg-accent-hover flex items-center justify-center cursor-pointer"
-          style={{ color: '#fff' }}
-        >
+        </Button>
+        <Button isIconOnly className="w-9" onPress={() => tl.toggle()} aria-label={tl.playing ? (lang === 'ru' ? 'Пауза' : 'Pause') : lang === 'ru' ? 'Пуск' : 'Play'}>
           {tl.playing ? <Pause className="w-4 h-4" strokeWidth={2} /> : <Play className="w-4 h-4 ml-0.5" strokeWidth={2} />}
-        </button>
-        <button className={btn} aria-label={lang === 'ru' ? 'Вперёд' : 'Forward'} title={lang === 'ru' ? 'Вперёд' : 'Forward'} onClick={() => tl.seek(tl.timeRef.current + step)}>
+        </Button>
+        <Button isIconOnly size="sm" variant="ghost" aria-label={lang === 'ru' ? 'Вперёд' : 'Forward'} onPress={() => tl.seek(tl.timeRef.current + step)}>
           <StepForward className="w-4 h-4" strokeWidth={1.75} />
-        </button>
+        </Button>
 
         <div className="relative flex-1 mx-2">
-          <input
-            type="range"
-            min={0}
-            max={tl.duration}
-            step={0.01}
-            value={tl.time}
-            onChange={(e) => tl.seek(Number(e.target.value))}
-            aria-label={lang === 'ru' ? 'Шкала времени' : 'Timeline'}
-            className="w-full accent-accent cursor-pointer"
-          />
+          <RangeSlider value={tl.time} onChange={(v) => tl.seek(v)} min={0} max={tl.duration} step={0.01} aria-label={lang === 'ru' ? 'Шкала времени' : 'Timeline'} />
           {marks.map((m) => (
-            <button
-              key={m.t}
-              onClick={() => tl.seek(m.t)}
-              title={m.label[lang]}
-              className={`absolute -top-1 w-1.5 h-1.5 rounded-full -translate-x-1/2 cursor-pointer ${dark ? 'bg-[#8fa4ff]' : 'bg-accent'}`}
-              style={{ left: pct(m.t) }}
-            />
+            <Tooltip key={m.t}><Tooltip.Trigger><Button aria-label={m.label[lang]} variant={dark ? 'ghost' : 'primary'} className="absolute -top-1 w-1.5" onPress={() => tl.seek(m.t)} style={{ left: pct(m.t) }} /></Tooltip.Trigger><Tooltip.Content>{m.label[lang]}</Tooltip.Content></Tooltip>
           ))}
         </div>
 
         <span className={`hidden sm:inline font-mono text-xs w-16 text-right ${dark ? 'text-[#B5B8C0]' : 'text-ink-2'}`}>{fmt(tl.time)}</span>
-        <select
-          value={tl.speed}
-          onChange={(e) => tl.setSpeed(Number(e.target.value))}
+        <Choice
           aria-label={lang === 'ru' ? 'Скорость' : 'Speed'}
-          className={`ml-1 h-8 rounded-md px-1.5 text-xs font-mono cursor-pointer ${dark ? 'bg-[#26282D] text-[#EDEDED] border border-[#34363C]' : 'bg-muted text-ink border border-line'}`}
-        >
-          {SPEEDS.map((s) => (
-            <option key={s} value={s}>
-              {s}×
-            </option>
-          ))}
-        </select>
+          className="ml-1 w-24"
+          value={String(tl.speed)}
+          onChange={(v) => tl.setSpeed(Number(v))}
+          options={SPEEDS.map((s) => ({ value: String(s), label: `${s}×` }))}
+        />
       </div>
       {marks.length > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1.5">

@@ -1,3 +1,5 @@
+import { Check } from './ui/Check';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -503,21 +505,13 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
           {/* Molecule picker */}
           <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
             {(['H2O', 'CH4', 'CO2'] as DeconstructMolecule[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
+              <Button variant={molecule === m ? 'primary' : 'ghost'} size="sm" className="text-xs font-mono font-bold" key={m} onPress={() => {
                   setMolecule(m);
                   setCurrentStep(1);
                   setForcedAngle(104.5);
-                }}
-                className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                  molecule === m
-                    ? 'bg-cyan-500 text-slate-950 shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
+                }}>
                 {m === 'H2O' ? 'H₂O (Water)' : m === 'CH4' ? 'CH₄ (Methane)' : 'CO₂ (Linear)'}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -578,43 +572,31 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
                   ? 'Попробуй распрямить воду в 180° как CO₂ — посмотри, как электронные пары отталкивают атомы обратно!'
                   : 'Force water into a 180° straight line — observe how lone-pair electron clouds repel it back!'}
               </p>
-              <button
-                onClick={triggerRepulsionSnap}
-                disabled={isRepelling}
-                className="mt-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-50"
-              >
+              <Button size="sm" className="mt-1 text-xs font-bold" onPress={() => triggerRepulsionSnap()} isDisabled={isRepelling}>
                 <Sparkles className="w-3.5 h-3.5" />
                 {isRepelling
                   ? (lang === 'ru' ? 'Отталкивание...' : 'Repelling back...')
                   : (lang === 'ru' ? 'Распрямить в 180° (Тест)' : 'Force 180° (Test)')}
-              </button>
+              </Button>
             </div>
           )}
         </div>
 
         {/* Step navigation footer */}
         <div className="p-4 bg-slate-950/70 border-t border-slate-800 flex items-center justify-between">
-          <button
-            onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-            disabled={currentStep === 1}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
-          >
+          <Button variant="secondary" size="sm" className="text-xs font-semibold" onPress={() => setCurrentStep(Math.max(1, currentStep - 1))} isDisabled={currentStep === 1}>
             <ArrowLeft className="w-4 h-4" />
             {lang === 'ru' ? 'Предыдущий шаг' : 'Previous Step'}
-          </button>
+          </Button>
 
           <div className="text-xs text-slate-400 font-mono">
             {lang === 'ru' ? 'Шаг' : 'Step'} {currentStep} / {stepsData[molecule].length}
           </div>
 
-          <button
-            onClick={() => setCurrentStep(Math.min(stepsData[molecule].length, currentStep + 1))}
-            disabled={currentStep === stepsData[molecule].length}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer shadow-md"
-          >
+          <Button size="sm" className="text-xs font-semibold" onPress={() => setCurrentStep(Math.min(stepsData[molecule].length, currentStep + 1))} isDisabled={currentStep === stepsData[molecule].length}>
             {lang === 'ru' ? 'Следующий шаг' : 'Next Step'}
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -646,25 +628,9 @@ export const DeconstructionExplorer: React.FC<DeconstructionExplorerProps> = ({
 
           {/* Toggle controls */}
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-2 text-xs">
-            <label className="flex items-center justify-between p-2 rounded-lg bg-slate-950/40 border border-slate-800/60 cursor-pointer text-slate-300 hover:text-white">
-              <span>{lang === 'ru' ? 'Показывать неподелённые пары' : 'Show Lone Pairs'}</span>
-              <input
-                type="checkbox"
-                checked={showLonePairs}
-                onChange={(e) => setShowLonePairs(e.target.checked)}
-                className="rounded accent-cyan-400"
-              />
-            </label>
+            <Check checked={showLonePairs} onChange={(v) => setShowLonePairs(v)}><span>{lang === 'ru' ? 'Показывать неподелённые пары' : 'Show Lone Pairs'}</span></Check>
 
-            <label className="flex items-center justify-between p-2 rounded-lg bg-slate-950/40 border border-slate-800/60 cursor-pointer text-slate-300 hover:text-white">
-              <span>{lang === 'ru' ? 'Вектор дипольного момента' : 'Net Dipole Vector'}</span>
-              <input
-                type="checkbox"
-                checked={showDipole}
-                onChange={(e) => setShowDipole(e.target.checked)}
-                className="rounded accent-cyan-400"
-              />
-            </label>
+            <Check checked={showDipole} onChange={(v) => setShowDipole(v)}><span>{lang === 'ru' ? 'Вектор дипольного момента' : 'Net Dipole Vector'}</span></Check>
           </div>
         </div>
       </div>

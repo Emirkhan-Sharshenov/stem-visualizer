@@ -54,83 +54,45 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <nav className="hidden lg:flex items-center gap-1 ml-2">
             {NAV_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => onSelectMode(item.id)}
-                className={`${item.id === 'formulas' || item.id === 'course_map' ? 'hidden xl:block ' : ''}h-8 px-2 xl:px-3 rounded-md text-sm whitespace-nowrap transition-colors cursor-pointer ${
-                  isActive(item.id) ? 'text-accent font-medium' : 'text-ink-2 hover:text-ink hover:bg-hover'
-                }`}
-              >
+              <Button variant="ghost" size="sm" className={`text-sm whitespace-nowrap ${item.id === 'formulas' || item.id === 'course_map' ? 'hidden xl:block' : ''} ${isActive(item.id) ? 'text-accent font-medium' : 'text-ink-2'}`} key={item.id} onPress={() => onSelectMode(item.id)}>
                 {item.label[lang]}
-              </button>
+              </Button>
             ))}
           </nav>
 
-          <button
-            onClick={onOpenSearch}
-            className="hidden md:flex lg:hidden xl:flex flex-1 min-w-0 max-w-md mx-auto items-center gap-2.5 h-9 px-3 rounded-lg bg-surface border border-line hover:border-line-strong text-sm text-ink-3 transition-colors cursor-pointer"
-          >
+          <Button variant="outline" className="hidden md:flex lg:hidden xl:flex flex-1 min-w-0 mx-auto text-sm" onPress={() => onOpenSearch()}>
             <Search className="w-4 h-4" strokeWidth={1.75} />
             <span className="truncate">{lang === 'ru' ? 'Что непонятно? Например, электролиз' : 'What’s confusing? E.g. electrolysis'}</span>
             <kbd className="ml-auto font-mono text-[11px] px-1.5 py-0.5 rounded bg-muted border border-line text-ink-3">⌘K</kbd>
-          </button>
+          </Button>
 
-          <div className="ml-auto md:ml-0 flex items-center gap-1.5">
-            <button
-              onClick={onOpenSearch}
-              aria-label={lang === 'ru' ? 'Поиск' : 'Search'}
-              className="md:hidden lg:flex xl:hidden w-9 h-9 rounded-md flex items-center justify-center text-ink-2 hover:text-ink hover:bg-hover cursor-pointer"
-            >
+          <div className="ml-auto md:ml-0 flex items-center gap-1 shrink-0">
+            <Button variant="ghost" isIconOnly className="md:hidden lg:flex xl:hidden w-9" onPress={() => onOpenSearch()} aria-label={lang === 'ru' ? 'Поиск' : 'Search'}>
               <Search className="w-[18px] h-[18px]" strokeWidth={1.75} />
-            </button>
+            </Button>
 
-            <button
-              onClick={() => onSelectMode('progress')}
-              title={lang === 'ru' ? 'Мой прогресс' : 'My progress'}
-              className={`hidden sm:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-sm transition-colors cursor-pointer ${
-                currentMode === 'progress' ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface hover:bg-muted text-ink-2 hover:text-ink'
-              }`}
-            >
+            <Button aria-label={lang === 'ru' ? 'Мой прогресс' : 'My progress'} variant="outline" size="sm" className={`hidden sm:inline-flex text-sm ${currentMode === 'progress' ? 'text-accent' : 'text-ink-2'}`} onPress={() => onSelectMode('progress')}>
               <Flame className={`w-4 h-4 ${streak ? 'text-[#F76B15]' : ''}`} strokeWidth={1.75} />
               <span className="font-mono text-xs">{streak}</span>
-              <span className="w-px h-3.5 bg-line" />
-              <span className="font-mono text-xs">{done}</span>
-              <span className="text-xs">{lang === 'ru' ? 'тем' : 'topics'}</span>
-            </button>
+              {/* topics done: on wide screens only, the header is tight between lg and xl */}
+              <span className="w-px h-3.5 bg-line lg:hidden xl:inline" />
+              <span className="font-mono text-xs lg:hidden xl:inline">{done}</span>
+              <span className="text-xs lg:hidden xl:inline">{lang === 'ru' ? 'тем' : 'topics'}</span>
+            </Button>
 
-            <button
-              onClick={() => onSelectMode('pro')}
-              title={plan.pro ? 'Pro' : lang === 'ru' ? 'Тарифы' : 'Plans'}
-              className={`hidden sm:inline-flex items-center gap-1 h-8 px-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                currentMode === 'pro' ? 'bg-[#FFE7B3] text-[#8A4B0F]' : 'bg-[#FFF4DA] hover:bg-[#FFE7B3] text-[#B5651D]'
-              }`}
-            >
+            <Button aria-label={plan.pro ? 'Pro' : lang === 'ru' ? 'Тарифы' : 'Plans'} variant="ghost" size="sm" className={`hidden sm:inline-flex text-sm font-medium ${currentMode === 'pro' ? 'text-[#8A4B0F]' : 'text-[#B5651D]'}`} onPress={() => onSelectMode('pro')}>
               <Crown className="w-3.5 h-3.5" strokeWidth={2} />
-              {plan.pro ? 'Pro ✓' : 'Pro'}
-            </button>
+              <span className="lg:hidden xl:inline">{plan.pro ? 'Pro ✓' : 'Pro'}</span>
+            </Button>
 
-            <button
-              onClick={onToggleMentor}
-              className="inline-flex items-center h-8 px-3 rounded-md border border-line bg-surface hover:bg-muted text-sm text-ink transition-colors cursor-pointer"
-            >
+            <Button variant="outline" size="sm" className="text-sm" onPress={() => onToggleMentor()}>
               {lang === 'ru' ? 'Наставник' : 'Mentor'}
-            </button>
+            </Button>
 
-            <div className="hidden sm:block w-px h-4 bg-line mx-1" />
-
-            <div className="hidden sm:inline-flex p-0.5 rounded-md bg-muted border border-line">
-              {(['ru', 'en'] as const).map((l) => (
-                <button
-                  key={l}
-                  onClick={() => l !== lang && onToggleLang()}
-                  className={`px-2 h-6 rounded font-mono text-[11px] uppercase cursor-pointer ${
-                    lang === l ? 'bg-surface text-ink border border-line' : 'text-ink-3 hover:text-ink'
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+            {/* one button that switches to the other language */}
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-mono uppercase" aria-label={lang === 'ru' ? 'Switch to English' : 'Переключить на русский'} onPress={() => onToggleLang()}>
+              {lang === 'ru' ? 'en' : 'ru'}
+            </Button>
 
             <ThemeSwitch lang={lang} />
             <AccountButton lang={lang} onSelect={onSelectMode} />
@@ -185,9 +147,9 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => 
   const name = (user.user_metadata?.name as string) || (user.user_metadata?.full_name as string) || user.email || '';
   return (
     <div ref={ref} className="relative ml-1">
-      <button onClick={() => setOpen((o) => !o)} aria-label={name} className="w-8 h-8 rounded-full bg-accent hover:bg-accent-hover flex items-center justify-center text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+      <Button isIconOnly size="sm" className="w-8 text-sm font-medium" onPress={() => setOpen((o) => !o)} aria-label={name}>
         {name.slice(0, 1).toUpperCase()}
-      </button>
+      </Button>
       {open && (
         <div className="absolute right-0 top-10 z-50 w-56 rounded-xl bg-surface border border-line shadow-xl p-1.5">
           <div className="px-3 py-2">

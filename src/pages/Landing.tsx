@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useState } from 'react';
 import { ArrowRight, Check, Search, Network, Zap, Award, Languages, Box } from 'lucide-react';
 import { Logo, LogoMark } from '../components/brand/Logo';
@@ -47,24 +48,15 @@ export const Landing: React.FC<LandingProps> = ({ lang, onToggleLang, onNavigate
             <a href="#pricing" className="hover:text-ink transition-colors">{t.nav.pricing}</a>
           </nav>
           <div className="flex items-center gap-2">
-            <button
-              onClick={onToggleLang}
-              className="h-8 px-2.5 rounded-md text-xs font-mono text-ink-2 hover:text-ink hover:bg-hover transition-colors cursor-pointer"
-            >
+            <Button variant="ghost" size="sm" className="text-xs font-mono" onPress={() => onToggleLang()}>
               {lang === 'ru' ? 'EN' : 'RU'}
-            </button>
-            <button
-              onClick={() => onNavigate('login')}
-              className="hidden sm:inline-flex h-8 px-3 items-center rounded-md text-sm text-ink hover:bg-hover transition-colors cursor-pointer"
-            >
+            </Button>
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex text-sm" onPress={() => onNavigate('login')}>
               {t.nav.login}
-            </button>
-            <button
-              onClick={() => onNavigate('register')}
-              className="inline-flex h-8 px-3 items-center whitespace-nowrap rounded-md bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
-            >
+            </Button>
+            <Button size="sm" className="whitespace-nowrap text-sm font-medium" onPress={() => onNavigate('register')}>
               {t.nav.start}
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -115,15 +107,9 @@ export const Landing: React.FC<LandingProps> = ({ lang, onToggleLang, onNavigate
               <span className="text-[12px] text-[#8C8F98]">{t.hero.stageHint}</span>
               <div className="inline-flex p-1 rounded-lg bg-[#1A1C21] border border-stage-line">
                 {ORBITALS.map((o) => (
-                  <button
-                    key={o}
-                    onClick={() => setOrbital(o)}
-                    className={`px-3 h-8 rounded-md font-mono text-xs transition-colors cursor-pointer ${
-                      orbital === o ? 'bg-accent text-white' : 'text-[#B5B8C0] hover:text-white'
-                    }`}
-                  >
+                  <Button variant={orbital === o ? 'primary' : 'ghost'} size="sm" className="font-mono text-xs" key={o} onPress={() => setOrbital(o)}>
                     {ORBITAL_LABEL[o]}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>

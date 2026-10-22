@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useMemo, useState } from 'react';
 import { Printer, Search } from 'lucide-react';
 import { SECTIONS, SUBJECTS } from '../../data/curriculum';
@@ -54,16 +55,16 @@ export const FormulasPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
           <h1 className="font-serif text-[36px] leading-tight text-ink">{L('Шпаргалка формул', 'Formula sheet')}</h1>
           <p className="text-ink-2 mt-1">{L(`Все главные формулы учебника — ${all.length} штук. Нажми на карточку, чтобы открыть тему.`, `Every key formula in the textbook, ${all.length} in all. Tap a card to open its topic.`)}</p>
         </div>
-        <button onClick={() => window.print()} className="print:hidden h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+        <Button variant="outline" className="text-sm" onPress={() => window.print()}>
           <Printer className="w-4 h-4" />
           {L('Распечатать', 'Print')}
-        </button>
+        </Button>
       </div>
 
       <div className="print:hidden flex flex-col gap-3">
         <label className="flex items-center gap-2 h-10 px-3 rounded-lg bg-surface border border-line focus-within:border-accent max-w-md">
           <Search className="w-4 h-4 text-ink-3" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти: давление, импульс, моль…', 'Find: pressure, momentum, mole…')} className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-ink-3" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти: давление, импульс, моль…', 'Find: pressure, momentum, mole…')} className="flex-1 text-sm" />
         </label>
         {!query && (
           <div className="flex flex-wrap gap-2">
@@ -83,9 +84,9 @@ export const FormulasPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
             ))}
             <span className="w-px bg-line mx-1" />
             {(['all', ...grades] as const).map((g) => (
-              <button key={g} onClick={() => setGrade(g)} className={`h-9 px-3 rounded-full text-sm border cursor-pointer ${grade === g ? 'bg-accent-soft border-accent text-accent font-medium' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}>
+              <Button variant="outline" className={`text-sm ${grade === g ? 'text-accent font-medium' : 'text-ink-2'}`} key={g} onPress={() => setGrade(g)}>
                 {g === 'all' ? L('Все классы', 'All grades') : `${g} ${L('кл.', 'gr.')}`}
-              </button>
+              </Button>
             ))}
           </div>
         )}

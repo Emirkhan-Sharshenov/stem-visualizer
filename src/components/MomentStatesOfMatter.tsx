@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, Flame, Snowflake, Wind, HelpCircle } from 'lucide-react';
@@ -183,15 +185,10 @@ export const MomentStatesOfMatter: React.FC<MomentStatesOfMatterProps> = ({ lang
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                isPlaying ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
-              }`}
-            >
+            <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -203,17 +200,9 @@ export const MomentStatesOfMatter: React.FC<MomentStatesOfMatterProps> = ({ lang
               { id: 25, label: lang === 'ru' ? 'Вода (25°C)' : 'Water (25°C)', active: stateType === 'liquid' },
               { id: 115, label: lang === 'ru' ? 'Пар (115°C)' : 'Steam (115°C)', active: stateType === 'gas' },
             ].map((p, idx) => (
-              <button
-                key={idx}
-                onClick={() => setTemperature(p.id)}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                  p.active
-                    ? 'bg-cyan-500 text-slate-950 shadow-md scale-105'
-                    : 'bg-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
+              <Button variant={p.active ? 'primary' : 'secondary'} size="sm" className="font-bold" key={idx} onPress={() => setTemperature(p.id)}>
                 {p.label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -251,14 +240,7 @@ export const MomentStatesOfMatter: React.FC<MomentStatesOfMatterProps> = ({ lang
             <span>{lang === 'ru' ? 'Температура нагревателя T (°C)' : 'Heater Temperature T (°C)'}</span>
             <span className="font-mono text-cyan-400 font-bold">{temperature}°C</span>
           </div>
-          <input
-            type="range"
-            min="-30"
-            max="125"
-            value={temperature}
-            onChange={(e) => setTemperature(Number(e.target.value))}
-            className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-          />
+          <RangeSlider value={temperature} onChange={(v) => setTemperature(v)} min={-30} max={125} />
         </div>
       </div>
 

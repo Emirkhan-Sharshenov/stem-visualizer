@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Atom, Bone, Box, ChartSpline, FlaskConical, Grid3x3, Hexagon, Play, Search, Table2, Triangle } from 'lucide-react';
 import type { StemCategory, VisualMode } from '../../types/stem';
@@ -577,10 +578,10 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
     const s = SUBJECT[open.subject];
     return (
       <div className="flex flex-col gap-5">
-        <button onClick={() => setOpen(null)} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+        <Button variant="ghost" className="self-start text-sm" onPress={() => setOpen(null)}>
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           {L('Все лаборатории', 'All labs')}
-        </button>
+        </Button>
         <div>
           <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
             <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
@@ -594,9 +595,9 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
           <h2 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Где это изучают', 'Where it’s taught')}</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {open.topics.map((t) => (
-              <button key={t.id} onClick={() => onOpenTopic(t.id)} className="px-3 py-1.5 rounded-lg bg-surface border border-line hover:border-accent text-sm text-ink cursor-pointer">
+              <Button variant="outline" size="sm" className="text-sm" key={t.id} onPress={() => onOpenTopic(t.id)}>
                 {t.title[lang]} <span className="text-ink-3">· {t.grade} {L('кл.', 'gr.')}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </section>
@@ -614,7 +615,7 @@ export const LabsPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void;
         </div>
         <label className="relative w-full lg:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3" strokeWidth={1.75} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти: ДНК, линза, аммиак…', 'Find: DNA, lens, ammonia…')} className="w-full h-10 pl-9 pr-3 rounded-lg bg-surface border border-line text-sm text-ink outline-none focus:border-accent" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти: ДНК, линза, аммиак…', 'Find: DNA, lens, ammonia…')} className="w-full pl-9 pr-3 text-sm" />
         </label>
       </header>
       <section>

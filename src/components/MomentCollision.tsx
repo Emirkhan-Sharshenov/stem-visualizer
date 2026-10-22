@@ -1,3 +1,6 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Check } from './ui/Check';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, FastForward, HelpCircle, Zap } from 'lucide-react';
@@ -208,22 +211,14 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                isPlaying ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
-              }`}
-            >
+            <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-            </button>
+            </Button>
 
-            <button
-              onClick={resetCarts}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 cursor-pointer"
-            >
+            <Button variant="outline" onPress={() => resetCarts()}>
               <RotateCcw className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -236,15 +231,7 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
             </span>
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white font-sans text-xs">
-            <input
-              type="checkbox"
-              checked={autoSlowMo}
-              onChange={(e) => setAutoSlowMo(e.target.checked)}
-              className="rounded accent-cyan-400"
-            />
-            {lang === 'ru' ? 'Авто-замедление в момент удара' : 'Auto Slow-Mo at Impact'}
-          </label>
+          <Check checked={autoSlowMo} onChange={(v) => setAutoSlowMo(v)}>{lang === 'ru' ? 'Авто-замедление в момент удара' : 'Auto Slow-Mo at Impact'}</Check>
         </div>
 
         {/* Canvas Display */}
@@ -275,15 +262,7 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Масса M₁' : 'Mass M₁'}</span>
               <span className="font-mono text-cyan-400 font-bold">{m1} kg</span>
             </div>
-            <input
-              type="range"
-              min="0.5"
-              max="5.0"
-              step="0.5"
-              value={m1}
-              onChange={(e) => setM1(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={m1} onChange={(v) => setM1(v)} min={0.5} max={5.0} step={0.5} />
           </div>
 
           <div>
@@ -291,15 +270,7 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Скорость V₁' : 'Speed V₁'}</span>
               <span className="font-mono text-cyan-400 font-bold">{v1} m/s</span>
             </div>
-            <input
-              type="range"
-              min="0.5"
-              max="6.0"
-              step="0.5"
-              value={v1}
-              onChange={(e) => setV1(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={v1} onChange={(v) => setV1(v)} min={0.5} max={6.0} step={0.5} />
           </div>
 
           <div>
@@ -307,15 +278,7 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Масса M₂' : 'Mass M₂'}</span>
               <span className="font-mono text-amber-400 font-bold">{m2} kg</span>
             </div>
-            <input
-              type="range"
-              min="0.5"
-              max="5.0"
-              step="0.5"
-              value={m2}
-              onChange={(e) => setM2(Number(e.target.value))}
-              className="w-full accent-amber-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={m2} onChange={(v) => setM2(v)} min={0.5} max={5.0} step={0.5} />
           </div>
 
           <div>
@@ -323,15 +286,7 @@ export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Скорость V₂' : 'Speed V₂'}</span>
               <span className="font-mono text-amber-400 font-bold">{v2} m/s</span>
             </div>
-            <input
-              type="range"
-              min="-6.0"
-              max="-0.5"
-              step="0.5"
-              value={v2}
-              onChange={(e) => setV2(Number(e.target.value))}
-              className="w-full accent-amber-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={v2} onChange={(v) => setV2(v)} min={-6.0} max={-0.5} step={0.5} />
           </div>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Compass, HelpCircle, RotateCcw, Sparkles } from 'lucide-react';
@@ -164,14 +166,11 @@ export const MomentOptics: React.FC<MomentOpticsProps> = ({ lang }) => {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsReverse(!isReverse)}
-            className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-all cursor-pointer"
-          >
+          <Button variant="outline" size="sm" className="text-xs font-semibold" onPress={() => setIsReverse(!isReverse)}>
             {isReverse
               ? (lang === 'ru' ? 'Направление: Стекло → Воздух' : 'Direction: Glass → Air')
               : (lang === 'ru' ? 'Направление: Воздух → Стекло' : 'Direction: Air → Glass')}
-          </button>
+          </Button>
         </div>
 
         {/* Live Gauges Bar */}
@@ -221,14 +220,7 @@ export const MomentOptics: React.FC<MomentOpticsProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Угол падения луча α' : 'Incident Angle α'}</span>
               <span className="font-mono text-rose-400 font-bold">{angleDeg}°</span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="85"
-              value={angleDeg}
-              onChange={(e) => setAngleDeg(Number(e.target.value))}
-              className="w-full accent-rose-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={angleDeg} onChange={(v) => setAngleDeg(v)} min={0} max={85} />
           </div>
 
           <div>
@@ -236,15 +228,7 @@ export const MomentOptics: React.FC<MomentOpticsProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Показатель преломления стекла n₂' : 'Refractive Index n₂'}</span>
               <span className="font-mono text-cyan-400 font-bold">{n2.toFixed(2)}</span>
             </div>
-            <input
-              type="range"
-              min="1.1"
-              max="2.4"
-              step="0.05"
-              value={n2}
-              onChange={(e) => setN2(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={n2} onChange={(v) => setN2(v)} min={1.1} max={2.4} step={0.05} />
           </div>
         </div>
       </div>

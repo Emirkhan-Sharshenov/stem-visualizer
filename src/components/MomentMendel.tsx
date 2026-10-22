@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useState } from 'react';
 import { Dna, Sparkles, CheckCircle2, RotateCcw } from 'lucide-react';
 
@@ -62,36 +63,24 @@ export const MomentMendel: React.FC<MomentMendelProps> = ({ lang }) => {
           <div className="text-xs font-mono text-slate-400">
             {lang === 'ru' ? 'Генотип Матери (P₁):' : 'Mother Genotype (P₁):'}
             <div className="flex gap-2 mt-1">
-              <button
-                onClick={() => setP1Allele1(p1Allele1 === 'A' ? 'a' : 'A')}
-                className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-yellow-400 font-bold font-mono"
-              >
+              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP1Allele1(p1Allele1 === 'A' ? 'a' : 'A')}>
                 {p1Allele1}
-              </button>
-              <button
-                onClick={() => setP1Allele2(p1Allele2 === 'A' ? 'a' : 'A')}
-                className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-yellow-400 font-bold font-mono"
-              >
+              </Button>
+              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP1Allele2(p1Allele2 === 'A' ? 'a' : 'A')}>
                 {p1Allele2}
-              </button>
+              </Button>
             </div>
           </div>
 
           <div className="text-xs font-mono text-slate-400">
             {lang === 'ru' ? 'Генотип Отца (P₂):' : 'Father Genotype (P₂):'}
             <div className="flex gap-2 mt-1">
-              <button
-                onClick={() => setP2Allele1(p2Allele1 === 'A' ? 'a' : 'A')}
-                className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-cyan-400 font-bold font-mono"
-              >
+              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP2Allele1(p2Allele1 === 'A' ? 'a' : 'A')}>
                 {p2Allele1}
-              </button>
-              <button
-                onClick={() => setP2Allele2(p2Allele2 === 'A' ? 'a' : 'A')}
-                className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-cyan-400 font-bold font-mono"
-              >
+              </Button>
+              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP2Allele2(p2Allele2 === 'A' ? 'a' : 'A')}>
                 {p2Allele2}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

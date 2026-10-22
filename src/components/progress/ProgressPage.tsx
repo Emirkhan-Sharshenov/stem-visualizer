@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { lazy, Suspense, useState } from 'react';
 import { Flame, Sparkles } from 'lucide-react';
 import { TOPICS } from '../../data/curriculum';
@@ -55,9 +56,9 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
               ['course_map', L('Карта курса', 'Course map')],
             ] as const
           ).map(([mode, label]) => (
-            <button key={mode} onClick={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: mode }))} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink hover:border-accent hover:text-accent cursor-pointer">
+            <Button variant="outline" className="text-sm" key={mode} onPress={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: mode }))}>
               {label}
-            </button>
+            </Button>
           ))}
         </div>
       </header>

@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitalRenderStyle, OrbitalType, ExplanationLevel } from '../types/stem';
@@ -279,15 +281,9 @@ export const OrbitalsExplorer: React.FC<OrbitalsExplorerProps> = ({ lang, onUnlo
         </div>
         <div className="flex p-1 rounded-lg bg-muted border border-line overflow-x-auto">
           {ORBITALS.map((o) => (
-            <button
-              key={o.type}
-              onClick={() => setOrbitalType(o.type)}
-              className={`shrink-0 h-9 px-3 rounded-md text-sm transition-colors cursor-pointer ${
-                orbitalType === o.type ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
-              }`}
-            >
+            <Button variant={orbitalType === o.type ? 'outline' : 'ghost'} className={`shrink-0 text-sm ${orbitalType === o.type ? 'font-medium' : ''}`} key={o.type} onPress={() => setOrbitalType(o.type)}>
               <Formula tex={o.label.replace('²', '^2').replace('³', '^3')} />
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -319,24 +315,15 @@ export const OrbitalsExplorer: React.FC<OrbitalsExplorerProps> = ({ lang, onUnlo
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex p-1 rounded-lg bg-muted border border-line overflow-x-auto">
               {STYLES.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setRenderStyle(s.id)}
-                  className={`shrink-0 h-8 px-3 rounded-md text-sm transition-colors cursor-pointer ${
-                    renderStyle === s.id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
-                  }`}
-                >
+                <Button variant={renderStyle === s.id ? 'outline' : 'ghost'} size="sm" className={`shrink-0 text-sm ${renderStyle === s.id ? 'font-medium' : ''}`} key={s.id} onPress={() => setRenderStyle(s.id)}>
                   {s.label[lang]}
-                </button>
+                </Button>
               ))}
             </div>
-            <button
-              onClick={() => setIsRotating((r) => !r)}
-              className="h-9 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-sm text-ink inline-flex items-center gap-1.5 cursor-pointer"
-            >
+            <Button variant="outline" className="text-sm" onPress={() => setIsRotating((r) => !r)}>
               {isRotating ? <Pause className="w-3.5 h-3.5" strokeWidth={1.75} /> : <Play className="w-3.5 h-3.5" strokeWidth={1.75} />}
               {isRotating ? (lang === 'ru' ? 'Остановить' : 'Stop') : lang === 'ru' ? 'Вращать' : 'Rotate'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -349,12 +336,9 @@ export const OrbitalsExplorer: React.FC<OrbitalsExplorerProps> = ({ lang, onUnlo
               <Formula tex={orbital.tex} />
             </div>
             <p className="mt-3 text-[14.5px] leading-relaxed text-ink-2">{orbital.text[lang]}</p>
-            <button
-              onClick={() => onOpenPrediction('pred-p-orbital')}
-              className="mt-4 w-full h-10 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
-            >
+            <Button fullWidth className="mt-4 text-sm font-medium" onPress={() => onOpenPrediction('pred-p-orbital')}>
               {lang === 'ru' ? 'Сначала представь' : 'Predict first'}
-            </button>
+            </Button>
           </section>
 
           <section className="bg-surface border border-line rounded-xl p-5 flex flex-col gap-4">
@@ -372,15 +356,9 @@ export const OrbitalsExplorer: React.FC<OrbitalsExplorerProps> = ({ lang, onUnlo
             <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Объяснение' : 'Explanation'}</h3>
             <div className="mt-3 grid grid-cols-4 p-1 rounded-lg bg-muted border border-line">
               {([1, 2, 3, 4] as ExplanationLevel[]).map((lvl) => (
-                <button
-                  key={lvl}
-                  onClick={() => setExplanationLevel(lvl)}
-                  className={`h-8 rounded-md text-[12.5px] truncate px-1 transition-colors cursor-pointer ${
-                    explanationLevel === lvl ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
-                  }`}
-                >
+                <Button variant={explanationLevel === lvl ? 'outline' : 'ghost'} size="sm" className={`truncate ${explanationLevel === lvl ? 'font-medium' : ''}`} key={lvl} onPress={() => setExplanationLevel(lvl)}>
                   {conceptData.tiers.find((t) => t.level === lvl)!.badge[lang]}
-                </button>
+                </Button>
               ))}
             </div>
             <h4 className="mt-4 font-serif text-lg text-ink">{tier.title[lang]}</h4>
@@ -404,21 +382,15 @@ const Slider: React.FC<{ label: string; value: number; min: number; max: number;
       <span className="text-ink">{label}</span>
       <span className="font-mono text-ink">{format(value)}</span>
     </div>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-2 w-full accent-accent cursor-pointer" />
+    <RangeSlider value={value} onChange={(v) => onChange(v)} min={min} max={max} step={step} className="mt-2" />
   </div>
 );
 
 const Toggle: React.FC<{ label: string; checked: boolean; onChange: (v: boolean) => void }> = ({ label, checked, onChange }) => (
   <label className="flex items-center justify-between text-sm text-ink cursor-pointer">
     {label}
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${checked ? 'bg-accent' : 'bg-line-strong'}`}
-    >
+    <Button variant={checked ? 'primary' : 'ghost'} size="sm" className="relative w-9" type="button" onPress={() => onChange(!checked)}>
       <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-4' : ''}`} />
-    </button>
+    </Button>
   </label>
 );

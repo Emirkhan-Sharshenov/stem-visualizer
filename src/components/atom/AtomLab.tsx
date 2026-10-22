@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Check, Minus, Plus, RotateCcw } from 'lucide-react';
 import { chargeLabel, commonA, configTex, ELEMENTS, shells, TASKS } from './atom';
@@ -23,13 +24,13 @@ const Counter: React.FC<{ label: string; color: string; value: number; max: numb
   <div className="flex items-center gap-2">
     <span className="w-3 h-3 rounded-full shrink-0" style={{ background: color }} />
     <span className="text-sm text-ink flex-1">{label}</span>
-    <button onClick={() => onChange(Math.max(0, value - 1))} disabled={value <= 0} className="w-8 h-8 rounded-lg border border-line bg-surface flex items-center justify-center hover:bg-muted disabled:opacity-40 cursor-pointer" aria-label="−">
+    <Button variant="outline" isIconOnly size="sm" className="w-8" onPress={() => onChange(Math.max(0, value - 1))} isDisabled={value <= 0} aria-label="−">
       <Minus className="w-4 h-4" />
-    </button>
+    </Button>
     <span className="w-8 text-center font-mono text-lg text-ink">{value}</span>
-    <button onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} className="w-8 h-8 rounded-lg border border-line bg-surface flex items-center justify-center hover:bg-muted disabled:opacity-40 cursor-pointer" aria-label="+">
+    <Button variant="outline" isIconOnly size="sm" className="w-8" onPress={() => onChange(Math.min(max, value + 1))} isDisabled={value >= max} aria-label="+">
       <Plus className="w-4 h-4" />
-    </button>
+    </Button>
   </div>
 );
 
@@ -140,25 +141,22 @@ export const AtomLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <Counter label={L('Нейтроны', 'Neutrons')} color={N} value={n} max={28} onChange={setN} />
             <Counter label={L('Электроны', 'Electrons')} color={E} value={e} max={20} onChange={setE} />
             <div className="flex flex-wrap gap-2 pt-1">
-              <button onClick={() => setE(p)} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink hover:bg-muted cursor-pointer">
+              <Button variant="outline" className="text-sm" onPress={() => setE(p)}>
                 {L('Сделать нейтральным', 'Make it neutral')}
-              </button>
+              </Button>
               {el && (
-                <button onClick={() => setN(commonA(el) - p)} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink hover:bg-muted cursor-pointer">
+                <Button variant="outline" className="text-sm" onPress={() => setN(commonA(el) - p)}>
                   {L('Самый частый изотоп', 'Most common isotope')}
-                </button>
+                </Button>
               )}
-              <button
-                onClick={() => {
+              <Button variant="outline" className="text-sm" onPress={() => {
                   setP(0);
                   setN(0);
                   setE(0);
-                }}
-                className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer"
-              >
+                }}>
                 <RotateCcw className="w-4 h-4" />
                 {L('Пусто', 'Empty')}
-              </button>
+              </Button>
             </div>
           </div>
 

@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Calculator, Check, Flame, Heart, Search, Shuffle, Sigma, X } from 'lucide-react';
 import { PROBLEMS, ProblemGen, problemQuestion } from '../../lib/problems';
@@ -41,10 +42,10 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
   };
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
-      <button onClick={onBack} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="self-start text-sm" onPress={() => onBack()}>
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
         {L('Все задачи', 'All problems')}
-      </button>
+      </Button>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="inline-flex items-center gap-1.5 text-xs text-ink-3">
@@ -97,10 +98,10 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
               </p>
               {q.explain && <p className="mt-1 text-ink-2">{q.explain[lang]}</p>}
             </div>
-            <button onClick={next} className="self-end h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+            <Button className="self-end text-sm font-medium" onPress={() => next()}>
               {L('Следующая задача', 'Next problem')}
               <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -161,19 +162,15 @@ export const ProblemTrainer: React.FC<{ lang: Lang; onOpenTopic?: (id: string) =
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-        <button onClick={() => setMarathon(true)} className="h-10 px-4 rounded-lg border border-[#F6CBB9] bg-[#FFF4F0] hover:bg-[#FFE9E1] text-sm font-medium text-[#B42318] inline-flex items-center gap-2 cursor-pointer">
+        <Button variant="outline" className="text-sm font-medium" onPress={() => setMarathon(true)}>
           <Heart className="w-4 h-4" fill="#E5484D" strokeWidth={1.75} />
           {L('Марафон: 3 жизни', 'Marathon: 3 lives')}
           {(marathonBest ?? 0) > 0 && <span className="font-mono text-xs opacity-70">{L('рекорд', 'best')} {marathonBest}</span>}
-        </button>
-        <button
-          onClick={() => setRun({ gens: [...list].sort(() => Math.random() - 0.5), title: L('Смешанные задачи', 'Mixed problems') })}
-          className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-2 cursor-pointer"
-          style={{ color: '#fff' }}
-        >
+        </Button>
+        <Button className="text-sm font-medium" onPress={() => setRun({ gens: [...list].sort(() => Math.random() - 0.5), title: L('Смешанные задачи', 'Mixed problems') })}>
           <Shuffle className="w-4 h-4" strokeWidth={1.75} />
           {L('Решать вперемешку', 'Mixed run')}
-        </button>
+        </Button>
         </div>
       </div>
       <p className="text-sm text-ink-2">
@@ -182,17 +179,17 @@ export const ProblemTrainer: React.FC<{ lang: Lang; onOpenTopic?: (id: string) =
       </p>
       <label className="flex items-center gap-2 h-11 px-3 rounded-xl bg-surface border border-line focus-within:border-accent max-w-xl">
         <Search className="w-4 h-4 text-ink-3" />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={L('Любая тема или задача: «импульс», «моль», «линза»…', 'Any topic or problem: “momentum”, “mole”, “lens”…')} className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-ink-3" />
+        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={L('Любая тема или задача: «импульс», «моль», «линза»…', 'Any topic or problem: “momentum”, “mole”, “lens”…')} className="flex-1 text-sm" />
       </label>
       {topicHits.length > 0 && (
         <div className="flex flex-col gap-2">
           <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Тренировка по теме — бесконечно', 'Endless topic drill')}</h3>
           <div className="flex flex-wrap gap-2">
             {topicHits.map((tp) => (
-              <button key={tp.id} onClick={() => setDrill(tp.id)} className="h-9 px-3 rounded-full border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:border-accent hover:text-accent cursor-pointer">
+              <Button variant="outline" className="text-sm" key={tp.id} onPress={() => setDrill(tp.id)}>
                 <BookOpen className="w-3.5 h-3.5" style={{ color: COLOR[tp.subject] }} />
                 {tp.title[lang]} <span className="text-ink-3 text-xs">{tp.grade} {L('кл.', 'gr.')}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -203,11 +200,11 @@ export const ProblemTrainer: React.FC<{ lang: Lang; onOpenTopic?: (id: string) =
       {handwritten.length > 0 && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{handwritten.map((g) => card(g))}</div>}
       {laws.length > 0 && (
         <div className="flex flex-col gap-3">
-          <button onClick={() => setShowLaws(!showLaws)} className="self-start inline-flex items-center gap-2 text-sm font-medium text-ink cursor-pointer">
+          <Button variant="ghost" className="self-start text-sm font-medium" onPress={() => setShowLaws(!showLaws)}>
             <Sigma className="w-4 h-4 text-accent" />
             {L(`Задачи по формулам учебника · ${laws.length}`, `Problems from textbook formulas · ${laws.length}`)}
             <span className="text-accent">{showLaws || qry ? L('свернуть', 'hide') : L('показать', 'show')}</span>
-          </button>
+          </Button>
           {(showLaws || qry) && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">{laws.map((g) => card(g, true))}</div>}
         </div>
       )}

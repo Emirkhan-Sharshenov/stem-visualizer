@@ -1,3 +1,4 @@
+import { RangeSlider } from './ui/RangeSlider';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Compass, Play, Pause, RotateCcw } from 'lucide-react';
@@ -201,15 +202,7 @@ export const MomentDerivative: React.FC<MomentDerivativeProps> = ({ lang }) => {
             </span>
             <span className="font-mono text-emerald-400 font-bold">{deltaX.toFixed(3)}</span>
           </div>
-          <input
-            type="range"
-            min={0.01}
-            max={3.0}
-            step={0.01}
-            value={deltaX}
-            onChange={(e) => setDeltaX(Number(e.target.value))}
-            className="w-full accent-emerald-400 cursor-pointer"
-          />
+          <RangeSlider value={deltaX} onChange={(v) => setDeltaX(v)} min={0.01} max={3.0} step={0.01} />
           <div className="flex justify-between text-[10px] text-slate-500">
             <span>{lang === 'ru' ? 'Δx → 0 (Мгновенная скорость)' : 'Δx → 0 (instantaneous rate)'}</span>
             <span>{lang === 'ru' ? 'Δx = 3.0 (Средняя скорость за отрезок)' : 'Δx = 3.0 (average rate over the interval)'}</span>
@@ -221,15 +214,7 @@ export const MomentDerivative: React.FC<MomentDerivativeProps> = ({ lang }) => {
             <span className="text-slate-400">{lang === 'ru' ? 'Положение точки x:' : 'Position of point x:'}</span>
             <span className="font-mono text-cyan-400 font-bold">x = {xPoint.toFixed(1)}</span>
           </div>
-          <input
-            type="range"
-            min={0.5}
-            max={5.5}
-            step={0.1}
-            value={xPoint}
-            onChange={(e) => setXPoint(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
-          />
+          <RangeSlider value={xPoint} onChange={(v) => setXPoint(v)} min={0.5} max={5.5} step={0.1} />
         </div>
       </div>
     </div>

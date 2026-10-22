@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, Zap, HelpCircle, Magnet, Lightbulb } from 'lucide-react';
@@ -195,15 +197,10 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsAutoOscillating(!isAutoOscillating)}
-              className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                isAutoOscillating ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
-              }`}
-            >
+            <Button variant="outline" size="sm" className={`text-xs font-semibold ${isAutoOscillating ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsAutoOscillating(!isAutoOscillating)}>
               {isAutoOscillating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               <span>{isAutoOscillating ? (lang === 'ru' ? 'Ручной режим' : 'Manual') : (lang === 'ru' ? 'Автоколебания' : 'Auto Oscillate')}</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -255,17 +252,10 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Положение магнита X (Двигай мышью!)' : 'Magnet Position X'}</span>
               <span className="font-mono text-cyan-400 font-bold">{magnetX.toFixed(0)} px</span>
             </div>
-            <input
-              type="range"
-              min="80"
-              max="480"
-              value={magnetX}
-              onChange={(e) => {
+            <RangeSlider value={magnetX} onChange={(v) => {
                 setIsAutoOscillating(false);
-                setMagnetX(Number(e.target.value));
-              }}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+                setMagnetX(v);
+              }} min={80} max={480} />
           </div>
 
           <div>
@@ -273,14 +263,7 @@ export const MomentInduction: React.FC<MomentInductionProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Количество витков катушки N' : 'Number of Coil Turns N'}</span>
               <span className="font-mono text-amber-400 font-bold">{coilTurns}</span>
             </div>
-            <input
-              type="range"
-              min="1"
-              max="8"
-              value={coilTurns}
-              onChange={(e) => setCoilTurns(Number(e.target.value))}
-              className="w-full accent-amber-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={coilTurns} onChange={(v) => setCoilTurns(v)} min={1} max={8} />
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -256,13 +257,9 @@ export const ModelLab: React.FC<ModelLabProps> = ({ lang, model, focus, compact 
         {clips.length > 1 && (
           <div className="flex flex-wrap gap-2">
             {clips.map((c, k) => (
-              <button
-                key={c.name}
-                onClick={() => setClipIndex(k)}
-                className={`h-8 px-3 rounded-full text-sm border cursor-pointer transition-colors ${k === clipIndex ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface text-ink-2 hover:text-ink'}`}
-              >
+              <Button variant="outline" size="sm" className={`text-sm ${k === clipIndex ? 'text-accent' : 'text-ink-2'}`} key={c.name} onPress={() => setClipIndex(k)}>
                 {({ Survey: { ru: 'Осматривается', en: 'Looking around' }, Walk: { ru: 'Шаг', en: 'Walk' }, Run: { ru: 'Бег', en: 'Run' } } as Record<string, { ru: string; en: string }>)[c.name]?.[lang] ?? c.name}
-              </button>
+              </Button>
             ))}
           </div>
         )}
@@ -336,13 +333,9 @@ const PartsList: React.FC<{
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
             {p.info.title[lang]}
           </button>
-          <button
-            onClick={() => setHidden((h) => ({ ...h, [p.name]: !h[p.name] }))}
-            aria-label={hidden[p.name] ? (lang === 'ru' ? 'Показать' : 'Show') : lang === 'ru' ? 'Скрыть' : 'Hide'}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-ink-3 hover:text-ink hover:bg-muted cursor-pointer"
-          >
+          <Button variant="ghost" isIconOnly size="sm" className="w-7" onPress={() => setHidden((h) => ({ ...h, [p.name]: !h[p.name] }))} aria-label={hidden[p.name] ? (lang === 'ru' ? 'Показать' : 'Show') : lang === 'ru' ? 'Скрыть' : 'Hide'}>
             {hidden[p.name] ? <EyeOff className="w-4 h-4" strokeWidth={1.75} /> : <Eye className="w-4 h-4" strokeWidth={1.75} />}
-          </button>
+          </Button>
         </li>
       ))}
     </ul>

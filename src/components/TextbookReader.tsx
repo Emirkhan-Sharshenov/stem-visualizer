@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { StemCategory, VisualMode } from '../types/stem';
 import { ArrowLeft, ArrowRight, Box, Check, Presentation, Search, X } from 'lucide-react';
@@ -144,13 +145,10 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
             </div>
             <h2 className="mt-2 font-serif text-2xl leading-snug text-ink">{lastTopic.title[lang]}</h2>
           </div>
-          <button
-            onClick={() => openTopic(lastTopic.id)}
-            className="shrink-0 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
-          >
+          <Button size="lg" className="shrink-0 text-sm font-medium" onPress={() => openTopic(lastTopic.id)}>
             {lang === 'ru' ? 'Продолжить' : 'Continue'}
             <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-          </button>
+          </Button>
         </section>
       )}
 
@@ -159,38 +157,28 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {SUBJECT_IDS.map((s) => (
-              <button
-                key={s}
-                onClick={() => {
+              <Button variant={subject === s && !results ? 'primary' : 'outline'} className="shrink-0 text-sm" key={s} onPress={() => {
                   setSubject(s);
                   setQuery('');
-                }}
-                className={`shrink-0 inline-flex items-center gap-2 h-9 px-4 rounded-full border text-sm transition-colors cursor-pointer ${
-                  subject === s && !results ? 'border-ink bg-ink text-paper' : 'border-line bg-surface text-ink-2 hover:text-ink hover:border-line-strong'
-                }`}
-              >
+                }}>
                 <span className={`w-2 h-2 rounded-full ${SUBJECT_META[s].dot}`} />
                 {SUBJECT_META[s].label[lang]}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="relative w-full lg:w-80">
             <Search className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
-            <input
+            <Input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={lang === 'ru' ? 'Найти тему во всех классах' : 'Search topics in every grade'}
-              className="w-full h-10 pl-9 pr-9 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-ink-3 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+              className="w-full pl-9 pr-9 text-sm"
             />
             {query && (
-              <button
-                onClick={() => setQuery('')}
-                aria-label={lang === 'ru' ? 'Очистить' : 'Clear'}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded flex items-center justify-center text-ink-3 hover:text-ink cursor-pointer"
-              >
+              <Button variant="ghost" isIconOnly size="sm" className="absolute right-2 top-1/2 w-6" onPress={() => setQuery('')} aria-label={lang === 'ru' ? 'Очистить' : 'Clear'}>
                 <X className="w-4 h-4" strokeWidth={1.75} />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -207,15 +195,9 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="inline-flex p-1 rounded-lg bg-muted border border-line overflow-x-auto max-w-full">
                 {grades.map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setGrade(g)}
-                    className={`shrink-0 h-8 px-3.5 rounded-md text-sm transition-colors cursor-pointer ${
-                      activeGrade === g ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
-                    }`}
-                  >
+                  <Button variant={activeGrade === g ? 'outline' : 'ghost'} size="sm" className={`shrink-0 text-sm ${activeGrade === g ? 'font-medium' : ''}`} key={g} onPress={() => setGrade(g)}>
                     {g} {lang === 'ru' ? 'класс' : 'grade'}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <span className="text-sm text-ink-2">
@@ -330,10 +312,10 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
   return (
     <article className="flex flex-col gap-6 w-full">
       <nav className="flex items-center gap-2 text-sm text-ink-2 min-w-0">
-        <button onClick={onBack} className="inline-flex items-center gap-1.5 hover:text-ink cursor-pointer shrink-0">
+        <Button variant="ghost" className="shrink-0" onPress={() => onBack()}>
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           {lang === 'ru' ? 'Учебник' : 'Textbook'}
-        </button>
+        </Button>
         <span className="text-ink-3">/</span>
         <span className="shrink-0">{SUBJECT_META[topic.subject].label[lang]}, {topic.grade} {lang === 'ru' ? 'класс' : 'grade'}</span>
         {sectionTitle && (
@@ -350,30 +332,19 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
           <h1 className="mt-2 font-serif text-[30px] sm:text-[36px] leading-tight tracking-[-0.02em] text-ink">{topic.title[lang]}</h1>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
-          <button
-            onClick={() => setSlides(true)}
-            className="h-10 px-4 rounded-lg bg-surface border border-line hover:bg-muted text-sm text-ink transition-colors cursor-pointer inline-flex items-center gap-2"
-          >
+          <Button variant="outline" className="text-sm" onPress={() => setSlides(true)}>
             <Presentation className="w-4 h-4" strokeWidth={1.75} />
             {lang === 'ru' ? 'Презентация' : 'Slides'}
-          </button>
+          </Button>
           {onAskMentor && (
-            <button
-              onClick={() => onAskMentor(topic.id, topic.title[lang])}
-              className="h-10 px-4 rounded-lg bg-surface border border-line hover:bg-muted text-sm text-ink transition-colors cursor-pointer"
-            >
+            <Button variant="outline" className="text-sm" onPress={() => onAskMentor(topic.id, topic.title[lang])}>
               {lang === 'ru' ? 'Спросить наставника' : 'Ask the mentor'}
-            </button>
+            </Button>
           )}
-          <button
-            onClick={onToggleCompleted}
-            className={`h-10 px-4 rounded-lg border text-sm inline-flex items-center gap-2 transition-colors cursor-pointer ${
-              isCompleted ? 'border-chemistry bg-[#E9F6EF] text-[#1E7A4C]' : 'bg-surface border-line hover:bg-muted text-ink'
-            }`}
-          >
+          <Button variant="outline" className={`text-sm ${isCompleted ? 'text-[#1E7A4C]' : 'text-ink'}`} onPress={() => onToggleCompleted()}>
             <Check className="w-4 h-4" strokeWidth={2} />
             {isCompleted ? (lang === 'ru' ? 'Понято' : 'Understood') : lang === 'ru' ? 'Я понял' : 'I get it'}
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -422,10 +393,10 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
           </button>
         ) : <span />}
         {next && (
-          <button onClick={() => onOpen(next.id)} className="text-right p-4 rounded-xl border border-line bg-surface hover:border-line-strong transition-colors cursor-pointer">
+          <Button variant="outline" onPress={() => onOpen(next.id)}>
             <span className="inline-flex items-center gap-1.5 text-xs text-ink-3">{lang === 'ru' ? 'Следующая тема' : 'Next topic'}<ArrowRight className="w-3.5 h-3.5" strokeWidth={1.75} /></span>
             <span className="mt-1 block font-serif text-lg text-ink">{next.title[lang]}</span>
-          </button>
+          </Button>
         )}
       </div>
     </article>
@@ -454,9 +425,9 @@ const TopicQuiz: React.FC<{ topic: Topic; lang: Lang; onOpen: (id: string) => vo
           </p>
         </div>
         {attempt === null && (
-          <button onClick={() => setAttempt(0)} className="h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+          <Button className="text-sm font-medium" onPress={() => setAttempt(0)}>
             {best ? (lang === 'ru' ? 'Пройти ещё раз' : 'Retake') : lang === 'ru' ? 'Начать тест' : 'Start the quiz'}
-          </button>
+          </Button>
         )}
       </div>
       {attempt !== null && (

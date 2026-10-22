@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useState } from 'react';
 import { HelpCircle, RotateCcw, Scale, Zap } from 'lucide-react';
 
@@ -44,13 +46,10 @@ export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
             </div>
           </div>
 
-          <button
-            onClick={() => { setM1(30); setL1(2); setM2(15); setL2(4); }}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 cursor-pointer border border-slate-700"
-          >
+          <Button variant="outline" size="sm" className="text-xs font-semibold" onPress={() => { setM1(30); setL1(2); setM2(15); setL2(4); }}>
             <RotateCcw className="w-4 h-4" />
             <span>{lang === 'ru' ? 'Сброс' : 'Reset'}</span>
-          </button>
+          </Button>
         </div>
 
         {/* Live Gauges Bar */}
@@ -173,14 +172,7 @@ export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Масса слева M₁' : 'Left Mass M₁'}</span>
               <span className="font-mono text-cyan-400 font-bold">{m1} kg</span>
             </div>
-            <input
-              type="range"
-              min="5"
-              max="60"
-              value={m1}
-              onChange={(e) => setM1(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={m1} onChange={(v) => setM1(v)} min={5} max={60} />
           </div>
 
           <div>
@@ -188,15 +180,7 @@ export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Плечо слева L₁' : 'Left Arm L₁'}</span>
               <span className="font-mono text-cyan-400 font-bold">{l1} m</span>
             </div>
-            <input
-              type="range"
-              min="0.5"
-              max="5.0"
-              step="0.5"
-              value={l1}
-              onChange={(e) => setL1(Number(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={l1} onChange={(v) => setL1(v)} min={0.5} max={5.0} step={0.5} />
           </div>
 
           <div>
@@ -204,14 +188,7 @@ export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Масса справа M₂' : 'Right Mass M₂'}</span>
               <span className="font-mono text-amber-400 font-bold">{m2} kg</span>
             </div>
-            <input
-              type="range"
-              min="5"
-              max="60"
-              value={m2}
-              onChange={(e) => setM2(Number(e.target.value))}
-              className="w-full accent-amber-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={m2} onChange={(v) => setM2(v)} min={5} max={60} />
           </div>
 
           <div>
@@ -219,15 +196,7 @@ export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
               <span>{lang === 'ru' ? 'Плечо справа L₂' : 'Right Arm L₂'}</span>
               <span className="font-mono text-amber-400 font-bold">{l2} m</span>
             </div>
-            <input
-              type="range"
-              min="0.5"
-              max="5.0"
-              step="0.5"
-              value={l2}
-              onChange={(e) => setL2(Number(e.target.value))}
-              className="w-full accent-amber-400 bg-slate-800 rounded-lg cursor-pointer"
-            />
+            <RangeSlider value={l2} onChange={(v) => setL2(v)} min={0.5} max={5.0} step={0.5} />
           </div>
         </div>
       </div>

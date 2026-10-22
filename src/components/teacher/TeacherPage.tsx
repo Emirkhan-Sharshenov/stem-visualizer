@@ -1,3 +1,5 @@
+import { Choice } from '../ui/Choice';
+import { Button, Tooltip, Input } from '@heroui/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, ClipboardList, Copy, GraduationCap, Loader2, Plus, Trash2, Users, X } from 'lucide-react';
 import { gradesFor, SECTIONS, sectionsFor } from '../../data/curriculum';
@@ -89,22 +91,13 @@ const NewAssignment: React.FC<{ lang: Lang; classId: string; onDone: () => void 
     <div className={`${card} p-4 flex flex-col gap-3`}>
       <div className="text-sm font-medium text-ink">{L('Новое задание', 'New assignment')}</div>
       <div className="grid sm:grid-cols-3 gap-2">
-        <select className={field} value={subject} onChange={(e) => { setSubject(e.target.value as StemCategory); setSectionId(''); setTopicId(''); }}>
-          {SUBJ.map((s) => <option key={s.id} value={s.id}>{s[lang]}</option>)}
-        </select>
-        <select className={field} value={g} onChange={(e) => { setGrade(Number(e.target.value)); setSectionId(''); setTopicId(''); }}>
-          {grades.map((x) => <option key={x} value={x}>{x} {L('класс', 'grade')}</option>)}
-        </select>
-        <select className={field} value={section?.id ?? ''} onChange={(e) => { setSectionId(e.target.value); setTopicId(''); }}>
-          {sections.map((s) => <option key={s.id} value={s.id}>{s.title[lang]}</option>)}
-        </select>
+        <Choice aria-label={L('Предмет', 'Subject')} value={subject} onChange={(v) => { setSubject(v as StemCategory); setSectionId(''); setTopicId(''); }} options={SUBJ.map((s) => ({ value: s.id, label: s[lang] }))} />
+        <Choice aria-label={L('Класс', 'Grade')} value={String(g)} onChange={(v) => { setGrade(Number(v)); setSectionId(''); setTopicId(''); }} options={grades.map((x) => ({ value: String(x), label: `${x} ${L('класс', 'grade')}` }))} />
+        <Choice aria-label={L('Раздел', 'Section')} value={section?.id ?? ''} onChange={(v) => { setSectionId(v); setTopicId(''); }} options={sections.map((s) => ({ value: s.id, label: s.title[lang] }))} />
       </div>
       <div className="grid sm:grid-cols-[1fr_180px_auto] gap-2">
-        <select className={field} value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-          <option value="">{L('Тест по всему разделу', 'Test on the whole section')}</option>
-          {section?.topics.map((t) => <option key={t.id} value={t.id}>{L('Тема', 'Topic')}: {t.title[lang]}</option>)}
-        </select>
-        <input type="date" className={field} value={due} onChange={(e) => setDue(e.target.value)} title={L('Срок', 'Due')} />
+        <Choice aria-label={L('Тема теста', 'Test topic')} value={topicId} onChange={(v) => setTopicId(v)} options={[{ value: '', label: L('Тест по всему разделу', 'Test on the whole section') }, ...(section?.topics ?? []).map((t) => ({ value: t.id, label: `${L('Тема', 'Topic')}: ${t.title[lang]}` }))]} />
+        <Input type="date" className="w-full" value={due} onChange={(e) => setDue(e.target.value)} title={L('Срок', 'Due')} />
         <button onClick={save} disabled={busy || !section} className={primary} style={{ color: '#fff' }}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           {L('Задать', 'Assign')}
@@ -159,10 +152,10 @@ const ClassView: React.FC<{ lang: Lang; cls: ClassRow; onBack: () => void; onDel
 
   return (
     <div className="flex flex-col gap-5">
-      <button onClick={onBack} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="self-start text-sm" onPress={() => onBack()}>
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
         {L('Все классы', 'All classes')}
-      </button>
+      </Button>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h2 className="font-serif text-[30px] leading-tight text-ink">{cls.name}</h2>
         <div className={`${card} px-4 py-2.5 flex items-center gap-3`}>
@@ -170,9 +163,9 @@ const ClassView: React.FC<{ lang: Lang; cls: ClassRow; onBack: () => void; onDel
             <div className="text-[11px] text-ink-3">{L('Код для учеников', 'Student join code')}</div>
             <div className="font-mono text-xl tracking-[0.2em] text-ink">{cls.join_code}</div>
           </div>
-          <button onClick={copy} className="w-9 h-9 rounded-lg border border-line hover:bg-muted flex items-center justify-center text-ink-2 cursor-pointer" title={L('Скопировать', 'Copy')}>
+          <Tooltip><Tooltip.Trigger><Button aria-label={L('Скопировать', 'Copy')} variant="outline" isIconOnly className="w-9" onPress={() => copy()}>
             {copied ? <Check className="w-4 h-4 text-[#1E7A4C]" /> : <Copy className="w-4 h-4" />}
-          </button>
+          </Button></Tooltip.Trigger><Tooltip.Content>{L('Скопировать', 'Copy')}</Tooltip.Content></Tooltip>
         </div>
       </div>
       <p className="text-sm text-ink-2 -mt-2">
@@ -187,9 +180,9 @@ const ClassView: React.FC<{ lang: Lang; cls: ClassRow; onBack: () => void; onDel
             ['assignments', L(`Задания · ${tasks.length}`, `Assignments · ${tasks.length}`)],
           ] as const
         ).map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
+          <Button variant={tab === id ? 'outline' : 'ghost'} className={`text-sm ${tab === id ? 'font-medium' : ''}`} key={id} onPress={() => setTab(id)}>
             {label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -241,16 +234,13 @@ const ClassView: React.FC<{ lang: Lang; cls: ClassRow; onBack: () => void; onDel
                               ) : (
                                 <p className="text-sm text-ink-3">{L('Ошибок пока нет.', 'No mistakes so far.')}</p>
                               )}
-                              <button
-                                onClick={async () => {
+                              <Button variant="ghost" size="sm" className="mt-3 text-xs" onPress={async () => {
                                   if (!confirm(L(`Убрать ${s.name} из класса?`, `Remove ${s.name} from the class?`))) return;
                                   await removeStudent(cls.id, s.id).catch(() => undefined);
                                   load();
-                                }}
-                                className="mt-3 text-xs text-[#CC2F35] hover:underline cursor-pointer"
-                              >
+                                }}>
                                 {L('Убрать из класса', 'Remove from class')}
-                              </button>
+                              </Button>
                             </td>
                           </tr>
                         )}
@@ -295,17 +285,13 @@ const ClassView: React.FC<{ lang: Lang; cls: ClassRow; onBack: () => void; onDel
                     </div>
                   </div>
                   <span className="font-mono text-sm text-ink">{doneBy.length}/{students.length}</span>
-                  <button
-                    onClick={async () => {
+                  <Tooltip><Tooltip.Trigger><Button aria-label={L('Удалить', 'Delete')} variant="ghost" isIconOnly size="sm" className="w-8" onPress={async () => {
                       if (!confirm(L('Удалить задание?', 'Delete the assignment?'))) return;
                       await removeAssignment(a.id).catch(() => undefined);
                       load();
-                    }}
-                    className="w-8 h-8 rounded-md flex items-center justify-center text-ink-3 hover:text-[#CC2F35] hover:bg-muted cursor-pointer"
-                    title={L('Удалить', 'Delete')}
-                  >
+                    }}>
                     <Trash2 className="w-4 h-4" strokeWidth={1.75} />
-                  </button>
+                  </Button></Tooltip.Trigger><Tooltip.Content>{L('Удалить', 'Delete')}</Tooltip.Content></Tooltip>
                 </div>
                 {students.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
@@ -326,16 +312,13 @@ const ClassView: React.FC<{ lang: Lang; cls: ClassRow; onBack: () => void; onDel
         </div>
       )}
 
-      <button
-        onClick={async () => {
+      <Button variant="ghost" className="self-start text-sm" onPress={async () => {
           if (!confirm(L(`Удалить класс «${cls.name}»? Задания тоже удалятся.`, `Delete “${cls.name}”? Its assignments go too.`))) return;
           await deleteClass(cls.id).catch(() => undefined);
           onDeleted();
-        }}
-        className="self-start text-sm text-[#CC2F35] hover:underline cursor-pointer"
-      >
+        }}>
         {L('Удалить класс', 'Delete class')}
-      </button>
+      </Button>
     </div>
   );
 };
@@ -410,7 +393,7 @@ const TeacherHome: React.FC<{ lang: Lang; uid: string }> = ({ lang, uid }) => {
     >
       <div className="flex flex-col gap-4">
         <div className={`${card} p-4 flex flex-col sm:flex-row gap-2`}>
-          <input
+          <Input
             value={name}
             onChange={(e) => setName(e.target.value.slice(0, 60))}
             onKeyDown={(e) => e.key === 'Enter' && create()}
@@ -535,7 +518,7 @@ export const StudentClasses: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; comp
       <div className={`${card} p-4`}>
         <div className="text-sm font-medium text-ink">{L('Вступить в класс', 'Join a class')}</div>
         <div className="mt-2 flex gap-2">
-          <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))} onKeyDown={(e) => e.key === 'Enter' && join()} placeholder={L('Код от учителя', 'Code from your teacher')} className={`${field} flex-1 font-mono tracking-[0.15em] uppercase`} />
+          <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))} onKeyDown={(e) => e.key === 'Enter' && join()} placeholder={L('Код от учителя', 'Code from your teacher')} className={`${field} flex-1 font-mono tracking-[0.15em] uppercase`} />
           <button onClick={join} disabled={busy} className={primary} style={{ color: '#fff' }}>
             {busy && <Loader2 className="w-4 h-4 animate-spin" />}
             {L('Вступить', 'Join')}
@@ -552,16 +535,13 @@ export const StudentClasses: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; comp
                 <div className="text-[16px] font-medium text-ink">{c.name}</div>
                 {c.teacher && <div className="text-xs text-ink-3">{L('Учитель', 'Teacher')}: {c.teacher}</div>}
               </div>
-              <button
-                onClick={async () => {
+              <Button variant="ghost" size="sm" className="text-xs" onPress={async () => {
                   if (!confirm(L(`Выйти из класса «${c.name}»?`, `Leave “${c.name}”?`))) return;
                   await leaveClass(c.id, user.id).catch(() => undefined);
                   load();
-                }}
-                className="text-xs text-ink-3 hover:text-[#CC2F35] inline-flex items-center gap-1 cursor-pointer"
-              >
+                }}>
                 <X className="w-3.5 h-3.5" /> {L('Выйти', 'Leave')}
-              </button>
+              </Button>
             </div>
             <div className="mt-2">{own.length ? taskList(own) : <p className="text-sm text-ink-3 py-2">{L('Заданий пока нет.', 'No assignments yet.')}</p>}</div>
           </div>
@@ -598,9 +578,9 @@ export const TeacherPage: React.FC<{ lang: Lang; onOpenTopic: OpenTopic; initial
               ['student', L('Я ученик', 'I’m a student')],
             ] as const
           ).map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
+            <Button variant={tab === id ? 'outline' : 'ghost'} className={`text-sm ${tab === id ? 'font-medium' : ''}`} key={id} onPress={() => setTab(id)}>
               {label}
-            </button>
+            </Button>
           ))}
         </div>
       </header>

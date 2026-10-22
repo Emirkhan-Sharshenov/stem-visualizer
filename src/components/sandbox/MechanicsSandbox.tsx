@@ -1,3 +1,6 @@
+import { Check as CheckBox } from '../ui/Check';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button, Tooltip } from '@heroui/react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Anchor as AnchorIcon, Circle, Hand, Link2, Pause, Play, RotateCcw, Square, StepForward, Trash2, Triangle, Waves } from 'lucide-react';
 import { Body, cloneScene, inclinePoints, Link, ropePath, Scene, Solid, Vec, World } from './physics';
@@ -28,15 +31,12 @@ const Slider: React.FC<{ label: string; value: number; min: number; max: number;
         {fmt(value, digits)} {unit}
       </span>
     </span>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+    <RangeSlider value={value} onChange={(v) => onChange(v)} min={min} max={max} step={step} />
   </label>
 );
 
 const Check: React.FC<{ label: string; checked: boolean; onChange: (v: boolean) => void }> = ({ label, checked, onChange }) => (
-  <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer select-none">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 accent-accent" />
-    {label}
-  </label>
+  <CheckBox checked={checked} onChange={(v) => onChange(v)}>{label}</CheckBox>
 );
 
 const card = 'bg-surface border border-line rounded-xl p-4';
@@ -438,23 +438,19 @@ export const MechanicsSandbox: React.FC<{ lang: Lang }> = ({ lang }) => {
   };
 
   const toolBtn = (id: Tool, icon: React.ReactNode, text: string) => (
-    <button
-      onClick={() => {
+    <Button variant={tool === id ? 'primary' : 'outline'} className="text-sm" onPress={() => {
         setTool(id);
         setPending([]);
-      }}
-      className={`h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border cursor-pointer ${tool === id ? 'bg-accent border-accent' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-      style={tool === id ? { color: '#fff' } : undefined}
-    >
+      }} style={tool === id ? { color: '#fff' } : undefined}>
       {icon}
       {text}
-    </button>
+    </Button>
   );
   const addBtn = (kind: Parameters<typeof add>[0], icon: React.ReactNode, text: string) => (
-    <button onClick={() => add(kind)} className="h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border border-dashed border-line-strong bg-surface text-ink hover:bg-muted cursor-pointer">
+    <Button variant="outline" className="text-sm" onPress={() => add(kind)}>
       {icon}
       {text}
-    </button>
+    </Button>
   );
 
   const toolHint =
@@ -477,14 +473,9 @@ export const MechanicsSandbox: React.FC<{ lang: Lang }> = ({ lang }) => {
       {/* presets */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {PRESETS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => load(p.id)}
-            className={`shrink-0 h-9 px-3.5 rounded-full text-sm border cursor-pointer ${presetId === p.id ? 'bg-ink border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}
-            style={presetId === p.id ? { color: '#fff' } : undefined}
-          >
+          <Button variant={presetId === p.id ? 'primary' : 'outline'} className="shrink-0 text-sm" key={p.id} onPress={() => load(p.id)} style={presetId === p.id ? { color: '#fff' } : undefined}>
             {p.title[lang]}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -495,32 +486,28 @@ export const MechanicsSandbox: React.FC<{ lang: Lang }> = ({ lang }) => {
 
       {/* toolbar */}
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => {
+        <Button className="text-sm font-medium" onPress={() => {
             if (!running) {
               snapshot.current = world.t === 0 ? cloneScene(scene) : snapshot.current;
               world.rebase();
             }
             setRunning(!running);
-          }}
-          className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer"
-          style={{ color: '#fff' }}
-        >
+          }}>
           {running ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           {running ? L('Пауза', 'Pause') : L('Пуск', 'Run')}
-        </button>
-        <button onClick={() => { world.step(1 / 30, 8); refresh(); }} disabled={running} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted disabled:opacity-40 cursor-pointer" title={L('Шаг 1/30 с', 'Step 1/30 s')}>
+        </Button>
+        <Tooltip><Tooltip.Trigger><Button aria-label={L('Шаг 1/30 с', 'Step 1/30 s')} variant="outline" className="text-sm" onPress={() => { world.step(1 / 30, 8); refresh(); }} isDisabled={running}>
           <StepForward className="w-4 h-4" />
-        </button>
-        <button onClick={reset} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+        </Button></Tooltip.Trigger><Tooltip.Content>{L('Шаг 1/30 с', 'Step 1/30 s')}</Tooltip.Content></Tooltip>
+        <Button variant="outline" className="text-sm" onPress={() => reset()}>
           <RotateCcw className="w-4 h-4" />
           {L('Сначала', 'Reset')}
-        </button>
+        </Button>
         <div className="flex p-0.5 rounded-lg bg-muted border border-line">
           {[0.25, 0.5, 1].map((k) => (
-            <button key={k} onClick={() => setSpeed(k)} className={`h-8 px-2.5 rounded-md text-xs font-mono cursor-pointer ${speed === k ? 'bg-surface border border-line text-ink' : 'text-ink-2'}`}>
+            <Button variant={speed === k ? 'outline' : 'ghost'} size="sm" className="text-xs font-mono" key={k} onPress={() => setSpeed(k)}>
               ×{String(k).replace('.', ',')}
-            </button>
+            </Button>
           ))}
         </div>
         <span className="w-px h-6 bg-line mx-1" />
@@ -568,9 +555,9 @@ export const MechanicsSandbox: React.FC<{ lang: Lang }> = ({ lang }) => {
               <div className="text-xs text-ink-2 mb-1.5">{L('Тяготение', 'Gravity')}: <span className="font-mono text-ink">g = {fmt(scene.laws.g)} м/с²</span></div>
               <div className="flex flex-wrap gap-1.5">
                 {GRAVITY.map((g) => (
-                  <button key={g.ru} onClick={() => setLaws({ g: g.g })} className={`h-8 px-2.5 rounded-md text-xs border cursor-pointer ${scene.laws.g === g.g ? 'bg-accent border-accent' : 'bg-surface border-line text-ink-2 hover:text-ink'}`} style={scene.laws.g === g.g ? { color: '#fff' } : undefined}>
+                  <Button variant={scene.laws.g === g.g ? 'primary' : 'outline'} size="sm" className="text-xs" key={g.ru} onPress={() => setLaws({ g: g.g })} style={scene.laws.g === g.g ? { color: '#fff' } : undefined}>
                     {g[lang]}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -664,10 +651,10 @@ export const MechanicsSandbox: React.FC<{ lang: Lang }> = ({ lang }) => {
             <p className="text-sm text-ink-3">{L('Нажми на тело, плоскость, нить или пружину, чтобы изменить их.', 'Tap a body, incline, rope or spring to change it.')}</p>
           )}
           {selected && (selBody || selSolid || selLink || selAnchor) && (
-            <button onClick={() => remove(selected)} className="mt-4 text-xs text-[#CC2F35] hover:underline inline-flex items-center gap-1 cursor-pointer">
+            <Button variant="ghost" size="sm" className="mt-4 text-xs" onPress={() => remove(selected)}>
               <Trash2 className="w-3.5 h-3.5" />
               {L('Удалить', 'Delete')}
-            </button>
+            </Button>
           )}
         </div>
 

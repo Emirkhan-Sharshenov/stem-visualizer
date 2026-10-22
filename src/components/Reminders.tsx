@@ -1,3 +1,5 @@
+import { Choice } from './ui/Choice';
+import { Button } from '@heroui/react';
 import React from 'react';
 import { Bell, BellOff, Download, Share, SquarePlus } from 'lucide-react';
 import { usePwa } from '../lib/push';
@@ -37,32 +39,26 @@ export const Reminders: React.FC<{ lang: 'ru' | 'en'; compact?: boolean }> = ({ 
       {(state === 'off' || state === 'on' || state === 'busy') && (
         <div className="flex flex-wrap items-center gap-2">
           {state === 'on' ? (
-            <button onClick={disable} className="h-10 px-4 rounded-lg border border-line text-sm text-ink hover:bg-muted inline-flex items-center gap-1.5 cursor-pointer">
+            <Button variant="outline" className="text-sm" onPress={() => disable()}>
               <BellOff className="w-4 h-4" /> {L('Выключить', 'Turn off')}
-            </button>
+            </Button>
           ) : (
-            <button onClick={enable} disabled={state === 'busy'} className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => enable()} isDisabled={state === 'busy'}>
               <Bell className="w-4 h-4" /> {L('Включить напоминания', 'Turn reminders on')}
-            </button>
+            </Button>
           )}
           <label className="inline-flex items-center gap-2 text-sm text-ink-2">
             {L('в', 'at')}
-            <select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="h-10 rounded-lg border border-line bg-paper px-2 text-ink">
-              {[15, 16, 17, 18, 19, 20, 21].map((h) => (
-                <option key={h} value={h}>
-                  {h}:00
-                </option>
-              ))}
-            </select>
+            <Choice aria-label={L('Время напоминания', 'Reminder time')} className="w-28" value={String(hour)} onChange={(v) => setHour(Number(v))} options={[15, 16, 17, 18, 19, 20, 21].map((h) => ({ value: String(h), label: `${h}:00` }))} />
           </label>
           {state === 'on' && <span className="text-sm text-[#1E7A4C]">✓ {L('включены', 'on')}</span>}
         </div>
       )}
 
       {canInstall && (
-        <button onClick={install} className="self-start h-10 px-4 rounded-lg border border-line text-sm text-ink hover:bg-muted inline-flex items-center gap-1.5 cursor-pointer">
+        <Button variant="outline" className="self-start text-sm" onPress={() => install()}>
           <Download className="w-4 h-4" /> {L('Установить как приложение', 'Install as an app')}
-        </button>
+        </Button>
       )}
     </div>
   );

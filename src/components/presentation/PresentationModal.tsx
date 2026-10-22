@@ -1,5 +1,8 @@
+import { Choice } from '../ui/Choice';
+import { Check as CheckBox } from '../ui/Check';
+import { Button, Tooltip, Input, TextArea } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Dialog } from '../ui/Dialog';
 import { ArrowLeft, ArrowRight, Check, Crown, Dices, Download, Eye, EyeOff, GraduationCap, ImageIcon, Loader2, Lock, Presentation, Shuffle, Trash2, Upload, X } from 'lucide-react';
 import type { Section, Topic } from '../../data/curriculum';
 import { sectionsFor } from '../../data/curriculum';
@@ -288,16 +291,6 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     };
   }, [cands, photoAt, lang]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [onClose]);
-
   // one object per look, or every render would count as a change and throw away the prepared file
   const theme = useMemo(() => themeFor(style.theme, topic.subject, style.accent), [style.theme, topic.subject, style.accent]);
   const deck = whole && teacher && section ? section.title[lang] : topic.title[lang];
@@ -418,10 +411,9 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
   const hasModelOpt = !!topic.sim && !('lab' in topic.sim);
   const quizCount = useSection ? Math.min(10, section!.topics.length) : 4;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4" role="dialog" aria-modal>
-      <div className="absolute inset-0 bg-black/55 anim-page" onClick={onClose} />
-      <div className="soft-scroll relative w-full max-w-6xl max-h-[94vh] bg-paper rounded-2xl border border-line shadow-2xl flex flex-col overflow-hidden anim-page">
+  // Esc, the backdrop and the scroll lock come from the dialog
+  return (
+    <Dialog onClose={onClose} label={L('Презентация по теме', 'Presentation')} className="soft-scroll max-w-6xl max-h-[94vh] p-0 bg-paper flex flex-col overflow-hidden">
         <header className="flex items-center gap-3 px-5 py-4 border-b border-line bg-surface">
           <span className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: hex(accent) + '1F', color: hex(accent) }}>
             <Presentation className="w-5 h-5" />
@@ -435,9 +427,9 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
               <Crown className="w-3.5 h-3.5" /> Pro
             </span>
           )}
-          <button onClick={onClose} className="w-9 h-9 rounded-lg hover:bg-muted flex items-center justify-center cursor-pointer" aria-label={L('Закрыть', 'Close')}>
+          <Button variant="ghost" isIconOnly className="w-9" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
             <X className="w-5 h-5 text-ink-2" />
-          </button>
+          </Button>
         </header>
 
         <div className="flex-1 min-h-0 grid lg:grid-cols-[300px_1fr] overflow-y-auto lg:overflow-hidden">
@@ -466,10 +458,10 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                   hint={cands === null ? L('ищем подходящие…', 'searching…') : cands.length ? L('на титульном слайде и во введении, с автором и лицензией', 'on the title and intro, with author and licence') : L('для этой темы ничего не нашлось', 'nothing found for this topic')}
                 />
                 {usePhotos && cands && cands.length > 2 && (
-                  <button onClick={() => setPhotoAt((n) => n + 2)} disabled={photoBusy} className="ml-7 mt-1 h-8 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-xs text-ink inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60">
+                  <Button variant="outline" size="sm" className="ml-7 mt-1 text-xs" onPress={() => setPhotoAt((n) => n + 2)} isDisabled={photoBusy}>
                     {photoBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Shuffle className="w-3.5 h-3.5" />}
                     {L('Другие картинки', 'Other pictures')}
-                  </button>
+                  </Button>
                 )}
                 <p className="ml-7 mt-2 text-xs text-ink-3 flex items-center gap-1">
                   <ImageIcon className="w-3.5 h-3.5" /> {L('Иконки по смыслу — на каждом шаге', 'Topic icons on every step')}
@@ -513,7 +505,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                     ['date', L('Дата урока', 'Lesson date')],
                   ] as [keyof Branding, string][]
                 ).map(([k, ph]) => (
-                  <input key={k} value={(brand[k] as string) ?? ''} onChange={(e) => setBrand({ [k]: e.target.value })} placeholder={ph} readOnly={!teacher} className="h-8 px-2.5 rounded-lg border border-line bg-paper text-sm outline-none focus:border-accent" />
+                  <Input key={k} value={(brand[k] as string) ?? ''} onChange={(e) => setBrand({ [k]: e.target.value })} placeholder={ph} readOnly={!teacher} className="text-sm" />
                 ))}
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   <label className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs text-ink inline-flex items-center gap-1.5 cursor-pointer">
@@ -521,26 +513,26 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                     <input type="file" accept="image/*" className="hidden" disabled={!teacher} onChange={async (e) => { const f = e.target.files?.[0]; if (f) setBrand({ logo: await readImage(f, 500, false) }); e.target.value = ''; }} />
                   </label>
                   {brand.logo && (
-                    <button onClick={() => setBrand({ logo: undefined })} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer" title={L('Убрать логотип', 'Remove logo')}>
+                    <Tooltip><Tooltip.Trigger><Button aria-label={L('Убрать логотип', 'Remove logo')} variant="outline" isIconOnly size="sm" className="w-8" onPress={() => setBrand({ logo: undefined })}>
                       <Trash2 className="w-3.5 h-3.5 text-ink-2" />
-                    </button>
+                    </Button></Tooltip.Trigger><Tooltip.Content>{L('Убрать логотип', 'Remove logo')}</Tooltip.Content></Tooltip>
                   )}
                   <label className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs text-ink inline-flex items-center gap-1.5 cursor-pointer">
                     <ImageIcon className="w-3.5 h-3.5" /> {titlePhoto ? L('Другое фото', 'Change photo') : L('Своё фото на титул', 'Own title photo')}
                     <input type="file" accept="image/*" className="hidden" disabled={!teacher} onChange={async (e) => { const f = e.target.files?.[0]; if (f) setTitlePhoto({ ...(await readImage(f, 1600, true)), credit: '', photo: true }); e.target.value = ''; }} />
                   </label>
                   {titlePhoto && (
-                    <button onClick={() => setTitlePhoto(null)} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer" title={L('Убрать фото', 'Remove photo')}>
+                    <Tooltip><Tooltip.Trigger><Button aria-label={L('Убрать фото', 'Remove photo')} variant="outline" isIconOnly size="sm" className="w-8" onPress={() => setTitlePhoto(null)}>
                       <Trash2 className="w-3.5 h-3.5 text-ink-2" />
-                    </button>
+                    </Button></Tooltip.Trigger><Tooltip.Content>{L('Убрать фото', 'Remove photo')}</Tooltip.Content></Tooltip>
                   )}
                 </div>
                 <p className="text-[11px] text-ink-3">{L('Учитель, класс и дата — на титульном слайде, логотип — на каждом.', 'Teacher, class and date go on the title, the logo on every slide.')}</p>
               </div>
               {!teacher && (
-                <button onClick={upgrade} className="mt-2 text-xs text-accent hover:underline cursor-pointer">
+                <Button variant="ghost" size="sm" className="mt-2 text-xs" onPress={() => upgrade()}>
                   {L('Всё это — в тарифе «Учитель»', 'All of this is in the Teacher plan')}
-                </button>
+                </Button>
               )}
             </div>
           </aside>
@@ -571,29 +563,26 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
                   <div className="shrink-0 rounded-xl border border-line bg-surface p-3 flex flex-col gap-2">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mr-auto">{L('Этот слайд', 'This slide')}</span>
-                      <button onClick={() => move(-1)} disabled={current === 0} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer disabled:opacity-40" title={L('Сдвинуть влево', 'Move left')}>
+                      <Tooltip><Tooltip.Trigger><Button aria-label={L('Сдвинуть влево', 'Move left')} variant="outline" isIconOnly size="sm" className="w-8" onPress={() => move(-1)} isDisabled={current === 0}>
                         <ArrowLeft className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => move(1)} disabled={current === ordered.length - 1} className="h-8 w-8 rounded-lg border border-line hover:bg-muted inline-flex items-center justify-center cursor-pointer disabled:opacity-40" title={L('Сдвинуть вправо', 'Move right')}>
+                      </Button></Tooltip.Trigger><Tooltip.Content>{L('Сдвинуть влево', 'Move left')}</Tooltip.Content></Tooltip>
+                      <Tooltip><Tooltip.Trigger><Button aria-label={L('Сдвинуть вправо', 'Move right')} variant="outline" isIconOnly size="sm" className="w-8" onPress={() => move(1)} isDisabled={current === ordered.length - 1}>
                         <ArrowRight className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setHidden((h) => { const n = new Set(h); if (n.has(curSrc)) n.delete(curSrc); else n.add(curSrc); return n; })}
-                        className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs inline-flex items-center gap-1.5 cursor-pointer"
-                      >
+                      </Button></Tooltip.Trigger><Tooltip.Content>{L('Сдвинуть вправо', 'Move right')}</Tooltip.Content></Tooltip>
+                      <Button variant="outline" size="sm" className="text-xs" onPress={() => setHidden((h) => { const n = new Set(h); if (n.has(curSrc)) n.delete(curSrc); else n.add(curSrc); return n; })}>
                         {hidden.has(curSrc) ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />} {hidden.has(curSrc) ? L('Показать', 'Show') : L('Скрыть', 'Hide')}
-                      </button>
+                      </Button>
                       {edits[curSrc] && (
-                        <button onClick={() => setEdits((e) => { const n = { ...e }; delete n[curSrc]; return n; })} className="h-8 px-2.5 rounded-lg border border-line hover:bg-muted text-xs cursor-pointer">
+                        <Button variant="outline" size="sm" className="text-xs" onPress={() => setEdits((e) => { const n = { ...e }; delete n[curSrc]; return n; })}>
                           {L('Вернуть текст', 'Reset text')}
-                        </button>
+                        </Button>
                       )}
                     </div>
                     {editable(curSlide).title !== undefined && (
-                      <input value={editable(curSlide).title} onChange={(e) => setEdits((x) => ({ ...x, [curSrc]: { ...x[curSrc], title: e.target.value } }))} className="h-9 px-2.5 rounded-lg border border-line bg-paper text-sm outline-none focus:border-accent" aria-label={L('Заголовок', 'Title')} />
+                      <Input value={editable(curSlide).title} onChange={(e) => setEdits((x) => ({ ...x, [curSrc]: { ...x[curSrc], title: e.target.value } }))} className="text-sm" aria-label={L('Заголовок', 'Title')} />
                     )}
                     {editable(curSlide).body !== undefined && (
-                      <textarea value={editable(curSlide).body} onChange={(e) => setEdits((x) => ({ ...x, [curSrc]: { ...x[curSrc], body: e.target.value } }))} rows={3} className="px-2.5 py-2 rounded-lg border border-line bg-paper text-sm outline-none focus:border-accent resize-y" aria-label={L('Текст', 'Text')} />
+                      <TextArea value={editable(curSlide).body} onChange={(e) => setEdits((x) => ({ ...x, [curSrc]: { ...x[curSrc], body: e.target.value } }))} rows={3} className="text-sm" aria-label={L('Текст', 'Text')} />
                     )}
                   </div>
                 ) : (
@@ -622,9 +611,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
             {done ? L('Скачано', 'Downloaded') : ready ? L('Сохранить файл', 'Save file') : busy ? L('Собираем…', 'Building…') : plan.pro && waiting ? L('Готовим картинки…', 'Preparing pictures…') : plan.pro ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}
           </button>
         </footer>
-      </div>
-    </div>,
-    document.body,
+    </Dialog>
   );
 };
 
@@ -673,13 +660,7 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
   const select = <V extends string>(label: string, value: V, set: (v: V) => void, opts: [V, string][]) => (
     <label className="flex items-center justify-between gap-2 text-xs text-ink-2">
       <span>{label}</span>
-      <select value={value} onChange={(e) => set(e.target.value as V)} className="h-8 px-2 rounded-lg border border-line bg-surface text-ink text-xs cursor-pointer max-w-[60%]">
-        {opts.map(([v, n]) => (
-          <option key={v} value={v}>
-            {n}
-          </option>
-        ))}
-      </select>
+      <Choice aria-label={label} className="max-w-[60%]" value={value} onChange={(v) => set(v as V)} options={opts.map(([v, n]) => ({ value: v, label: n }))} />
     </label>
   );
   return (
@@ -698,14 +679,14 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
             );
           })}
         </div>
-        <button onClick={() => setShowAll(!showAll)} className="mt-2 w-full h-8 rounded-lg border border-line hover:bg-muted text-xs text-ink-2 cursor-pointer">
+        <Button variant="outline" size="sm" fullWidth className="mt-2 text-xs" onPress={() => setShowAll(!showAll)}>
           {showAll ? L('Свернуть', 'Show fewer') : L(`Показать все ${TEMPLATES.length} шаблонов`, `Show all ${TEMPLATES.length} templates`)}
-        </button>
+        </Button>
       </Group>
       <div>
-        <button onClick={() => setFine(!fine)} className="w-full flex items-center justify-between text-xs font-medium uppercase tracking-[0.05em] text-ink-2 cursor-pointer">
+        <Button variant="ghost" size="sm" fullWidth className="justify-between text-xs font-medium uppercase tracking-[0.05em]" onPress={() => setFine(!fine)}>
           {L('Макет каждого слайда', 'Layout of each slide')} <span className="text-ink-3">{fine ? '−' : '+'}</span>
-        </button>
+        </Button>
         {fine && (
           <div className="mt-2 flex flex-col gap-1.5">
             {select(L('Титульный', 'Title'), style.title, (v) => setStyle({ title: v }), [
@@ -758,9 +739,9 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
           </div>
         )}
       </div>
-      <button onClick={onSurprise} className="h-9 rounded-lg border border-dashed border-line-strong hover:border-accent hover:text-accent text-sm text-ink-2 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
+      <Button variant="outline" className="text-sm" onPress={() => onSurprise()}>
         <Dices className="w-4 h-4" /> {L('Удиви меня — случайный стиль', 'Surprise me')}
-      </button>
+      </Button>
       <Group title={L('Тема', 'Theme')}>
         <div className="grid grid-cols-4 gap-1.5">
           {THEMES.map((id) => {
@@ -776,10 +757,10 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
       </Group>
       <Group title={L('Цвет акцента', 'Accent colour')}>
         <div className="flex flex-wrap gap-1.5">
-          <button onClick={() => setStyle({ accent: null })} className={`h-7 px-2.5 rounded-full text-xs border cursor-pointer ${style.accent === null ? 'border-accent text-accent bg-accent-soft' : 'border-line text-ink-2'}`}>
+          <Button variant="outline" size="sm" className={`text-xs ${style.accent === null ? 'text-accent' : 'text-ink-2'}`} onPress={() => setStyle({ accent: null })}>
             <span className="inline-block w-2.5 h-2.5 rounded-full mr-1 align-[-1px]" style={{ background: `#${themeFor(style.theme, topic.subject, null).accent}` }} />
             {L('Как у предмета', 'Subject')}
-          </button>
+          </Button>
           {ACCENTS.map((c) => (
             <button key={c} onClick={() => setStyle({ accent: c })} aria-label={c} className={`w-7 h-7 rounded-full cursor-pointer transition-transform hover:scale-110 ${style.accent === c ? 'ring-2 ring-offset-2 ring-ink' : ''}`} style={{ background: `#${c}` }} />
           ))}
@@ -820,30 +801,27 @@ const DesignPanel: React.FC<{ lang: Lang; style: DesignStyle; setStyle: (p: Part
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex p-0.5 rounded-lg bg-muted border border-line">
             {([['full', L('Подвал полностью', 'Full footer')], ['number', L('Только номер', 'Number only')], ['none', L('Без подвала', 'No footer')]] as ['full' | 'number' | 'none', string][]).map(([id, name]) => (
-              <button key={id} onClick={() => setStyle({ footer: id })} className={`flex-1 h-8 rounded-md text-xs cursor-pointer ${(style.footer ?? 'full') === id ? 'bg-surface border border-line text-ink font-medium shadow-sm' : 'text-ink-2'}`}>
+              <Button variant={(style.footer ?? 'full') === id ? 'outline' : 'ghost'} size="sm" className={`flex-1 text-xs ${(style.footer ?? 'full') === id ? 'font-medium' : ''}`} key={id} onPress={() => setStyle({ footer: id })}>
                 {name}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="flex p-0.5 rounded-lg bg-muted border border-line">
             {([['round', L('Скруглённые карточки', 'Rounded cards')], ['sharp', L('Острые углы', 'Square corners')]] as ['round' | 'sharp', string][]).map(([id, name]) => (
-              <button key={id} onClick={() => setStyle({ corners: id })} className={`flex-1 h-8 rounded-md text-xs cursor-pointer ${(style.corners ?? 'round') === id ? 'bg-surface border border-line text-ink font-medium shadow-sm' : 'text-ink-2'}`}>
+              <Button variant={(style.corners ?? 'round') === id ? 'outline' : 'ghost'} size="sm" className={`flex-1 text-xs ${(style.corners ?? 'round') === id ? 'font-medium' : ''}`} key={id} onPress={() => setStyle({ corners: id })}>
                 {name}
-              </button>
+              </Button>
             ))}
           </div>
-          <label className="flex items-center gap-2 cursor-pointer text-ink">
-            <input type="checkbox" checked={style.icons !== false} onChange={(e) => setStyle({ icons: e.target.checked })} />
-            {L('Иконки на слайдах', 'Icons on slides')}
-          </label>
+          <CheckBox checked={style.icons !== false} onChange={(v) => setStyle({ icons: v })}>{L('Иконки на слайдах', 'Icons on slides')}</CheckBox>
         </div>
       </Group>
       <Group title={L('Размер текста', 'Text size')}>
         <div className="flex p-0.5 rounded-lg bg-muted border border-line text-sm">
           {([['compact', L('Компактно', 'Compact')], ['normal', L('Обычно', 'Normal')], ['large', L('Крупно', 'Large')]] as [ScaleId, string][]).map(([id, name]) => (
-            <button key={id} onClick={() => setStyle({ scale: id })} className={`flex-1 h-8 rounded-md cursor-pointer ${style.scale === id ? 'bg-surface border border-line text-ink font-medium shadow-sm' : 'text-ink-2'}`}>
+            <Button variant={style.scale === id ? 'outline' : 'ghost'} size="sm" className={`flex-1 ${style.scale === id ? 'font-medium' : ''}`} key={id} onPress={() => setStyle({ scale: id })}>
               {name}
-            </button>
+            </Button>
           ))}
         </div>
       </Group>

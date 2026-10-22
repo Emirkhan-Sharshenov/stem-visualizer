@@ -1,3 +1,4 @@
+import { Button, Tooltip } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, RotateCcw, Trash2, Undo2 } from 'lucide-react';
 import { indicatorColor, METAL_COLOR, REAGENTS, reagent, Reagent, ReagentKind } from './data';
@@ -383,15 +384,10 @@ export const ChemLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {REAGENTS.filter((r) => r.kind === g.kind).map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => add(r)}
-                    title={r.name[lang]}
-                    className="h-8 px-2.5 rounded-lg border border-line bg-surface hover:border-accent hover:bg-accent-soft text-[13px] text-ink cursor-pointer inline-flex items-center gap-1.5"
-                  >
+                  <Tooltip key={r.id}><Tooltip.Trigger><Button aria-label={r.name[lang]} variant="outline" size="sm" onPress={() => add(r)}>
                     {r.color && <span className="w-2 h-2 rounded-full" style={{ background: r.color }} />}
                     <span className="font-mono">{pretty(r.formula)}</span>
-                  </button>
+                  </Button></Tooltip.Trigger><Tooltip.Content>{r.name[lang]}</Tooltip.Content></Tooltip>
                 ))}
               </div>
             </div>
@@ -405,14 +401,14 @@ export const ChemLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <canvas ref={canvasRef} className="block w-full" />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={undo} disabled={!history.length} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted disabled:opacity-40 cursor-pointer">
+            <Button variant="outline" className="text-sm" onPress={() => undo()} isDisabled={!history.length}>
               <Undo2 className="w-4 h-4" />
               {L('Отменить', 'Undo')}
-            </button>
-            <button onClick={emptyIt} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => emptyIt()}>
               <Trash2 className="w-4 h-4" />
               {L('Вылить', 'Empty')}
-            </button>
+            </Button>
             {ind && (
               <span className="text-sm text-ink-2 inline-flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full border border-line" style={{ background: ind.color === 'transparent' ? '#fff' : ind.color }} />
@@ -501,10 +497,10 @@ export const ChemLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                   })}
                 </ul>
                 {goalsDone.size > 0 && (
-                  <button onClick={() => setGoalsDone(new Set())} className="mt-2 text-xs text-ink-3 hover:text-ink inline-flex items-center gap-1 cursor-pointer">
+                  <Button variant="ghost" size="sm" className="mt-2 text-xs" onPress={() => setGoalsDone(new Set())}>
                     <RotateCcw className="w-3 h-3" />
                     {L('Начать задания заново', 'Reset challenges')}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>

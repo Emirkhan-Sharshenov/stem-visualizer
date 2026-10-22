@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useMemo, useState } from 'react';
 import { Check, NotebookPen, X } from 'lucide-react';
 import { progress, REVIEW_DAYS, useProgress } from '../../lib/progress';
@@ -75,23 +76,19 @@ export const MistakesReview: React.FC<{ lang: Lang; onOpenTopic: (id: string) =>
                 </div>
                 <div className="flex justify-between gap-2">
                   {topicById(card.q.topicId) ? (
-                    <button onClick={() => onOpenTopic(card.q.topicId)} className="h-10 px-3 rounded-lg border border-line bg-surface text-sm text-ink cursor-pointer">
+                    <Button variant="outline" className="text-sm" onPress={() => onOpenTopic(card.q.topicId)}>
                       {L('Повторить тему', 'Revise the topic')}
-                    </button>
+                    </Button>
                   ) : (
                     <span />
                   )}
-                  <button
-                    onClick={() => {
+                  <Button className="text-sm font-medium" onPress={() => {
                       setAnswer(null);
                       setDone((d) => d + 1);
                       setI((k) => k + 1);
-                    }}
-                    className="h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer"
-                    style={{ color: '#fff' }}
-                  >
+                    }}>
                     {L('Дальше', 'Next')}
-                  </button>
+                  </Button>
                 </div>
               </>
             )}

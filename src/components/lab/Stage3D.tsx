@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Box, Move3d, RotateCcw, X } from 'lucide-react';
 import { PartInfo, StageOptions, ThreeStage } from '../../lib/three/ThreeStage';
@@ -84,25 +85,15 @@ export const Stage3D: React.FC<Stage3DProps> = ({ lang, options, onReady, onGoTo
 
       {/* Reset view */}
       {onReset && (
-        <button
-          onClick={() => stageRef.current && onReset(stageRef.current)}
-          aria-label={lang === 'ru' ? 'Сбросить вид' : 'Reset view'}
-          title={lang === 'ru' ? 'Сбросить вид' : 'Reset view'}
-          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[#B5B8C0] hover:text-white flex items-center justify-center cursor-pointer"
-        >
+        <Button variant="outline" isIconOnly size="sm" className="absolute top-3 right-3 z-10 w-8" onPress={() => stageRef.current && onReset(stageRef.current)} aria-label={lang === 'ru' ? 'Сбросить вид' : 'Reset view'}>
           <RotateCcw className="w-4 h-4" strokeWidth={1.75} />
-        </button>
+        </Button>
       )}
 
       {/* See the model in the room */}
-      <button
-        onClick={() => setAr(true)}
-        aria-label={lang === 'ru' ? 'Посмотреть в комнате' : 'View in your room'}
-        title={lang === 'ru' ? 'Посмотреть в комнате (AR)' : 'View in your room (AR)'}
-        className={`absolute top-3 ${onReset ? 'right-[52px]' : 'right-3'} z-10 h-8 px-2.5 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[#B5B8C0] hover:text-white inline-flex items-center gap-1.5 text-[12px] font-medium cursor-pointer`}
-      >
+      <Button variant="outline" size="sm" className={`absolute top-3 z-10 font-medium ${onReset ? 'right-[52px]' : 'right-3'}`} onPress={() => setAr(true)} aria-label={lang === 'ru' ? 'Посмотреть в комнате' : 'View in your room'}>
         <Box className="w-4 h-4" strokeWidth={1.75} /> {lang === 'ru' ? 'В комнате' : 'AR'}
-      </button>
+      </Button>
       {ar && stageRef.current && (
         <Suspense fallback={null}>
           <ArView lang={lang} load={() => stageRef.current!.exportGlb()} onClose={() => setAr(false)} />
@@ -119,25 +110,18 @@ export const Stage3D: React.FC<Stage3DProps> = ({ lang, options, onReady, onGoTo
           <>
             <div className="flex items-start justify-between gap-3">
               <h4 className="font-serif text-lg leading-snug text-[#EDEDED]">{selected.title[lang]}</h4>
-              <button
-                onClick={() => onSelect(null)}
-                aria-label={lang === 'ru' ? 'Закрыть' : 'Close'}
-                className="shrink-0 w-7 h-7 -mr-1 -mt-1 rounded-md text-[#8C8F98] hover:text-white hover:bg-[#26282D] flex items-center justify-center cursor-pointer"
-              >
+              <Button variant="ghost" isIconOnly size="sm" className="shrink-0 w-7 -mr-1 -mt-1" onPress={() => onSelect(null)} aria-label={lang === 'ru' ? 'Закрыть' : 'Close'}>
                 <X className="w-4 h-4" strokeWidth={1.75} />
-              </button>
+              </Button>
             </div>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#B5B8C0]">{selected.text[lang]}</p>
             {selected.goTo && onGoTo && (
-              <button
-                onClick={() => {
+              <Button size="sm" className="mt-3 font-medium" onPress={() => {
                   onGoTo(selected.goTo!);
                   onSelect(null);
-                }}
-                className="mt-3 h-8 px-3 rounded-md bg-accent hover:bg-accent-hover text-white text-[13px] font-medium cursor-pointer"
-              >
+                }}>
                 {lang === 'ru' ? 'Приблизить' : 'Zoom in'}
-              </button>
+              </Button>
             )}
           </>
         )}

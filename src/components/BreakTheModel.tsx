@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useState } from 'react';
 import { Flame, AlertTriangle, RefreshCw, Zap, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -101,17 +103,9 @@ export const BreakTheModel: React.FC<BreakTheModelProps> = ({ lang, onUnlockMile
             { id: 'orbit', label: { en: '2. Crash the Orbit (Physics)', ru: '2. Разрушь орбиту (Физика)' } },
             { id: 'cyanide', label: { en: '3. Inhibit ATP (Biology)', ru: '3. Отключи АТФ (Биология)' } },
           ].map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setActiveChallenge(c.id as any)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                activeChallenge === c.id
-                  ? 'bg-rose-500 text-white shadow-md font-bold'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
+            <Button variant="ghost" size="sm" className={`text-xs font-semibold ${activeChallenge === c.id ? 'text-white font-bold' : 'text-slate-400'}`} key={c.id} onPress={() => setActiveChallenge(c.id as any)}>
               {c.label[lang]}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -135,19 +129,13 @@ export const BreakTheModel: React.FC<BreakTheModelProps> = ({ lang, onUnlockMile
 
               {/* Action buttons */}
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleAddElectron('up')}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 cursor-pointer shadow-md"
-                >
+                <Button size="sm" className="text-xs font-bold" onPress={() => handleAddElectron('up')}>
                   {lang === 'ru' ? 'Добавить электрон ↑ (Spin Up)' : 'Add Electron ↑ (Spin Up)'}
-                </button>
-                <button
-                  onClick={() => setElectronsIn1s(['up', 'down'])}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1 cursor-pointer"
-                >
+                </Button>
+                <Button variant="secondary" size="sm" className="text-xs font-semibold" onPress={() => setElectronsIn1s(['up', 'down'])}>
                   <RefreshCw className="w-3.5 h-3.5" />
                   {lang === 'ru' ? 'Сброс' : 'Reset'}
-                </button>
+                </Button>
               </div>
 
               {pauliError && (
@@ -200,22 +188,12 @@ export const BreakTheModel: React.FC<BreakTheModelProps> = ({ lang, onUnlockMile
                   <span>{lang === 'ru' ? 'Орбитальная скорость' : 'Orbital Velocity (% of circular speed)'}</span>
                   <span className="font-mono text-cyan-400 font-bold">{velocity}%</span>
                 </div>
-                <input
-                  type="range"
-                  min="30"
-                  max="200"
-                  value={velocity}
-                  onChange={(e) => setVelocity(Number(e.target.value))}
-                  className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-                />
+                <RangeSlider value={velocity} onChange={(v) => setVelocity(v)} min={30} max={200} />
               </div>
 
-              <button
-                onClick={handleSimulateOrbit}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-md"
-              >
+              <Button size="sm" fullWidth className="sm:w-auto text-xs font-bold" onPress={() => handleSimulateOrbit()}>
                 {lang === 'ru' ? 'ЗАПУСТИТЬ ТРАЕКТОРИЮ' : 'SIMULATE TRAJECTORY'}
-              </button>
+              </Button>
             </div>
 
             {/* Visual feedback */}
@@ -244,18 +222,11 @@ export const BreakTheModel: React.FC<BreakTheModelProps> = ({ lang, onUnlockMile
             </div>
 
             <div className="flex items-center gap-4">
-              <button
-                onClick={handleTogglePoison}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md ${
-                  isPoisoned
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                    : 'bg-rose-600 hover:bg-rose-500 text-white'
-                }`}
-              >
+              <Button variant={isPoisoned ? 'primary' : 'danger'} size="sm" className="text-xs font-bold" onPress={() => handleTogglePoison()}>
                 {isPoisoned
                   ? (lang === 'ru' ? 'Очистить ингибитор (Восстановить клетку)' : 'Clear Inhibitor (Restore Cell)')
                   : (lang === 'ru' ? 'Ввести цианид (Сломать градиент H+)' : 'Inject Cyanide (Inhibit H+ Pump)')}
-              </button>
+              </Button>
             </div>
 
             {/* ATP Gauge */}

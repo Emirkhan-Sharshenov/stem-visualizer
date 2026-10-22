@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useMemo, useRef, useState } from 'react';
 import { Copy, Image, Send, Swords, Trophy } from 'lucide-react';
 import { Confetti } from '../fx/Confetti';
@@ -119,9 +120,9 @@ export const Duel: React.FC<{ lang: Lang; onExit: () => void; challenge?: DuelCh
               <p className="text-ink-2">{L('Реши 10 задач как можно быстрее, а потом отправь ссылку другу: ему достанутся те же задачи. Сначала считаются верные ответы, при равенстве побеждает тот, кто быстрее.', 'Solve 10 problems as fast as you can, then send a friend the link: they get the same ones. Correct answers count first, then speed.')}</p>
             </>
           )}
-          <button onClick={begin} className="mt-2 h-12 px-6 rounded-xl bg-accent hover:bg-accent-hover font-medium cursor-pointer" style={{ color: '#fff' }}>
+          <Button size="lg" className="mt-2 font-medium" onPress={() => begin()}>
             {rival ? L('Принять вызов', 'Accept') : L('Начать', 'Start')}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -154,19 +155,19 @@ export const Duel: React.FC<{ lang: Lang; onExit: () => void; challenge?: DuelCh
           </div>
         )}
         <div className="w-full mt-2 flex flex-col gap-2">
-          <input value={name} onChange={(e) => setName(e.target.value.slice(0, 24))} placeholder={L('Твоё имя для соперника', 'Your name for the rival')} className="h-11 px-3 rounded-lg border border-line bg-paper text-ink outline-none focus:border-accent" />
-          <button onClick={share} className="h-11 rounded-lg bg-accent hover:bg-accent-hover font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+          <Input value={name} onChange={(e) => setName(e.target.value.slice(0, 24))} placeholder={L('Твоё имя для соперника', 'Your name for the rival')}  />
+          <Button size="lg" className="font-medium" onPress={() => share()}>
             {copied ? <Copy className="w-4 h-4" /> : <Send className="w-4 h-4" />} {copied ? L('Ссылка скопирована', 'Link copied') : rival ? L('Отправить ответный вызов', 'Send it back') : L('Вызвать друга', 'Challenge a friend')}
-          </button>
-          <button onClick={story} disabled={!card} className="h-11 rounded-lg border border-line hover:bg-muted text-sm font-medium text-ink inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+          </Button>
+          <Button variant="outline" size="lg" className="text-sm font-medium" onPress={() => story()} isDisabled={!card}>
             <Image className="w-4 h-4" /> {L('Картинка в сторис', 'Story picture')}
-          </button>
-          <button onClick={newDuel} className="h-11 rounded-lg border border-line hover:bg-muted text-sm text-ink cursor-pointer">
+          </Button>
+          <Button variant="outline" size="lg" className="text-sm" onPress={() => newDuel()}>
             {L('Новая дуэль', 'New duel')}
-          </button>
-          <button onClick={onExit} className="h-9 text-sm text-ink-3 hover:text-ink cursor-pointer">
+          </Button>
+          <Button variant="ghost" className="text-sm" onPress={() => onExit()}>
             {L('Другие игры', 'Other games')}
-          </button>
+          </Button>
         </div>
       </div>
     );

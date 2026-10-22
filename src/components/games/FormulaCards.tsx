@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useMemo, useState } from 'react';
 import { Eye, RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react';
 import type { StemCategory } from '../../types/stem';
@@ -166,21 +167,21 @@ export const FormulaCards: React.FC<{ lang: Lang; onExit: () => void }> = ({ lan
       </div>
       {shown ? (
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={() => grade(false)} className="h-12 rounded-xl border border-[#E5484D] text-[#CC2F35] hover:bg-[#FDF0EF] font-medium inline-flex items-center justify-center gap-2 cursor-pointer">
+          <Button variant="danger" size="lg" className="font-medium" onPress={() => grade(false)}>
             <ThumbsDown className="w-4 h-4" /> {L('Не вспомнил', 'Forgot')}
-          </button>
-          <button onClick={() => grade(true)} className="h-12 rounded-xl bg-[#30A46C] hover:brightness-95 font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+          </Button>
+          <Button size="lg" className="font-medium" onPress={() => grade(true)}>
             <ThumbsUp className="w-4 h-4" /> {L('Помню', 'Knew it')}
-          </button>
+          </Button>
         </div>
       ) : (
-        <button onClick={() => setShown(true)} className="h-12 rounded-xl bg-accent hover:bg-accent-hover font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+        <Button size="lg" className="font-medium" onPress={() => setShown(true)}>
           <Eye className="w-4 h-4" /> {L('Показать формулу', 'Show formula')}
-        </button>
+        </Button>
       )}
-      <button onClick={() => setSubject(null)} className="self-center text-sm text-ink-3 hover:text-ink inline-flex items-center gap-1 cursor-pointer">
+      <Button variant="ghost" className="self-center text-sm" onPress={() => setSubject(null)}>
         <RotateCcw className="w-3.5 h-3.5" /> {L('Другой предмет', 'Another subject')}
-      </button>
+      </Button>
     </div>
   );
 };

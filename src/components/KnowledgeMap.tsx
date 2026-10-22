@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useState } from 'react';
 import { KNOWLEDGE_GRAPH_NODES, KNOWLEDGE_GRAPH_LINKS } from '../data/concepts';
 import { VisualMode } from '../types/stem';
@@ -162,13 +163,10 @@ export const KnowledgeMap: React.FC<KnowledgeMapProps> = ({ lang, onNavigateToCo
               </div>
 
               {/* Direct Jump Button */}
-              <button
-                onClick={() => onNavigateToConcept(getTargetViewMode(selectedNode.id))}
-                className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all"
-              >
+              <Button size="sm" fullWidth className="text-xs font-bold" onPress={() => onNavigateToConcept(getTargetViewMode(selectedNode.id))}>
                 <span>{lang === 'ru' ? 'ОТКРЫТЬ 3D МОДЕЛЬ' : 'EXPLORE 3D MODEL'}</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           )}
         </div>

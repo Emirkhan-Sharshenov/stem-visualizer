@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Timer, Trash2 } from 'lucide-react';
 import { COLOR_HEX, Conditions, factors, illuminance, LightColor, limiting, MAX_BUBBLES, rate } from './photo';
@@ -100,7 +102,7 @@ export const PhotoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {value} {unit}
         </span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => on(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+      <RangeSlider value={value} onChange={(v) => on(v)} min={min} max={max} step={step} />
     </label>
   );
 
@@ -199,10 +201,10 @@ export const PhotoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => setMeasuring({ start: performance.now(), count: 0 })} disabled={!!measuring} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => setMeasuring({ start: performance.now(), count: 0 })} isDisabled={!!measuring}>
               <Timer className="w-4 h-4" />
               {measuring ? L('Считаем пузырьки…', 'Counting bubbles…') : L('Измерить за 1 минуту', 'Measure for 1 minute')}
-            </button>
+            </Button>
             <span className="text-sm text-ink-2">
               {L('Скорость сейчас', 'Rate now')}: <b className="font-mono text-ink">≈ {Math.round(r * MAX_BUBBLES)}</b> {L('пузырьков/мин', 'bubbles/min')}
             </span>
@@ -213,9 +215,9 @@ export const PhotoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Журнал измерений', 'Measurements')}</h3>
                 {rows.length > 0 && (
-                  <button onClick={() => setRows([])} className="text-ink-3 hover:text-ink cursor-pointer" aria-label={L('Очистить', 'Clear')}>
+                  <Button variant="ghost" onPress={() => setRows([])} aria-label={L('Очистить', 'Clear')}>
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
               {rows.length === 0 ? (
@@ -256,9 +258,9 @@ export const PhotoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                     ['t', L('Температура', 'Temperature')],
                   ] as const
                 ).map(([k, label]) => (
-                  <button key={k} onClick={() => setAxis(k)} className={`flex-1 h-7 rounded-md cursor-pointer ${axis === k ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2'}`}>
+                  <Button variant={axis === k ? 'outline' : 'ghost'} size="sm" className={`flex-1 ${axis === k ? 'font-medium' : ''}`} key={k} onPress={() => setAxis(k)}>
                     {label}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <svg viewBox={`0 0 ${CW} ${CH}`} className="w-full">

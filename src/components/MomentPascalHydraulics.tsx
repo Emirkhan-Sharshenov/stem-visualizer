@@ -1,3 +1,4 @@
+import { RangeSlider } from './ui/RangeSlider';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { ArrowDown, ArrowUp, RefreshCw, HelpCircle, Info } from 'lucide-react';
@@ -252,15 +253,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
             <span className="text-slate-400">{lang === 'ru' ? 'Сила нажатия рукой (F₁):' : 'Hand Push Force (F₁):'}</span>
             <span className="font-mono text-amber-400 font-bold">{f1Force} {lang === 'ru' ? 'Н' : 'N'}</span>
           </div>
-          <input
-            type="range"
-            min={20}
-            max={300}
-            step={10}
-            value={f1Force}
-            onChange={(e) => setF1Force(Number(e.target.value))}
-            className="w-full accent-amber-400 cursor-pointer"
-          />
+          <RangeSlider value={f1Force} onChange={(v) => setF1Force(v)} min={20} max={300} step={10} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -268,15 +261,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
             <span className="text-slate-400">{lang === 'ru' ? 'Отношение площадей (S₂ / S₁):' : 'Area Ratio (S₂ / S₁):'}</span>
             <span className="font-mono text-emerald-400 font-bold">{areaRatio}×</span>
           </div>
-          <input
-            type="range"
-            min={2}
-            max={25}
-            step={1}
-            value={areaRatio}
-            onChange={(e) => setAreaRatio(Number(e.target.value))}
-            className="w-full accent-emerald-400 cursor-pointer"
-          />
+          <RangeSlider value={areaRatio} onChange={(v) => setAreaRatio(v)} min={2} max={25} step={1} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -284,15 +269,7 @@ export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ 
             <span className="text-slate-400">{lang === 'ru' ? 'Ход малого поршня (h₁):' : 'Piston Stroke (h₁):'}</span>
             <span className="font-mono text-cyan-400 font-bold">{displacement} {lang === 'ru' ? 'мм' : 'mm'}</span>
           </div>
-          <input
-            type="range"
-            min={5}
-            max={70}
-            step={2}
-            value={displacement}
-            onChange={(e) => setDisplacement(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
-          />
+          <RangeSlider value={displacement} onChange={(v) => setDisplacement(v)} min={5} max={70} step={2} />
         </div>
       </div>
 

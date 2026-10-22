@@ -1,3 +1,6 @@
+import { Check } from '../ui/Check';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pause, Play, Plus, RotateCcw } from 'lucide-react';
 import { BOX_H, count, EA, EA_CAT, makeWorld, Params, Q, R_BIG, R_SMALL, spawn, step, World } from './kinetics';
@@ -98,10 +101,10 @@ export const KineticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <canvas ref={box} className="block w-full" />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => setRun(!run)} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => setRun(!run)}>
               {run ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {run ? L('Пауза', 'Pause') : L('Пуск', 'Run')}
-            </button>
+            </Button>
             {(
               [
                 [0, 'A', COL.a],
@@ -109,22 +112,19 @@ export const KineticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                 [2, 'AB', COL.ab],
               ] as const
             ).map(([t, name, color]) => (
-              <button key={name} onClick={() => spawn(world.current, t, 20, params)} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+              <Button variant="outline" className="text-sm" key={name} onPress={() => spawn(world.current, t, 20, params)}>
                 <Plus className="w-4 h-4" />
                 20 <b style={{ color }}>{name}</b>
-              </button>
+              </Button>
             ))}
-            <button
-              onClick={() => {
+            <Button variant="outline" className="text-sm" onPress={() => {
                 const p = { T: 3, catalyst: false, width: MAX_W };
                 world.current = makeWorld(p);
                 setParams(p);
-              }}
-              className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer"
-            >
+              }}>
               <RotateCcw className="w-4 h-4" />
               {L('Заново', 'Restart')}
-            </button>
+            </Button>
           </div>
           <div className="bg-surface border border-line rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -144,18 +144,15 @@ export const KineticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Температура', 'Temperature')} <span className="font-mono text-ink">{kelvin} K</span>
               </span>
-              <input type="range" min={1.2} max={6} step={0.1} value={params.T} onChange={(e) => set({ T: Number(e.target.value) })} className="w-full accent-accent cursor-pointer" />
+              <RangeSlider value={params.T} onChange={(v) => set({ T: v })} min={1.2} max={6} step={0.1} />
             </label>
             <label className="flex flex-col gap-1">
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Объём сосуда (давление)', 'Vessel volume (pressure)')} <span className="font-mono text-ink">{Math.round((params.width / MAX_W) * 100)}%</span>
               </span>
-              <input type="range" min={200} max={MAX_W} step={10} value={params.width} onChange={(e) => set({ width: Number(e.target.value) })} className="w-full accent-accent cursor-pointer" />
+              <RangeSlider value={params.width} onChange={(v) => set({ width: v })} min={200} max={MAX_W} step={10} />
             </label>
-            <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer">
-              <input type="checkbox" checked={params.catalyst} onChange={(e) => set({ catalyst: e.target.checked })} className="w-4 h-4 accent-accent" />
-              {L('Добавить катализатор', 'Add a catalyst')}
-            </label>
+            <Check checked={params.catalyst} onChange={(v) => set({ catalyst: v })}>{L('Добавить катализатор', 'Add a catalyst')}</Check>
           </div>
 
           <div className="bg-surface border border-line rounded-xl p-4 text-sm flex flex-col gap-1.5">

@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Sparkles, Layers, RotateCcw, Play, Pause } from 'lucide-react';
@@ -282,36 +284,15 @@ export const MomentChemicalBond: React.FC<MomentChemicalBondProps> = ({ lang }) 
 
         {/* Bond Type Selectors */}
         <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-          <button
-            onClick={() => setBondType('covalent_nonpolar')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              bondType === 'covalent_nonpolar'
-                ? 'bg-cyan-500 text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
+          <Button variant={bondType === 'covalent_nonpolar' ? 'primary' : 'ghost'} size="sm" className="text-xs font-bold" onPress={() => setBondType('covalent_nonpolar')}>
             {lang === 'ru' ? 'Ковалентная неполярная (H₂)' : 'Nonpolar Covalent (H₂)'}
-          </button>
-          <button
-            onClick={() => setBondType('covalent_polar')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              bondType === 'covalent_polar'
-                ? 'bg-cyan-500 text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
+          </Button>
+          <Button variant={bondType === 'covalent_polar' ? 'primary' : 'ghost'} size="sm" className="text-xs font-bold" onPress={() => setBondType('covalent_polar')}>
             {lang === 'ru' ? 'Ковалентная полярная (HCl)' : 'Polar Covalent (HCl)'}
-          </button>
-          <button
-            onClick={() => setBondType('ionic')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              bondType === 'ionic'
-                ? 'bg-cyan-500 text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
+          </Button>
+          <Button variant={bondType === 'ionic' ? 'primary' : 'ghost'} size="sm" className="text-xs font-bold" onPress={() => setBondType('ionic')}>
             {lang === 'ru' ? 'Ионная связь (Na⁺Cl⁻)' : 'Ionic Bond (Na⁺Cl⁻)'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -326,15 +307,7 @@ export const MomentChemicalBond: React.FC<MomentChemicalBondProps> = ({ lang }) 
           <span className="text-slate-400">{lang === 'ru' ? 'Межатомное расстояние (r):' : 'Interatomic Distance (r):'}</span>
           <span className="font-mono text-cyan-400 font-bold">{interatomicDistance} pm</span>
         </div>
-        <input
-          type="range"
-          min={90}
-          max={240}
-          step={2}
-          value={interatomicDistance}
-          onChange={(e) => setInteratomicDistance(Number(e.target.value))}
-          className="w-full accent-cyan-400 cursor-pointer"
-        />
+        <RangeSlider value={interatomicDistance} onChange={(v) => setInteratomicDistance(v)} min={90} max={240} step={2} />
         <div className="flex justify-between text-[10px] text-slate-500">
           <span>{lang === 'ru' ? 'Сближение: перекрывание электронных облаков' : 'Closer: electron clouds overlap'}</span>
           <span>{lang === 'ru' ? 'Удаление: разрыв связи' : 'Farther: bond cleavage'}</span>

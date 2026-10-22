@@ -1,3 +1,5 @@
+import { Dialog } from './ui/Dialog';
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Search, X } from 'lucide-react';
 import { SECTIONS, Topic, TOPICS, topicById } from '../data/curriculum';
@@ -67,21 +69,20 @@ export const SearchModal: React.FC<SearchModalProps> = ({ lang, onClose, onOpenT
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] p-4 bg-[rgba(17,17,17,0.45)]" onClick={onClose}>
-      <div className="bg-surface border border-line rounded-2xl max-w-2xl w-full shadow-2xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+    <Dialog onClose={onClose} label={L('Поиск', 'Search')} placement="top" className="max-w-2xl p-0 flex flex-col overflow-hidden">
         <div className="relative border-b border-line">
           <Search className="w-5 h-5 text-ink-3 absolute left-4 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
-          <input
+          <Input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && list[0] && open(list[0].id)}
             placeholder={L('Что непонятно? Например: «не понимаю электролиз»', 'What’s confusing? E.g. “I don’t get electrolysis”')}
-            className="w-full bg-transparent pl-12 pr-12 py-4 text-[15px] text-ink placeholder:text-ink-3 outline-none"
+            className="w-full pl-12 pr-12"
           />
-          <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md text-ink-3 hover:text-ink hover:bg-muted flex items-center justify-center cursor-pointer">
+          <Button variant="ghost" isIconOnly size="sm" className="absolute right-3 top-1/2 w-8" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
             <X className="w-4 h-4" strokeWidth={1.75} />
-          </button>
+          </Button>
         </div>
         <div className="px-4 pt-3 pb-1 text-xs font-medium uppercase tracking-[0.05em] text-ink-3">
           {results ? L(`Найдено: ${results.length}`, `Found: ${results.length}`) : L('Популярные темы', 'Popular topics')}
@@ -103,7 +104,6 @@ export const SearchModal: React.FC<SearchModalProps> = ({ lang, onClose, onOpenT
           ))}
           {results && results.length === 0 && <li className="px-3 py-6 text-sm text-ink-2">{L('Ничего не нашлось. Попробуй другое слово.', 'Nothing found. Try another word.')}</li>}
         </ul>
-      </div>
-    </div>
+    </Dialog>
   );
 };

@@ -1,3 +1,7 @@
+import { Choice } from '../ui/Choice';
+import { Check as CheckBox } from '../ui/Check';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Droplet, Pause, Play, RotateCcw, Target } from 'lucide-react';
 import { AnalyteId, ANALYTES, INDICATORS, IndicatorId, pH, solutionColor } from './titration';
@@ -121,40 +125,17 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
-        <select className={sel} value={analyteId} onChange={(e) => setAnalyteId(e.target.value as AnalyteId)}>
-          {ANALYTES.map((a) => (
-            <option key={a.id} value={a.id}>
-              {L('В колбе: ', 'Flask: ')}
-              {a.name[lang]}
-            </option>
-          ))}
-        </select>
-        <select className={sel} value={indicatorId} onChange={(e) => setIndicatorId(e.target.value as IndicatorId)}>
-          {INDICATORS.map((i) => (
-            <option key={i.id} value={i.id}>
-              {L('Индикатор: ', 'Indicator: ')}
-              {i.name[lang]}
-            </option>
-          ))}
-        </select>
+        <Choice aria-label={L('Вещество в колбе', 'Flask')} value={analyteId} onChange={(v) => setAnalyteId(v as AnalyteId)} options={ANALYTES.map((a) => ({ value: a.id, label: `${L('В колбе: ', 'Flask: ')}${a.name[lang]}` }))} />
+        <Choice aria-label={L('Индикатор', 'Indicator')} value={indicatorId} onChange={(v) => setIndicatorId(v as IndicatorId)} options={INDICATORS.map((i) => ({ value: i.id, label: `${L('Индикатор: ', 'Indicator: ')}${i.name[lang]}` }))} />
         {task === null ? (
-          <select className={sel} value={ca} onChange={(e) => setCa(Number(e.target.value))}>
-            {[0.05, 0.1, 0.15, 0.2].map((c) => (
-              <option key={c} value={c}>
-                c = {c} {L('моль/л', 'mol/L')}
-              </option>
-            ))}
-          </select>
+          <Choice aria-label={L('Концентрация кислоты', 'Acid concentration')} value={String(ca)} onChange={(v) => setCa(Number(v))} options={[0.05, 0.1, 0.15, 0.2].map((c) => ({ value: String(c), label: `c = ${c} ${L('моль/л', 'mol/L')}` }))} />
         ) : (
           <span className="h-9 px-3 rounded-lg bg-[#FFF4DA] text-[#8A4B0F] text-sm inline-flex items-center">c = ? {L('моль/л', 'mol/L')}</span>
         )}
-        <button
-          onClick={() => setTask(task === null ? randomConc() : null)}
-          className={`h-9 px-3 rounded-lg border text-sm inline-flex items-center gap-1.5 cursor-pointer ${task !== null ? 'bg-[#FFE7B3] border-[#F3D9A4] text-[#8A4B0F]' : 'border-line bg-surface text-ink hover:bg-muted'}`}
-        >
+        <Button variant="outline" className={`text-sm ${task !== null ? 'text-[#8A4B0F]' : 'text-ink'}`} onPress={() => setTask(task === null ? randomConc() : null)}>
           <Target className="w-4 h-4" />
           {task === null ? L('Задача: неизвестная концентрация', 'Task: unknown concentration') : L('Выйти из задачи', 'Leave the task')}
-        </button>
+        </Button>
       </div>
 
       <div className="grid lg:grid-cols-[260px_1fr] gap-4 items-start">
@@ -222,36 +203,33 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => add(DROP)} disabled={vt >= BURETTE} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer disabled:opacity-50">
+            <Button variant="outline" className="text-sm" onPress={() => add(DROP)} isDisabled={vt >= BURETTE}>
               <Droplet className="w-4 h-4" />
               {L('1 капля', '1 drop')}
-            </button>
+            </Button>
             {[0.5, 1, 5].map((ml) => (
-              <button key={ml} onClick={() => add(ml)} disabled={vt >= BURETTE} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink hover:bg-muted cursor-pointer disabled:opacity-50">
+              <Button variant="outline" className="text-sm" key={ml} onPress={() => add(ml)} isDisabled={vt >= BURETTE}>
                 +{ml} {L('мл', 'mL')}
-              </button>
+              </Button>
             ))}
-            <button onClick={() => setFlow(!flow)} disabled={vt >= BURETTE} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => setFlow(!flow)} isDisabled={vt >= BURETTE}>
               {flow ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {flow ? L('Закрыть кран', 'Close tap') : L('Открыть кран', 'Open tap')}
-            </button>
-            <button onClick={() => reset(true)} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => reset(true)}>
               <RotateCcw className="w-4 h-4" />
               {L('Заново', 'Restart')}
-            </button>
+            </Button>
           </div>
           <label className="flex items-center gap-3 text-xs text-ink-2">
             {L('Скорость крана', 'Tap speed')}
-            <input type="range" min={0.2} max={4} step={0.2} value={rate} onChange={(e) => setRate(Number(e.target.value))} className="flex-1 max-w-[200px] accent-accent cursor-pointer" />
+            <RangeSlider value={rate} onChange={(v) => setRate(v)} min={0.2} max={4} step={0.2} className="flex-1 max-w-[200px]" />
           </label>
 
           <div className="bg-surface border border-line rounded-xl p-3">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Кривая титрования', 'Titration curve')}</h3>
-              <label className="inline-flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer">
-                <input type="checkbox" checked={theory} onChange={(e) => setTheory(e.target.checked)} className="w-3.5 h-3.5 accent-accent" />
-                {L('теория', 'theory')}
-              </label>
+              <CheckBox checked={theory} onChange={(v) => setTheory(v)}>{L('теория', 'theory')}</CheckBox>
             </div>
             <svg viewBox={`0 0 ${CW} ${CH}`} className="w-full">
               {/* indicator range */}
@@ -298,12 +276,12 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                 <Formula tex={`c_{\\text{кисл}} \\cdot V_{\\text{кисл}} = c_{\\text{щел}} \\cdot V_{\\text{щел}}`} display />
               </div>
               <div className="flex flex-wrap gap-2 items-center">
-                <input value={guess} onChange={(e) => setGuess(e.target.value)} placeholder="0,100" inputMode="decimal" className="h-9 w-28 rounded-lg border border-line bg-surface px-3 text-sm font-mono text-ink outline-none focus:border-accent" />
+                <Input value={guess} onChange={(e) => setGuess(e.target.value)} placeholder="0,100" inputMode="decimal" className="w-28 text-sm font-mono" />
                 <span className="text-sm text-ink-2">{L('моль/л', 'mol/L')}</span>
-                <button onClick={check} className="h-9 px-3 rounded-lg bg-accent text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+                <Button className="text-sm font-medium" onPress={() => check()}>
                   <Check className="w-4 h-4" />
                   {L('Проверить', 'Check')}
-                </button>
+                </Button>
               </div>
               {verdict !== null && (
                 <p className={`text-sm font-medium ${verdict ? 'text-[#1E7A4C]' : 'text-[#B42318]'}`}>

@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Dices, RotateCcw } from 'lucide-react';
 import type { GraphId } from './ids';
@@ -786,13 +788,13 @@ export const MathGraph: React.FC<{ id: GraphId; lang: Lang }> = ({ id, lang }) =
                 <span>{lang === 'ru' ? s.ru : s.en}</span>
                 <span className="font-mono text-ink">{n(p[s.k] ?? s.v)}</span>
               </span>
-              <input type="range" min={s.min} max={s.max} step={s.step} value={p[s.k] ?? s.v} onChange={(e) => setP({ ...p, [s.k]: Number(e.target.value) })} className="w-full accent-[#8E4EC6] cursor-pointer" />
+              <RangeSlider value={p[s.k] ?? s.v} onChange={(v) => setP({ ...p, [s.k]: v })} min={s.min} max={s.max} step={s.step} color="#8E4EC6" />
             </label>
           ))}
-          <button onClick={() => setP(Object.fromEntries(pre.sliders.map((s) => [s.k, s.v])))} className="self-start h-8 px-3 rounded-lg border border-line text-xs text-ink-2 hover:text-ink inline-flex items-center gap-1.5 cursor-pointer">
+          <Button variant="outline" size="sm" className="self-start text-xs" onPress={() => setP(Object.fromEntries(pre.sliders.map((s) => [s.k, s.v])))}>
             <RotateCcw className="w-3.5 h-3.5" />
             {lang === 'ru' ? 'Сбросить' : 'Reset'}
-          </button>
+          </Button>
         </div>
         <div className="flex flex-col gap-2 min-w-0">
           <div className="overflow-x-auto text-ink text-[17px] py-1">
@@ -835,23 +837,19 @@ const DiceSim: React.FC<{ lang: Lang }> = ({ lang }) => {
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex p-0.5 rounded-lg bg-muted border border-line text-sm">
           {[false, true].map((v) => (
-            <button
-              key={String(v)}
-              onClick={() => {
+            <Button variant={two === v ? 'outline' : 'ghost'} size="sm" className={`${two === v ? 'font-medium' : ''}`} key={String(v)} onPress={() => {
                 setTwo(v);
                 setCounts(Array(13).fill(0));
                 setLast([]);
-              }}
-              className={`h-8 px-3 rounded-md cursor-pointer ${two === v ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2'}`}
-            >
+              }}>
               {v ? L(lang, 'Два кубика (сумма)', 'Two dice (sum)') : L(lang, 'Один кубик', 'One die')}
-            </button>
+            </Button>
           ))}
         </div>
         {[1, 10, 100, 1000].map((k) => (
-          <button key={k} onClick={() => roll(k)} className="h-9 px-3 rounded-lg bg-[#8E4EC6] text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+          <Button variant="ghost" className="text-sm font-medium" key={k} onPress={() => roll(k)}>
             <Dices className="w-4 h-4" />×{k}
-          </button>
+          </Button>
         ))}
         <span className="text-sm text-ink-2 ml-auto">
           {L(lang, 'Бросков', 'Rolls')}: <b className="font-mono text-ink">{total}</b>

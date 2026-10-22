@@ -1,3 +1,6 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Check } from '../ui/Check';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { MousePointer2, Pause, Play, Plus, RotateCcw, Rocket, Shuffle } from 'lucide-react';
@@ -403,14 +406,9 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {SCENES.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => loadScene(s.id)}
-            className={`shrink-0 h-9 px-3.5 rounded-full text-sm border cursor-pointer ${sceneId === s.id ? 'bg-ink border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}
-            style={sceneId === s.id ? { color: '#fff' } : undefined}
-          >
+          <Button variant={sceneId === s.id ? 'primary' : 'outline'} className="shrink-0 text-sm" key={s.id} onPress={() => loadScene(s.id)} style={sceneId === s.id ? { color: '#fff' } : undefined}>
             {s.title[lang]}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="bg-surface border border-line rounded-xl px-4 py-3">
@@ -464,51 +462,39 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
           </Stage3D>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => setRunning(!running)} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => setRunning(!running)}>
               {running ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {running ? L('Пауза', 'Pause') : L('Пуск', 'Run')}
-            </button>
-            <button onClick={() => rebuild(scene)} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => rebuild(scene)}>
               <RotateCcw className="w-4 h-4" />
               {L('Сначала', 'Reset')}
-            </button>
+            </Button>
             <div className="flex p-0.5 rounded-lg bg-muted border border-line">
               {[0.25, 1, 4].map((k) => (
-                <button key={k} onClick={() => setSpeed(k)} className={`h-8 px-2.5 rounded-md text-xs font-mono cursor-pointer ${speed === k ? 'bg-surface border border-line text-ink' : 'text-ink-2'}`}>
+                <Button variant={speed === k ? 'outline' : 'ghost'} size="sm" className="text-xs font-mono" key={k} onPress={() => setSpeed(k)}>
                   ×{String(k).replace('.', ',')}
-                </button>
+                </Button>
               ))}
             </div>
-            <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer select-none">
-              <input type="checkbox" checked={trails} onChange={(e) => setTrails(e.target.checked)} className="w-4 h-4 accent-accent" />
-              {L('Следы орбит', 'Orbit trails')}
-            </label>
+            <Check checked={trails} onChange={(v) => setTrails(v)}>{L('Следы орбит', 'Orbit trails')}</Check>
             {sceneId === 'three' && (
-              <button onClick={nudge} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+              <Button variant="outline" className="text-sm" onPress={() => nudge()}>
                 <Shuffle className="w-4 h-4" />
                 {L('Толкнуть (±1%)', 'Nudge (±1%)')}
-              </button>
+              </Button>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setAdding(null)}
-              className={`h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border cursor-pointer ${!adding ? 'bg-accent border-accent' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-              style={!adding ? { color: '#fff' } : undefined}
-            >
+            <Button variant={!adding ? 'primary' : 'outline'} className="text-sm" onPress={() => setAdding(null)} style={!adding ? { color: '#fff' } : undefined}>
               <MousePointer2 className="w-4 h-4" />
               {L('Смотреть и выбирать', 'Look and select')}
-            </button>
+            </Button>
             {(['planet', 'moon', 'star'] as const).map((k) => (
-              <button
-                key={k}
-                onClick={() => setAdding(k)}
-                className={`h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border cursor-pointer ${adding === k ? 'bg-accent border-accent' : 'bg-surface border-dashed border-line-strong text-ink hover:bg-muted'}`}
-                style={adding === k ? { color: '#fff' } : undefined}
-              >
+              <Button variant={adding === k ? 'primary' : 'outline'} className="text-sm" key={k} onPress={() => setAdding(k)} style={adding === k ? { color: '#fff' } : undefined}>
                 <Plus className="w-4 h-4" />
                 {{ planet: L('Планета', 'Planet'), moon: L('Спутник', 'Moon'), star: L('Звезда', 'Star') }[k]}
-              </button>
+              </Button>
             ))}
           </div>
           <p className="text-xs text-ink-3">{L('Крути сцену мышкой или пальцем, колесо — приближение. Нажми на тело, чтобы увидеть его орбиту.', 'Drag to orbit, scroll to zoom. Click a body to see its orbit.')}</p>
@@ -525,7 +511,7 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
                     {fmt(launchV, 1)} {L('км/с', 'km/s')}
                   </span>
                 </span>
-                <input type="range" min={5} max={13} step={0.1} value={launchV} onChange={(e) => setLaunchV(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+                <RangeSlider value={launchV} onChange={(v) => setLaunchV(v)} min={5} max={13} step={0.1} />
               </label>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button onClick={() => setLaunchV(Math.round(Math.sqrt(EARTH_MU / (EARTH_R + 200)) * 10) / 10)} className="rounded-lg bg-muted px-2 py-1.5 text-left hover:bg-hover cursor-pointer">
@@ -537,10 +523,10 @@ export const Space3D: React.FC<{ lang: Lang }> = ({ lang }) => {
                   <span className="block text-ink-3">{L('улёт от Земли', 'escape from Earth')}</span>
                 </button>
               </div>
-              <button onClick={launch} className="h-10 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+              <Button className="text-sm font-medium" onPress={() => launch()}>
                 <Rocket className="w-4 h-4" />
                 {L('Запустить', 'Launch')}
-              </button>
+              </Button>
               <p className="text-[11px] text-ink-3">{L('У самой поверхности Земли v₁ = 7,9 км/с и v₂ = 11,2 км/с — на высоте 200 км чуть меньше.', 'Right at the surface v₁ = 7.9 km/s and v₂ = 11.2 km/s; at 200 km a little less.')}</p>
             </div>
           )}

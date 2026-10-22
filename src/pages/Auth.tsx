@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { authErrorText, cloudEnabled, resendSignupCode, resetPassword, signIn, signInWithGoogle, signUp, updatePassword, useSession, verifyEmailCode } from '../lib/supabase';
@@ -167,19 +168,13 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
             <Logo size={26} />
           </a>
           <div className="flex items-center gap-1">
-            <button
-              onClick={onToggleLang}
-              className="h-8 px-2.5 rounded-md text-xs font-mono text-ink-2 hover:text-ink hover:bg-hover transition-colors cursor-pointer"
-            >
+            <Button variant="ghost" size="sm" className="text-xs font-mono" onPress={() => onToggleLang()}>
               {lang === 'ru' ? 'EN' : 'RU'}
-            </button>
-            <button
-              onClick={() => onNavigate('landing')}
-              className="h-8 px-2.5 rounded-md inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink hover:bg-hover transition-colors cursor-pointer"
-            >
+            </Button>
+            <Button variant="ghost" size="sm" className="text-sm" onPress={() => onNavigate('landing')}>
               <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
               {t.back}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -188,14 +183,10 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
             <h1 className="font-serif text-[32px] sm:text-[36px] leading-tight tracking-[-0.02em]">{copy.title}</h1>
             <p className="mt-2 text-[15px] text-ink-2">{copy.subtitle}</p>
 
-            <button
-              type="button"
-              onClick={google}
-              className="mt-8 w-full h-11 rounded-lg bg-surface border border-line hover:bg-muted hover:border-line-strong text-sm font-medium text-ink inline-flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
-            >
+            <Button variant="outline" size="lg" fullWidth className="mt-8 text-sm font-medium" type="button" onPress={() => google()}>
               <GoogleIcon />
               {t.google}
-            </button>
+            </Button>
 
             <div className="my-6 flex items-center gap-3 text-xs text-ink-3">
               <span className="flex-1 h-px bg-line" />
@@ -209,7 +200,7 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                   {codeFor.kind === 'signup' ? L('Подтверждение почты', 'Confirm your email') : L('Новый пароль', 'New password')}: <b>{codeFor.email}</b>
                 </p>
                 <Field label={L('Код из письма', 'Code from the email')}>
-                  <input
+                  <Input
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     autoFocus
@@ -221,22 +212,22 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                 </Field>
                 {codeFor.kind === 'recovery' && (
                   <Field label={L('Новый пароль', 'New password')} hint={t.fields.passwordHint}>
-                    <input type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={`${inputBase} border-line`} />
+                    <Input type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={`${inputBase} border-line`} />
                   </Field>
                 )}
                 {formError && <p className="rounded-lg bg-[#FDF0EF] border border-[#F2C8C5] px-3 py-2 text-sm text-[#CC2F35]">{formError}</p>}
                 {notice && <p className="rounded-lg bg-[#EAF6EF] border border-[#BFE3CC] px-3 py-2 text-sm text-[#1E7A4C]">{notice}</p>}
-                <button type="submit" disabled={busy} className="w-full h-11 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-70 text-white text-sm font-medium cursor-pointer inline-flex items-center justify-center gap-2">
+                <Button size="lg" fullWidth className="text-sm font-medium" type="submit" isDisabled={busy}>
                   {busy && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
                   {codeFor.kind === 'signup' ? L('Подтвердить', 'Confirm') : L('Сменить пароль', 'Change password')}
-                </button>
+                </Button>
                 <div className="flex justify-between text-sm">
-                  <button type="button" onClick={resend} className="text-accent hover:text-accent-hover cursor-pointer">
+                  <Button variant="ghost" type="button" onPress={() => resend()}>
                     {L('Отправить код ещё раз', 'Send the code again')}
-                  </button>
-                  <button type="button" onClick={() => { setCodeFor(null); setNotice(null); setFormError(null); setCode(''); }} className="text-ink-2 hover:text-ink cursor-pointer">
+                  </Button>
+                  <Button variant="ghost" type="button" onPress={() => { setCodeFor(null); setNotice(null); setFormError(null); setCode(''); }}>
                     {L('Назад', 'Back')}
-                  </button>
+                  </Button>
                 </div>
                 <p className="text-xs text-ink-3">{L('Письмо не пришло? Подожди минуту и проверь папку «Спам» или «Промоакции».', 'No email? Wait a minute and check Spam or Promotions.')}</p>
               </form>
@@ -248,22 +239,15 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                     <span className="block text-sm font-medium text-ink mb-1.5">{t.fields.role}</span>
                     <div className="grid grid-cols-2 p-1 rounded-lg bg-muted border border-line">
                       {(['student', 'teacher'] as Role[]).map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setRole(r)}
-                          className={`h-9 rounded-md text-sm transition-colors cursor-pointer ${
-                            role === r ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
-                          }`}
-                        >
+                        <Button variant={role === r ? 'outline' : 'ghost'} className={`text-sm ${role === r ? 'font-medium' : ''}`} key={r} type="button" onPress={() => setRole(r)}>
                           {t.fields[r]}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
 
                   <Field label={t.fields.name} error={errors.name}>
-                    <input
+                    <Input
                       type="text"
                       autoComplete="given-name"
                       value={name}
@@ -278,16 +262,9 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                       <span className="block text-sm font-medium text-ink mb-1.5">{t.fields.grade}</span>
                       <div className="flex gap-1.5">
                         {GRADES.map((g) => (
-                          <button
-                            key={g}
-                            type="button"
-                            onClick={() => setGrade(g)}
-                            className={`flex-1 h-9 rounded-md font-mono text-sm border transition-colors cursor-pointer ${
-                              grade === g ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface text-ink-2 hover:border-line-strong'
-                            }`}
-                          >
+                          <Button variant="outline" className={`flex-1 font-mono text-sm ${grade === g ? 'text-accent' : 'text-ink-2'}`} key={g} type="button" onPress={() => setGrade(g)}>
                             {g}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
@@ -296,7 +273,7 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
               )}
 
               <Field label={t.fields.email} error={errors.email}>
-                <input
+                <Input
                   type="email"
                   autoComplete="email"
                   value={email}
@@ -311,39 +288,30 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
                 error={errors.password}
                 hint={mode === 'register' ? t.fields.passwordHint : undefined}
                 aside={mode === 'login' ? (
-                  <button type="button" onClick={forgot} className="text-sm text-accent hover:text-accent-hover cursor-pointer">{t.login.forgot}</button>
+                  <Button variant="ghost" className="text-sm" type="button" onPress={() => forgot()}>{t.login.forgot}</Button>
                 ) : undefined}
               >
                 <div className="relative">
-                  <input
+                  <Input
                     type={showPassword ? 'text' : 'password'}
                     autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
                     className={`${inputBase} pr-11 ${errors.password ? 'border-physics' : 'border-line'}`}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md flex items-center justify-center text-ink-3 hover:text-ink hover:bg-hover cursor-pointer"
-                  >
+                  <Button variant="ghost" isIconOnly size="sm" className="absolute right-1.5 top-1/2 w-8" type="button" onPress={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
                     {showPassword ? <EyeOff className="w-4 h-4" strokeWidth={1.75} /> : <Eye className="w-4 h-4" strokeWidth={1.75} />}
-                  </button>
+                  </Button>
                 </div>
               </Field>
 
               {formError && <p className="rounded-lg bg-[#FDF0EF] border border-[#F2C8C5] px-3 py-2 text-sm text-[#CC2F35]">{formError}</p>}
               {notice && <p className="rounded-lg bg-[#EAF6EF] border border-[#BFE3CC] px-3 py-2 text-sm text-[#1E7A4C]">{notice}</p>}
 
-              <button
-                type="submit"
-                disabled={busy}
-                className="w-full h-11 rounded-lg bg-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-70 text-white text-sm font-medium transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
-              >
+              <Button size="lg" fullWidth className="text-sm font-medium" type="submit" isDisabled={busy}>
                 {busy && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
                 {copy.submit}
-              </button>
+              </Button>
             </form>
             )}
 
@@ -351,19 +319,13 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
 
             <p className="mt-8 text-sm text-ink-2">
               {copy.switchText}{' '}
-              <button
-                onClick={() => onNavigate(mode === 'login' ? 'register' : 'login')}
-                className="text-accent hover:text-accent-hover font-medium cursor-pointer"
-              >
+              <Button variant="ghost" className="font-medium" onPress={() => onNavigate(mode === 'login' ? 'register' : 'login')}>
                 {copy.switchLink}
-              </button>
+              </Button>
             </p>
-            <button
-              onClick={() => onNavigate('app')}
-              className="mt-2 text-sm text-ink-3 hover:text-ink underline underline-offset-4 decoration-line-strong cursor-pointer"
-            >
+            <Button variant="ghost" className="mt-2 text-sm" onPress={() => onNavigate('app')}>
               {t.guest}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

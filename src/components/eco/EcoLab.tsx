@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Flame, Pause, Play, Plus, RotateCcw, Target } from 'lucide-react';
 import { BURROWS, DEFAULTS, GH, GW, makeWorld, Params, step, World } from './eco';
@@ -9,7 +11,7 @@ const COL = { grass: '#30A46C', rabbit: '#5B8CFF', fox: '#F76B15' };
 const Slider: React.FC<{ label: string; value: number; min: number; max: number; step: number; left: string; right: string; onChange: (v: number) => void }> = ({ label, value, min, max, step: st, left, right, onChange }) => (
   <label className="flex flex-col gap-1">
     <span className="text-xs text-ink-2">{label}</span>
-    <input type="range" min={min} max={max} step={st} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+    <RangeSlider value={value} onChange={(v) => onChange(v)} min={min} max={max} step={st} />
     <span className="flex justify-between text-[11px] text-ink-3">
       <span>{left}</span>
       <span>{right}</span>
@@ -181,25 +183,22 @@ export const EcoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <canvas ref={field} className="block w-full" />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => setRun(!run)} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => setRun(!run)}>
               {run ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {run ? L('Пауза', 'Pause') : L('Пуск', 'Run')}
-            </button>
-            <button
-              onClick={() => {
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => {
                 world.current = makeWorld();
                 setParams(DEFAULTS);
-              }}
-              className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer"
-            >
+              }}>
               <RotateCcw className="w-4 h-4" />
               {L('Заново', 'Restart')}
-            </button>
+            </Button>
             <div className="flex p-0.5 rounded-lg bg-muted border border-line">
               {[1, 2, 5].map((k) => (
-                <button key={k} onClick={() => setSpeed(k)} className={`h-8 px-2.5 rounded-md text-xs font-mono cursor-pointer ${speed === k ? 'bg-surface border border-line text-ink' : 'text-ink-2'}`}>
+                <Button variant={speed === k ? 'outline' : 'ghost'} size="sm" className="text-xs font-mono" key={k} onPress={() => setSpeed(k)}>
                   ×{k}
-                </button>
+                </Button>
               ))}
             </div>
             <span className="text-sm text-ink-2 ml-auto">
@@ -210,22 +209,22 @@ export const EcoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => event('rabbits')} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            <Button variant="outline" className="text-sm" onPress={() => event('rabbits')}>
               <Plus className="w-4 h-4" />
               {L('Выпустить 25 зайцев', 'Release 25 rabbits')}
-            </button>
-            <button onClick={() => event('foxes')} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => event('foxes')}>
               <Plus className="w-4 h-4" />
               {L('Выпустить 6 лис', 'Release 6 foxes')}
-            </button>
-            <button onClick={() => event('hunt')} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => event('hunt')}>
               <Target className="w-4 h-4" />
               {L('Охота на лис (−50%)', 'Fox hunt (−50%)')}
-            </button>
-            <button onClick={() => event('fire')} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => event('fire')}>
               <Flame className="w-4 h-4" />
               {L('Степной пожар', 'Wildfire')}
-            </button>
+            </Button>
           </div>
           <div className="bg-surface border border-line rounded-xl p-4">
             <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">{L('Численность популяций', 'Population sizes')}</h3>

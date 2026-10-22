@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Stage3D } from '../lab/Stage3D';
@@ -226,19 +227,12 @@ export const LatticeLab: React.FC<{ lang: 'ru' | 'en'; ids: LatticeId[] }> = ({ 
       {ids.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
           {ids.map((id) => (
-            <button
-              key={id}
-              onClick={() => {
+            <Button variant={id === current ? 'primary' : 'outline'} size="sm" className="text-sm" key={id} onPress={() => {
                 setCurrent(id);
                 setSelected(null);
-              }}
-              className={`h-8 px-3 rounded-lg text-sm border transition-colors cursor-pointer ${
-                id === current ? 'bg-accent text-white border-accent' : 'bg-surface border-line text-ink-2 hover:text-ink hover:border-line-strong'
-              }`}
-              style={id === current ? { color: '#fff' } : undefined}
-            >
+              }} style={id === current ? { color: '#fff' } : undefined}>
               {LATTICES[id].kind[lang]}
-            </button>
+            </Button>
           ))}
         </div>
       )}

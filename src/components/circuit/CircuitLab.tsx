@@ -1,3 +1,6 @@
+import { Check } from '../ui/Check';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Hand, RotateCcw, Trash2 } from 'lucide-react';
 import { Board, COLS, DEFAULTS, ends, LAMP_MAX_P, Part, PartType, ROWS, solve, Solution } from './solver';
@@ -276,7 +279,7 @@ const Slider: React.FC<{ label: string; value: number; min: number; max: number;
         {num(value, step < 1 ? 1 : 0)} {unit}
       </span>
     </span>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+    <RangeSlider value={value} onChange={(v) => onChange(v)} min={min} max={max} step={step} />
   </label>
 );
 
@@ -475,14 +478,9 @@ export const CircuitLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {CIRCUITS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => load(p.id)}
-            className={`shrink-0 h-9 px-3.5 rounded-full text-sm border cursor-pointer ${presetId === p.id ? 'bg-ink border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}
-            style={presetId === p.id ? { color: '#fff' } : undefined}
-          >
+          <Button variant={presetId === p.id ? 'primary' : 'outline'} className="shrink-0 text-sm" key={p.id} onPress={() => load(p.id)} style={presetId === p.id ? { color: '#fff' } : undefined}>
             {p.title[lang]}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -492,32 +490,19 @@ export const CircuitLab: React.FC<{ lang: Lang }> = ({ lang }) => {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => setTool('hand')}
-          className={`h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border cursor-pointer ${tool === 'hand' ? 'bg-accent border-accent' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-          style={tool === 'hand' ? { color: '#fff' } : undefined}
-        >
+        <Button variant={tool === 'hand' ? 'primary' : 'outline'} className="text-sm" onPress={() => setTool('hand')} style={tool === 'hand' ? { color: '#fff' } : undefined}>
           <Hand className="w-4 h-4" />
           {L('Выбрать', 'Select')}
-        </button>
+        </Button>
         {TOOLS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTool(t)}
-            className={`h-9 px-3 rounded-lg text-sm border cursor-pointer ${tool === t ? 'bg-accent border-accent' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-            style={tool === t ? { color: '#fff' } : undefined}
-          >
+          <Button variant={tool === t ? 'primary' : 'outline'} className="text-sm" key={t} onPress={() => setTool(t)} style={tool === t ? { color: '#fff' } : undefined}>
             {NAMES[t][lang]}
-          </button>
+          </Button>
         ))}
-        <button
-          onClick={() => setTool('delete')}
-          className={`h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border cursor-pointer ${tool === 'delete' ? 'bg-[#E5484D] border-[#E5484D]' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-          style={tool === 'delete' ? { color: '#fff' } : undefined}
-        >
+        <Button variant={tool === 'delete' ? 'danger' : 'outline'} className="text-sm" onPress={() => setTool('delete')} style={tool === 'delete' ? { color: '#fff' } : undefined}>
           <Trash2 className="w-4 h-4" />
           {L('Удалить', 'Delete')}
-        </button>
+        </Button>
       </div>
       <p className="text-xs text-ink-3 -mt-2">
         {tool === 'hand'
@@ -546,14 +531,11 @@ export const CircuitLab: React.FC<{ lang: Lang }> = ({ lang }) => {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="inline-flex items-center gap-2 text-sm text-ink cursor-pointer select-none">
-          <input type="checkbox" checked={electrons} onChange={(e) => setElectrons(e.target.checked)} className="w-4 h-4 accent-accent" />
-          {electrons ? L('Показаны электроны (движутся от − к +)', 'Showing electrons (− to +)') : L('Показать движение электронов вместо направления тока', 'Show electrons instead of current direction')}
-        </label>
-        <button onClick={() => load(presetId)} className="ml-auto h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+        <Check checked={electrons} onChange={(v) => setElectrons(v)}>{electrons ? L('Показаны электроны (движутся от − к +)', 'Showing electrons (− to +)') : L('Показать движение электронов вместо направления тока', 'Show electrons instead of current direction')}</Check>
+        <Button variant="outline" className="ml-auto text-sm" onPress={() => load(presetId)}>
           <RotateCcw className="w-4 h-4" />
           {L('Сбросить схему', 'Reset circuit')}
-        </button>
+        </Button>
       </div>
 
       <div className="grid md:grid-cols-2 gap-3 items-start">
@@ -566,9 +548,9 @@ export const CircuitLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                 <>
                   <Slider label={L('ЭДС ε', 'EMF ε')} value={part.emf} min={1.5} max={24} step={0.5} unit={L('В', 'V')} onChange={(emf) => set({ emf })} />
                   <Slider label={L('Внутреннее сопротивление r', 'Internal resistance r')} value={part.r} min={0} max={5} step={0.1} unit={L('Ом', 'Ω')} onChange={(r) => set({ r })} />
-                  <button onClick={() => set({ dir: part.dir === 1 ? -1 : 1 })} className="self-start h-8 px-3 rounded-lg border border-line text-sm text-ink hover:bg-muted cursor-pointer">
+                  <Button variant="outline" size="sm" className="self-start text-sm" onPress={() => set({ dir: part.dir === 1 ? -1 : 1 })}>
                     {L('Перевернуть полюса', 'Flip polarity')}
-                  </button>
+                  </Button>
                 </>
               )}
               {(part.type === 'resistor' || part.type === 'lamp' || part.type === 'rheostat') && (
@@ -583,38 +565,31 @@ export const CircuitLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                 />
               )}
               {part.type === 'lamp' && part.burnt && (
-                <button
-                  onClick={() => {
+                <Button size="sm" className="self-start text-sm" onPress={() => {
                     set({ burnt: false });
                     setBurntMsg(false);
-                  }}
-                  className="self-start h-8 px-3 rounded-lg bg-accent text-sm cursor-pointer"
-                  style={{ color: '#fff' }}
-                >
+                  }}>
                   {L('Заменить лампу', 'Replace the lamp')}
-                </button>
+                </Button>
               )}
               {part.type === 'switch' && (
-                <button onClick={() => set({ on: !part.on })} className="self-start h-8 px-3 rounded-lg border border-line text-sm text-ink hover:bg-muted cursor-pointer">
+                <Button variant="outline" size="sm" className="self-start text-sm" onPress={() => set({ on: !part.on })}>
                   {part.on ? L('Разомкнуть', 'Open') : L('Замкнуть', 'Close')}
-                </button>
+                </Button>
               )}
               {part.type === 'voltmeter' && <p className="text-xs text-ink-3">{L('У вольтметра очень большое сопротивление — ток через него почти не идёт. Подключай его параллельно.', 'A voltmeter has a huge resistance, so almost no current flows through it. Connect it in parallel.')}</p>}
               {part.type === 'ammeter' && <p className="text-xs text-ink-3">{L('У амперметра почти нулевое сопротивление. Подключай его последовательно — параллельно он устроит короткое замыкание.', 'An ammeter has almost zero resistance. Put it in series; in parallel it shorts the circuit.')}</p>}
-              <button
-                onClick={() => {
+              <Button variant="ghost" size="sm" className="self-start text-xs" onPress={() => {
                   setBoard((b) => {
                     const n = { ...b };
                     delete n[selected!];
                     return n;
                   });
                   setSelected(null);
-                }}
-                className="self-start text-xs text-[#CC2F35] hover:underline inline-flex items-center gap-1 cursor-pointer"
-              >
+                }}>
                 <Trash2 className="w-3.5 h-3.5" />
                 {L('Удалить', 'Delete')}
-              </button>
+              </Button>
             </div>
           ) : (
             <p className="text-sm text-ink-3">{L('Нажми на деталь в схеме.', 'Tap a part in the circuit.')}</p>

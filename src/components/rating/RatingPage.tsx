@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, Check, Pencil, Trophy, Users, Zap } from 'lucide-react';
 import { useSession } from '../../lib/supabase';
@@ -44,10 +45,10 @@ const Nickname: React.FC<{ lang: Lang; value: string; onSaved: () => void }> = (
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   if (!edit)
     return (
-      <button onClick={() => setEdit(true)} className="inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="text-sm" onPress={() => setEdit(true)}>
         {L('Твой ник', 'Your nickname')}: <b className="text-ink">{value}</b>
         <Pencil className="w-3.5 h-3.5" />
-      </button>
+      </Button>
     );
   return (
     <form
@@ -64,11 +65,11 @@ const Nickname: React.FC<{ lang: Lang; value: string; onSaved: () => void }> = (
       }}
       className="flex flex-wrap items-center gap-2"
     >
-      <input value={v} onChange={(e) => setV(e.target.value)} maxLength={20} autoFocus className="h-9 w-48 rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-accent" />
-      <button className="h-9 px-3 rounded-lg bg-accent text-sm font-medium inline-flex items-center gap-1 cursor-pointer" style={{ color: '#fff' }}>
+      <Input value={v} onChange={(e) => setV(e.target.value)} maxLength={20} autoFocus className="w-48 text-sm" />
+      <Button className="text-sm font-medium">
         <Check className="w-4 h-4" />
         {L('Сохранить', 'Save')}
-      </button>
+      </Button>
       {err && <span className="text-xs text-[#B42318] w-full">{err}</span>}
     </form>
   );
@@ -215,9 +216,9 @@ const ClassView: React.FC<{ lang: Lang }> = ({ lang }) => {
         <Users className="w-8 h-8 mx-auto text-ink-3" />
         <p className="mt-2 text-ink">{L('Ты пока не состоишь в классе.', 'You are not in a class yet.')}</p>
         <p className="text-sm text-ink-2">{L('Попроси учителя код класса и введи его — тогда здесь появится рейтинг одноклассников.', 'Ask your teacher for the class code; then your classmates’ ranking shows up here.')}</p>
-        <button onClick={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: 'classes' }))} className="mt-3 h-9 px-4 rounded-lg bg-accent text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+        <Button className="mt-3 text-sm font-medium" onPress={() => window.dispatchEvent(new CustomEvent('open-mode', { detail: 'classes' }))}>
           {L('Ввести код класса', 'Enter a class code')}
-        </button>
+        </Button>
       </div>
     );
   return (
@@ -276,10 +277,10 @@ export const RatingPage: React.FC<{ lang: Lang }> = ({ lang }) => {
             <div className="flex-1 text-center sm:text-left">
               <h2 className="font-serif text-2xl text-ink">{L('Войди, чтобы попасть в лигу', 'Sign in to join a league')}</h2>
               <p className="mt-1 text-sm text-ink-2">{L('Соревнуйся с учениками со всего Кыргызстана и с одноклассниками. Это бесплатно.', 'Compete with learners across the country and with your classmates. It is free.')}</p>
-              <button onClick={() => navigate('login')} className="mt-3 h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+              <Button className="mt-3 text-sm font-medium" onPress={() => navigate('login')}>
                 <Trophy className="w-4 h-4" />
                 {L('Войти', 'Sign in')}
-              </button>
+              </Button>
             </div>
           </div>
           <HowToEarn lang={lang} />
@@ -294,9 +295,9 @@ export const RatingPage: React.FC<{ lang: Lang }> = ({ lang }) => {
                 ['class', L('Мой класс', 'My class')],
               ] as [Tab, string][]
             ).map(([id, label]) => (
-              <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm whitespace-nowrap cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
+              <Button variant={tab === id ? 'outline' : 'ghost'} className={`text-sm whitespace-nowrap ${tab === id ? 'font-medium' : ''}`} key={id} onPress={() => setTab(id)}>
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
           {tab === 'league' ? <LeagueView lang={lang} /> : tab === 'all' ? <AllTime lang={lang} /> : <ClassView lang={lang} />}

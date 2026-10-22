@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { fitCanvas } from '../../lib/canvas';
@@ -144,19 +145,14 @@ export const ProcessSim: React.FC<{
         <span className="pointer-events-none absolute top-3 left-3 px-2 py-1 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[12px] text-[#EDEDED]">
           {sim.title[lang]}
         </span>
-        <button
-          onClick={() => {
+        <Button variant="outline" isIconOnly size="sm" className="absolute top-3 right-3 z-10 w-8" onPress={() => {
             const el = stageRef.current;
             if (!el) return;
             if (document.fullscreenElement) document.exitFullscreen?.();
             else el.requestFullscreen?.().catch(() => undefined);
-          }}
-          aria-label={lang === 'ru' ? 'Во весь экран' : 'Full screen'}
-          title={lang === 'ru' ? 'Во весь экран' : 'Full screen'}
-          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-md bg-[#1A1C21]/90 border border-[#2c2f36] text-[#B5B8C0] hover:text-white flex items-center justify-center cursor-pointer"
-        >
+          }} aria-label={lang === 'ru' ? 'Во весь экран' : 'Full screen'}>
           <Maximize2 className="w-4 h-4" strokeWidth={1.75} />
-        </button>
+        </Button>
         <InfoCard lang={lang} info={selected} onClose={() => setSelected(null)} />
       </div>
 

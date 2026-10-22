@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Compass, Play, Pause, RotateCcw } from 'lucide-react';
@@ -213,30 +215,15 @@ export const MomentTrigCircle: React.FC<MomentTrigCircleProps> = ({ lang }) => {
             <span className="text-slate-400">{lang === 'ru' ? 'Вращение угла (0° — 360°):' : 'Angle Rotation (0° - 360°):'}</span>
             <span className="font-mono text-yellow-400 font-bold">{angleDeg}° ({angleRad.toFixed(2)} rad)</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={360}
-            step={1}
-            value={angleDeg}
-            onChange={(e) => {
+          <RangeSlider value={angleDeg} onChange={(v) => {
               setIsAutoSpin(false);
-              setAngleDeg(Number(e.target.value));
-            }}
-            className="w-full accent-yellow-400 cursor-pointer"
-          />
+              setAngleDeg(v);
+            }} min={0} max={360} step={1} />
         </div>
 
-        <button
-          onClick={() => setIsAutoSpin(!isAutoSpin)}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-            isAutoSpin
-              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40'
-              : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
-          }`}
-        >
+        <Button variant="outline" size="sm" className={`text-xs font-bold ${isAutoSpin ? '' : 'text-slate-300'}`} onPress={() => setIsAutoSpin(!isAutoSpin)}>
           {isAutoSpin ? (lang === 'ru' ? 'Пауза вращения' : 'Pause Spin') : (lang === 'ru' ? 'Непрерывное вращение' : 'Continuous Spin')}
-        </button>
+        </Button>
       </div>
     </div>
   );

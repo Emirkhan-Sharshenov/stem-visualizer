@@ -1,5 +1,6 @@
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Dialog } from '../ui/Dialog';
 import { Award, Download, Lock, Share2, X } from 'lucide-react';
 import { TOPICS } from '../../data/curriculum';
 import type { Progress } from '../../lib/progress';
@@ -240,30 +241,26 @@ const CertModal: React.FC<{ lang: Lang; course: Course; onClose: () => void }> =
     save();
   };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-3" role="dialog" aria-modal>
-      <div className="absolute inset-0 bg-black/55" onClick={onClose} />
-      <div className="relative w-full max-w-3xl bg-paper rounded-2xl border border-line shadow-2xl p-4 sm:p-6 flex flex-col gap-4 anim-page">
+  return (
+    <Dialog onClose={onClose} label={L('Сертификат', 'Certificate')} className="max-w-3xl p-4 sm:p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Award className="w-5 h-5" style={{ color: course.subject.color }} />
           <h2 className="font-serif text-xl text-ink flex-1">{L('Сертификат', 'Certificate')}: {course.subject[lang]}, {L(`${course.grade} класс`, `grade ${course.grade}`)}</h2>
-          <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="w-8 h-8 rounded-md text-ink-3 hover:text-ink hover:bg-muted flex items-center justify-center cursor-pointer">
+          <Button variant="ghost" isIconOnly size="sm" className="w-8" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
         <div className="rounded-xl border border-line overflow-hidden bg-muted aspect-[2339/1654]">{img && <img src={img} alt="" className="w-full h-full object-contain" />}</div>
-        <input value={name} onChange={(e) => setName(e.target.value.slice(0, 40))} placeholder={L('Имя и фамилия для сертификата', 'Full name for the certificate')} className="h-11 px-3 rounded-lg border border-line bg-surface text-ink outline-none focus:border-accent" />
+        <Input value={name} onChange={(e) => setName(e.target.value.slice(0, 40))} placeholder={L('Имя и фамилия для сертификата', 'Full name for the certificate')}  />
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={save} disabled={!pdf} className="h-11 rounded-lg bg-accent hover:bg-accent-hover font-medium inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40" style={{ color: '#fff' }}>
+          <Button size="lg" className="font-medium" onPress={() => save()} isDisabled={!pdf}>
             <Download className="w-4 h-4" /> {L('Скачать PDF', 'Download PDF')}
-          </button>
-          <button onClick={share} disabled={!pdf} className="h-11 rounded-lg border border-line hover:bg-muted text-sm font-medium text-ink inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40">
+          </Button>
+          <Button variant="outline" size="lg" className="text-sm font-medium" onPress={() => share()} isDisabled={!pdf}>
             <Share2 className="w-4 h-4" /> {L('Поделиться', 'Share')}
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </Dialog>
   );
 };
 

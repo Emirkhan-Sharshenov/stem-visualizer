@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas, logicalHeight } from '../lib/canvas';
 import { Volume2, Play, Pause, RotateCcw, AlertTriangle } from 'lucide-react';
@@ -204,15 +206,7 @@ export const MomentDopplerWave: React.FC<MomentDopplerWaveProps> = ({ lang }) =>
               {sourceSpeed === 0 ? (lang === 'ru' ? 'Покой (0 м/с)' : 'Rest') : `${sourceSpeed.toFixed(2)} × Скорости звука`}
             </span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={1.8}
-            step={0.05}
-            value={sourceSpeed}
-            onChange={(e) => setSourceSpeed(Number(e.target.value))}
-            className="w-full accent-yellow-400 cursor-pointer"
-          />
+          <RangeSlider value={sourceSpeed} onChange={(v) => setSourceSpeed(v)} min={0} max={1.8} step={0.05} />
           <div className="flex justify-between text-[10px] text-slate-500">
             <span>{lang === 'ru' ? '0.0 (Стоит на месте)' : '0.0 (At rest)'}</span>
             <span>{lang === 'ru' ? '1.0 (Звуковой барьер)' : '1.0 (Sound barrier)'}</span>
@@ -220,12 +214,9 @@ export const MomentDopplerWave: React.FC<MomentDopplerWaveProps> = ({ lang }) =>
           </div>
         </div>
 
-        <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 border border-slate-800 text-slate-200 hover:bg-slate-800 transition-all cursor-pointer"
-        >
+        <Button variant="outline" size="sm" className="text-xs font-bold" onPress={() => setIsPlaying(!isPlaying)}>
           {isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}
-        </button>
+        </Button>
       </div>
     </div>
   );

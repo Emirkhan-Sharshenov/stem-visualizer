@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, Rocket, HelpCircle, Clock, Zap } from 'lucide-react';
@@ -166,15 +168,10 @@ export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-              isPlaying ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
-            }`}
-          >
+          <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-          </button>
+          </Button>
         </div>
 
         {/* Live Gauges Bar */}
@@ -222,15 +219,7 @@ export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
             <span>{lang === 'ru' ? 'Скорость ракеты v (в долях от скорости света c)' : 'Rocket Speed v (% of c)'}</span>
             <span className="font-mono text-rose-400 font-bold">{(velocityFraction * 100).toFixed(0)}% c ({(velocityFraction * 299792).toFixed(0)} {lang === 'ru' ? 'км/с' : 'km/s'})</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="0.99"
-            step="0.01"
-            value={velocityFraction}
-            onChange={(e) => setVelocityFraction(Number(e.target.value))}
-            className="w-full accent-rose-400 bg-slate-800 rounded-lg cursor-pointer"
-          />
+          <RangeSlider value={velocityFraction} onChange={(v) => setVelocityFraction(v)} min={0} max={0.99} step={0.01} />
         </div>
       </div>
 

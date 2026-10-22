@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Heart, Timer, Trophy, Zap } from 'lucide-react';
 import { PROBLEMS, problemQuestion } from '../../lib/problems';
@@ -84,12 +85,12 @@ export const Marathon: React.FC<{ lang: Lang; subject: string; onBack: () => voi
             {L('Бонус за серию', 'Run bonus')}: <b className="text-ink">+{score * XP.perMarathon}</b> {L('очков', 'points')}
           </p>
           <div className="mt-4 flex justify-center gap-2">
-            <button onClick={restart} className="h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => restart()}>
               {L('Ещё раз', 'Again')}
-            </button>
-            <button onClick={onBack} className="h-10 px-4 rounded-lg border border-line bg-surface text-sm text-ink cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => onBack()}>
               {L('К задачам', 'Back to problems')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -98,10 +99,10 @@ export const Marathon: React.FC<{ lang: Lang; subject: string; onBack: () => voi
 
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
-      <button onClick={onBack} className="self-start inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-ink cursor-pointer">
+      <Button variant="ghost" className="self-start text-sm" onPress={() => onBack()}>
         <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
         {L('Выйти из марафона', 'Leave the marathon')}
-      </button>
+      </Button>
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="font-serif text-[26px] text-ink mr-auto">{L('Марафон задач', 'Problem marathon')}</h2>
         <span className="inline-flex gap-1">
@@ -149,9 +150,9 @@ export const Marathon: React.FC<{ lang: Lang; subject: string; onBack: () => voi
               <p className="font-medium text-ink">{answer === q.correct ? L('Верно!', 'Correct!') : answer === -1 ? L('Время вышло.', 'Time is up.') : L('Неверно — минус жизнь.', 'Wrong: you lose a life.')}</p>
               {q.explain && <p className="mt-1 text-ink-2">{q.explain[lang]}</p>}
             </div>
-            <button onClick={next} className="self-end h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+            <Button className="self-end text-sm font-medium" onPress={() => next()}>
               {lives <= 0 ? L('Итоги', 'Results') : L('Дальше', 'Next')}
-            </button>
+            </Button>
           </>
         )}
       </div>

@@ -1,3 +1,5 @@
+import { RangeSlider } from './ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import * as THREE from 'three';
@@ -356,22 +358,12 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
 
           {/* Sub-mode switch */}
           <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setSubMode('revolution')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                subMode === 'revolution' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
-              }`}
-            >
+            <Button variant={subMode === 'revolution' ? 'primary' : 'ghost'} size="sm" className="text-xs font-semibold" onPress={() => setSubMode('revolution')}>
               {lang === 'ru' ? 'Тела вращения' : 'Revolution'}
-            </button>
-            <button
-              onClick={() => setSubMode('divergence')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                subMode === 'divergence' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
-              }`}
-            >
+            </Button>
+            <Button variant={subMode === 'divergence' ? 'primary' : 'ghost'} size="sm" className="text-xs font-semibold" onPress={() => setSubMode('divergence')}>
               {lang === 'ru' ? 'Дивергенция' : 'Divergence'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -396,17 +388,9 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
                   { id: 'parabola', label: '0.25x²' },
                   { id: 'cone', label: 'Cone' },
                 ].map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setCurveType(c.id as any)}
-                    className={`py-1.5 rounded-lg text-xs font-mono font-bold border transition-all cursor-pointer ${
-                      curveType === c.id
-                        ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow'
-                        : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
-                    }`}
-                  >
+                  <Button variant={curveType === c.id ? 'primary' : 'outline'} size="sm" className="text-xs font-mono font-bold" key={c.id} onPress={() => setCurveType(c.id as any)}>
                     {c.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -467,15 +451,7 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
                 <span>{lang === 'ru' ? 'Угол вращения (2D → 3D)' : 'Rotation Angle (2D → 3D)'}</span>
                 <span className="font-mono text-cyan-400">{rotationAngle}°</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="360"
-                step="5"
-                value={rotationAngle}
-                onChange={(e) => setRotationAngle(Number(e.target.value))}
-                className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-              />
+              <RangeSlider value={rotationAngle} onChange={(v) => setRotationAngle(v)} min={0} max={360} step={5} />
             </div>
 
             <div>
@@ -483,15 +459,7 @@ export const Math2D3DExplorer: React.FC<Math2D3DExplorerProps> = ({
                 <span>{lang === 'ru' ? 'Число сечений дисков (n)' : 'Integration Discs (n)'}</span>
                 <span className="font-mono text-cyan-400">{sliceCount}</span>
               </div>
-              <input
-                type="range"
-                min="6"
-                max="60"
-                step="2"
-                value={sliceCount}
-                onChange={(e) => setSliceCount(Number(e.target.value))}
-                className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-              />
+              <RangeSlider value={sliceCount} onChange={(v) => setSliceCount(v)} min={6} max={60} step={2} />
             </div>
           </div>
         )}

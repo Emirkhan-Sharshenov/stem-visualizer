@@ -1,3 +1,4 @@
+import { RangeSlider } from '../ui/RangeSlider';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { SolidId } from './ids';
@@ -388,7 +389,7 @@ export const Solid3D: React.FC<{ id: SolidId; lang: Lang }> = ({ id, lang }) => 
                 <span>{lang === 'ru' ? s.ru : s.en}</span>
                 <span className="font-mono text-ink">{n(p[s.k])}</span>
               </span>
-              <input type="range" min={s.min} max={s.max} step={s.step} value={p[s.k]} onChange={(e) => setP({ ...p, [s.k]: Number(e.target.value) })} className="w-full accent-[#8E4EC6] cursor-pointer" />
+              <RangeSlider value={p[s.k]} onChange={(v) => setP({ ...p, [s.k]: v })} min={s.min} max={s.max} step={s.step} color="#8E4EC6" />
             </label>
           ))}
         </div>

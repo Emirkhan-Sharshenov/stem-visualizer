@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useMemo, useState } from 'react';
 import { Check, Lightbulb, Minus, Plus, SkipForward } from 'lucide-react';
 import { GameBar, GameOver, Lang, shuffle, useCountdown } from './common';
@@ -135,16 +136,16 @@ export const BalanceGame: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang
               {i === re.length && <span className="text-3xl text-ink-3 mx-1">→</span>}
               {i > 0 && i !== re.length && <span className="text-2xl text-ink-3">+</span>}
               <div className="flex flex-col items-center gap-1">
-                <button onClick={() => setCo(co.map((x, j) => (j === i ? Math.min(12, x + 1) : x)))} className="w-9 h-7 rounded-md border border-line hover:bg-muted flex items-center justify-center cursor-pointer" aria-label="+">
+                <Button variant="outline" isIconOnly size="sm" className="w-9" onPress={() => setCo(co.map((x, j) => (j === i ? Math.min(12, x + 1) : x)))} aria-label="+">
                   <Plus className="w-4 h-4" />
-                </button>
+                </Button>
                 <div className="flex items-baseline gap-0.5">
                   <span className={`font-mono text-3xl w-8 text-right ${co[i] > 1 ? 'text-accent font-bold' : 'text-ink-3'}`}>{co[i]}</span>
                   <span className="font-serif text-3xl text-ink">{sub(f)}</span>
                 </div>
-                <button onClick={() => setCo(co.map((x, j) => (j === i ? Math.max(1, x - 1) : x)))} className="w-9 h-7 rounded-md border border-line hover:bg-muted flex items-center justify-center cursor-pointer" aria-label="−">
+                <Button variant="outline" isIconOnly size="sm" className="w-9" onPress={() => setCo(co.map((x, j) => (j === i ? Math.max(1, x - 1) : x)))} aria-label="−">
                   <Minus className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </React.Fragment>
           ))}
@@ -162,15 +163,15 @@ export const BalanceGame: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang
         </div>
         {hint && <p className="text-sm text-ink-2 anim-page">{L('Подсказка: коэффициенты', 'Hint: coefficients')} — <b className="font-mono">{EQUATIONS[order[idx % order.length]][2].join(', ')}</b></p>}
         <div className="flex flex-wrap justify-center gap-2">
-          <button onClick={check} disabled={!balanced} className="h-11 px-6 rounded-lg bg-[#30A46C] text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" style={{ color: '#fff' }}>
+          <Button size="lg" className="text-sm font-medium" onPress={() => check()} isDisabled={!balanced}>
             <Check className="w-4 h-4" /> {L('Готово', 'Done')}
-          </button>
-          <button onClick={() => setHint(true)} disabled={hint} className="h-11 px-4 rounded-lg border border-line hover:bg-muted text-sm text-ink inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+          </Button>
+          <Button variant="outline" size="lg" className="text-sm" onPress={() => setHint(true)} isDisabled={hint}>
             <Lightbulb className="w-4 h-4" /> {L('Подсказка', 'Hint')}
-          </button>
-          <button onClick={() => next(0)} className="h-11 px-4 rounded-lg border border-line hover:bg-muted text-sm text-ink-2 inline-flex items-center gap-1.5 cursor-pointer">
+          </Button>
+          <Button variant="outline" size="lg" className="text-sm" onPress={() => next(0)}>
             <SkipForward className="w-4 h-4" /> {L('Пропустить', 'Skip')}
-          </button>
+          </Button>
         </div>
         <p className="text-xs text-ink-3 text-center max-w-md">{L('Число атомов каждого элемента слева и справа должно совпасть. Коэффициенты — наименьшие целые.', 'Each element needs the same number of atoms on both sides, with the smallest whole coefficients.')}</p>
       </div>

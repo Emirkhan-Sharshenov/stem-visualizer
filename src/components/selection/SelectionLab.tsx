@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bird, Factory, Pause, Play, RotateCcw, SkipForward, Trees } from 'lucide-react';
 import { eatChance, Env, firstGeneration, isDark, Moth, nextGeneration, place, rng, stats } from './selection';
@@ -231,29 +233,25 @@ export const SelectionLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setAuto(!auto)} disabled={!!player} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50" style={{ color: '#fff' }}>
+            <Button className="text-sm font-medium" onPress={() => setAuto(!auto)} isDisabled={!!player}>
               {auto ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {auto ? L('Пауза', 'Pause') : L('Смена поколений', 'Run generations')}
-            </button>
-            <button onClick={generation} disabled={auto || !!player || phase === 'eaten'} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer disabled:opacity-50">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => generation()} isDisabled={auto || !!player || phase === 'eaten'}>
               <SkipForward className="w-4 h-4" />
               {L('Одно поколение', 'One generation')}
-            </button>
-            <button
-              onClick={() => {
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => {
                 setAuto(false);
                 setPlayer({ left: PLAYER_TIME, bites: 0, dark: 0, light: 0 });
-              }}
-              disabled={!!player || phase === 'eaten'}
-              className="h-9 px-3 rounded-lg border border-[#F6CBB9] bg-[#FFF4F0] text-sm text-[#B42318] inline-flex items-center gap-1.5 hover:bg-[#FFE9E1] cursor-pointer disabled:opacity-50"
-            >
+              }} isDisabled={!!player || phase === 'eaten'}>
               <Bird className="w-4 h-4" />
               {L('Ты — птица', 'You are the bird')}
-            </button>
-            <button onClick={reset} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            </Button>
+            <Button variant="outline" className="text-sm" onPress={() => reset()}>
               <RotateCcw className="w-4 h-4" />
               {L('Заново', 'Restart')}
-            </button>
+            </Button>
           </div>
 
           <div className="bg-surface border border-line rounded-xl p-4">
@@ -296,23 +294,23 @@ export const SelectionLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                   ['soot', <Factory key="f" className="w-4 h-4" />, L('Заводская копоть', 'Factory soot')],
                 ] as const
               ).map(([id, icon, label]) => (
-                <button key={id} onClick={() => setEnv(id)} className={`h-10 rounded-lg border text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer ${env === id ? 'border-accent bg-accent-soft text-accent font-medium' : 'border-line bg-surface text-ink-2'}`}>
+                <Button variant="outline" className={`text-sm ${env === id ? 'text-accent font-medium' : 'text-ink-2'}`} key={id} onPress={() => setEnv(id)}>
                   {icon}
                   {label}
-                </button>
+                </Button>
               ))}
             </div>
             <label className="flex flex-col gap-1">
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Сколько птиц охотится', 'How many birds hunt')} <span className="font-mono text-ink">{Math.round(strength * 100)}%</span>
               </span>
-              <input type="range" min={0} max={0.9} step={0.05} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+              <RangeSlider value={strength} onChange={(v) => setStrength(v)} min={0} max={0.9} step={0.05} />
             </label>
             <label className="flex flex-col gap-1">
               <span className="flex justify-between text-xs text-ink-2">
                 {L('Частота мутаций', 'Mutation rate')} <span className="font-mono text-ink">{(mu * 100).toFixed(1)}%</span>
               </span>
-              <input type="range" min={0} max={0.02} step={0.001} value={mu} onChange={(e) => setMu(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+              <RangeSlider value={mu} onChange={(v) => setMu(v)} min={0} max={0.02} step={0.001} />
             </label>
           </div>
 

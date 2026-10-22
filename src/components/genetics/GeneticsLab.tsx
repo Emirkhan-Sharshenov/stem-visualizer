@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Dices, GitBranch } from 'lucide-react';
 import { cross, fmtGen, gametes, Genotype, key, Mode, MODES, Phenotype, ratios, sample, simplify } from './genetics';
@@ -130,14 +131,9 @@ export const GeneticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           {m.options[i].map((o) => {
             const on = key(o) === key(g);
             return (
-              <button
-                key={key(o)}
-                onClick={() => setParent(i, o)}
-                className={`h-8 px-2.5 rounded-md border text-sm font-mono cursor-pointer ${on ? 'bg-accent border-accent' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-                style={on ? { color: '#fff' } : undefined}
-              >
+              <Button variant={on ? 'primary' : 'outline'} size="sm" className="text-sm font-mono" key={key(o)} onPress={() => setParent(i, o)} style={on ? { color: '#fff' } : undefined}>
                 {fmtGen(m, o)}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -157,14 +153,9 @@ export const GeneticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {MODES.map((x) => (
-          <button
-            key={x.id}
-            onClick={() => setMode(x.id)}
-            className={`shrink-0 h-9 px-3.5 rounded-full text-sm border cursor-pointer ${modeId === x.id ? 'bg-ink border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}
-            style={modeId === x.id ? { color: '#fff' } : undefined}
-          >
+          <Button variant={modeId === x.id ? 'primary' : 'outline'} className="shrink-0 text-sm" key={x.id} onPress={() => setMode(x.id)} style={modeId === x.id ? { color: '#fff' } : undefined}>
             {x.title[lang]}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="bg-surface border border-line rounded-xl px-4 py-3">
@@ -184,10 +175,10 @@ export const GeneticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
               {L('Решётка Пеннета', 'Punnett square')} · {L('потомство', 'offspring')} {genName(gen + 1)}
             </h3>
-            <button onClick={nextGen} className="h-8 px-3 rounded-lg border border-line bg-surface text-xs text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+            <Button variant="outline" size="sm" className="text-xs" onPress={() => nextGen()}>
               <GitBranch className="w-3.5 h-3.5" />
               {L('Скрестить потомков между собой', 'Cross the offspring')}
-            </button>
+            </Button>
           </div>
           {picking && (
             <p className="mb-2 text-sm text-accent">
@@ -263,10 +254,10 @@ export const GeneticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <p className="text-xs text-ink-3">{L('Решётка даёт вероятности. Настоящие числа случайны — как у Менделя, который считал тысячи горошин.', 'The square gives probabilities; real counts are random, like the thousands of peas Mendel counted.')}</p>
             <div className="mt-2 flex gap-2">
               {[20, 100, 1000].map((n) => (
-                <button key={n} onClick={() => setSim({ n, counts: sample(m, parents[0], parents[1], n) })} className="h-8 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+                <Button variant="outline" size="sm" className="text-sm" key={n} onPress={() => setSim({ n, counts: sample(m, parents[0], parents[1], n) })}>
                   <Dices className="w-3.5 h-3.5" />
                   {n}
-                </button>
+                </Button>
               ))}
             </div>
             {sim && (

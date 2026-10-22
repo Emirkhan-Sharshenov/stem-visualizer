@@ -1,3 +1,5 @@
+import { Check } from '../ui/Check';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Minus, RotateCcw } from 'lucide-react';
@@ -100,20 +102,14 @@ export const MoleculeBuilder: React.FC<{ lang: Lang }> = ({ lang }) => {
           const a = analyse(p.center, p.ligs, p.charge ?? 0);
           const on = p.center === center && p.ligs.join() === ligs.join() && (p.charge ?? 0) === charge;
           return (
-            <button
-              key={i}
-              onClick={() => {
+            <Button aria-label={a.name?.[lang]} variant={on ? 'primary' : 'outline'} className="shrink-0 text-sm font-mono" key={i} onPress={() => {
                 setCenter(p.center);
                 setLigs(p.ligs);
                 setCharge(p.charge ?? 0);
                 setSelected(null);
-              }}
-              className={`shrink-0 h-9 px-3 rounded-full text-sm border cursor-pointer font-mono ${on ? 'bg-ink border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}
-              style={on ? { color: '#fff' } : undefined}
-              title={a.name?.[lang]}
-            >
+              }} style={on ? { color: '#fff' } : undefined}>
               {a.formula}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -151,17 +147,12 @@ export const MoleculeBuilder: React.FC<{ lang: Lang }> = ({ lang }) => {
               <div className="text-[11px] font-medium uppercase tracking-[0.05em] text-ink-2 mb-1.5">{L('Центральный атом', 'Central atom')}</div>
               <div className="flex flex-wrap gap-1.5">
                 {Object.keys(CENTRAL).map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => {
+                  <Button variant={center === a ? 'primary' : 'outline'} size="sm" className="w-10 text-sm font-mono" key={a} onPress={() => {
                       setCenter(a);
                       setSelected(null);
-                    }}
-                    className={`h-8 w-10 rounded-md text-sm font-mono border cursor-pointer ${center === a ? 'bg-accent border-accent' : 'bg-surface border-line text-ink'}`}
-                    style={center === a ? { color: '#fff' } : undefined}
-                  >
+                    }} style={center === a ? { color: '#fff' } : undefined}>
                     {a}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -169,36 +160,30 @@ export const MoleculeBuilder: React.FC<{ lang: Lang }> = ({ lang }) => {
               <div className="text-[11px] font-medium uppercase tracking-[0.05em] text-ink-2 mb-1.5">{L('Присоединить', 'Attach')}</div>
               <div className="flex flex-wrap gap-1.5">
                 {LIGANDS.map((l) => (
-                  <button key={l.id} onClick={() => add(l.id)} disabled={ligs.length >= 6} className="h-8 px-2.5 rounded-md text-sm font-mono border border-line bg-surface text-ink hover:bg-muted disabled:opacity-40 cursor-pointer">
+                  <Button variant="outline" size="sm" className="text-sm font-mono" key={l.id} onPress={() => add(l.id)} isDisabled={ligs.length >= 6}>
                     +{l.label}
-                  </button>
+                  </Button>
                 ))}
-                <button onClick={remove} disabled={!ligs.length} className="h-8 px-2.5 rounded-md text-sm border border-line bg-surface text-ink hover:bg-muted disabled:opacity-40 cursor-pointer inline-flex items-center gap-1">
+                <Button variant="outline" size="sm" className="text-sm" onPress={() => remove()} isDisabled={!ligs.length}>
                   <Minus className="w-3.5 h-3.5" />
                   {L('убрать', 'remove')}
-                </button>
-                <button onClick={() => setLigs([])} className="h-8 px-2.5 rounded-md text-sm border border-line bg-surface text-ink-2 hover:bg-muted cursor-pointer inline-flex items-center gap-1">
+                </Button>
+                <Button variant="outline" size="sm" className="text-sm" onPress={() => setLigs([])}>
                   <RotateCcw className="w-3.5 h-3.5" />
-                </button>
+                </Button>
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-ink-2">{L('Заряд', 'Charge')}:</span>
               {[-1, 0, 1].map((q) => (
-                <button key={q} onClick={() => setCharge(q)} className={`h-7 w-9 rounded-md text-sm font-mono border cursor-pointer ${charge === q ? 'bg-accent border-accent' : 'bg-surface border-line text-ink'}`} style={charge === q ? { color: '#fff' } : undefined}>
+                <Button variant={charge === q ? 'primary' : 'outline'} size="sm" className="w-9 text-sm font-mono" key={q} onPress={() => setCharge(q)} style={charge === q ? { color: '#fff' } : undefined}>
                   {q > 0 ? '+1' : q < 0 ? '−1' : '0'}
-                </button>
+                </Button>
               ))}
             </div>
             <div className="flex flex-wrap gap-4 text-sm">
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={showLP} onChange={(e) => setShowLP(e.target.checked)} className="w-4 h-4 accent-accent" />
-                {L('Неподелённые пары', 'Lone pairs')}
-              </label>
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={showDipole} onChange={(e) => setShowDipole(e.target.checked)} className="w-4 h-4 accent-accent" />
-                {L('Дипольный момент', 'Dipole')}
-              </label>
+              <Check checked={showLP} onChange={(v) => setShowLP(v)}>{L('Неподелённые пары', 'Lone pairs')}</Check>
+              <Check checked={showDipole} onChange={(v) => setShowDipole(v)}>{L('Дипольный момент', 'Dipole')}</Check>
             </div>
           </div>
 

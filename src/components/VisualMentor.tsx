@@ -1,3 +1,4 @@
+import { Button, Tooltip, TextArea } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, Bot, Camera, Crown, RotateCcw, X } from 'lucide-react';
 import { topicById, TOPICS } from '../data/curriculum';
@@ -364,13 +365,13 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
           </div>
         </div>
         {messages.length > 0 && (
-          <button onClick={() => setMessages([])} title={L('Новый разговор', 'New conversation')} className="w-8 h-8 rounded-md flex items-center justify-center text-ink-2 hover:text-ink hover:bg-hover cursor-pointer">
+          <Tooltip><Tooltip.Trigger><Button aria-label={L('Новый разговор', 'New conversation')} variant="ghost" isIconOnly size="sm" className="w-8" onPress={() => setMessages([])}>
             <RotateCcw className="w-4 h-4" strokeWidth={1.75} />
-          </button>
+          </Button></Tooltip.Trigger><Tooltip.Content>{L('Новый разговор', 'New conversation')}</Tooltip.Content></Tooltip>
         )}
-        <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="w-8 h-8 rounded-md flex items-center justify-center text-ink-2 hover:text-ink hover:bg-hover cursor-pointer">
+        <Button variant="ghost" isIconOnly size="sm" className="w-8" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
           <X className="w-[18px] h-[18px]" strokeWidth={1.75} />
-        </button>
+        </Button>
       </div>
 
       {topic && subj ? (
@@ -408,9 +409,9 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
                   {c}
                 </button>
               ))}
-              <button onClick={() => camera.current?.click()} className="self-start inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-accent-soft text-accent font-medium hover:bg-accent/15 transition-colors cursor-pointer">
+              <Button variant="secondary" className="self-start text-sm font-medium" onPress={() => camera.current?.click()}>
                 <Camera className="w-4 h-4" strokeWidth={1.75} /> {L('Сфотографировать задачу из учебника', 'Snap a problem from your textbook')}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -440,16 +441,13 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
                 </button>
               )}
               {m.upgrade && (
-                <button
-                  onClick={() => {
+                <Button variant="ghost" className="self-start text-sm font-medium" onPress={() => {
                     window.dispatchEvent(new Event('open-pro'));
                     onClose();
-                  }}
-                  className="self-start inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[#FFE7B3] hover:bg-[#FFDB8F] text-[#8A4B0F] text-sm font-medium cursor-pointer"
-                >
+                  }}>
                   <Crown className="w-4 h-4" strokeWidth={1.75} />
                   {L('Подробнее о Pro', 'About Pro')}
-                </button>
+                </Button>
               )}
             </div>
           ),
@@ -468,9 +466,9 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
           <div className="mb-2 flex items-center gap-2">
             <img src={photo.url} alt="" className="h-16 rounded-lg border border-line object-cover" />
             <span className="text-xs text-ink-2 flex-1">{L('Фото задачи прикреплено. Можно дописать вопрос.', 'Photo attached. You can add a question.')}</span>
-            <button onClick={() => setPhoto(null)} aria-label={L('Убрать фото', 'Remove photo')} className="w-7 h-7 rounded-md text-ink-3 hover:text-ink hover:bg-hover flex items-center justify-center cursor-pointer">
+            <Button variant="ghost" isIconOnly size="sm" className="w-7" onPress={() => setPhoto(null)} aria-label={L('Убрать фото', 'Remove photo')}>
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         )}
         <input
@@ -492,16 +490,10 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
           }}
         />
         <div className="flex items-end gap-2 rounded-xl border border-line bg-paper focus-within:border-accent px-3 py-2">
-          <button
-            onClick={() => camera.current?.click()}
-            disabled={loading}
-            aria-label={L('Сфотографировать задачу', 'Take a photo of a problem')}
-            title={L('Сфотографируй задачу — разберу по шагам', 'Snap a problem and I will solve it step by step')}
-            className="w-8 h-8 rounded-lg text-ink-2 hover:text-accent hover:bg-accent-soft flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-40"
-          >
+          <Tooltip><Tooltip.Trigger><Button variant="ghost" isIconOnly size="sm" className="w-8 shrink-0" onPress={() => camera.current?.click()} isDisabled={loading} aria-label={L('Сфотографировать задачу', 'Take a photo of a problem')}>
             <Camera className="w-[18px] h-[18px]" strokeWidth={1.75} />
-          </button>
-          <textarea
+          </Button></Tooltip.Trigger><Tooltip.Content>{L('Сфотографируй задачу — разберу по шагам', 'Snap a problem and I will solve it step by step')}</Tooltip.Content></Tooltip>
+          <TextArea
             ref={input}
             rows={1}
             value={question}
@@ -513,17 +505,11 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
               }
             }}
             placeholder={topic ? L('Спроси про эту тему…', 'Ask about this topic…') : L('Задай вопрос…', 'Ask a question…')}
-            className="flex-1 resize-none bg-transparent text-[14.5px] text-ink placeholder:text-ink-3 outline-none max-h-32 py-1"
+            className="flex-1 resize-none max-h-32"
           />
-          <button
-            onClick={() => send()}
-            disabled={(!question.trim() && !photo) || loading}
-            aria-label={L('Отправить', 'Send')}
-            className="w-8 h-8 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-40 flex items-center justify-center shrink-0 cursor-pointer disabled:cursor-not-allowed"
-            style={{ color: '#fff' }}
-          >
+          <Button isIconOnly size="sm" className="w-8 shrink-0" onPress={() => send()} isDisabled={(!question.trim() && !photo) || loading} aria-label={L('Отправить', 'Send')}>
             <ArrowUp className="w-4 h-4" strokeWidth={2} />
-          </button>
+          </Button>
         </div>
         <p className="mt-1.5 text-[11px] text-ink-3 text-center">{L('ИИ может ошибаться — сверяйся с учебником.', 'AI can make mistakes; check with the textbook.')}</p>
       </div>

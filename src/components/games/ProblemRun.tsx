@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, Delete, X } from 'lucide-react';
 import { GameBar, Lang } from './common';
@@ -116,17 +117,17 @@ export const ProblemRun: React.FC<{ lang: Lang; title: string; list: { q: string
           }}
           className="w-full flex justify-center"
         >
-          <input ref={field} value={input} onChange={(e) => setInput(e.target.value.replace(/[^0-9,.\-]/g, '').slice(0, 7))} inputMode="none" className="w-48 h-14 text-center font-mono text-3xl rounded-xl border border-line bg-paper outline-none focus:border-accent" aria-label={L('Ответ', 'Answer')} />
+          <Input ref={field} value={input} onChange={(e) => setInput(e.target.value.replace(/[^0-9,.\-]/g, '').slice(0, 7))} inputMode="none" className="w-48 h-14 text-center font-mono text-3xl" aria-label={L('Ответ', 'Answer')} />
         </form>
         <div className="grid grid-cols-3 gap-2 w-full max-w-xs">
           {['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', 'del'].map((k) => (
-            <button key={k} type="button" onClick={() => press(k)} className="h-12 rounded-xl border border-line bg-paper hover:bg-muted active:scale-95 transition-transform text-xl font-mono text-ink cursor-pointer flex items-center justify-center">
+            <Button variant="outline" size="lg" className="text-xl font-mono" key={k} type="button" onPress={() => press(k)}>
               {k === 'del' ? <Delete className="w-5 h-5" /> : k === '-' ? '±' : k}
-            </button>
+            </Button>
           ))}
-          <button type="button" onClick={() => press('ok')} className="col-span-3 h-12 rounded-xl bg-accent hover:bg-accent-hover text-base font-medium cursor-pointer inline-flex items-center justify-center gap-1.5" style={{ color: '#fff' }}>
+          <Button size="lg" className="col-span-3 text-base font-medium" type="button" onPress={() => press('ok')}>
             {flash === 'wrong' ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />} {L('Ответить', 'Answer')}
-          </button>
+          </Button>
         </div>
         <p className="text-xs text-ink-3">{L('Ответ можно дать один раз — потом сразу следующая задача.', 'One answer per problem, then the next one.')}</p>
       </div>

@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Move, RotateCcw } from 'lucide-react';
 import type { GeomId } from './ids';
@@ -1223,7 +1225,7 @@ export const GeoBoard: React.FC<{ id: GeomId; lang: Lang }> = ({ id, lang }) => 
                 <span>{lang === 'ru' ? s.ru : s.en}</span>
                 <span className="font-mono text-ink">{n(p[s.k] ?? s.v)}</span>
               </span>
-              <input type="range" min={s.min} max={s.max} step={s.step} value={p[s.k] ?? s.v} onChange={(e) => setP({ ...p, [s.k]: Number(e.target.value) })} className="w-full accent-[#8E4EC6] cursor-pointer" />
+              <RangeSlider value={p[s.k] ?? s.v} onChange={(v) => setP({ ...p, [s.k]: v })} min={s.min} max={s.max} step={s.step} color="#8E4EC6" />
             </label>
           ))}
           {tex && (
@@ -1231,16 +1233,13 @@ export const GeoBoard: React.FC<{ id: GeomId; lang: Lang }> = ({ id, lang }) => 
               <Formula tex={tex} display />
             </div>
           )}
-          <button
-            onClick={() => {
+          <Button variant="outline" size="sm" className="self-start text-xs" onPress={() => {
               setPts({ ...(pre.pts ?? {}) });
               setP(initP(pre));
-            }}
-            className="self-start h-8 px-3 rounded-lg border border-line text-xs text-ink-2 hover:text-ink inline-flex items-center gap-1.5 cursor-pointer"
-          >
+            }}>
             <RotateCcw className="w-3.5 h-3.5" />
             {L(lang, 'Сбросить', 'Reset')}
-          </button>
+          </Button>
         </div>
         <ul className="text-sm text-ink-2 flex flex-col gap-1.5">
           {facts.map((f, i) => (

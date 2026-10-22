@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Play, Pause, RotateCcw, Activity } from 'lucide-react';
@@ -197,13 +198,9 @@ export const MomentNormalDistribution: React.FC<MomentNormalDistributionProps> =
             <span className="font-bold text-yellow-400 text-sm">{totalBalls}</span>
           </div>
           <div className="h-6 w-px bg-slate-800" />
-          <button
-            onClick={handleReset}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
-            title={lang === 'ru' ? 'Сброс' : 'Reset'}
-          >
+          <Button aria-label={lang === 'ru' ? 'Сброс' : 'Reset'} variant="secondary" onPress={() => handleReset()}>
             <RotateCcw className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Dialog } from '../ui/Dialog';
 import { Box, Loader2, Smartphone, X } from 'lucide-react';
 
 /* "See it in your room": shows the exported model in Google's <model-viewer>, which places it in the room
@@ -66,14 +67,14 @@ export const ArView: React.FC<{ lang: 'ru' | 'en'; title?: string; load: () => P
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return createPortal(
-    <div className="fixed inset-0 z-[90] flex flex-col bg-[#0B0C0F] anim-page" role="dialog" aria-modal>
+  return (
+    <Dialog onClose={onClose} label={title ?? L('Модель в комнате', 'Model in your room')} size="full" className="p-0 bg-[#0B0C0F] flex flex-col">
       <header className="flex items-center gap-3 px-4 h-14 border-b border-[#24262B]">
         <Box className="w-5 h-5 text-[#8FA4FF]" />
         <h2 className="flex-1 truncate text-[15px] font-medium text-[#EDEDED]">{title ?? L('Модель в комнате', 'Model in your room')}</h2>
-        <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="w-9 h-9 rounded-lg text-[#A0A3AB] hover:text-white hover:bg-[#1D1F24] flex items-center justify-center cursor-pointer">
+        <Button variant="ghost" isIconOnly className="w-9" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
           <X className="w-5 h-5" />
-        </button>
+        </Button>
       </header>
       <div className="relative flex-1 min-h-0">
         <div ref={host} className="absolute inset-0" />
@@ -87,9 +88,9 @@ export const ArView: React.FC<{ lang: 'ru' | 'en'; title?: string; load: () => P
       </div>
       <footer className="p-4 border-t border-[#24262B] flex flex-col items-center gap-2">
         {canAr ? (
-          <button onClick={() => viewer.current?.activateAR()} className="h-12 w-full max-w-sm rounded-xl bg-accent hover:bg-accent-hover font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+          <Button size="lg" fullWidth className="font-medium" onPress={() => viewer.current?.activateAR()}>
             <Smartphone className="w-5 h-5" /> {L('Поставить в комнату', 'Place in my room')}
-          </button>
+          </Button>
         ) : (
           state === 'ready' && (
             <p className="text-sm text-[#A0A3AB] text-center max-w-md">
@@ -98,8 +99,7 @@ export const ArView: React.FC<{ lang: 'ru' | 'en'; title?: string; load: () => P
           )
         )}
       </footer>
-    </div>,
-    document.body,
+    </Dialog>
   );
 };
 

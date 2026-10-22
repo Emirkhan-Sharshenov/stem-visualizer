@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Hand, RotateCcw, Trash2 } from 'lucide-react';
 import { COLOR_OF, curvedArc, Element, flatEnds, imageOf, isSource, Item, LightColor, nAt, polygon, trace, Trace, Vec } from './optics';
@@ -515,7 +517,7 @@ const Slider: React.FC<{ label: string; value: number; min: number; max: number;
         {fmt(value, digits)} {unit}
       </span>
     </span>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+    <RangeSlider value={value} onChange={(v) => onChange(v)} min={min} max={max} step={step} />
   </label>
 );
 
@@ -629,14 +631,9 @@ export const OpticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {PRESETS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => load(p.id)}
-            className={`shrink-0 h-9 px-3.5 rounded-full text-sm border cursor-pointer ${presetId === p.id ? 'bg-ink border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'}`}
-            style={presetId === p.id ? { color: '#fff' } : undefined}
-          >
+          <Button variant={presetId === p.id ? 'primary' : 'outline'} className="shrink-0 text-sm" key={p.id} onPress={() => load(p.id)} style={presetId === p.id ? { color: '#fff' } : undefined}>
             {p.title[lang]}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="bg-surface border border-line rounded-xl px-4 py-3">
@@ -649,32 +646,24 @@ export const OpticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setDel(false)}
-          className={`h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border cursor-pointer ${!del ? 'bg-accent border-accent' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-          style={!del ? { color: '#fff' } : undefined}
-        >
+        <Button variant={!del ? 'primary' : 'outline'} className="text-sm" onPress={() => setDel(false)} style={!del ? { color: '#fff' } : undefined}>
           <Hand className="w-4 h-4" />
           {L('Двигать', 'Move')}
-        </button>
-        <button
-          onClick={() => setDel(!del)}
-          className={`h-9 px-3 rounded-lg text-sm inline-flex items-center gap-1.5 border cursor-pointer ${del ? 'bg-[#E5484D] border-[#E5484D]' : 'bg-surface border-line text-ink hover:bg-muted'}`}
-          style={del ? { color: '#fff' } : undefined}
-        >
+        </Button>
+        <Button variant={del ? 'danger' : 'outline'} className="text-sm" onPress={() => setDel(!del)} style={del ? { color: '#fff' } : undefined}>
           <Trash2 className="w-4 h-4" />
           {L('Удалить', 'Delete')}
-        </button>
+        </Button>
         <span className="w-px h-9 bg-line mx-1" />
         {ADD.map((a) => (
-          <button key={a.kind} onClick={() => add(a.kind)} className="h-9 px-3 rounded-lg text-sm border border-dashed border-line-strong bg-surface text-ink hover:bg-muted cursor-pointer">
+          <Button variant="outline" className="text-sm" key={a.kind} onPress={() => add(a.kind)}>
             + {a[lang]}
-          </button>
+          </Button>
         ))}
-        <button onClick={() => load(presetId)} className="ml-auto h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+        <Button variant="outline" className="ml-auto text-sm" onPress={() => load(presetId)}>
           <RotateCcw className="w-4 h-4" />
           {L('Сбросить', 'Reset')}
-        </button>
+        </Button>
       </div>
       <p className="text-xs text-ink-3 -mt-2">{L('Перетаскивай предметы. Синей круглой ручкой у выбранного предмета его можно поворачивать.', 'Drag things around. Turn the selected one with its round blue handle.')}</p>
 
@@ -688,14 +677,10 @@ export const OpticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               {(sel.kind === 'laser' || sel.kind === 'beam' || sel.kind === 'lamp') && (
                 <div className="flex flex-wrap gap-1.5">
                   {(['red', 'green', 'blue', 'white'] as LightColor[]).map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => update(sel.id, { color: c })}
-                      className={`h-8 px-2.5 rounded-md text-xs border cursor-pointer ${sel.color === c ? 'border-accent bg-accent-soft text-ink' : 'border-line text-ink-2'}`}
-                    >
+                    <Button variant="outline" size="sm" className={`text-xs ${sel.color === c ? 'text-ink' : 'text-ink-2'}`} key={c} onPress={() => update(sel.id, { color: c })}>
                       <span className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle" style={{ background: c === 'white' ? 'linear-gradient(90deg,#8B5CF6,#22C55E,#FACC15,#EF4444)' : COLOR_OF[c].color }} />
                       {{ red: L('Красный', 'Red'), green: L('Зелёный', 'Green'), blue: L('Синий', 'Blue'), white: L('Белый', 'White') }[c]}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -720,9 +705,9 @@ export const OpticsLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                       { n: 1.5, ru: 'Стекло', en: 'Glass' },
                       { n: 2.42, ru: 'Алмаз', en: 'Diamond' },
                     ].map((m) => (
-                      <button key={m.ru} onClick={() => update(sel.id, { n: m.n })} className="h-7 px-2 rounded-md text-xs border border-line text-ink-2 hover:text-ink cursor-pointer">
+                      <Button variant="outline" size="sm" className="text-xs" key={m.ru} onPress={() => update(sel.id, { n: m.n })}>
                         {m[lang]} {fmt(m.n, 2)}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </>

@@ -151,3 +151,17 @@ blockquote.font-serif {
   & .bg-\[\#26282D\] { background-color: #1F2B47 !important; }
   & :is(.border-\[\#2c2f36\], .border-\[\#24262B\], .border-\[\#26282D\]) { border-color: #22305A !important; }
 }
+
+/* the warm band of the daily questions: sunny on white, an amber glow at night */
+.sv-warm-band {
+  background: linear-gradient(90deg, #FFF4DA, #FDF8EE);
+}
+[data-theme="stem-lab-dark"] .sv-warm-band {
+  background: linear-gradient(90deg, rgba(245, 165, 36, 0.2), rgba(245, 165, 36, 0.05));
+}
+
+/* white pills on coloured cards (records, "new today") keep dark text at night */
+[data-theme="stem-lab-dark"] :is(.bg-white\/90, .bg-white\/80, .bg-white) :is(.text-ink, .text-ink-2),
+[data-theme="stem-lab-dark"] :is(.bg-white\/90, .bg-white\/80).text-ink {
+  color: #0F1A2E !important;
+}

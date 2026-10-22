@@ -1,3 +1,5 @@
+import { Choice } from '../ui/Choice';
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { ArrowRight, Check, Copy, Crown, Play, Presentation, Smartphone, Users, X } from 'lucide-react';
@@ -224,20 +226,16 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
         <div className="flex flex-wrap items-center gap-4 text-sm text-ink-2">
           <label className="inline-flex items-center gap-2">
             {L('Вопросов', 'Questions')}
-            <select value={count} onChange={(e) => setCount(Number(e.target.value))} className="h-9 rounded-lg border border-line bg-surface px-2 text-ink">
-              {[5, 10, 15].map((n) => <option key={n}>{n}</option>)}
-            </select>
+            <Choice aria-label={L('Вопросов', 'Questions')} className="w-24" value={String(count)} onChange={(v) => setCount(Number(v))} options={[5, 10, 15].map((n) => ({ value: String(n), label: String(n) }))} />
           </label>
           <label className="inline-flex items-center gap-2">
             {L('Секунд на ответ', 'Seconds each')}
-            <select value={dur} onChange={(e) => setDur(Number(e.target.value))} className="h-9 rounded-lg border border-line bg-surface px-2 text-ink">
-              {[10, 20, 30, 45].map((n) => <option key={n}>{n}</option>)}
-            </select>
+            <Choice aria-label={L('Секунд на ответ', 'Seconds each')} className="w-24" value={String(dur)} onChange={(v) => setDur(Number(v))} options={[10, 20, 30, 45].map((n) => ({ value: String(n), label: String(n) }))} />
           </label>
         </div>
-        <button onClick={open} disabled={!sectionId} className="h-12 rounded-xl bg-accent hover:bg-accent-hover font-medium inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40" style={{ color: '#fff' }}>
+        <Button size="lg" className="font-medium" onPress={() => open()} isDisabled={!sectionId}>
           <Play className="w-4 h-4" /> {L('Создать комнату', 'Open a room')}
-        </button>
+        </Button>
         {!plan.pro && <p className="text-xs text-ink-3 text-center">{L(`Бесплатно — до ${FREE_SEATS} учеников в комнате. С тарифом «Учитель» — весь класс, до ${MAX_SEATS}.`, `Free: up to ${FREE_SEATS} students per room. With the Teacher plan: the whole class, up to ${MAX_SEATS}.`)}</p>}
       </div>
     );
@@ -251,8 +249,7 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
         <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8 flex flex-col items-center text-center gap-3">
           <p className="text-ink-2">{L('Ученики открывают сайт → «Игры» → «Живой квиз» → «Войти по коду»', 'Students open the site → Games → Live quiz → Join with a code')}</p>
           <div className="font-mono text-6xl sm:text-8xl font-bold tracking-[0.12em] text-ink">{code}</div>
-          <button
-            onClick={async () => {
+          <Button variant="ghost" className="text-sm" onPress={async () => {
               try {
                 await navigator.clipboard.writeText(joinLink(code));
                 setCopied(true);
@@ -260,11 +257,9 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
               } catch {
                 prompt(L('Ссылка для учеников', 'Link for students'), joinLink(code));
               }
-            }}
-            className="text-sm text-accent inline-flex items-center gap-1.5 cursor-pointer hover:underline"
-          >
+            }}>
             <Copy className="w-4 h-4" /> {copied ? L('Ссылка скопирована', 'Link copied') : L('Скопировать ссылку для чата класса', 'Copy the link for the class chat')}
-          </button>
+          </Button>
           <div className="mt-2 inline-flex items-center gap-2 text-ink">
             <Users className="w-5 h-5" /> <span className="font-medium">{seats.length}</span>
             {players.length > seats.length && <span className="text-sm text-[#CC2F35]">{L(`(+${players.length - seats.length} не поместились)`, `(+${players.length - seats.length} over the limit)`)}</span>}
@@ -276,9 +271,9 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
               </span>
             ))}
           </div>
-          <button onClick={next} disabled={!seats.length} className="mt-3 h-12 px-8 rounded-xl bg-accent hover:bg-accent-hover font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-40" style={{ color: '#fff' }}>
+          <Button size="lg" className="mt-3 font-medium" onPress={() => next()} isDisabled={!seats.length}>
             <Play className="w-4 h-4" /> {L('Начать', 'Start')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -302,9 +297,9 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
               </div>
             ))}
           </div>
-          <button onClick={reveal} className="self-end h-10 px-4 rounded-lg border border-line text-sm text-ink hover:bg-muted cursor-pointer">
+          <Button variant="outline" className="self-end text-sm" onPress={() => reveal()}>
             {L('Показать ответ', 'Show answer')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -332,9 +327,9 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
             </p>
           </div>
           <Board lang={lang} board={board.slice(0, 5)} />
-          <button onClick={next} className="self-end h-11 px-5 rounded-lg bg-accent hover:bg-accent-hover font-medium inline-flex items-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+          <Button size="lg" className="self-end font-medium" onPress={() => next()}>
             {state.idx + 1 < state.total ? L('Следующий вопрос', 'Next question') : L('Итоги', 'Results')} <ArrowRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -344,9 +339,9 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
           <h3 className="font-serif text-3xl text-ink">{L('Итоги', 'Results')}</h3>
           <Podium board={board} />
           <Board lang={lang} board={board.slice(3, 10)} start={4} />
-          <button onClick={onExit} className="h-11 px-5 rounded-lg border border-line text-sm text-ink hover:bg-muted cursor-pointer">
+          <Button variant="outline" size="lg" className="text-sm" onPress={() => onExit()}>
             {L('Закончить', 'Finish')}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -454,11 +449,11 @@ const Player: React.FC<{ lang: Lang; initialCode?: string }> = ({ lang, initialC
   if (!joined)
     return (
       <div className="flex flex-col gap-3 max-w-sm mx-auto w-full">
-        <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 5))} inputMode="numeric" placeholder={L('Код комнаты', 'Room code')} className="h-16 text-center font-mono text-4xl tracking-[0.2em] rounded-xl border border-line bg-surface outline-none focus:border-accent" />
-        <input value={name} onChange={(e) => setName(e.target.value.slice(0, 20))} placeholder={L('Твоё имя', 'Your name')} className="h-12 px-3 text-center rounded-xl border border-line bg-surface outline-none focus:border-accent text-ink" />
-        <button onClick={join} disabled={code.length !== 5 || !name.trim()} className="h-12 rounded-xl bg-accent hover:bg-accent-hover font-medium cursor-pointer disabled:opacity-40" style={{ color: '#fff' }}>
+        <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 5))} inputMode="numeric" placeholder={L('Код комнаты', 'Room code')} className="h-16 text-center font-mono text-4xl tracking-[0.2em]" />
+        <Input value={name} onChange={(e) => setName(e.target.value.slice(0, 20))} placeholder={L('Твоё имя', 'Your name')} className="h-12 text-center" />
+        <Button size="lg" className="font-medium" onPress={() => join()} isDisabled={code.length !== 5 || !name.trim()}>
           {L('Войти', 'Join')}
-        </button>
+        </Button>
       </div>
     );
 

@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useState } from 'react';
 import { Check, Crown, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
 import { PRICES, FREE_MENTOR_DAILY, inSom, openCheckout, paymentsEnabled, redeemCode, redeemErrorText, usePlan } from '../../lib/plan';
@@ -20,9 +21,9 @@ export const ProGate: React.FC<{ lang: Lang; pro: boolean; onUpgrade: () => void
           </span>
           <h3 className="mt-2 font-serif text-xl text-ink">{title}</h3>
           <p className="mt-1 text-sm text-ink-2">{text}</p>
-          <button onClick={onUpgrade} className="mt-3 h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+          <Button className="mt-3 text-sm font-medium" onPress={() => onUpgrade()}>
             {lang === 'ru' ? `Pro за $${PRICES.month} в месяц` : `Pro for $${PRICES.month}/mo`}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -126,9 +127,9 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             ✓ {plan.plan === 'teacher' ? L('Тариф «Учитель»', 'Teacher plan') + ' · ' : ''}{L(`Pro активен до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Pro is active until ${plan.expiresAt.toLocaleDateString('en-GB')}`)}
           </span>
           <div className="flex gap-2">
-            <button onClick={() => onNavigate('practice')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Пробный ОРТ', 'Mock exam')}</button>
-            <button onClick={() => onNavigate('progress')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Мой план', 'My plan')}</button>
-            {plan.plan === 'teacher' && <button onClick={() => onNavigate('teacher')} className="h-9 px-3 rounded-lg bg-surface border border-line text-sm text-ink cursor-pointer">{L('Кабинет учителя', 'Teacher dashboard')}</button>}
+            <Button variant="outline" className="text-sm" onPress={() => onNavigate('practice')}>{L('Пробный ОРТ', 'Mock exam')}</Button>
+            <Button variant="outline" className="text-sm" onPress={() => onNavigate('progress')}>{L('Мой план', 'My plan')}</Button>
+            {plan.plan === 'teacher' && <Button variant="outline" className="text-sm" onPress={() => onNavigate('teacher')}>{L('Кабинет учителя', 'Teacher dashboard')}</Button>}
           </div>
         </div>
       )}
@@ -157,9 +158,9 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             <h2 className="font-serif text-2xl text-ink">Pro</h2>
             <div className="flex p-0.5 rounded-md bg-muted border border-line text-xs">
               {(['month', 'year'] as const).map((p) => (
-                <button key={p} onClick={() => setPeriod(p)} className={`px-2.5 h-7 rounded cursor-pointer ${period === p ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2'}`}>
+                <Button variant={period === p ? 'outline' : 'ghost'} size="sm" className={`${period === p ? 'font-medium' : ''}`} key={p} onPress={() => setPeriod(p)}>
                   {p === 'month' ? L('месяц', 'month') : L(`год −${YEAR_OFF}%`, `year −${YEAR_OFF}%`)}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -184,17 +185,17 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           </ul>
           {paymentsEnabled ? (
             <>
-              <button onClick={() => pay('pro')} disabled={paying || plan.pro} className="mt-6 w-full h-11 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-60 text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+              <Button size="lg" fullWidth className="mt-6 text-sm font-medium" onPress={() => pay('pro')} isDisabled={paying || plan.pro}>
                 {paying && <Loader2 className="w-4 h-4 animate-spin" />}
                 {plan.pro ? L('Pro уже подключён', 'You have Pro') : user ? L(`Оплатить картой — $${price}`, `Pay by card — $${price}`) : L('Войти и оплатить', 'Log in to pay')}
-              </button>
+              </Button>
               <p className="mt-2 text-xs text-center text-ink-3">{L('Visa и Mastercard любого банка. Оплата через Freemius — безопасно, данные карты к нам не попадают.', 'Any Visa or Mastercard. Paid via Freemius, so your card details never reach us.')}</p>
             </>
           ) : (
             <>
-              <button disabled className="mt-6 w-full h-11 rounded-lg bg-accent opacity-60 text-sm font-medium cursor-not-allowed" style={{ color: '#fff' }}>
+              <Button size="lg" fullWidth className="mt-6 opacity-60 text-sm font-medium" isDisabled>
                 {L('Оплата картой — скоро', 'Card payment — coming soon')}
-              </button>
+              </Button>
               <p className="mt-2 text-xs text-center text-ink-3">{L('Пока Pro подключается промокодом ниже', 'For now Pro is activated with a promo code below')}</p>
             </>
           )}
@@ -216,13 +217,9 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
               </li>
             ))}
           </ul>
-          <button
-            onClick={() => pay('teacher')}
-            disabled={!paymentsEnabled || paying || plan.plan === 'teacher'}
-            className="mt-6 w-full h-11 rounded-lg border-2 border-accent text-accent hover:bg-accent-soft disabled:opacity-60 text-sm font-medium cursor-pointer disabled:cursor-not-allowed"
-          >
+          <Button variant="outline" size="lg" fullWidth className="mt-6 text-sm font-medium" onPress={() => pay('teacher')} isDisabled={!paymentsEnabled || paying || plan.plan === 'teacher'}>
             {plan.plan === 'teacher' ? L('Тариф подключён', 'You have it') : paymentsEnabled ? (user ? L(`Оплатить — $${PRICES.teacher}`, `Pay — $${PRICES.teacher}`) : L('Войти и оплатить', 'Log in to pay')) : L('Оплата картой — скоро', 'Card payment — coming soon')}
-          </button>
+          </Button>
           <p className="mt-2 text-xs text-center text-ink-3">{L('Для школ — промокоды на весь класс: напишите нам.', 'For schools: promo codes for a whole class, just ask.')}</p>
         </div>
       </div>
@@ -247,17 +244,17 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           </p>
         ) : (
           <div className="mt-3 flex gap-2">
-            <input
+            <Input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === 'Enter' && redeem()}
               placeholder="STEM2026"
-              className="flex-1 h-11 px-3 rounded-lg bg-surface border border-line font-mono text-[15px] text-ink outline-none focus:border-accent uppercase"
+              className="flex-1 font-mono uppercase"
             />
-            <button onClick={redeem} disabled={busy} className="h-11 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-2 cursor-pointer" style={{ color: '#fff' }}>
+            <Button size="lg" className="text-sm font-medium" onPress={() => redeem()} isDisabled={busy}>
               {busy && <Loader2 className="w-4 h-4 animate-spin" />}
               {L('Активировать', 'Activate')}
-            </button>
+            </Button>
           </div>
         )}
         {msg && <p className={`mt-3 text-sm ${msg.ok ? 'text-[#1E7A4C]' : 'text-[#CC2F35]'}`}>{msg.text}</p>}

@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import React, { useEffect, useState } from 'react';
 import { Confetti } from '../fx/Confetti';
 import { Check, Clock, RotateCcw, X } from 'lucide-react';
@@ -69,10 +70,10 @@ export const Quiz: React.FC<{
             {ok ? L('Отлично! Тема засчитана.', 'Great! Topic passed.') : L('Почти. Перечитай пункты, где ошибся, и попробуй снова.', 'Nearly. Re-read the points you missed and try again.')}
           </p>
           {onRetry && (
-            <button onClick={onRetry} className="mt-3 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-sm text-ink cursor-pointer">
+            <Button variant="outline" className="mt-3 text-sm" onPress={() => onRetry()}>
               <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.75} />
               {L('Пройти ещё раз', 'Try again')}
-            </button>
+            </Button>
           )}
         </div>
         <ol className="flex flex-col gap-2">
@@ -89,9 +90,9 @@ export const Quiz: React.FC<{
                     <p className="text-[14.5px] text-ink">{q.prompt[lang]}</p>
                     <p className="mt-1 text-[13.5px] text-[#1E7A4C]">{q.options[q.correct].tex ? <Formula tex={q.options[q.correct].ru} /> : q.options[q.correct][lang]}</p>
                     {topic && onOpenTopic && (
-                      <button onClick={() => onOpenTopic(topic.id)} className="mt-1 text-xs text-accent hover:underline cursor-pointer">
+                      <Button variant="ghost" size="sm" className="mt-1 text-xs" onPress={() => onOpenTopic(topic.id)}>
                         {L('Тема:', 'Topic:')} {topic.title[lang]} →
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -156,13 +157,9 @@ export const Quiz: React.FC<{
       )}
       {answer !== null && (
         <div className="flex justify-end">
-          <button
-            onClick={() => (i + 1 < questions.length ? setI(i + 1) : finish())}
-            className="h-10 px-5 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium cursor-pointer"
-            style={{ color: '#fff' }}
-          >
+          <Button className="text-sm font-medium" onPress={() => (i + 1 < questions.length ? setI(i + 1) : finish())}>
             {i + 1 < questions.length ? L('Дальше', 'Next') : L('Результат', 'See results')}
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 
@@ -24,31 +26,16 @@ export const Slider: React.FC<{
       <span className="text-ink">{label}</span>
       <span className="font-mono text-ink">{format(value)}</span>
     </span>
-    <input
-      type="range"
-      min={min}
-      max={max}
-      step={step}
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      className="mt-2 w-full accent-accent cursor-pointer"
-    />
+    <RangeSlider value={value} onChange={(v) => onChange(v)} min={min} max={max} step={step} className="mt-2" />
   </label>
 );
 
 export const Toggle: React.FC<{ label: string; checked: boolean; onChange: (v: boolean) => void }> = ({ label, checked, onChange }) => (
   <div className="flex items-center justify-between text-sm text-ink">
     {label}
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${checked ? 'bg-accent' : 'bg-line-strong'}`}
-    >
+    <Button variant={checked ? 'primary' : 'ghost'} size="sm" className="relative w-9" type="button" aria-label={label} onPress={() => onChange(!checked)}>
       <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-4' : ''}`} />
-    </button>
+    </Button>
   </div>
 );
 
@@ -56,15 +43,9 @@ export function Segmented<T extends string>({ value, options, onChange, classNam
   return (
     <div className={`flex p-1 rounded-lg bg-muted border border-line overflow-x-auto ${className}`}>
       {options.map((o) => (
-        <button
-          key={o.id}
-          onClick={() => onChange(o.id)}
-          className={`flex-1 shrink-0 h-8 px-3 rounded-md text-sm whitespace-nowrap transition-colors cursor-pointer ${
-            value === o.id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'
-          }`}
-        >
+        <Button variant={value === o.id ? 'outline' : 'ghost'} size="sm" className={`flex-1 shrink-0 text-sm whitespace-nowrap ${value === o.id ? 'font-medium' : ''}`} key={o.id} onPress={() => onChange(o.id)}>
           {o.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -86,21 +67,15 @@ export const Tip: React.FC<{ lang: 'ru' | 'en'; children: React.ReactNode }> = (
 
 export const PlayControls: React.FC<{ lang: 'ru' | 'en'; running: boolean; onToggle: () => void; onReset?: () => void }> = ({ lang, running, onToggle, onReset }) => (
   <div className="flex gap-2">
-    <button
-      onClick={onToggle}
-      className="flex-1 h-9 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-sm text-ink inline-flex items-center justify-center gap-1.5 cursor-pointer"
-    >
+    <Button variant="outline" className="flex-1 text-sm" onPress={() => onToggle()}>
       {running ? <Pause className="w-3.5 h-3.5" strokeWidth={1.75} /> : <Play className="w-3.5 h-3.5" strokeWidth={1.75} />}
       {running ? (lang === 'ru' ? 'Пауза' : 'Pause') : lang === 'ru' ? 'Пуск' : 'Play'}
-    </button>
+    </Button>
     {onReset && (
-      <button
-        onClick={onReset}
-        className="h-9 px-3 rounded-lg border border-line bg-surface hover:bg-muted text-sm text-ink inline-flex items-center gap-1.5 cursor-pointer"
-      >
+      <Button variant="outline" className="text-sm" onPress={() => onReset()}>
         <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.75} />
         {lang === 'ru' ? 'Сначала' : 'Restart'}
-      </button>
+      </Button>
     )}
   </div>
 );
@@ -147,13 +122,9 @@ export const InfoCard: React.FC<{ lang: 'ru' | 'en'; info: { title: { ru: string
       <>
         <div className="flex items-start justify-between gap-3">
           <h4 className="font-serif text-lg leading-snug text-[#EDEDED]">{info.title[lang]}</h4>
-          <button
-            onClick={onClose}
-            aria-label={lang === 'ru' ? 'Закрыть' : 'Close'}
-            className="shrink-0 w-7 h-7 -mr-1 -mt-1 rounded-md text-[#8C8F98] hover:text-white hover:bg-[#26282D] flex items-center justify-center cursor-pointer"
-          >
+          <Button variant="ghost" isIconOnly size="sm" className="shrink-0 w-7 -mr-1 -mt-1" onPress={() => onClose()} aria-label={lang === 'ru' ? 'Закрыть' : 'Close'}>
             ×
-          </button>
+          </Button>
         </div>
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#B5B8C0]">{info.text[lang]}</p>
       </>

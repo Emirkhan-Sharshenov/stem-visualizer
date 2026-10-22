@@ -1,3 +1,4 @@
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Check, Link2, Search, Trophy, X } from 'lucide-react';
 import { gradesFor, Section, SECTIONS, topicById, TOPICS } from '../../data/curriculum';
@@ -200,7 +201,7 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
         <div className="relative w-full sm:w-72">
           <label className="flex items-center gap-2 h-10 px-3 rounded-lg bg-surface border border-line focus-within:border-accent">
             <Search className="w-4 h-4 text-ink-3" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти тему на карте', 'Find a topic')} className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-ink-3" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L('Найти тему на карте', 'Find a topic')} className="flex-1 text-sm" />
           </label>
           {results.length > 0 && (
             <ul className="absolute z-20 mt-1 w-full bg-surface border border-line rounded-lg shadow-lg overflow-hidden">
@@ -296,15 +297,9 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
                             {Object.keys(completed).length ? L('Ты здесь', 'You are here') : L('Начни отсюда', 'Start here')}
                           </span>
                         )}
-                        <button
-                          ref={(el) => {
+                        <Button variant="ghost" className="relative" ref={(el) => {
                             nodes.current[s.id] = el;
-                          }}
-                          onClick={() => setOpenId(isOpen ? null : s.id)}
-                          aria-label={s.title[lang]}
-                          className={`relative rounded-full transition-transform hover:scale-105 active:scale-95 cursor-pointer ${celebrating ? 'map-pop' : ''}`}
-                          style={{ width: NODE, height: NODE, animationDelay: celebrating ? `${T_POP}ms` : undefined, boxShadow: isOpen ? `0 0 0 6px ${COLOR[subject]}40` : isHere ? `0 0 0 6px ${COLOR[subject]}26` : undefined }}
-                        >
+                          }} onPress={() => setOpenId(isOpen ? null : s.id)} aria-label={s.title[lang]} style={{ width: NODE, height: NODE, animationDelay: celebrating ? `${T_POP}ms` : undefined, boxShadow: isOpen ? `0 0 0 6px ${COLOR[subject]}40` : isHere ? `0 0 0 6px ${COLOR[subject]}26` : undefined }}>
                           <Ring share={share} color={COLOR[subject]} fill={celebrating} />
                           {celebrating && <Burst color={COLOR[subject]} />}
                           <span
@@ -318,7 +313,7 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
                               </span>
                             )}
                           </span>
-                        </button>
+                        </Button>
                         <span className={`mt-1.5 text-center text-[12.5px] leading-tight line-clamp-2 ${share > 0 || isHere ? 'text-ink font-medium' : 'text-ink-2'}`}>{s.title[lang]}</span>
                       </div>
                     );
@@ -396,9 +391,9 @@ const SectionPanel: React.FC<{ lang: Lang; s: Section; completed: Record<string,
             </div>
             <h2 className="mt-0.5 font-serif text-2xl leading-tight text-ink">{s.title[lang]}</h2>
           </div>
-          <button onClick={onClose} aria-label={L('Закрыть', 'Close')} className="w-8 h-8 rounded-md flex items-center justify-center text-ink-2 hover:bg-hover cursor-pointer">
+          <Button variant="ghost" isIconOnly size="sm" className="w-8" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
         <div className="mt-3 flex items-center gap-3">
           <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">

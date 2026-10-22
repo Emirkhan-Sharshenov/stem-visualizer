@@ -1,3 +1,4 @@
+import { RangeSlider } from './ui/RangeSlider';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
 import { Compass, Play, RotateCcw, CheckCircle2 } from 'lucide-react';
@@ -162,15 +163,7 @@ export const MomentPythagorasProof: React.FC<MomentPythagorasProofProps> = ({ la
             <span className="text-slate-400">{lang === 'ru' ? 'Длина катета a:' : 'Leg a length:'}</span>
             <span className="font-mono text-cyan-400 font-bold">{legA}</span>
           </div>
-          <input
-            type="range"
-            min={2}
-            max={6}
-            step={1}
-            value={legA}
-            onChange={(e) => setLegA(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
-          />
+          <RangeSlider value={legA} onChange={(v) => setLegA(v)} min={2} max={6} step={1} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -178,15 +171,7 @@ export const MomentPythagorasProof: React.FC<MomentPythagorasProofProps> = ({ la
             <span className="text-slate-400">{lang === 'ru' ? 'Длина катета b:' : 'Leg b length:'}</span>
             <span className="font-mono text-amber-400 font-bold">{legB}</span>
           </div>
-          <input
-            type="range"
-            min={2}
-            max={7}
-            step={1}
-            value={legB}
-            onChange={(e) => setLegB(Number(e.target.value))}
-            className="w-full accent-amber-400 cursor-pointer"
-          />
+          <RangeSlider value={legB} onChange={(v) => setLegB(v)} min={2} max={7} step={1} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -194,15 +179,7 @@ export const MomentPythagorasProof: React.FC<MomentPythagorasProofProps> = ({ la
             <span className="text-slate-400">{lang === 'ru' ? 'Перекладывание площадей:' : 'Square Area Transfer:'}</span>
             <span className="font-mono text-emerald-400 font-bold">{(morphFrac * 100).toFixed(0)}%</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={morphFrac}
-            onChange={(e) => setMorphFrac(Number(e.target.value))}
-            className="w-full accent-emerald-400 cursor-pointer"
-          />
+          <RangeSlider value={morphFrac} onChange={(v) => setMorphFrac(v)} min={0} max={1} step={0.05} />
         </div>
       </div>
     </div>

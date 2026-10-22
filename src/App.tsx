@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import { useTheme } from './lib/theme';
 import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { VisualMode, Milestone } from './types/stem';
@@ -277,9 +278,9 @@ export default function App({ lang, setLang }: AppProps) {
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-5">
         {crumb && (
           <nav className="flex items-center gap-2 text-sm text-ink-2 min-w-0">
-            <button onClick={() => { setTextbookKey((k) => k + 1); setCurrentMode('textbook'); }} className="hover:text-ink cursor-pointer shrink-0">
+            <Button variant="ghost" className="shrink-0" onPress={() => { setTextbookKey((k) => k + 1); setCurrentMode('textbook'); }}>
               {lang === 'ru' ? 'Учебник' : 'Textbook'}
-            </button>
+            </Button>
             <span className="text-ink-3">/</span>
             <span className={`w-2 h-2 rounded-full shrink-0 ${SUBJECT_DOT[crumb.subject]}`} />
             <span className="text-ink truncate">{crumb.title[lang]}</span>
@@ -308,9 +309,9 @@ export default function App({ lang, setLang }: AppProps) {
             {currentMode === 'progress' && <ProgressPage lang={lang} onOpenTopic={openTopic} />}
             {currentMode === 'sandbox' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Механика: собери свой опыт' : 'Mechanics: build your own experiment'}</h1>
@@ -320,9 +321,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'circuits' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Электрические цепи: собери свою схему' : 'Circuits: build your own'}</h1>
@@ -332,9 +333,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'optics' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Оптика: лучи, линзы и зеркала' : 'Optics: rays, lenses and mirrors'}</h1>
@@ -344,9 +345,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'chemlab' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · конструктор опытов' : 'Chemistry · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Химическая лаборатория' : 'Chemistry lab'}</h1>
@@ -356,9 +357,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'genetics' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Биология · конструктор опытов' : 'Biology · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Генетика: скрещивания' : 'Genetics: crosses'}</h1>
@@ -368,9 +369,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'heat' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Тепловые процессы' : 'Heat processes'}</h1>
@@ -380,9 +381,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'ecosystem' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Биология · конструктор опытов' : 'Biology · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Экосистема: хищники и жертвы' : 'Ecosystem: predators and prey'}</h1>
@@ -392,9 +393,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'molbuilder' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · 3D-конструктор' : 'Chemistry · 3D builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Конструктор молекул в 3D' : '3D molecule builder'}</h1>
@@ -404,9 +405,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'space3d' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · 3D-песочница' : 'Physics · 3D sandbox'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Космос: гравитация в 3D' : 'Space: gravity in 3D'}</h1>
@@ -416,9 +417,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'efield' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Электрическое поле' : 'Electric field'}</h1>
@@ -428,9 +429,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'waves' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Физика · конструктор опытов' : 'Physics · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Волны: интерференция и дифракция' : 'Waves: interference and diffraction'}</h1>
@@ -440,9 +441,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'titration' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · конструктор опытов' : 'Chemistry · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Титрование' : 'Titration'}</h1>
@@ -452,9 +453,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'atom' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · конструктор опытов' : 'Chemistry · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Собери атом' : 'Build an atom'}</h1>
@@ -464,9 +465,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'kinetics' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Химия · конструктор опытов' : 'Chemistry · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Скорость реакции и равновесие' : 'Reaction rate and equilibrium'}</h1>
@@ -476,9 +477,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'selection' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Биология · конструктор опытов' : 'Biology · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Естественный отбор' : 'Natural selection'}</h1>
@@ -488,9 +489,9 @@ export default function App({ lang, setLang }: AppProps) {
             )}
             {currentMode === 'photosynthesis' && (
               <div className="flex flex-col gap-5">
-                <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                   ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                </button>
+                </Button>
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lang === 'ru' ? 'Биология · конструктор опытов' : 'Biology · experiment builder'}</span>
                   <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lang === 'ru' ? 'Фотосинтез' : 'Photosynthesis'}</h1>
@@ -504,9 +505,9 @@ export default function App({ lang, setLang }: AppProps) {
               const Comp = lab.comp;
               return (
                 <div className="flex flex-col gap-5">
-                  <button onClick={() => setCurrentMode('labs')} className="self-start text-sm text-ink-2 hover:text-ink cursor-pointer">
+                  <Button variant="ghost" className="self-start text-sm" onPress={() => setCurrentMode('labs')}>
                     ← {lang === 'ru' ? 'Все лаборатории' : 'All labs'}
-                  </button>
+                  </Button>
                   <div>
                     <span className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{lab.kicker[lang]}</span>
                     <h1 className="mt-1 font-serif text-[32px] leading-tight text-ink">{lab.title[lang]}</h1>

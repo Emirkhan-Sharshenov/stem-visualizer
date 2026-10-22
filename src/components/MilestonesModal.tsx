@@ -1,3 +1,5 @@
+import { Button, Modal } from '@heroui/react';
+import { Dialog } from './ui/Dialog';
 import React from 'react';
 import { Milestone } from '../types/stem';
 import { Award, X, Check, Lock, Sparkles } from 'lucide-react';
@@ -12,14 +14,8 @@ export const MilestonesModal: React.FC<MilestonesModalProps> = ({ milestones, la
   const unlockedCount = milestones.filter((m) => m.unlocked).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[rgba(17,17,17,0.45)] animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl flex flex-col gap-5 text-slate-100 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-        >
-          <X className="w-4 h-4" />
-        </button>
+    <Dialog onClose={onClose} label={lang === 'ru' ? 'Открытия' : 'Milestones'} className="max-w-xl flex flex-col gap-5 text-slate-100">
+        <Modal.CloseTrigger />
 
         <div className="flex items-center gap-3">
           <span className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -77,7 +73,6 @@ export const MilestonesModal: React.FC<MilestonesModalProps> = ({ milestones, la
             </div>
           ))}
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };

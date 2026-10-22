@@ -1,3 +1,6 @@
+import { Check } from '../ui/Check';
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import { compile, Fn } from './expr';
@@ -254,9 +257,9 @@ export const PlotterLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               [<Minus key="m" className="w-4 h-4" />, () => zoom(1 / 1.4)],
               [<RotateCcw key="r" className="w-4 h-4" />, () => setView({ cx: 0, cy: 0, scale: 40 })],
             ].map(([icon, fn], i) => (
-              <button key={i} onClick={fn as () => void} className="w-8 h-8 rounded-lg bg-surface/90 border border-line flex items-center justify-center hover:bg-muted cursor-pointer text-ink-2">
+              <Button variant="outline" isIconOnly size="sm" className="w-8" key={i} onPress={fn as () => void}>
                 {icon as React.ReactNode}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -284,7 +287,7 @@ export const PlotterLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             <div className="flex items-center gap-2">
               <input type="checkbox" checked={l.on} onChange={(e) => setLines(lines.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} style={{ accentColor: COLORS[i] }} />
               <span className="font-mono text-sm" style={{ color: COLORS[i] }}>y =</span>
-              <input
+              <Input
                 value={l.src}
                 onChange={(e) => setLines(lines.map((x, j) => (j === i ? { src: e.target.value, on: true } : x)))}
                 className={`flex-1 min-w-0 h-9 px-2.5 rounded-lg border bg-paper font-mono text-sm outline-none focus:border-accent ${compiled[i].err ? 'border-[#E5484D]' : 'border-line'}`}
@@ -296,9 +299,9 @@ export const PlotterLab: React.FC<{ lang: Lang }> = ({ lang }) => {
         ))}
         <div className="flex flex-wrap gap-1">
           {PRESETS.map((p) => (
-            <button key={p} onClick={() => setLines([{ src: p, on: true }, ...lines.slice(1)])} className="h-7 px-2 rounded-md border border-line text-xs font-mono text-ink-2 hover:text-ink hover:bg-muted cursor-pointer">
+            <Button variant="outline" size="sm" className="text-xs font-mono" key={p} onPress={() => setLines([{ src: p, on: true }, ...lines.slice(1)])}>
               {p}
-            </button>
+            </Button>
           ))}
         </div>
         {(['a', 'b', 'c'] as const).map((k) => (
@@ -307,13 +310,10 @@ export const PlotterLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               <span className="font-mono">{k}</span>
               <span className="font-mono text-ink">{n(prm[k])}</span>
             </span>
-            <input type="range" min={-5} max={5} step={0.1} value={prm[k]} onChange={(e) => setPrm({ ...prm, [k]: Number(e.target.value) })} className="w-full accent-[#8E4EC6] cursor-pointer" />
+            <RangeSlider value={prm[k]} onChange={(v) => setPrm({ ...prm, [k]: v })} min={-5} max={5} step={0.1} color="#8E4EC6" />
           </label>
         ))}
-        <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={deriv} onChange={(e) => setDeriv(e.target.checked)} />
-          {L('Показать производную (пунктир)', 'Show the derivative (dashed)')}
-        </label>
+        <Check checked={deriv} onChange={(v) => setDeriv(v)}>{L('Показать производную (пунктир)', 'Show the derivative (dashed)')}</Check>
         <p className="text-xs text-ink-3 border-t border-line pt-3">
           {L('Можно писать как в тетради: 2x, x², 3(x+1), sin x, √x, |x|, e^x, ln x, π.', 'Write as in a notebook: 2x, x², 3(x+1), sin x, √x, |x|, e^x, ln x, π.')}
         </p>

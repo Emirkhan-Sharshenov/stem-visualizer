@@ -1,3 +1,5 @@
+import { RangeSlider } from '../ui/RangeSlider';
+import { Button } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { Body, equilibrium, fmt, fmtJ, Kind, makeBody, stages, state, SUBST } from './heat';
@@ -13,7 +15,7 @@ const Slider: React.FC<{ label: string; value: number; min: number; max: number;
         {fmt(value, digits)} {unit}
       </span>
     </span>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent cursor-pointer" />
+    <RangeSlider value={value} onChange={(v) => onChange(v)} min={min} max={max} step={step} />
   </label>
 );
 
@@ -309,19 +311,19 @@ const Heating: React.FC<{ lang: Lang }> = ({ lang }) => {
           <canvas ref={canvasRef} className="block w-full" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setRun(!run)} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ color: '#fff' }}>
+          <Button className="text-sm font-medium" onPress={() => setRun(!run)}>
             {run ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             {run ? L('Выключить горелку', 'Burner off') : L('Включить горелку', 'Burner on')}
-          </button>
-          <button onClick={() => reset()} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+          </Button>
+          <Button variant="outline" className="text-sm" onPress={() => reset()}>
             <RotateCcw className="w-4 h-4" />
             {L('Сначала', 'Reset')}
-          </button>
+          </Button>
           <div className="flex p-0.5 rounded-lg bg-muted border border-line">
             {[10, 30, 100].map((k) => (
-              <button key={k} onClick={() => setSpeed(k)} className={`h-8 px-2.5 rounded-md text-xs font-mono cursor-pointer ${speed === k ? 'bg-surface border border-line text-ink' : 'text-ink-2'}`}>
+              <Button variant={speed === k ? 'outline' : 'ghost'} size="sm" className="text-xs font-mono" key={k} onPress={() => setSpeed(k)}>
                 ×{k}
-              </button>
+              </Button>
             ))}
           </div>
           <span className="text-sm text-ink-2">
@@ -339,19 +341,14 @@ const Heating: React.FC<{ lang: Lang }> = ({ lang }) => {
           <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Опыт', 'Setup')}</h3>
           <div className="flex flex-wrap gap-1.5">
             {(Object.keys(SUBST) as Kind[]).map((k) => (
-              <button
-                key={k}
-                onClick={() => {
+              <Button variant={kind === k ? 'primary' : 'outline'} size="sm" className="text-xs" key={k} onPress={() => {
                   setKind(k);
                   const t0 = k === 'water' ? T0 : 20;
                   if (k !== 'water') setT0(20);
                   reset(k, m, t0);
-                }}
-                className={`h-8 px-2.5 rounded-md text-xs border cursor-pointer ${kind === k ? 'bg-accent border-accent' : 'bg-surface border-line text-ink-2'}`}
-                style={kind === k ? { color: '#fff' } : undefined}
-              >
+                }} style={kind === k ? { color: '#fff' } : undefined}>
                 {SUBST[k].name[lang]}
-              </button>
+              </Button>
             ))}
           </div>
           <Slider label={L('Масса m', 'Mass m')} value={m} min={0.1} max={2} step={0.1} unit={L('кг', 'kg')} onChange={(v) => { setM(v); reset(kind, v, T0); }} />
@@ -476,13 +473,13 @@ const Calorimeter: React.FC<{ lang: Lang }> = ({ lang }) => {
           <canvas ref={canvasRef} className="block w-full" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setMixed(true)} disabled={mixed || !items.length} className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50 text-sm font-medium cursor-pointer" style={{ color: '#fff' }}>
+          <Button className="text-sm font-medium" onPress={() => setMixed(true)} isDisabled={mixed || !items.length}>
             {L('Смешать и подождать', 'Mix and wait')}
-          </button>
-          <button onClick={() => setMixed(false)} className="h-9 px-3 rounded-lg border border-line bg-surface text-sm text-ink inline-flex items-center gap-1.5 hover:bg-muted cursor-pointer">
+          </Button>
+          <Button variant="outline" className="text-sm" onPress={() => setMixed(false)}>
             <RotateCcw className="w-4 h-4" />
             {L('До смешивания', 'Before mixing')}
-          </button>
+          </Button>
         </div>
         {mixed && eq && anim >= 1 && (
           <div className="bg-surface border border-line rounded-xl p-4">
@@ -529,9 +526,9 @@ const Calorimeter: React.FC<{ lang: Lang }> = ({ lang }) => {
                   <span className="w-3 h-3 rounded-sm" style={{ background: it.d.kind === 'water' ? (it.d.ice ? '#DCEFFF' : '#5BA4E6') : SUBST[it.d.kind].color }} />
                   {name(it.d)} · {fmt(it.d.m, 2)} {L('кг', 'kg')} · {fmt(it.d.T, 0)} °C
                 </span>
-                <button onClick={() => { setItems((l) => l.filter((x) => x.id !== it.id)); setMixed(false); }} className="text-ink-3 hover:text-[#CC2F35] cursor-pointer" aria-label={L('Убрать', 'Remove')}>
+                <Button variant="ghost" onPress={() => { setItems((l) => l.filter((x) => x.id !== it.id)); setMixed(false); }} aria-label={L('Убрать', 'Remove')}>
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -546,14 +543,9 @@ const Calorimeter: React.FC<{ lang: Lang }> = ({ lang }) => {
             ].map((o) => {
               const on = draft.kind === o.kind && draft.ice === o.ice;
               return (
-                <button
-                  key={o.ru}
-                  onClick={() => setDraft({ kind: o.kind, ice: o.ice, m: draft.m, T: o.ice ? -10 : o.kind === 'water' ? 20 : 100 })}
-                  className={`h-8 px-2.5 rounded-md text-xs border cursor-pointer ${on ? 'bg-accent border-accent' : 'bg-surface border-line text-ink-2'}`}
-                  style={on ? { color: '#fff' } : undefined}
-                >
+                <Button variant={on ? 'primary' : 'outline'} size="sm" className="text-xs" key={o.ru} onPress={() => setDraft({ kind: o.kind, ice: o.ice, m: draft.m, T: o.ice ? -10 : o.kind === 'water' ? 20 : 100 })} style={on ? { color: '#fff' } : undefined}>
                   {lang === 'ru' ? o.ru : o.en}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -568,16 +560,13 @@ const Calorimeter: React.FC<{ lang: Lang }> = ({ lang }) => {
             digits={0}
             onChange={(T) => setDraft({ ...draft, T })}
           />
-          <button
-            onClick={() => {
+          <Button variant="outline" className="text-sm" onPress={() => {
               setItems((l) => [...l, { id: `n${ids.current++}`, d: { ...draft } }]);
               setMixed(false);
-            }}
-            className="h-9 rounded-lg border border-dashed border-line-strong text-sm text-ink inline-flex items-center justify-center gap-1.5 hover:bg-muted cursor-pointer"
-          >
+            }}>
             <Plus className="w-4 h-4" />
             {L('Положить в калориметр', 'Put it in')}
-          </button>
+          </Button>
           <p className="text-[11px] text-ink-3">c: {(['Cu', 'Fe', 'Al', 'Pb'] as Kind[]).map((k) => `${SUBST[k].name[lang].toLowerCase()} ${SUBST[k].c}`).join(', ')} {L('Дж/(кг·°C)', 'J/(kg·°C)')}</p>
         </div>
       </div>
@@ -600,9 +589,9 @@ export const HeatLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             ['cal', L('Калориметр: смешивание', 'Calorimeter: mixing')],
           ] as const
         ).map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className={`h-9 px-4 rounded-md text-sm cursor-pointer ${tab === id ? 'bg-surface border border-line text-ink font-medium' : 'text-ink-2 hover:text-ink'}`}>
+          <Button variant={tab === id ? 'outline' : 'ghost'} className={`text-sm ${tab === id ? 'font-medium' : ''}`} key={id} onPress={() => setTab(id)}>
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="bg-surface border border-line rounded-xl px-4 py-3">
