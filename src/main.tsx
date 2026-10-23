@@ -6,6 +6,7 @@ import {Credits} from './pages/Credits';
 
 // The app (textbook and labs) is large; the landing and auth pages don't need it up front
 const App = lazy(() => import('./App.tsx'));
+const Parent = lazy(() => import('./pages/Parent'));
 import {navigate, useRoute} from './router';
 import type {Lang} from './i18n/landing';
 import './index.css';
@@ -50,6 +51,12 @@ function Root() {
     return (
       <Suspense fallback={<div className="min-h-screen bg-paper" />}>
         <App lang={lang} setLang={setLang} />
+      </Suspense>
+    );
+  if (route === 'parent')
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-paper" />}>
+        <Parent lang={lang} onToggleLang={toggleLang} />
       </Suspense>
     );
   if (route === 'reset') return <ResetPassword lang={lang} onNavigate={navigate} />;

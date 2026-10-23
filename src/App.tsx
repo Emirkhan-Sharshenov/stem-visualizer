@@ -50,6 +50,7 @@ const PracticePage = lazy(() => import('./components/practice/PracticePage'));
 const CourseMap = lazy(() => import('./components/map/CourseMap'));
 const ProgressPage = lazy(() => import('./components/progress/ProgressPage'));
 const ProPage = lazy(() => import('./components/pro/ProPage'));
+const TrialNotice = lazy(() => import('./components/pro/TrialNotice'));
 const TeacherPage = lazy(() => import('./components/teacher/TeacherPage'));
 const MechanicsSandbox = lazy(() => import('./components/sandbox/MechanicsSandbox'));
 const CircuitLab = lazy(() => import('./components/circuit/CircuitLab'));
@@ -725,6 +726,9 @@ export default function App({ lang, setLang }: AppProps) {
       )}
 
       <XpToast lang={lang} />
+      <Suspense fallback={null}>
+        <TrialNotice lang={lang} />
+      </Suspense>
 
       {/* AI Visual Mentor Drawer */}
       <VisualMentor

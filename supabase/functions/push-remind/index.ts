@@ -56,6 +56,28 @@ Deno.serve(async () => {
     );
   }
   if (sent.length) await admin.rpc('push_mark_sent', { p_endpoints: sent });
+
+  // the free week of Pro ends within two days: one note per trial, at the learner's reminder hour
+  const { data: ending } = await admin.rpc('trial_ending');
+  const told = new Set<string>();
+  for (const t of (ending ?? []) as (Sub & { user_id: string; expires_at: string })[]) {
+    const ru = t.lang !== 'en';
+    const left = Math.max(1, Math.round((new Date(t.expires_at).getTime() - Date.now()) / 864e5));
+    const note = {
+      title: ru ? (left > 1 ? '⏳ Pro закончится через 2 дня' : '⏳ Pro закончится завтра') : left > 1 ? '⏳ Your Pro week ends in 2 days' : '⏳ Your Pro week ends tomorrow',
+      body: ru ? 'Наставник без лимита и работа над ошибками останутся, если продлить Pro.' : 'Keep the unlimited mentor and mistake review by extending Pro.',
+      url: '/#/app?lab=pro',
+    };
+    try {
+      await webpush.sendNotification({ endpoint: t.endpoint, keys: { p256dh: t.p256dh, auth: t.auth } }, JSON.stringify(note), { TTL: 6 * 3600, urgency: 'normal' });
+      told.add(t.user_id);
+    } catch (e) {
+      const code = (e as { statusCode?: number }).statusCode;
+      if (code === 404 || code === 410) gone.push(t.endpoint);
+    }
+  }
+  if (told.size) await admin.rpc('trial_mark_reminded', { p_users: [...told] });
+
   for (const ep of gone) await admin.rpc('push_remove', { p_endpoint: ep });
-  return new Response(JSON.stringify({ due: subs.length, sent: sent.length, removed: gone.length }), { headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify({ due: subs.length, sent: sent.length, trial: told.size, removed: gone.length }), { headers: { 'Content-Type': 'application/json' } });
 });

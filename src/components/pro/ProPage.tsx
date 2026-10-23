@@ -1,8 +1,9 @@
 import { Button, Input } from '@heroui/react';
 import React, { useState } from 'react';
-import { Check, Crown, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
-import { PRICES, FREE_MENTOR_DAILY, inSom, openCheckout, paymentsEnabled, redeemCode, redeemErrorText, usePlan } from '../../lib/plan';
+import { Check, Crown, Gift, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
+import { Currency, PRICES, FREE_MENTOR_DAILY, localCurrency, money, openCheckout, paymentsEnabled, planChanged, redeemCode, redeemErrorText, startTrial, usePlan } from '../../lib/plan';
 import { cloudEnabled, useSession } from '../../lib/supabase';
+import { AskParent, ChargeNote, CurrencySwitch } from './pricing';
 
 type Lang = 'ru' | 'en';
 /** public launch code (created by 0005_teacher_plan.sql) */
@@ -10,7 +11,21 @@ const YEAR_OFF = Math.round((1 - PRICES.year / (PRICES.month * 12)) * 100);
 
 /** small lock overlay for Pro-only blocks */
 export const ProGate: React.FC<{ lang: Lang; pro: boolean; onUpgrade: () => void; title: string; text: string; children: React.ReactNode }> = ({ lang, pro, onUpgrade, title, text, children }) => {
+  const plan = usePlan();
+  const [busy, setBusy] = useState(false);
   if (pro) return <>{children}</>;
+  // never had Pro: the free week opens the block right here; otherwise the plans page
+  const tryFree = async () => {
+    setBusy(true);
+    try {
+      await startTrial();
+    } catch {
+      onUpgrade();
+    } finally {
+      setBusy(false);
+    }
+  };
+  const perDay = money(PRICES.year / 365, localCurrency(), lang);
   return (
     <div className="relative rounded-xl overflow-hidden border border-line">
       <div className="pointer-events-none select-none blur-[3px] opacity-60 max-h-[340px] overflow-hidden">{children}</div>
@@ -21,9 +36,19 @@ export const ProGate: React.FC<{ lang: Lang; pro: boolean; onUpgrade: () => void
           </span>
           <h3 className="mt-2 font-serif text-xl text-ink">{title}</h3>
           <p className="mt-1 text-sm text-ink-2">{text}</p>
-          <Button className="mt-3 text-sm font-medium" onPress={() => onUpgrade()}>
-            {lang === 'ru' ? `Pro за $${PRICES.month} в месяц` : `Pro for $${PRICES.month}/mo`}
-          </Button>
+          {plan.canTrial ? (
+            <>
+              <Button className="mt-3 text-sm font-medium" onPress={tryFree} isDisabled={busy}>
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Gift className="w-4 h-4" />}
+                {lang === 'ru' ? 'Открыть — неделя Pro бесплатно' : 'Unlock: a free week of Pro'}
+              </Button>
+              <p className="mt-1.5 text-xs text-ink-3">{lang === 'ru' ? 'Без карты, ничего не спишется' : 'No card, nothing is charged'}</p>
+            </>
+          ) : (
+            <Button className="mt-3 text-sm font-medium" onPress={() => onUpgrade()}>
+              {lang === 'ru' ? `Pro — от ${perDay} в день` : `Pro from ${perDay} a day`}
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -37,8 +62,23 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [period, setPeriod] = useState<'month' | 'year'>('month');
+  const [period, setPeriod] = useState<'month' | 'year'>('year');
   const [paying, setPaying] = useState(false);
+  const [cur, setCur] = useState<Currency>(localCurrency);
+  const [trialBusy, setTrialBusy] = useState(false);
+
+  const tryFree = async () => {
+    setTrialBusy(true);
+    setMsg(null);
+    try {
+      const until = await startTrial();
+      setMsg({ ok: true, text: L(`Готово! Pro бесплатно до ${until.toLocaleDateString('ru-RU')}. Карта не нужна.`, `Done! Free Pro until ${until.toLocaleDateString('en-GB')}. No card needed.`) });
+    } catch (e) {
+      setMsg({ ok: false, text: redeemErrorText(e, lang) });
+    } finally {
+      setTrialBusy(false);
+    }
+  };
 
   const pay = async (tier: 'pro' | 'teacher' = 'pro') => {
     if (!ready) return;
@@ -55,7 +95,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
         () => {
           setMsg({ ok: true, text: L('Оплата прошла! Тариф включится в течение минуты.', 'Payment received! Your plan turns on within a minute.') });
           // the webhook lands a moment later
-          [3000, 8000, 20000, 45000].forEach((ms) => setTimeout(plan.refresh, ms));
+          [3000, 8000, 20000, 45000].forEach((ms) => setTimeout(planChanged, ms));
         },
         tier,
       );
@@ -75,7 +115,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
       const until = await redeemCode(code);
       setMsg({ ok: true, text: L(`Готово! Pro активен до ${until.toLocaleDateString('ru-RU')}.`, `Done! Pro is active until ${until.toLocaleDateString('en-GB')}.`) });
       setCode('');
-      plan.refresh();
+      planChanged();
     } catch (e) {
       setMsg({ ok: false, text: redeemErrorText(e, lang) });
     } finally {
@@ -115,16 +155,40 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           <Crown className="w-3.5 h-3.5" strokeWidth={2} />
           STEM Visualizer Pro
         </span>
-        <h1 className="mt-3 font-serif text-[40px] leading-tight text-ink">{L('Учиться — бесплатно. Pro — когда нужен наставник.', 'Learning is free. Pro is for when you want a tutor.')}</h1>
+        <h1 className="mt-3 font-serif text-[40px] leading-tight text-ink">{L('Наставник, который видит твои ошибки и доводит до пятёрки', 'A tutor that sees your mistakes and gets you to the top mark')}</h1>
         <p className="mt-3 text-[16px] text-ink-2">
-          {L('Весь учебник, лаборатории и тесты открыты всем школьникам. Платно только то, что стоит нам денег: ИИ-наставник и подготовка к экзаменам.', 'The whole textbook, labs and tests are open to every student. Only what costs us money is paid: the AI mentor and exam prep.')}
+          {L(`Учебник, лаборатории и тесты бесплатны для всех. Pro разбирает каждую твою ошибку, отвечает на любые вопросы и готовит к экзамену — за ${money(PRICES.year / 365, cur, lang)} в день.`, `The textbook, labs and tests are free for everyone. Pro revisits every mistake you make, answers any question and gets you exam-ready, for ${money(PRICES.year / 365, cur, lang)} a day.`)}
         </p>
       </header>
+
+      {!plan.pro && !plan.loading && (plan.canTrial || (ready && !user && cloudEnabled)) && (
+        <div className="max-w-3xl mx-auto w-full rounded-2xl border-2 border-accent bg-surface px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+          <span className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-accent-soft text-accent flex items-center justify-center shrink-0">
+              <Gift className="w-5 h-5" strokeWidth={1.75} />
+            </span>
+            <span>
+              <span className="block text-[16px] font-medium text-ink">{L('Попробуй Pro неделю бесплатно', 'Try Pro free for a week')}</span>
+              <span className="block text-sm text-ink-2">{L('Без карты. Через 7 дней Pro просто выключится, ничего не спишется.', 'No card. After 7 days Pro just switches off; nothing is charged.')}</span>
+            </span>
+          </span>
+          {user ? (
+            <Button className="text-sm font-medium" onPress={tryFree} isDisabled={trialBusy}>
+              {trialBusy && <Loader2 className="w-4 h-4 animate-spin" />}
+              {L('Включить бесплатно', 'Start free week')}
+            </Button>
+          ) : (
+            <Button className="text-sm font-medium" onPress={() => (window.location.hash = '#/register')}>
+              {L('Зарегистрироваться', 'Sign up')}
+            </Button>
+          )}
+        </div>
+      )}
 
       {plan.pro && plan.expiresAt && (
         <div className="max-w-3xl mx-auto w-full rounded-xl bg-[#EAF6EF] border border-[#BFE3CC] px-5 py-4 flex flex-wrap items-center justify-between gap-3">
           <span className="text-[15px] text-[#1E7A4C]">
-            ✓ {plan.plan === 'teacher' ? L('Тариф «Учитель»', 'Teacher plan') + ' · ' : ''}{L(`Pro активен до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Pro is active until ${plan.expiresAt.toLocaleDateString('en-GB')}`)}
+            ✓ {plan.plan === 'teacher' ? L('Тариф «Учитель»', 'Teacher plan') + ' · ' : ''}{plan.trial ? L(`Пробная неделя Pro до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Free Pro week until ${plan.expiresAt.toLocaleDateString('en-GB')}`) : L(`Pro активен до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Pro is active until ${plan.expiresAt.toLocaleDateString('en-GB')}`)}
           </span>
           <div className="flex gap-2">
             <Button variant="outline" className="text-sm" onPress={() => onNavigate('practice')}>{L('Пробный ОРТ', 'Mock exam')}</Button>
@@ -154,10 +218,10 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           <span className="absolute -top-3 right-6 px-2.5 py-0.5 rounded-full bg-accent text-xs font-medium" style={{ color: '#fff' }}>
             {L('Для подготовки к ОРТ', 'For exam prep')}
           </span>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-serif text-2xl text-ink">Pro</h2>
             <div className="flex p-0.5 rounded-md bg-muted border border-line text-xs">
-              {(['month', 'year'] as const).map((p) => (
+              {(['year', 'month'] as const).map((p) => (
                 <Button variant={period === p ? 'outline' : 'ghost'} size="sm" className={`${period === p ? 'font-medium' : ''}`} key={p} onPress={() => setPeriod(p)}>
                   {p === 'month' ? L('месяц', 'month') : L(`год −${YEAR_OFF}%`, `year −${YEAR_OFF}%`)}
                 </Button>
@@ -165,12 +229,16 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             </div>
           </div>
           <div className="mt-2 font-serif text-4xl text-ink">
-            ${price} <span className="text-lg text-ink-2">{L(period === 'month' ? 'в месяц' : 'в год', period === 'month' ? 'a month' : 'a year')}</span>
+            {money(price, cur, lang)} <span className="text-lg text-ink-2">{L(period === 'month' ? 'в месяц' : 'в год', period === 'month' ? 'a month' : 'a year')}</span>
           </div>
           <p className="text-sm text-ink-3">
-            {L(`≈ ${inSom(price)} сом`, `≈ ${inSom(price)} KGS`)}
-            {period === 'year' ? L(` · $${(PRICES.year / 12).toFixed(2)} в месяц`, ` · $${(PRICES.year / 12).toFixed(2)} a month`) : L(' · отменить можно в любой момент', ' · cancel any time')}
+            {period === 'year'
+              ? L(`${money(PRICES.year / 12, cur, lang)} в месяц · ${money(PRICES.year / 365, cur, lang)} в день`, `${money(PRICES.year / 12, cur, lang)} a month · ${money(PRICES.year / 365, cur, lang)} a day`)
+              : L(`${money((PRICES.month * 12) / 365, cur, lang)} в день · отменить можно в любой момент`, `${money((PRICES.month * 12) / 365, cur, lang)} a day · cancel any time`)}
           </p>
+          <div className="mt-3">
+            <CurrencySwitch value={cur} onChange={setCur} lang={lang} />
+          </div>
           <p className="mt-4 text-sm text-ink-2">{L('Всё из бесплатного, плюс:', 'Everything in Free, plus:')}</p>
           <ul className="mt-2 flex flex-col gap-3">
             {PRO.map((f) => (
@@ -185,11 +253,12 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
           </ul>
           {paymentsEnabled ? (
             <>
-              <Button size="lg" fullWidth className="mt-6 text-sm font-medium" onPress={() => pay('pro')} isDisabled={paying || plan.pro}>
+              <Button size="lg" fullWidth className="mt-6 text-sm font-medium" onPress={() => pay('pro')} isDisabled={paying || (plan.pro && !plan.trial)}>
                 {paying && <Loader2 className="w-4 h-4 animate-spin" />}
-                {plan.pro ? L('Pro уже подключён', 'You have Pro') : user ? L(`Оплатить картой — $${price}`, `Pay by card — $${price}`) : L('Войти и оплатить', 'Log in to pay')}
+                {plan.pro && !plan.trial ? L('Pro уже подключён', 'You have Pro') : user ? L(`Оплатить картой — ${money(price, cur, lang)}`, `Pay by card — ${money(price, cur, lang)}`) : L('Войти и оплатить', 'Log in to pay')}
               </Button>
-              <p className="mt-2 text-xs text-center text-ink-3">{L('Visa и Mastercard любого банка. Оплата через Freemius — безопасно, данные карты к нам не попадают.', 'Any Visa or Mastercard. Paid via Freemius, so your card details never reach us.')}</p>
+              <ChargeNote cur={cur} usd={price} lang={lang} />
+              {user && !(plan.pro && !plan.trial) && <AskParent lang={lang} className="mt-4" />}
             </>
           ) : (
             <>
@@ -206,9 +275,9 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             <h2 className="font-serif text-2xl text-ink">{L('Учитель', 'Teacher')}</h2>
           </div>
           <div className="mt-2 font-serif text-4xl text-ink">
-            ${PRICES.teacher} <span className="text-lg text-ink-2">{L('в месяц', 'a month')}</span>
+            {money(PRICES.teacher, cur, lang)} <span className="text-lg text-ink-2">{L('в месяц', 'a month')}</span>
           </div>
-          <p className="text-sm text-ink-3">{L(`≈ ${inSom(PRICES.teacher)} сом · для учителей и репетиторов`, `≈ ${inSom(PRICES.teacher)} KGS · for teachers and tutors`)}</p>
+          <p className="text-sm text-ink-3">{L('для учителей и репетиторов', 'for teachers and tutors')}</p>
           <ul className="mt-5 flex flex-col gap-2.5">
             {TEACHER.map((f) => (
               <li key={f} className="flex items-start gap-2 text-[15px] text-ink">
@@ -218,7 +287,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             ))}
           </ul>
           <Button variant="outline" size="lg" fullWidth className="mt-6 text-sm font-medium" onPress={() => pay('teacher')} isDisabled={!paymentsEnabled || paying || plan.plan === 'teacher'}>
-            {plan.plan === 'teacher' ? L('Тариф подключён', 'You have it') : paymentsEnabled ? (user ? L(`Оплатить — $${PRICES.teacher}`, `Pay — $${PRICES.teacher}`) : L('Войти и оплатить', 'Log in to pay')) : L('Оплата картой — скоро', 'Card payment — coming soon')}
+            {plan.plan === 'teacher' ? L('Тариф подключён', 'You have it') : paymentsEnabled ? (user ? L(`Оплатить — ${money(PRICES.teacher, cur, lang)}`, `Pay — ${money(PRICES.teacher, cur, lang)}`) : L('Войти и оплатить', 'Log in to pay')) : L('Оплата картой — скоро', 'Card payment — coming soon')}
           </Button>
           <p className="mt-2 text-xs text-center text-ink-3">{L('Для школ — промокоды на весь класс: напишите нам.', 'For schools: promo codes for a whole class, just ask.')}</p>
         </div>

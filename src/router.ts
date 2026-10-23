@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 
-export type Route = 'landing' | 'login' | 'register' | 'app' | 'credits' | 'reset';
+export type Route = 'landing' | 'login' | 'register' | 'app' | 'credits' | 'reset' | 'parent';
 
-const ROUTES: Route[] = ['login', 'register', 'app', 'credits', 'reset'];
+const ROUTES: Route[] = ['login', 'register', 'app', 'credits', 'reset', 'parent'];
 
 // Hash routing keeps deep links working without server rewrites: #/login, #/register, #/app
 function parse(hash: string): Route {
   // #/app?lab=space3d: the query only picks a section inside the app
-  const path = hash.replace(/^#\/?/, '').split('?')[0];
+  // #/parent/<token>: the first segment is the route
+  const path = hash.replace(/^#\/?/, '').split('?')[0].split('/')[0];
   return (ROUTES as string[]).includes(path) ? (path as Route) : 'landing';
 }
 

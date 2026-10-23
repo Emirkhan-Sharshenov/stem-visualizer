@@ -1,9 +1,9 @@
 import { Button, Tooltip, TextArea } from '@heroui/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUp, Bot, Camera, Crown, RotateCcw, X } from 'lucide-react';
+import { ArrowUp, Bot, Camera, Crown, Gift, RotateCcw, X } from 'lucide-react';
 import { topicById, TOPICS } from '../data/curriculum';
 import type { Topic } from '../data/curriculum/types';
-import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, MENTOR_URL, usePlan } from '../lib/plan';
+import { authHeaders, FREE_MENTOR_DAILY, GUEST_MENTOR_DAILY, MENTOR_URL, startTrial, usePlan } from '../lib/plan';
 import { useMentorTopic } from '../lib/mentorTopic';
 import { Formula } from './Formula';
 import { inlineTex, prepareAnswer, tidyTex } from '../lib/mathText';
@@ -331,10 +331,15 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
                   `Без аккаунта можно задать ${GUEST_MENTOR_DAILY} вопроса в день. Войди — и получишь ${FREE_MENTOR_DAILY} в день бесплатно, а с Pro — без ограничений.`,
                   `Guests get ${GUEST_MENTOR_DAILY} questions a day. Log in for ${FREE_MENTOR_DAILY} a day for free, or get Pro for unlimited questions.`,
                 )
-              : L(
-                  `На сегодня бесплатные вопросы закончились (${FREE_MENTOR_DAILY} в день). Завтра лимит обновится — или подключи Pro и спрашивай сколько угодно.`,
-                  `You've used today's free questions (${FREE_MENTOR_DAILY} a day). The limit resets tomorrow, or get Pro for unlimited questions.`,
-                ),
+              : plan.canTrial
+                ? L(
+                    `На сегодня бесплатные вопросы закончились (${FREE_MENTOR_DAILY} в день). Включи неделю Pro бесплатно — и спрашивай сколько угодно, карта не нужна.`,
+                    `You've used today's free questions (${FREE_MENTOR_DAILY} a day). Start a free week of Pro and ask as much as you like, no card needed.`,
+                  )
+                : L(
+                    `На сегодня бесплатные вопросы закончились (${FREE_MENTOR_DAILY} в день). Завтра лимит обновится — или подключи Pro и спрашивай сколько угодно.`,
+                    `You've used today's free questions (${FREE_MENTOR_DAILY} a day). The limit resets tomorrow, or get Pro for unlimited questions.`,
+                  ),
           },
         ]);
         return;
@@ -440,7 +445,17 @@ export const VisualMentor: React.FC<VisualMentorProps> = ({ lang, currentTopic, 
                   {L('Открыть тему и модель', 'Open the topic and model')}: {topicById(m.topicId)!.title[lang]}
                 </button>
               )}
-              {m.upgrade && (
+              {m.upgrade && plan.canTrial && (
+                <Button className="self-start text-sm font-medium" onPress={() => {
+                    startTrial()
+                      .then(() => setMessages((ms) => [...ms, { role: 'mentor', text: L('Готово, неделя Pro включена! Спрашивай дальше.', 'Done, your Pro week is on! Ask away.') }]))
+                      .catch(() => window.dispatchEvent(new Event('open-pro')));
+                  }}>
+                  <Gift className="w-4 h-4" strokeWidth={1.75} />
+                  {L('Включить неделю Pro бесплатно', 'Start a free Pro week')}
+                </Button>
+              )}
+              {m.upgrade && !plan.canTrial && (
                 <Button variant="ghost" className="self-start text-sm font-medium" onPress={() => {
                     window.dispatchEvent(new Event('open-pro'));
                     onClose();
