@@ -9,10 +9,15 @@
     "voice:check": "node scripts/check-voice.mjs"
   },
   "dependencies": {
+    "@heroui/react": "^3.2.6",
+    "@heroui/styles": "^3.2.6",
+    "@internationalized/date": "^3.12.4",
     "@remotion/cli": "^4.0.532",
+    "@remotion/tailwind-v4": "^4.0.532",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "remotion": "^4.0.532"
+    "remotion": "^4.0.532",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

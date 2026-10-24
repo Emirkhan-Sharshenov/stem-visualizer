@@ -1,0 +1,66 @@
+/* HeroUI v3 for the newer videos, without Tailwind's preflight: every composition shares one bundle and the
+   older videos were laid out without that reset. A small reset applies only inside .reel-root. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+@import "@heroui/styles/base" layer(base);
+@import "@heroui/styles/themes/shared/theme.css" layer(theme);
+@import "@heroui/styles/themes/default" layer(theme);
+@import "@heroui/styles/components/index.css" layer(components);
+@import "@heroui/styles/utilities";
+@import "@heroui/styles/variants";
+@import "./stem-lab-heroui.css";
+
+@source "./";
+
+@theme {
+  --font-display: "Unbounded", "IBM Plex Sans", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  .reel-root,
+  .reel-root *,
+  .reel-root ::before,
+  .reel-root ::after {
+    box-sizing: border-box;
+  }
+  .reel-root {
+    font-family: var(--font-sans);
+    color: var(--foreground);
+    background: var(--background);
+  }
+  .reel-root :is(button, input) {
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+  }
+  .reel-root :is(h1, h2, h3, p) {
+    margin: 0;
+  }
+}
+
+/* a video is rendered frame by frame: every movement comes from the frame number, never from CSS timing */
+.reel-root *,
+.reel-root *::before,
+.reel-root *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* chips at video scale: HeroUI's sizes are for a 400 px phone screen, the frame is 1080 px wide */
+.reel-root .reel-chip {
+  height: auto;
+  padding: 14px 28px;
+  border-radius: 999px;
+}
+.reel-root .reel-chip-label {
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 500;
+}

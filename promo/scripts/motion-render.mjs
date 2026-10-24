@@ -5,6 +5,7 @@
 // into out/motion/<id>.mp4 with the picture copied as is (the old file is kept in out/motion/prev/).
 // usage: node scripts/motion-render.mjs [--stills | --audio] [CompositionId ...]
 import { bundle } from '@remotion/bundler';
+import { enableTailwind } from '@remotion/tailwind-v4';
 import { renderMedia, renderStill, selectComposition } from '@remotion/renderer';
 import os from 'os';
 import path from 'path';
@@ -20,7 +21,7 @@ const want = ids.length ? ids : ['MotionTrailer', 'MotionSlides', 'MotionLabs', 
 const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const concurrency = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2), Math.floor(os.freemem() / 1.5e9)));
 
-const serveUrl = await bundle({ entryPoint: path.resolve('src/index.ts') });
+const serveUrl = await bundle({ entryPoint: path.resolve('src/index.ts'), webpackOverride: (c) => enableTailwind(c) });
 try {
   for (const id of want) {
     const composition = await selectComposition({ serveUrl, id, inputProps: {}, browserExecutable: CHROME });

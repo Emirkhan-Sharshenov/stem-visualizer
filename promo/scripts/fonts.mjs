@@ -1,9 +1,9 @@
-// Saves the Google Fonts used by the videos (Inter, Newsreader; Cyrillic + Latin) into public/fonts,
+// Saves the Google Fonts used by the videos (Inter, Newsreader, Unbounded, IBM Plex; Cyrillic + Latin) into public/fonts,
 // so renders never depend on the network or Chrome's cache.
 // usage: node scripts/fonts.mjs
 import fs from 'fs';
 
-const CSS = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=block';
+const CSS = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Unbounded:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=block';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 fs.mkdirSync('public/fonts', { recursive: true });
 let css = await (await fetch(CSS, { headers: { 'User-Agent': UA } })).text();
