@@ -126,7 +126,7 @@ export const Salt: React.FC<VisualProps> = ({ solve }) => {
 /* 4. a train covering 200 m in 10 s */
 export const Train: React.FC<VisualProps> = ({ solve }) => {
   const run = after(solve, 0.45, 1);
-  const x = 60 + run * 640;
+  const x = 60 + run * 580;
   const conv = after(solve, 0.05, 0.3);
   return (
     <svg viewBox="0 0 900 560" width="100%">
@@ -146,11 +146,11 @@ export const Train: React.FC<VisualProps> = ({ solve }) => {
       {/* distance ruler, measured from the nose */}
       {[0, 50, 100, 150, 200].map((m) => (
         <g key={m}>
-          <line x1={260 + m * 3.2} y1="390" x2={260 + m * 3.2} y2="420" stroke={DIM} strokeWidth="4" />
-          <Tag x={260 + m * 3.2} y={460} size={28} color={DIM}>{m}</Tag>
+          <line x1={260 + m * 2.9} y1="390" x2={260 + m * 2.9} y2="420" stroke={DIM} strokeWidth="4" />
+          <Tag x={260 + m * 2.9} y={460} size={28} color={DIM}>{m}</Tag>
         </g>
       ))}
-      <line x1="260" y1="405" x2={260 + run * 640} y2="405" stroke={CYAN} strokeWidth="8" />
+      <line x1="260" y1="405" x2={260 + run * 580} y2="405" stroke={CYAN} strokeWidth="8" />
       <Tag x={450} y={530} size={40} color={run > 0.98 ? CYAN : INK}>{`t = ${(run * 10).toFixed(1).replace('.', ',')} с · s = ${Math.round(run * 200)} м`}</Tag>
     </svg>
   );

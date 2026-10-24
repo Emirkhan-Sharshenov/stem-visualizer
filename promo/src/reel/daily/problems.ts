@@ -5,13 +5,16 @@ import VOICE from './voice.json';
 /* The seven "problem of the day" reels. `lines` are the voice lines (DAILY-PROBLEM-SCRIPT.md), one role each;
    `voice` holds where each line sits in the ElevenLabs take, in seconds, once the take is split. */
 
-export type Role = 'hook' | 'cond' | 'ask' | 'step' | 'answer' | 'cta';
+import type { Role } from '../timeline';
+export type { Role };
 
 export interface DailyProblem {
   id: string;
   subject: 'Физика' | 'Химия' | 'Геометрия';
   color: string;
   topic: string;
+  /** the big question on the first frame */
+  hook: string;
   condition: string;
   find: string;
   steps: { label: string; math: string }[];
@@ -32,6 +35,7 @@ const PHYS = '#E5484D';
 const LIST: Omit<DailyProblem, 'voice'>[] = [
   {
     id: 'zd-01',
+    hook: 'На какую высоту взлетит мяч?',
     subject: 'Физика',
     color: PHYS,
     topic: 'Механика · 9 класс',
@@ -57,6 +61,7 @@ const LIST: Omit<DailyProblem, 'voice'>[] = [
   },
   {
     id: 'zd-02',
+    hook: '6 Ом и 6 Ом параллельно — это сколько?',
     subject: 'Физика',
     color: PHYS,
     topic: 'Электричество · 8 класс',
@@ -82,6 +87,7 @@ const LIST: Omit<DailyProblem, 'voice'>[] = [
   },
   {
     id: 'zd-03',
+    hook: 'Сколько тут соли?',
     subject: 'Химия',
     color: '#30A46C',
     topic: 'Растворы · 8 класс',
@@ -106,6 +112,7 @@ const LIST: Omit<DailyProblem, 'voice'>[] = [
   },
   {
     id: 'zd-04',
+    hook: 'Сколько метров проедет поезд за 10 секунд?',
     subject: 'Физика',
     color: PHYS,
     topic: 'Движение · 7 класс',
@@ -131,6 +138,7 @@ const LIST: Omit<DailyProblem, 'voice'>[] = [
   },
   {
     id: 'zd-05',
+    hook: 'Катеты 6 и 8. А гипотенуза?',
     subject: 'Геометрия',
     color: '#8E4EC6',
     topic: 'Теорема Пифагора · 8 класс',
@@ -157,6 +165,7 @@ const LIST: Omit<DailyProblem, 'voice'>[] = [
   },
   {
     id: 'zd-06',
+    hook: 'Из какого металла этот кубик?',
     subject: 'Физика',
     color: PHYS,
     topic: 'Плотность · 7 класс',
@@ -182,6 +191,7 @@ const LIST: Omit<DailyProblem, 'voice'>[] = [
   },
   {
     id: 'zd-07',
+    hook: 'Какое давление лыжник оказывает на снег?',
     subject: 'Физика',
     color: PHYS,
     topic: 'Давление · 7 класс',

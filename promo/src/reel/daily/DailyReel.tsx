@@ -4,49 +4,14 @@ import { Button, Card, Chip, ProgressBar } from '@heroui/react';
 import { useFonts } from '../../ui';
 import { clamp, CYAN, DIM, INK, Logo, Mono, Stage, useIn } from '../kit';
 import { PROBLEMS, type DailyProblem } from './problems';
+import { THINK, timeline, VOICE_AT, type Timeline } from '../timeline';
 import '../reel.css';
 
 /* "Problem of the day": a ~25 s vertical reel from HeroUI components in the STEM Lab night theme.
    The voice is one take per problem (public/vo5/<id>.mp3); it is cut after the question so the
    viewer gets three seconds to think, then resumes with the solution. */
 
-const FPS = 30;
-const VOICE_AT = 6;
-const THINK = 90;
 
-/** until the take is split: a guess of each line's place from its length */
-function estimate(lines: DailyProblem['lines']): [number, number][] {
-  let t = 0;
-  return lines.map(([, text]) => {
-    const len = text.split(/\s+/).length / 2.6;
-    const span: [number, number] = [t, t + len];
-    t += len + 0.45;
-    return span;
-  });
-}
-
-export function timeline(p: DailyProblem) {
-  const v = p.voice ?? estimate(p.lines);
-  const ask = p.lines.findIndex(([r]) => r === 'ask');
-  const aEnd = v[ask][1];
-  const bStart = v[ask + 1][0];
-  const think = VOICE_AT + Math.round(aEnd * FPS) + 8;
-  const bAt = think + THINK + 6;
-  const at = (i: number, sec: number) => (i <= ask ? VOICE_AT + Math.round(sec * FPS) : bAt + Math.round((sec - bStart + 0.15) * FPS));
-  const lines = v.map(([a, b], i) => [at(i, a), at(i, b)] as [number, number]);
-  const first = (role: string) => lines[p.lines.findIndex(([r]) => r === role)][0];
-  const problem = (p.lines.some(([r]) => r === 'cond') ? first('cond') : first('ask')) - 4;
-  const answer = first('answer') - 4;
-  const cta = first('cta') - 4;
-  const total = lines[lines.length - 1][1] + 50;
-  return {
-    lines,
-    steps: lines.filter((_, i) => p.lines[i][0] === 'step').map(([a]) => a),
-    scenes: { hook: 0, problem, think, solve: bAt, answer, cta, total },
-    audio: { aLen: Math.round((aEnd + 0.25) * FPS), bAt, bFrom: Math.max(0, Math.round((bStart - 0.15) * FPS)) },
-  };
-}
-type Timeline = ReturnType<typeof timeline>;
 
 const SubjectChip: React.FC<{ p: DailyProblem }> = ({ p }) => (
   <Chip className="reel-chip" size="lg" variant="soft" style={{ background: `${p.color}2E`, color: p.color }}>
@@ -61,31 +26,6 @@ const Header: React.FC<{ p: DailyProblem; n: number }> = ({ p, n }) => (
   </div>
 );
 
-/* ---------- 1. hook ---------- */
-const Hook: React.FC<{ p: DailyProblem; n: number }> = ({ p, n }) => {
-  const f = useCurrentFrame();
-  const a = useIn(0);
-  const b = useIn(14);
-  const tick = Math.floor(f / 6) % 2;
-  return (
-    <Stage>
-      <div style={{ opacity: a, transform: `scale(${0.9 + a * 0.1})`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 30 }}>
-        <SubjectChip p={p} />
-        <div className="font-display" style={{ fontSize: 132, fontWeight: 700, lineHeight: 1, color: INK, textAlign: 'center', letterSpacing: '-0.03em' }}>
-          ЗАДАЧА
-          <br />
-          <span style={{ color: CYAN, textShadow: '0 0 50px rgba(57,225,255,0.5)' }}>ДНЯ</span>
-        </div>
-        <Mono style={{ fontSize: 34 }}>{`№${n} · ${p.topic.toUpperCase()}`}</Mono>
-      </div>
-      <div className="font-display" style={{ marginTop: 40, fontSize: 60, fontWeight: 700, color: INK, opacity: b, transform: `translateY(${(1 - b) * 40}px)`, whiteSpace: 'nowrap' }}>
-        Решишь за <span style={{ color: CYAN }}>3</span> секунды{tick ? '?' : ' '}
-      </div>
-    </Stage>
-  );
-};
-
-/* ---------- 2. the problem with its model at rest ---------- */
 const ModelCard: React.FC<{ p: DailyProblem; solve: number }> = ({ p, solve }) => (
   <Card className="w-full" style={{ padding: 24 }}>
     <Card.Content>
@@ -94,16 +34,39 @@ const ModelCard: React.FC<{ p: DailyProblem; solve: number }> = ({ p, solve }) =
   </Card>
 );
 
+/* ---------- 1. hook: from the very first frame (it is also the cover) the question and the model ---------- */
+const Hook: React.FC<{ p: DailyProblem; n: number }> = ({ p, n }) => {
+  const f = useCurrentFrame();
+  const pulse = 1 + 0.04 * Math.sin(f / 4);
+  return (
+    <Stage style={{ padding: '120px 80px 260px', gap: 40 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <SubjectChip p={p} />
+        <Mono style={{ fontSize: 30 }}>{`ЗАДАЧА ДНЯ · №${n}`}</Mono>
+      </div>
+      <div className="font-display" style={{ fontSize: 88, fontWeight: 700, lineHeight: 1.08, color: INK, textAlign: 'center', letterSpacing: '-0.02em' }}>
+        {p.hook}
+      </div>
+      <ModelCard p={p} solve={0} />
+      <div style={{ transform: `scale(${pulse})` }}>
+        <Chip className="reel-chip" color="accent" variant="primary" size="lg">
+          <Chip.Label className="reel-chip-label">⏱ Решишь за 3 секунды?</Chip.Label>
+        </Chip>
+      </div>
+    </Stage>
+  );
+};
+
+/* ---------- 2. the problem with its model at rest ---------- */
+
 const Problem: React.FC<{ p: DailyProblem; n: number }> = ({ p, n }) => {
-  const a = useIn(0);
-  const b = useIn(10);
-  const c = useIn(24);
+  const c = useIn(4);
   return (
     <Stage style={{ padding: '120px 80px 260px', gap: 34 }}>
-      <div style={{ width: '100%', opacity: a }}>
+      <div style={{ width: '100%' }}>
         <Header p={p} n={n} />
       </div>
-      <div style={{ width: '100%', opacity: b, transform: `translateY(${(1 - b) * 60}px)` }}>
+      <div style={{ width: '100%' }}>
         <ModelCard p={p} solve={0} />
       </div>
       <div style={{ width: '100%', opacity: c, transform: `translateY(${(1 - c) * 60}px)` }}>

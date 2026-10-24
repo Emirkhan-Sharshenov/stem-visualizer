@@ -7,6 +7,7 @@ import { Motion, MOTION_IDS, motionLength } from './Motion';
 import { Reel2, REEL_IDS, reelLength } from './Reels2';
 import { ReelPhoto, REEL_PHOTO_LEN } from './reel/ReelPhoto';
 import { DailyReel, dailyLength, DAILY_COUNT } from './reel/daily/DailyReel';
+import { MistakeReel, mistakeLength, MISTAKE_COUNT } from './reel/mistake/MistakeReel';
 
 export const Root: React.FC = () => (
   <>
@@ -24,6 +25,9 @@ export const Root: React.FC = () => (
     <Composition id="ReelPhoto" component={ReelPhoto} durationInFrames={REEL_PHOTO_LEN} fps={30} width={1080} height={1920} />
       {Array.from({ length: DAILY_COUNT }, (_, i) => (
         <Composition key={i} id={`Daily${String(i + 1).padStart(2, '0')}`} component={DailyReel} defaultProps={{ n: i + 1 }} durationInFrames={dailyLength(i + 1)} fps={30} width={1080} height={1920} />
+      ))}
+      {Array.from({ length: MISTAKE_COUNT }, (_, i) => (
+        <Composition key={`m${i}`} id={`Mistake${String(i + 1).padStart(2, '0')}`} component={MistakeReel} defaultProps={{ n: i + 1 }} durationInFrames={mistakeLength(i + 1)} fps={30} width={1080} height={1920} />
       ))}
     <Composition id="IntroVertical" component={Intro} durationInFrames={INTRO_LEN} fps={30} width={1080} height={1920} />
     <Composition id="IntroSquare" component={Intro} durationInFrames={INTRO_LEN} fps={30} width={1080} height={1080} />

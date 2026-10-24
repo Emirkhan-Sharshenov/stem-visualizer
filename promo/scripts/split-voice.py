@@ -1,17 +1,19 @@
-"""Splits each zd-XX.mp3 take into its script lines.
+"""Splits each voice take (zd-01.mp3, no-01.mp3, …) into the lines of its section in the script.
 
 The take is cut into speech chunks at its pauses; lines are runs of consecutive chunks. A run fits a line when
 its speaking time matches the line's syllables at the take's own pace, and when it has no more inner pauses
 than the line has punctuation marks inside it (people pause at commas, dashes and full stops, not mid-phrase).
-Prints the chosen split and writes [start, end] seconds per line to src/reel/daily/voice.json.
+Prints the chosen split and writes [start, end] seconds per line to the given voice.json.
 Check the printout: a line squeezed into half a second means a cut landed in the wrong pause; fix it in voice.json.
-usage: python scripts/split-voice.py   (takes public/vo5/zd-XX.mp3, text from DAILY-PROBLEM-SCRIPT.md)"""
+usage: python scripts/split-voice.py [script.md voice-dir out.json]
+       defaults: DAILY-PROBLEM-SCRIPT.md public/vo5 src/reel/daily/voice.json"""
 import json, os, re, subprocess, sys
 
 PROMO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FF = PROMO + r'\node_modules\@remotion\compositor-win32-x64-msvc\ffmpeg.exe'
-script = open(PROMO + r'\DAILY-PROBLEM-SCRIPT.md', encoding='utf-8').read().split('## Ударения')[0]
-sections = re.split(r'^## (zd-\d\d)[^\n]*\n', script, flags=re.M)
+SCRIPT, AUDIO, OUT = (sys.argv[1:4] if len(sys.argv) > 3 else ['DAILY-PROBLEM-SCRIPT.md', 'public/vo5', 'src/reel/daily/voice.json'])
+script = open(os.path.join(PROMO, SCRIPT), encoding='utf-8').read().split('## Ударения')[0]
+sections = re.split(r'^## ([a-z]+-\d\d)[^\n]*\n', script, flags=re.M)
 texts = {sections[i]: [l for l in sections[i + 1].strip().split('\n') if l and not l.startswith('#')] for i in range(1, len(sections), 2)}
 
 VOWELS = 'аеёиоуыэюяaeiou'
@@ -38,7 +40,7 @@ def chunks(path):
 
 result = {}
 for zid, lines in texts.items():
-    ch = chunks(rf'{PROMO}\public\vo5\{zid}.mp3')
+    ch = chunks(os.path.join(PROMO, AUDIO, f'{zid}.mp3'))
     n, k = len(ch), len(lines)
     speech = sum(e - s for s, e in ch)
     rate = speech / sum(syl(l) for l in lines)  # seconds per syllable in this take
@@ -73,4 +75,4 @@ for zid, lines in texts.items():
     for (s, e), (a, b), l in zip(spans, bounds, lines):
         print(f'   {s:6.2f}-{e:6.2f} {b - a} chunk(s)  {l[:64]}', file=sys.stderr)
 
-json.dump(result, open(PROMO + r'\src\reel\daily\voice.json', 'w'), indent=1)
+json.dump(result, open(os.path.join(PROMO, OUT), 'w'), indent=1)
