@@ -4,7 +4,8 @@ import { LogoMark } from './brand/Logo';
 import { Search, User, BookOpen, FlaskConical, Target, Flame, Trophy, Gamepad2 } from 'lucide-react';
 import { dayStreak, useProgress } from '../lib/progress';
 import { signOut, useSession } from '../lib/supabase';
-import { LogOut, Crown, Users, GraduationCap, Moon, Sun } from 'lucide-react';
+import { LogOut, Crown, Users, GraduationCap, Moon, Sun, BarChart3 } from 'lucide-react';
+import { useIsAdmin } from '../lib/admin';
 import { Button } from '@heroui/react';
 import { useTheme } from '../lib/theme';
 import { usePlan } from '../lib/plan';
@@ -129,6 +130,7 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => 
   const onProgress = () => onSelect('progress');
   const onPro = () => onSelect('pro');
   const { user, ready } = useSession();
+  const admin = useIsAdmin();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -172,6 +174,12 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => 
             <Crown className="w-4 h-4 text-[#B5651D]" strokeWidth={1.75} />
             {lang === 'ru' ? 'Подписка Pro' : 'Pro plan'}
           </button>
+          {admin && (
+            <button onClick={() => { setOpen(false); onSelect('admin'); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
+              <BarChart3 className="w-4 h-4 text-accent" strokeWidth={1.75} />
+              {lang === 'ru' ? 'Статистика' : 'Statistics'}
+            </button>
+          )}
           <button onClick={() => { setOpen(false); signOut(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
             <LogOut className="w-4 h-4" strokeWidth={1.75} />
             {lang === 'ru' ? 'Выйти' : 'Log out'}

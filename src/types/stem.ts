@@ -34,6 +34,7 @@ export type VisualMode =
   | 'enzymes'
   | 'galvanic'
   | 'games'
+ | 'admin'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 
