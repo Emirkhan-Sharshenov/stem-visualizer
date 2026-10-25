@@ -5,6 +5,7 @@ import { PROBLEMS, problemQuestion } from '../../lib/problems';
 import { progress, useProgress, XP } from '../../lib/progress';
 import { Formula } from '../Formula';
 import { questionDetail, useScreenDetail } from '../../lib/pageContext';
+import { gradeName } from '../../data/curriculum/index';
 
 type Lang = 'ru' | 'en';
 const LIVES = 3;
@@ -124,7 +125,7 @@ export const Marathon: React.FC<{ lang: Lang; subject: string; onBack: () => voi
       </div>
       <div className="bg-surface border border-line rounded-xl p-5 flex flex-col gap-4">
         <span className="text-xs text-ink-3">
-          {gen.title[lang]} · {gen.grade} {L('класс', 'grade')} · {L('уровень', 'level')} {level + 1}
+          {gen.title[lang]} · {gradeName(gen.grade, lang)} · {L('уровень', 'level')} {level + 1}
         </span>
         <p className="font-serif text-xl leading-snug text-ink">{q.prompt[lang]}</p>
         <div className="grid sm:grid-cols-2 gap-2">

@@ -99,7 +99,8 @@ export const Timeline: React.FC<{ lang: 'ru' | 'en'; tl: TimelineApi; marks?: Ti
 
   return (
     <div className={`rounded-xl px-3 py-2.5 ${dark ? 'bg-[#1A1C21]/95 border border-[#2c2f36]' : 'bg-surface border border-line'}`}>
-      <div className="flex items-center gap-1">
+      {/* on a phone the scrubber gets its own row; from sm up everything sits on one line */}
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-1">
         <Button isIconOnly size="sm" variant="ghost" aria-label={lang === 'ru' ? 'В начало' : 'Restart'} onPress={() => tl.seek(0)}>
           <SkipBack className="w-4 h-4" strokeWidth={1.75} />
         </Button>
@@ -113,10 +114,17 @@ export const Timeline: React.FC<{ lang: 'ru' | 'en'; tl: TimelineApi; marks?: Ti
           <StepForward className="w-4 h-4" strokeWidth={1.75} />
         </Button>
 
-        <div className="relative flex-1 mx-2">
+        <span className={`sm:hidden ml-auto font-mono text-xs ${dark ? 'text-[#B5B8C0]' : 'text-ink-2'}`}>{fmt(tl.time)}</span>
+        <div className="relative order-last sm:order-none basis-full sm:basis-auto flex-1 sm:mx-2 mt-1 sm:mt-0">
           <RangeSlider value={tl.time} onChange={(v) => tl.seek(v)} min={0} max={tl.duration} step={0.01} aria-label={lang === 'ru' ? 'Шкала времени' : 'Timeline'} />
+          {/* stage ticks: thin marks on the track, not buttons */}
           {marks.map((m) => (
-            <Tooltip key={m.t}><Tooltip.Trigger><Button aria-label={m.label[lang]} variant={dark ? 'ghost' : 'primary'} className="absolute -top-1 w-1.5" onPress={() => tl.seek(m.t)} style={{ left: pct(m.t) }} /></Tooltip.Trigger><Tooltip.Content>{m.label[lang]}</Tooltip.Content></Tooltip>
+            <Tooltip key={m.t}>
+              <Tooltip.Trigger>
+                <button type="button" aria-label={m.label[lang]} onClick={() => tl.seek(m.t)} className="absolute top-1.5 h-4 w-[3px] -translate-x-1/2 rounded-full bg-ink-2 opacity-60 hover:opacity-100 cursor-pointer" style={{ left: pct(m.t) }} />
+              </Tooltip.Trigger>
+              <Tooltip.Content>{m.label[lang]}</Tooltip.Content>
+            </Tooltip>
           ))}
         </div>
 
@@ -137,12 +145,11 @@ export const Timeline: React.FC<{ lang: 'ru' | 'en'; tl: TimelineApi; marks?: Ti
               onClick={() => tl.seek(m.t)}
               className={`px-2 py-0.5 rounded-full text-[11.5px] cursor-pointer transition-colors ${
                 activeMark === m
-                  ? 'bg-accent text-white'
+                  ? 'bg-accent text-accent-foreground'
                   : dark
                     ? 'bg-[#26282D] text-[#B5B8C0] hover:text-white'
                     : 'bg-muted text-ink-2 hover:text-ink'
               }`}
-              style={activeMark === m ? { color: '#fff' } : undefined}
             >
               {m.label[lang]}
             </button>

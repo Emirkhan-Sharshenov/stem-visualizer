@@ -7,14 +7,16 @@ import { progress, useProgress } from '../../lib/progress';
 import { dailyQuestions, questionsForTopic, sectionTest, todayKey } from '../../lib/quiz';
 import { Quiz } from './Quiz';
 import type { StemCategory } from '../../types/stem';
+import { gradeName } from '../../data/curriculum/index';
 
 type Lang = 'ru' | 'en';
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6', astronomy: '#4C6FFF' };
 const NAME: Record<string, { ru: string; en: string }> = {
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
   mathematics: { ru: 'Математика', en: 'Maths' },
+  astronomy: { ru: 'Астрономия', en: 'Astronomy' },
 };
 
 const chipCls = (active: boolean) => `h-9 px-3.5 rounded-full text-sm border cursor-pointer transition-colors ${active ? 'border-transparent' : 'bg-surface border-line text-ink-2 hover:text-ink'}`;
@@ -41,7 +43,7 @@ const Picker: React.FC<{ lang: Lang; p: ReturnType<typeof usePicker> }> = ({ lan
     <div className="flex flex-wrap gap-1.5">
       {p.grades.map((g) => (
         <Button variant="outline" size="sm" className={`text-sm ${p.grade === g ? 'text-accent font-medium' : 'text-ink-2'}`} key={g} onPress={() => p.setGrade(g)}>
-          {g} {lang === 'ru' ? 'класс' : 'grade'}
+          {gradeName(g, lang)}
         </Button>
       ))}
     </div>
@@ -118,7 +120,7 @@ const TopicRun: React.FC<{ lang: Lang; topic: Topic; onBack: () => void; onOpenT
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="text-xs text-ink-3">
-            {NAME[topic.subject]?.[lang]} · {topic.grade} {L('класс', 'grade')}
+            {NAME[topic.subject]?.[lang]} · {gradeName(topic.grade, lang)}
           </span>
           <h2 className="font-serif text-[28px] leading-tight text-ink">{topic.title[lang]}</h2>
         </div>

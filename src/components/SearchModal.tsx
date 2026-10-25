@@ -3,6 +3,7 @@ import { Button, Input } from '@heroui/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Search, X } from 'lucide-react';
 import { SECTIONS, Topic, TOPICS, topicById } from '../data/curriculum';
+import { gradeName } from '../data/curriculum/index';
 
 interface SearchModalProps {
   lang: 'ru' | 'en';
@@ -10,12 +11,13 @@ interface SearchModalProps {
   onOpenTopic: (id: string) => void;
 }
 
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6', astronomy: '#4C6FFF' };
 const NAME: Record<string, { ru: string; en: string }> = {
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
   mathematics: { ru: 'Математика', en: 'Maths' },
+  astronomy: { ru: 'Астрономия', en: 'Astronomy' },
 };
 
 const SUGGEST = ['p7-liquid-pressure', 'p8-conduction', 'p11-lorentz', 'c8-combustion', 'c11-redox', 'c8-lattices', 'b9-mitosis', 'b8-bones', 'b8-blood-groups', 'b11-adaptations'];
@@ -95,7 +97,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ lang, onClose, onOpenT
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] text-ink truncate">{t.title[lang]}</span>
                   <span className="block text-xs text-ink-3 truncate">
-                    {NAME[t.subject]?.[lang]} · {t.grade} {L('класс', 'grade')} · {sectionTitle(t)}
+                    {NAME[t.subject]?.[lang]} · {gradeName(t.grade, lang)} · {sectionTitle(t)}
                   </span>
                 </span>
                 <ArrowRight className="w-4 h-4 text-ink-3 group-hover:text-accent shrink-0" strokeWidth={1.75} />

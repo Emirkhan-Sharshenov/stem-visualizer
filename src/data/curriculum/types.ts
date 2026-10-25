@@ -8,6 +8,11 @@ import type { GeomId, GraphId, SolidId } from '../../components/math/ids';
 
 export type L = { ru: string; en: string };
 
+/** the step after grade 11: first-year university topics */
+export const UNI = 12;
+/** "9 класс" / "Grade 9", and "ВУЗ" / "University" for the university step */
+export const gradeName = (g: number, lang: 'ru' | 'en') => (g >= UNI ? (lang === 'ru' ? 'ВУЗ' : 'University') : lang === 'ru' ? `${g} класс` : `Grade ${g}`);
+
 /** What a topic shows as its live demonstration */
 export type SimRef =
   | { moment: VisualMode } // embeddable lab

@@ -5,6 +5,7 @@ import { Award, Download, Lock, Share2, X } from 'lucide-react';
 import { TOPICS } from '../../data/curriculum';
 import type { Progress } from '../../lib/progress';
 import { SITE } from '../../lib/shareCard';
+import { gradeName } from '../../data/curriculum/index';
 
 /* Course certificates: a subject and grade with 80% of its topics understood unlocks a certificate with the
    learner's name, drawn on a canvas and saved as a one-page A4 PDF (a JPEG inside a tiny hand-made PDF). */
@@ -101,7 +102,7 @@ async function drawCertificate(c: Course, name: string, lang: Lang): Promise<HTM
   g.fillText(L('освоил(а) курс', 'has completed the course'), W / 2, 940);
   g.font = serif(600, 84);
   g.fillStyle = col;
-  g.fillText(`${c.subject[lang]} · ${L(`${c.grade} класс`, `Grade ${c.grade}`)}`, W / 2, 1060);
+  g.fillText(`${c.subject[lang]} · ${gradeName(c.grade, lang)}`, W / 2, 1060);
   g.fillStyle = '#5A5D66';
   g.font = sans(500, 40);
   g.fillText(`${L(`Понято тем: ${c.done} из ${c.total}`, `Topics understood: ${c.done} of ${c.total}`)}${c.avg !== null ? L(` · средний балл тестов ${c.avg}%`, ` · average test score ${c.avg}%`) : ''}`, W / 2, 1160);
@@ -232,7 +233,7 @@ const CertModal: React.FC<{ lang: Lang; course: Course; onClose: () => void }> =
     const f = new File([pdf], file, { type: 'application/pdf' });
     if (navigator.canShare?.({ files: [f] })) {
       try {
-        await navigator.share({ files: [f], text: L(`Я освоил(а) курс «${course.subject.ru}, ${course.grade} класс» в STEM Visualizer 🎓 https://${SITE}`, `I completed ${course.subject.en}, grade ${course.grade} in STEM Visualizer 🎓 https://${SITE}`) });
+        await navigator.share({ files: [f], text: L(`Я освоил(а) курс «${course.subject.ru}, ${gradeName(course.grade, 'ru')}» в STEM Visualizer 🎓 https://${SITE}`, `I completed ${course.subject.en}, grade ${course.grade} in STEM Visualizer 🎓 https://${SITE}`) });
         return;
       } catch (e) {
         if ((e as Error)?.name === 'AbortError') return;
@@ -245,7 +246,7 @@ const CertModal: React.FC<{ lang: Lang; course: Course; onClose: () => void }> =
     <Dialog onClose={onClose} label={L('Сертификат', 'Certificate')} className="max-w-3xl p-4 sm:p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Award className="w-5 h-5" style={{ color: course.subject.color }} />
-          <h2 className="font-serif text-xl text-ink flex-1">{L('Сертификат', 'Certificate')}: {course.subject[lang]}, {L(`${course.grade} класс`, `grade ${course.grade}`)}</h2>
+          <h2 className="font-serif text-xl text-ink flex-1">{L('Сертификат', 'Certificate')}: {course.subject[lang]}, {gradeName(course.grade, lang)}</h2>
           <Button variant="ghost" isIconOnly size="sm" className="w-8" onPress={() => onClose()} aria-label={L('Закрыть', 'Close')}>
             <X className="w-5 h-5" />
           </Button>
@@ -292,7 +293,7 @@ export const Certificates: React.FC<{ lang: Lang; progress: Progress }> = ({ lan
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-ink">
-                    {c.subject[lang]}, {L(`${c.grade} класс`, `grade ${c.grade}`)}
+                    {c.subject[lang]}, {gradeName(c.grade, lang)}
                   </span>
                   <span className="block text-xs text-ink-2">{ok ? L('Получить сертификат →', 'Get the certificate →') : L(`ещё ${left} ${left === 1 ? 'тема' : left < 5 ? 'темы' : 'тем'}`, `${left} more topic${left === 1 ? '' : 's'}`)}</span>
                   <span className="mt-1.5 block h-1 rounded-full bg-muted overflow-hidden">

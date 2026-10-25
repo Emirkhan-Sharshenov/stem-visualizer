@@ -27,6 +27,7 @@ import { useProgress } from '../../lib/progress';
 import { useSession } from '../../lib/supabase';
 import { buildPlan } from '../progress/StudyPlan';
 import { ProGate } from '../pro/ProPage';
+import { gradeName } from '../../data/curriculum/index';
 
 type Lang = 'ru' | 'en';
 type OpenTopic = (id: string) => void;
@@ -92,7 +93,7 @@ const NewAssignment: React.FC<{ lang: Lang; classId: string; onDone: () => void 
       <div className="text-sm font-medium text-ink">{L('Новое задание', 'New assignment')}</div>
       <div className="grid sm:grid-cols-3 gap-2">
         <Choice aria-label={L('Предмет', 'Subject')} value={subject} onChange={(v) => { setSubject(v as StemCategory); setSectionId(''); setTopicId(''); }} options={SUBJ.map((s) => ({ value: s.id, label: s[lang] }))} />
-        <Choice aria-label={L('Класс', 'Grade')} value={String(g)} onChange={(v) => { setGrade(Number(v)); setSectionId(''); setTopicId(''); }} options={grades.map((x) => ({ value: String(x), label: `${x} ${L('класс', 'grade')}` }))} />
+        <Choice aria-label={L('Класс', 'Grade')} value={String(g)} onChange={(v) => { setGrade(Number(v)); setSectionId(''); setTopicId(''); }} options={grades.map((x) => ({ value: String(x), label: gradeName(x, lang) }))} />
         <Choice aria-label={L('Раздел', 'Section')} value={section?.id ?? ''} onChange={(v) => { setSectionId(v); setTopicId(''); }} options={sections.map((s) => ({ value: s.id, label: s.title[lang] }))} />
       </div>
       <div className="grid sm:grid-cols-[1fr_180px_auto] gap-2">

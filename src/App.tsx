@@ -90,6 +90,7 @@ const SUBJECT_DOT: Record<string, string> = {
   chemistry: 'bg-chemistry',
   biology: 'bg-biology',
   mathematics: 'bg-math',
+  astronomy: 'bg-astro',
 };
 
 type Crumb = { subject: keyof typeof SUBJECT_DOT; title: { ru: string; en: string } };

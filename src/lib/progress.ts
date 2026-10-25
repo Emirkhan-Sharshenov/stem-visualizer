@@ -233,7 +233,7 @@ export function badges(p: Progress, totals: Record<string, number>): Badge[] {
     b('daily', '☀️', 'Утренняя зарядка', 'Daily warm-up', 'Ответь на вопросы дня 5 раз', 'Do the questions of the day 5 times', Object.keys(p.daily).length, 5),
     b('solver', '🧮', 'Решатель', 'Problem solver', 'Реши правильно 50 задач', 'Solve 50 problems correctly', Object.values(p.problems ?? {}).reduce((s, x) => s + x.ok, 0), 50),
     b('tester', '⏱️', 'Тренировка', 'Practice run', 'Пройди 3 тренировочных теста', 'Finish 3 practice tests', p.tests.length, 3),
-    b('all', '🌌', 'Вся программа', 'Whole course', 'Пройди все темы', 'Complete every topic', done, totals.all ?? 486),
+    b('all', '🌌', 'Вся программа', 'Whole course', 'Пройди все темы', 'Complete every topic', done, totals.all ?? 660),
   ];
 }
 

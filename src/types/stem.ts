@@ -1,4 +1,4 @@
-export type StemCategory = 'chemistry' | 'physics' | 'mathematics' | 'biology';
+export type StemCategory = 'chemistry' | 'physics' | 'mathematics' | 'biology' | 'astronomy';
 
 export type SchoolGrade = 'all' | 'grade_7' | 'grade_8' | 'grade_9' | 'grade_10' | 'grade_11' | 'grade_5_6' | 'grade_7_8' | 'grade_10_11';
 

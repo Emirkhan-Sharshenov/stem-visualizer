@@ -25,13 +25,15 @@ import { MATH_8 } from './math8';
 import { MATH_9 } from './math9';
 import { MATH_10 } from './math10';
 import { MATH_11 } from './math11';
+import { ASTRONOMY_11 } from './astronomy11';
+import { ASTRONOMY_UNI, BIOLOGY_UNI, CHEMISTRY_UNI, MATH_UNI, PHYSICS_UNI } from './university';
 
 export * from './types';
 
 /** Newly authored curriculum, by subject and grade */
-const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11, ...BIOLOGY_5, ...BIOLOGY_6, ...BIOLOGY_7, ...BIOLOGY_8, ...BIOLOGY_9, ...BIOLOGY_10, ...BIOLOGY_11, ...MATH_5, ...MATH_6, ...MATH_7, ...MATH_8, ...MATH_9, ...MATH_10, ...MATH_11];
+const AUTHORED: Section[] = [...PHYSICS_7, ...PHYSICS_8, ...PHYSICS_9, ...PHYSICS_10, ...PHYSICS_11, ...CHEMISTRY_8, ...CHEMISTRY_9, ...CHEMISTRY_10, ...CHEMISTRY_11, ...BIOLOGY_5, ...BIOLOGY_6, ...BIOLOGY_7, ...BIOLOGY_8, ...BIOLOGY_9, ...BIOLOGY_10, ...BIOLOGY_11, ...MATH_5, ...MATH_6, ...MATH_7, ...MATH_8, ...MATH_9, ...MATH_10, ...MATH_11, ...ASTRONOMY_11, ...PHYSICS_UNI, ...CHEMISTRY_UNI, ...BIOLOGY_UNI, ...MATH_UNI, ...ASTRONOMY_UNI];
 
-export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
+export const SUBJECTS: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics', 'astronomy'];
 
 const DEDICATED: string[] = ['orbitals', 'deconstruction', 'physics_gravity', 'math_revolution', 'math_divergence', 'biology_cell', 'break_model'];
 

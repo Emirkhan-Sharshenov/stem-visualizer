@@ -81,16 +81,28 @@
   --color-chemistry: #30A46C;
   --color-biology: #F5A524;
   --color-math: #8E4EC6;
+  --color-astro: #4C6FFF;
 }
 
 @layer base {
   html {
     background-color: var(--sv-paper);
   }
+  /* the page itself never scrolls sideways: a phone would otherwise zoom out when a lab's canvas is wide for a
+     frame while it resizes. clip, unlike hidden, keeps the sticky header working. */
+  html,
+  body {
+    overflow-x: clip;
+  }
   body {
     font-family: var(--font-sans);
     background-color: var(--sv-paper);
     color: var(--sv-ink);
+  }
+  /* a grid cell may not grow past its column: otherwise one wide row (a DNA strip, a table) stretches the
+     single phone column and the whole page scrolls sideways. A min-w-* utility on the cell still wins. */
+  .grid > * {
+    min-width: 0;
   }
   code, pre, .font-mono {
     font-family: var(--font-mono);

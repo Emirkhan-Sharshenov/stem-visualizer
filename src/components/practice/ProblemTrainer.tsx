@@ -8,15 +8,17 @@ import { Marathon } from './Marathon';
 import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 import { TopicDrill } from './TopicDrill';
 import { TOPICS } from '../../data/curriculum';
+import { gradeName } from '../../data/curriculum/index';
 
 type Lang = 'ru' | 'en';
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6', astronomy: '#4C6FFF' };
 const NAME: Record<string, { ru: string; en: string }> = {
   all: { ru: 'Все', en: 'All' },
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
   mathematics: { ru: 'Математика', en: 'Maths' },
+  astronomy: { ru: 'Астрономия', en: 'Astronomy' },
 };
 
 /** endless run of generated problems: answer, see the worked solution, next */
@@ -27,7 +29,7 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const gen = gens[seed % gens.length];
   const q = useMemo(() => problemQuestion(gen, seed), [gen, seed]);
-  useScreenDetail('question-problem', `Расчётная задача «${gen.title.ru}», ${gen.grade} класс.\n${questionDetail(q, answer)}`);
+  useScreenDetail('question-problem', `Расчётная задача «${gen.title.ru}», ${gradeName(gen.grade, 'ru')}.\n${questionDetail(q, answer)}`);
   const choose = (k: number) => {
     if (answer !== null) return;
     setAnswer(k);
@@ -50,7 +52,7 @@ const Run: React.FC<{ lang: Lang; gens: ProblemGen[]; title: string; onBack: () 
         <div>
           <span className="inline-flex items-center gap-1.5 text-xs text-ink-3">
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: COLOR[gen.subject] }} />
-            {gen.title[lang]} · {gen.grade} {L('класс', 'grade')}
+            {gen.title[lang]} · {gradeName(gen.grade, lang)}
           </span>
           <h2 className="font-serif text-[26px] leading-tight text-ink">{title}</h2>
         </div>
@@ -195,7 +197,7 @@ export const ProblemTrainer: React.FC<{ lang: Lang; onOpenTopic?: (id: string) =
         </div>
       )}
       {!qry && (
-        <p className="text-sm text-ink-2 -mt-2">{L('Найди любую из 486 тем — и решай по ней сколько угодно: расчётные задачи по её формулам вперемешку с вопросами по теории.', 'Look up any of the 486 topics and drill it as long as you like: calculations from its formulas mixed with theory questions.')}</p>
+        <p className="text-sm text-ink-2 -mt-2">{L('Найди любую из 650+ тем — и решай по ней сколько угодно: расчётные задачи по её формулам вперемешку с вопросами по теории.', 'Look up any of the 650+ topics and drill it as long as you like: calculations from its formulas mixed with theory questions.')}</p>
       )}
       {handwritten.length > 0 && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{handwritten.map((g) => card(g))}</div>}
       {laws.length > 0 && (

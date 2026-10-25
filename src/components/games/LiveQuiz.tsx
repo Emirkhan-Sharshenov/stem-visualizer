@@ -12,6 +12,7 @@ import { progress } from '../../lib/progress';
 import { Confetti } from '../fx/Confetti';
 import { Formula } from '../Formula';
 import { GameBar, Lang } from './common';
+import { gradeName } from '../../data/curriculum/index';
 
 /* A live quiz for a class, like Kahoot: the teacher shows the room code on the projector, students join from
    their phones, everyone answers the same question against the clock and the board updates after each one.
@@ -209,16 +210,16 @@ const Host: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) =>
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
-          {(['physics', 'chemistry', 'biology', 'mathematics'] as StemCategory[]).map((s) => (
+          {(['physics', 'chemistry', 'biology', 'mathematics', 'astronomy'] as StemCategory[]).map((s) => (
             <button key={s} onClick={() => (setSubject(s), setSectionId(null))} className={`h-9 px-3.5 rounded-full border text-sm cursor-pointer ${subject === s ? 'bg-ink border-ink' : 'border-line text-ink hover:bg-muted'}`} style={subject === s ? { color: '#fff', background: '#16171A' } : undefined}>
-              {{ physics: L('Физика', 'Physics'), chemistry: L('Химия', 'Chemistry'), biology: L('Биология', 'Biology'), mathematics: L('Математика', 'Maths') }[s as 'physics']}
+              {{ physics: L('Физика', 'Physics'), chemistry: L('Химия', 'Chemistry'), biology: L('Биология', 'Biology'), mathematics: L('Математика', 'Maths'), astronomy: L('Астрономия', 'Astronomy') }[s as 'physics']}
             </button>
           ))}
         </div>
         <div className="grid sm:grid-cols-2 gap-2 max-h-[340px] overflow-y-auto soft-scroll pr-1">
           {sections.map((s) => (
             <button key={s.id} onClick={() => setSectionId(s.id)} className={`text-left rounded-xl border p-3 cursor-pointer ${sectionId === s.id ? 'border-accent bg-accent/5' : 'border-line bg-surface hover:bg-muted'}`}>
-              <div className="text-[11px] text-ink-3">{L(`${s.grade} класс`, `Grade ${s.grade}`)}</div>
+              <div className="text-[11px] text-ink-3">{gradeName(s.grade, lang)}</div>
               <div className="text-sm font-medium text-ink">{s.title[lang]}</div>
             </button>
           ))}

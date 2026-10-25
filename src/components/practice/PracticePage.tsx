@@ -11,6 +11,7 @@ import { ProblemTrainer } from './ProblemTrainer';
 import { OrtExam } from './OrtExam';
 import { MistakesReview } from './MistakesReview';
 import { questionDetail, useScreenDetail } from '../../lib/pageContext';
+import { gradeName } from '../../data/curriculum/index';
 
 const SimById = lazy(() => import('../sims/SimById'));
 
@@ -23,6 +24,7 @@ const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
   chemistry: { ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   biology: { ru: 'Биология', en: 'Biology', color: '#F5A524' },
   mathematics: { ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
+  astronomy: { ru: 'Астрономия', en: 'Astronomy', color: '#4C6FFF' },
 };
 
 /* ---------- predict, then check ---------- */
@@ -46,7 +48,7 @@ const Challenge: React.FC<{ lang: Lang; p: Prediction; onNext?: () => void; onBa
       <div>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.05em] text-ink-2">
           <span className="w-2 h-2 rounded-full" style={{ background: SUBJECTS[p.subject].color }} />
-          {SUBJECTS[p.subject][lang]} · {p.grade} {L('класс', 'grade')}
+          {SUBJECTS[p.subject][lang]} · {gradeName(p.grade, lang)}
         </span>
         <h1 className="mt-1 font-serif text-[28px] sm:text-[32px] leading-tight text-ink max-w-3xl">{p.question[lang]}</h1>
       </div>
@@ -110,6 +112,7 @@ const GRADE_RANGES: { id: string; r: [number, number]; ru: string; en: string }[
   { id: '5-7', r: [5, 7], ru: '5–7 класс', en: 'Grades 5–7' },
   { id: '8-9', r: [8, 9], ru: '8–9 класс', en: 'Grades 8–9' },
   { id: '10-11', r: [10, 11], ru: '10–11 класс', en: 'Grades 10–11' },
+  { id: 'uni', r: [12, 12], ru: 'ВУЗ', en: 'University' },
   { id: 'all', r: [5, 11], ru: 'Все классы', en: 'All grades' },
 ];
 

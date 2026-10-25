@@ -9,6 +9,7 @@ import { progress, useProgress } from '../lib/progress';
 import { questionsForTopic } from '../lib/quiz';
 import { gradesFor, sectionsFor, SimRef, SUBJECTS as SUBJECT_IDS, Topic, topicById, TOPICS } from '../data/curriculum';
 import { setMentorTopic } from '../lib/mentorTopic';
+import { gradeName } from '../data/curriculum/index';
 
 type Lang = 'ru' | 'en';
 
@@ -27,6 +28,7 @@ const SUBJECT_META: Record<StemCategory, { dot: string; label: { ru: string; en:
   chemistry: { dot: 'bg-chemistry', label: { ru: 'Химия', en: 'Chemistry' } },
   biology: { dot: 'bg-biology', label: { ru: 'Биология', en: 'Biology' } },
   mathematics: { dot: 'bg-math', label: { ru: 'Математика', en: 'Math' } },
+  astronomy: { dot: 'bg-astro', label: { ru: 'Астрономия', en: 'Astronomy' } },
 };
 
 const LABS_3D: { mode: VisualMode; subject: StemCategory; tex: string; title: { ru: string; en: string }; text: { ru: string; en: string } }[] = [
@@ -141,7 +143,7 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
             <div className="flex flex-wrap items-center gap-2 text-xs text-ink-2">
               <span className="px-2 py-0.5 rounded-full bg-muted font-medium">{lang === 'ru' ? 'Ты остановился здесь' : 'You stopped here'}</span>
               <SubjectTag subject={lastTopic.subject} lang={lang} />
-              <span className="text-ink-3">{lastTopic.grade} {lang === 'ru' ? 'класс' : 'grade'}</span>
+              <span className="text-ink-3">{gradeName(lastTopic.grade, lang)}</span>
             </div>
             <h2 className="mt-2 font-serif text-2xl leading-snug text-ink">{lastTopic.title[lang]}</h2>
           </div>
@@ -196,7 +198,7 @@ export const TextbookReader: React.FC<TextbookReaderProps> = ({ lang, onLaunchSi
               <div className="inline-flex p-1 rounded-lg bg-muted border border-line overflow-x-auto max-w-full">
                 {grades.map((g) => (
                   <Button variant={activeGrade === g ? 'outline' : 'ghost'} size="sm" className={`shrink-0 text-sm ${activeGrade === g ? 'font-medium' : ''}`} key={g} onPress={() => setGrade(g)}>
-                    {g} {lang === 'ru' ? 'класс' : 'grade'}
+                    {gradeName(g, lang)}
                   </Button>
                 ))}
               </div>
@@ -317,7 +319,7 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
           {lang === 'ru' ? 'Учебник' : 'Textbook'}
         </Button>
         <span className="text-ink-3">/</span>
-        <span className="shrink-0">{SUBJECT_META[topic.subject].label[lang]}, {topic.grade} {lang === 'ru' ? 'класс' : 'grade'}</span>
+        <span className="shrink-0">{SUBJECT_META[topic.subject].label[lang]}, {gradeName(topic.grade, lang)}</span>
         {sectionTitle && (
           <>
             <span className="text-ink-3">/</span>
@@ -393,10 +395,10 @@ const TopicView: React.FC<TopicViewProps> = ({ topic, lang, prev, next, isComple
           </button>
         ) : <span />}
         {next && (
-          <Button variant="outline" onPress={() => onOpen(next.id)}>
+          <button onClick={() => onOpen(next.id)} className="text-right p-4 rounded-xl border border-line bg-surface hover:border-line-strong transition-colors cursor-pointer">
             <span className="inline-flex items-center gap-1.5 text-xs text-ink-3">{lang === 'ru' ? 'Следующая тема' : 'Next topic'}<ArrowRight className="w-3.5 h-3.5" strokeWidth={1.75} /></span>
             <span className="mt-1 block font-serif text-lg text-ink">{next.title[lang]}</span>
-          </Button>
+          </button>
         )}
       </div>
     </article>

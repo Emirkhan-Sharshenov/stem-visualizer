@@ -6,19 +6,21 @@ import type { StemCategory } from '../../types/stem';
 import { useProgress } from '../../lib/progress';
 import { sectionIcon } from './sectionIcons';
 import { useScreenDetail } from '../../lib/pageContext';
+import { gradeName } from '../../data/curriculum/index';
 
 /* The course as a game path: one winding road per subject, a stop for every section, grade by grade.
    Finished sections are filled in, the first unfinished one is "you are here". */
 
 type Lang = 'ru' | 'en';
-const SUBJ: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics'];
-const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6' };
-const SOFT: Record<string, string> = { physics: '#FDECEC', chemistry: '#E7F6EE', biology: '#FEF4E0', mathematics: '#F3ECFA' };
+const SUBJ: StemCategory[] = ['physics', 'chemistry', 'biology', 'mathematics', 'astronomy'];
+const COLOR: Record<string, string> = { physics: '#E5484D', chemistry: '#30A46C', biology: '#F5A524', mathematics: '#8E4EC6', astronomy: '#4C6FFF' };
+const SOFT: Record<string, string> = { physics: '#FDECEC', chemistry: '#E7F6EE', biology: '#FEF4E0', mathematics: '#F3ECFA', astronomy: '#E8EDFF' };
 const NAME: Record<string, { ru: string; en: string }> = {
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
   mathematics: { ru: 'Математика', en: 'Maths' },
+  astronomy: { ru: 'Астрономия', en: 'Astronomy' },
 };
 
 /** hand-picked links where one subject explains another */
@@ -144,9 +146,9 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
   useScreenDetail(
     'map',
     open
-      ? `Открыт раздел «${open.title.ru}» (${NAME[open.subject].ru}, ${open.grade} класс). Темы: ${open.topics.map((tp) => `${completed[tp.id] ? '✓' : '○'} ${tp.title.ru}`).join('; ')}.`
+      ? `Открыт раздел «${open.title.ru}» (${NAME[open.subject].ru}, ${gradeName(open.grade, 'ru')}). Темы: ${open.topics.map((tp) => `${completed[tp.id] ? '✓' : '○'} ${tp.title.ru}`).join('; ')}.`
       : here
-        ? `Предмет: ${NAME[subject].ru}. Следующий непройденный раздел ученика: «${here.title.ru}», ${here.grade} класс.`
+        ? `Предмет: ${NAME[subject].ru}. Следующий непройденный раздел ученика: «${here.title.ru}», ${gradeName(here.grade, 'ru')}.`
         : `Предмет ${NAME[subject].ru} пройден полностью.`,
   );
   const [q, setQ] = useState('');
@@ -262,7 +264,7 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
                     <span className="h-px flex-1 bg-line" />
                     <span className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-sm font-medium ${gradeDone && secs.some((s) => s.id === party) ? 'map-pop' : ''}`} style={{ ...(gradeDone ? { background: COLOR[subject], color: '#fff' } : { background: '#fff', border: '1px solid #E5E5E0', color: '#16171A' }), animationDelay: `${T_HOP}ms` }}>
                       {gradeDone && <Trophy className="w-4 h-4" />}
-                      {g} {L('класс', 'grade')}
+                      {gradeName(g, lang)}
                     </span>
                     <span className="h-px flex-1 bg-line" />
                   </div>
@@ -355,7 +357,7 @@ export const CourseMap: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void
                 <div className="text-xs uppercase tracking-[0.05em] text-ink-3">{L('Следующий шаг', 'Next step')}</div>
                 <div className="mt-1 font-serif text-xl text-ink">{here.title[lang]}</div>
                 <div className="text-xs text-ink-3">
-                  {here.grade} {L('класс', 'grade')}
+                  {gradeName(here.grade, lang)}
                 </div>
                 <button onClick={() => setOpenId(here.id)} className="mt-3 h-10 px-4 rounded-lg text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer" style={{ background: COLOR[subject], color: '#fff' }}>
                   {L('Открыть раздел', 'Open the section')}
@@ -387,7 +389,7 @@ const SectionPanel: React.FC<{ lang: Lang; s: Section; completed: Record<string,
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium uppercase tracking-[0.05em]" style={{ color: COLOR[s.subject] }}>
-              {NAME[s.subject][lang]} · {s.grade} {L('класс', 'grade')}
+              {NAME[s.subject][lang]} · {gradeName(s.grade, lang)}
             </div>
             <h2 className="mt-0.5 font-serif text-2xl leading-tight text-ink">{s.title[lang]}</h2>
           </div>

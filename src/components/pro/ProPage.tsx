@@ -124,7 +124,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
   };
 
   const FREE = [
-    L('Все 486 тем и 60+ лабораторий', 'All 486 topics and 60+ labs'),
+    L('Все 650+ тем и 60+ лабораторий', 'All 650+ topics and 60+ labs'),
     L('Тесты по темам и разделам, задачи, вопросы дня', 'Topic and section tests, problems, daily questions'),
     L('Карта курса и прогресс', 'Course map and progress'),
     L('Лиги, рейтинг и марафон задач', 'Leagues, rankings and the problem marathon'),

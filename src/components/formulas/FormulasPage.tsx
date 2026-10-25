@@ -4,6 +4,7 @@ import { Printer, Search } from 'lucide-react';
 import { SECTIONS, SUBJECTS } from '../../data/curriculum';
 import type { StemCategory } from '../../types/stem';
 import { Formula } from '../Formula';
+import { gradeName } from '../../data/curriculum/index';
 
 /* Every key formula from the textbook on one page: search, filter, print for exam prep. */
 
@@ -14,6 +15,7 @@ const SUBJECT: Record<string, { ru: string; en: string; color: string }> = {
   chemistry: { ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   biology: { ru: 'Биология', en: 'Biology', color: '#F5A524' },
   mathematics: { ru: 'Математика', en: 'Maths', color: '#8E4EC6' },
+  astronomy: { ru: 'Астрономия', en: 'Astronomy', color: '#4C6FFF' },
 };
 
 export const FormulasPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }> = ({ lang, onOpenTopic }) => {
@@ -98,7 +100,7 @@ export const FormulasPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
         <section key={g.key} className="break-inside-avoid">
           <h2 className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.05em] text-ink-2 mb-2">
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: SUBJECT[g.subject]?.color }} />
-            {g.grade} {L('класс', 'grade')} · {g.title}
+            {gradeName(g.grade, lang)} · {g.title}
           </h2>
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
             {g.items.map(({ topic }) => (

@@ -8,6 +8,7 @@ import { StudyPlan } from './StudyPlan';
 import { StudentClasses } from '../teacher/TeacherPage';
 import { Certificates } from './Certificates';
 import { Reminders } from '../Reminders';
+import { gradeName } from '../../data/curriculum/index';
 
 const YearRecap = lazy(() => import('./YearRecap'));
 
@@ -157,7 +158,7 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
               <div className="text-xs opacity-80">{L('Продолжить', 'Continue')}</div>
               <div className="mt-1 font-serif text-xl">{next.title[lang]}</div>
               <div className="text-xs opacity-80 mt-1">
-                {SUBJ.find((s) => s.id === next.subject)?.[lang]} · {next.grade} {L('класс', 'grade')}
+                {SUBJ.find((s) => s.id === next.subject)?.[lang]} · {gradeName(next.grade, lang)}
               </div>
             </button>
           )}

@@ -114,7 +114,7 @@ const RULES: [RegExp, LucideIcon][] = [
   [/наука о живом|общую биологию/, Sprout],
 ];
 
-const FALLBACK: Record<string, LucideIcon> = { physics: Atom, chemistry: FlaskConical, biology: Leaf, mathematics: Sigma };
+const FALLBACK: Record<string, LucideIcon> = { physics: Atom, chemistry: FlaskConical, biology: Leaf, mathematics: Sigma, astronomy: Telescope };
 
 export function sectionIcon(s: Section): LucideIcon {
   const title = s.title.ru.toLowerCase();

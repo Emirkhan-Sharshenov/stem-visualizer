@@ -7,6 +7,7 @@ import { questionsForTopic, Question } from '../../lib/quiz';
 import { progress } from '../../lib/progress';
 import { Formula } from '../Formula';
 import { questionDetail, useScreenDetail } from '../../lib/pageContext';
+import { gradeName } from '../../data/curriculum/index';
 
 type Lang = 'ru' | 'en';
 
@@ -30,7 +31,7 @@ export const TopicDrill: React.FC<{ lang: Lang; topicId: string; onBack: () => v
     return pool[k % pool.length];
   }, [gens, k, seed, topic]);
 
-  useScreenDetail('question-drill', q ? `Тренировка по теме «${topic.title.ru}» (${topic.grade} класс).\n${questionDetail(q, answer)}` : null);
+  useScreenDetail('question-drill', q ? `Тренировка по теме «${topic.title.ru}» (${gradeName(topic.grade, 'ru')}).\n${questionDetail(q, answer)}` : null);
 
   if (!q) {
     return (
@@ -64,7 +65,7 @@ export const TopicDrill: React.FC<{ lang: Lang; topicId: string; onBack: () => v
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="text-xs text-ink-3">
-            {L('Тренировка по теме', 'Topic drill')} · {topic.grade} {L('класс', 'grade')} · {gens.length ? L(`расчётные задачи (${gens.length}) + теория`, `calculations (${gens.length}) + theory`) : L('вопросы по теории', 'theory questions')}
+            {L('Тренировка по теме', 'Topic drill')} · {gradeName(topic.grade, lang)} · {gens.length ? L(`расчётные задачи (${gens.length}) + теория`, `calculations (${gens.length}) + theory`) : L('вопросы по теории', 'theory questions')}
           </span>
           <h2 className="font-serif text-[26px] leading-tight text-ink">{topic.title[lang]}</h2>
         </div>

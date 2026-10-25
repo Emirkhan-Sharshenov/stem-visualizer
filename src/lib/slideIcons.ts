@@ -1,7 +1,7 @@
 import {
   Apple, Atom, BatteryCharging, Beaker, Bird, Bone, Box, Brain, Bug, Calculator, ChartLine, ChartSpline, Circle, Cog, Compass, Cylinder, Dices, Divide, Dna, Droplets, Ear, Egg, Eye, FlaskConical, Flame, Flower2,
   Footprints, Gauge, Gem, Hash, HeartPulse, Hexagon, Leaf, Lightbulb, Magnet, Microscope, MoveUpRight, Orbit, PawPrint, Percent, Pi, Pill, Radiation, Radical, Rocket, Ruler, Shield, Sigma, Snowflake, Sparkles,
-  Sprout, Square, Sun, Superscript, TestTubes, Thermometer, Timer, Trees, Triangle, Users, Volume2, Waves, Weight, Wind, Zap, Fish, Grid3x3, type LucideIcon,
+  Sprout, Square, Sun, Superscript, Telescope, TestTubes, Thermometer, Timer, Trees, Triangle, Users, Volume2, Waves, Weight, Wind, Zap, Fish, Grid3x3, type LucideIcon,
 } from 'lucide-react';
 
 /* A picture for a slide, chosen from its words. The first rule that matches wins, so narrow words go first. */
@@ -9,7 +9,7 @@ import {
 export const SLIDE_ICONS = {
   Apple, Atom, BatteryCharging, Beaker, Bird, Bone, Box, Brain, Bug, Calculator, ChartLine, ChartSpline, Circle, Cog, Compass, Cylinder, Dices, Divide, Dna, Droplets, Ear, Egg, Eye, FlaskConical, Flame, Flower2,
   Footprints, Gauge, Gem, Hash, HeartPulse, Hexagon, Leaf, Lightbulb, Magnet, Microscope, MoveUpRight, Orbit, PawPrint, Percent, Pi, Pill, Radiation, Radical, Rocket, Ruler, Shield, Sigma, Snowflake, Sparkles,
-  Sprout, Square, Sun, Superscript, TestTubes, Thermometer, Timer, Trees, Triangle, Users, Volume2, Waves, Weight, Wind, Zap, Fish, Grid3x3,
+  Sprout, Square, Sun, Superscript, Telescope, TestTubes, Thermometer, Timer, Trees, Triangle, Users, Volume2, Waves, Weight, Wind, Zap, Fish, Grid3x3,
 } satisfies Record<string, LucideIcon>;
 export type IconName = keyof typeof SLIDE_ICONS;
 
@@ -99,9 +99,10 @@ const BY_SUBJECT: Record<string, Rule[][]> = {
   chemistry: [CHEM, PHYS, BIO, MATH],
   physics: [PHYS, CHEM, MATH, BIO],
   mathematics: [MATH, PHYS, CHEM, BIO],
+  astronomy: [PHYS, MATH, CHEM, BIO],
 };
 
-const FALLBACK: Record<string, IconName> = { physics: 'Atom', chemistry: 'FlaskConical', biology: 'Leaf', mathematics: 'Sigma' };
+const FALLBACK: Record<string, IconName> = { physics: 'Atom', chemistry: 'FlaskConical', biology: 'Leaf', mathematics: 'Sigma', astronomy: 'Telescope' };
 
 /** the first text that matches a rule decides; e.g. a point's title, then its text, then the topic's title */
 export function iconFor(texts: string[], subject: string): IconName {

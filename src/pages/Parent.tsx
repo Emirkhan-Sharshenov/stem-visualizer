@@ -6,6 +6,7 @@ import { Currency, PRICES, localCurrency, money, openCheckout, paymentsEnabled }
 import { dayStreak, type Progress } from '../lib/progress';
 import { supabase } from '../lib/supabase';
 import { ChargeNote, CurrencySwitch } from '../components/pro/pricing';
+import { gradeName } from '../data/curriculum/index';
 
 interface Card {
   name: string | null;
@@ -117,7 +118,7 @@ export const Parent: React.FC<{ lang: Lang; onToggleLang: () => void }> = ({ lan
             {L(`${name} занимается в STEM Visualizer`, `${name} is studying with STEM Visualizer`)}
           </h1>
           <p className="mt-2 text-ink-2">
-            {card.grade ? L(`${card.grade} класс. `, `Grade ${card.grade}. `) : ''}
+            {card.grade ? L(`${gradeName(card.grade, 'ru')}. `, `Grade ${card.grade}. `) : ''}
             {lastDay ? L(`Последнее занятие: ${new Date(lastDay).toLocaleDateString('ru-RU')}.`, `Last studied on ${new Date(lastDay).toLocaleDateString('en-GB')}.`) : L('Занятий пока не было.', 'No study sessions yet.')}
           </p>
         </header>

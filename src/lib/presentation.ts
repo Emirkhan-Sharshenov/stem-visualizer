@@ -3,6 +3,7 @@ import { sectionsFor } from '../data/curriculum';
 import { Question, questionsForTopic, shuffle, rng, hashStr } from './quiz';
 import { problemQuestion, problemsForTopic } from './problems';
 import { iconFor, IconName } from './slideIcons';
+import { gradeName } from '../data/curriculum/index';
 
 /*
  * Presentations for a topic (Pro) or a whole section (Teacher).
@@ -131,13 +132,14 @@ export interface Theme {
   dark: boolean;
 }
 
-const SUBJECT_COLOR: Record<string, string> = { physics: 'E5484D', chemistry: '30A46C', biology: 'F5A524', mathematics: '8E4EC6' };
-const SUBJECT_SOFT: Record<string, string> = { physics: 'FDECEC', chemistry: 'E7F6EE', biology: 'FEF4E0', mathematics: 'F3ECFA' };
+const SUBJECT_COLOR: Record<string, string> = { physics: 'E5484D', chemistry: '30A46C', biology: 'F5A524', mathematics: '8E4EC6', astronomy: '4C6FFF' };
+const SUBJECT_SOFT: Record<string, string> = { physics: 'FDECEC', chemistry: 'E7F6EE', biology: 'FEF4E0', mathematics: 'F3ECFA', astronomy: 'E8EDFF' };
 const SUBJECT_NAME: Record<string, T2> = {
   physics: { ru: 'Физика', en: 'Physics' },
   chemistry: { ru: 'Химия', en: 'Chemistry' },
   biology: { ru: 'Биология', en: 'Biology' },
   mathematics: { ru: 'Математика', en: 'Mathematics' },
+  astronomy: { ru: 'Астрономия', en: 'Astronomy' },
 };
 
 export const accentFor = (subject: string) => SUBJECT_COLOR[subject] ?? '2F5BFF';
@@ -155,7 +157,7 @@ const mix = (a: string, b: string, t: number) =>
     .join('')
     .toUpperCase();
 
-const NEON: Record<string, string> = { physics: 'FF4D6D', chemistry: '2EF2A0', biology: 'FFC93C', mathematics: 'B98CFF' };
+const NEON: Record<string, string> = { physics: 'FF4D6D', chemistry: '2EF2A0', biology: 'FFC93C', mathematics: 'B98CFF', astronomy: '8CA3FF' };
 export const THEME_NAMES: Record<ThemeId, T2> = {
   light: { ru: 'Светлая', en: 'Light' },
   bright: { ru: 'Яркая', en: 'Bright' },
@@ -271,7 +273,7 @@ export function buildSlides(o: BuildOptions): SlideWithNotes[] {
   const { lang, parts } = o;
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const subj = SUBJECT_NAME[o.topic.subject][lang];
-  const grade = `${o.topic.grade} ${L('класс', 'grade')}`;
+  const grade = gradeName(o.topic.grade, lang);
   const label = `${subj} · ${grade}`;
   const seed = o.seed ?? 7;
   const slides: SlideWithNotes[] = [];
