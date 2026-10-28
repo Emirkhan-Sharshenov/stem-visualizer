@@ -8,13 +8,13 @@ import type { Lang } from '../common';
 import { compile, fly, type World } from './engine';
 import { Field } from './FuncWar';
 import {
-  allowedLook, BLASTS, BODIES, COLORS, DEFAULT_LOOKS, drawBlast, drawSoldier, drawTrail, EYES, HATS, loadSaved, storeSaved, THEMES, TRAILS,
+  allowedLook, BLASTS, BODIES, COLORS, DEFAULT_LOOKS, drawBlast, drawSoldier, drawTrail, EYES, granted, HATS, itemOpen, loadSaved, SKINS, storeSaved, THEMES, TRAILS,
   unlocked, unlockText, type Look, type Progress, type Saved, type ThemeId, type Unlock,
 } from './looks';
 
 /* "Мастерская": dress up your soldiers and pick a battlefield. Looks only — the rules ignore all of it. */
 
-type Tab = 'color' | 'trail' | 'body' | 'hat' | 'eyes' | 'blast' | 'theme';
+type Tab = 'skins' | 'color' | 'trail' | 'body' | 'hat' | 'eyes' | 'blast' | 'theme';
 const STAR_KEY = 'stem-funcwar-stars';
 const campaignStars = () => {
   try {
@@ -40,16 +40,16 @@ const Swatch: React.FC<{ draw: (g: CanvasRenderingContext2D, w: number, h: numbe
   useEffect(() => {
     const cv = ref.current!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = 72 * dpr;
-    cv.height = 48 * dpr;
+    cv.width = 96 * dpr;
+    cv.height = 64 * dpr;
     const g = cv.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.fillStyle = bg;
-    g.fillRect(0, 0, 72, 48);
-    draw(g, 72, 48);
+    g.fillRect(0, 0, 96, 64);
+    draw(g, 96, 64);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, bg]);
-  return <canvas ref={ref} style={{ width: 72, height: 48 }} className="rounded-lg" aria-hidden="true" />;
+  return <canvas ref={ref} style={{ width: 96, height: 64 }} className="rounded-lg" aria-hidden="true" />;
 };
 
 /** the looping sample shot, in its own component so its 60 fps state doesn't re-render the item grid */
@@ -93,8 +93,10 @@ export const Workshop: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, o
   const plan = usePlan();
   const { user } = useSession();
   const [wins, setWins] = useState(0);
-  const [tab, setTab] = useState<Tab>('color');
-  const progress: Progress = useMemo(() => ({ stars: campaignStars(), wins, pro: plan.pro }), [wins, plan.pro]);
+  const [tab, setTab] = useState<Tab>('skins');
+  // Pro looks are for paid Pro; the free week doesn't include them
+  const progress: Progress = useMemo(() => ({ stars: campaignStars(), wins, pro: plan.pro && !plan.trial }), [wins, plan.pro, plan.trial]);
+  const grants = useMemo(() => granted(progress), [progress]);
   const [saved, setSaved] = useState<Saved>(loadSaved);
   useEffect(() => {
     if (user) fwMe().then((m) => setWins(m?.wins ?? 0)).catch(() => {});
@@ -102,16 +104,17 @@ export const Workshop: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, o
   // drop anything no longer earned (a Pro item after Pro ended)
   useEffect(() => {
     if (plan.loading) return;
-    setSaved((s) => ({ look: allowedLook(s.look, progress), theme: THEMES.some((t) => t.id === s.theme && unlocked(t.unlock, progress)) ? s.theme : 'lab' }));
+    setSaved((s) => ({ ...s, look: allowedLook(s.look, progress), theme: THEMES.some((t) => t.id === s.theme && itemOpen('theme', t, progress)) ? s.theme : 'lab' }));
   }, [progress, plan.loading]);
   useEffect(() => storeSaved(saved), [saved]);
 
   const look = saved.look;
   const bg = THEMES.find((t) => t.id === saved.theme)!.bg;
-  const set = (patch: Partial<Look>) => setSaved((s) => ({ ...s, look: { ...s.look, ...patch } }));
+  const set = (patch: Partial<Look>) => setSaved((s) => ({ ...s, skin: undefined, look: { ...s.look, ...patch } }));
 
   const tile = (key: string, title: string, u: Unlock, selected: boolean, onPick: () => void, draw: (g: CanvasRenderingContext2D, w: number, h: number) => void, tileBg = bg) => {
-    const open = unlocked(u, progress);
+    // an item is open when earned on its own or through an earned skin
+    const open = unlocked(u, progress) || (tab !== 'skins' && grants.has(`${tab}:${key}`));
     return (
       <button
         key={key}
@@ -123,7 +126,7 @@ export const Workshop: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, o
         <Swatch draw={draw} bg={tileBg} sig={`${key}|${JSON.stringify(look)}`} />
         <span className="text-xs text-ink leading-tight">{title}</span>
         {!open && (
-          <span className={`absolute top-1.5 right-1.5 inline-flex items-center gap-0.5 px-1.5 h-5 rounded-full text-[10px] font-medium ${u.kind === 'pro' ? 'bg-[#FFF4DA] text-[#B5651D]' : 'bg-muted text-ink-2'}`}>
+          <span className={`inline-flex items-center gap-0.5 px-1.5 h-5 rounded-full text-[10px] font-medium ${u.kind === 'pro' ? 'bg-[#FFF4DA] text-[#B5651D]' : 'bg-muted text-ink-2'}`}>
             {u.kind === 'pro' ? <Crown className="w-3 h-3" /> : <Lock className="w-3 h-3" />} {unlockText(u, lang)}
           </span>
         )}
@@ -131,8 +134,9 @@ export const Workshop: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, o
     );
   };
 
-  const soldierAt = (l: Look) => (g: CanvasRenderingContext2D, w: number, h: number) => drawSoldier(g, w / 2, h / 2 + 4, 11, l, 1);
+  const soldierAt = (l: Look) => (g: CanvasRenderingContext2D, w: number, h: number) => drawSoldier(g, w / 2, h / 2 + 6, 15, l, 1);
   const TABS: { id: Tab; ru: string; en: string }[] = [
+    { id: 'skins', ru: 'Образы', en: 'Skins' },
     { id: 'color', ru: 'Цвет', en: 'Colour' },
     { id: 'trail', ru: 'След', en: 'Trail' },
     { id: 'body', ru: 'Боец', en: 'Body' },
@@ -141,8 +145,8 @@ export const Workshop: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, o
     { id: 'blast', ru: 'Взрыв', en: 'Blast' },
     { id: 'theme', ru: 'Поле', en: 'Field' },
   ];
-  const count = (list: { unlock: Unlock }[]) => `${list.filter((i) => unlocked(i.unlock, progress)).length}/${list.length}`;
-  const listFor: Record<Tab, { unlock: Unlock }[]> = { color: COLORS, trail: TRAILS, body: BODIES, hat: HATS, eyes: EYES, blast: BLASTS, theme: THEMES };
+  const count = (kind: Tab, list: { id: string; unlock: Unlock }[]) => `${list.filter((i) => unlocked(i.unlock, progress) || (kind !== 'skins' && grants.has(`${kind}:${i.id}`))).length}/${list.length}`;
+  const listFor: Record<Tab, { id: string; unlock: Unlock }[]> = { skins: SKINS, color: COLORS, trail: TRAILS, body: BODIES, hat: HATS, eyes: EYES, blast: BLASTS, theme: THEMES };
 
   return (
     <div className="flex flex-col gap-4">
@@ -168,11 +172,15 @@ export const Workshop: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, o
             <div className="flex flex-wrap gap-1.5">
               {TABS.map((t) => (
                 <Button key={t.id} size="sm" variant={tab === t.id ? 'primary' : 'outline'} className="text-xs" onPress={() => setTab(t.id)} aria-pressed={tab === t.id}>
-                  {lang === 'ru' ? t.ru : t.en} <span className="opacity-70 font-mono">{count(listFor[t.id])}</span>
+                  {lang === 'ru' ? t.ru : t.en} <span className="opacity-70 font-mono">{count(t.id, listFor[t.id])}</span>
                 </Button>
               ))}
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {tab === 'skins' &&
+                SKINS.map((sk) =>
+                  tile(sk.id, lang === 'ru' ? sk.ru : sk.en, sk.unlock, saved.skin === sk.id, () => setSaved({ look: sk.look, theme: sk.theme, skin: sk.id }), (g, w, h) => drawSoldier(g, w / 2, h / 2 + 6, 15, sk.look, 1), THEMES.find((t) => t.id === sk.theme)!.bg),
+                )}
               {tab === 'color' &&
                 COLORS.map((c) => tile(c.id, lang === 'ru' ? c.ru : c.en, c.unlock, look.color === c.id, () => set({ color: c.id }), soldierAt({ ...look, color: c.id })))}
               {tab === 'trail' &&
@@ -185,7 +193,7 @@ export const Workshop: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, o
               {tab === 'hat' && HATS.map((h) => tile(h.id, lang === 'ru' ? h.ru : h.en, h.unlock, look.hat === h.id, () => set({ hat: h.id }), soldierAt({ ...look, hat: h.id })))}
               {tab === 'eyes' && EYES.map((e) => tile(e.id, lang === 'ru' ? e.ru : e.en, e.unlock, look.eyes === e.id, () => set({ eyes: e.id }), soldierAt({ ...look, eyes: e.id })))}
               {tab === 'blast' &&
-                BLASTS.map((b) => tile(b.id, lang === 'ru' ? b.ru : b.en, b.unlock, look.blast === b.id, () => set({ blast: b.id }), (g, w, h) => drawBlast(g, w / 2, h / 2, 9, 0.45, { ...look, blast: b.id })))}
+                BLASTS.map((b) => tile(b.id, lang === 'ru' ? b.ru : b.en, b.unlock, look.blast === b.id, () => set({ blast: b.id }), (g, w, h) => drawBlast(g, w / 2, h / 2, 12, 0.45, { ...look, blast: b.id })))}
               {tab === 'theme' &&
                 THEMES.map((t) =>
                   tile(t.id, lang === 'ru' ? t.ru : t.en, t.unlock, saved.theme === t.id, () => setSaved((s) => ({ ...s, theme: t.id as ThemeId })), (g, w, h) => {

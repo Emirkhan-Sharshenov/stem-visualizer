@@ -5,7 +5,7 @@
 export type Unlock = { kind: 'free' } | { kind: 'stars'; n: number } | { kind: 'wins'; n: number } | { kind: 'pro' };
 interface Item { id: string; ru: string; en: string; unlock: Unlock }
 
-export const COLORS: (Item & { hex: string })[] = [
+export const COLORS: (Item & { hex: string; hex2?: string })[] = [
   { id: 'cyan', ru: 'Неон', en: 'Neon', hex: '#39E1FF', unlock: { kind: 'free' } },
   { id: 'coral', ru: 'Коралл', en: 'Coral', hex: '#FF5A5F', unlock: { kind: 'free' } },
   { id: 'lime', ru: 'Лайм', en: 'Lime', hex: '#9BE15D', unlock: { kind: 'free' } },
@@ -20,9 +20,18 @@ export const COLORS: (Item & { hex: string })[] = [
   { id: 'ruby', ru: 'Рубин', en: 'Ruby', hex: '#E0245E', unlock: { kind: 'pro' } },
   { id: 'teal', ru: 'Бирюза', en: 'Teal', hex: '#14B8A6', unlock: { kind: 'pro' } },
   { id: 'lavender', ru: 'Лаванда', en: 'Lavender', hex: '#C4B5FD', unlock: { kind: 'pro' } },
+  // two-tone gradients
+  { id: 'sunset', ru: 'Закат', en: 'Sunset', hex: '#FF8A3D', hex2: '#FF4F9A', unlock: { kind: 'stars', n: 24 } },
+  { id: 'ocean', ru: 'Океан', en: 'Ocean', hex: '#22D3EE', hex2: '#3B82F6', unlock: { kind: 'wins', n: 8 } },
+  { id: 'toxic', ru: 'Кислота', en: 'Toxic', hex: '#B4F04F', hex2: '#22D3EE', unlock: { kind: 'stars', n: 27 } },
+  { id: 'ice', ru: 'Лёд', en: 'Ice', hex: '#E0F2FE', hex2: '#60A5FA', unlock: { kind: 'wins', n: 15 } },
+  { id: 'aurora', ru: 'Сияние', en: 'Aurora', hex: '#4FF0C0', hex2: '#A78BFA', unlock: { kind: 'pro' } },
+  { id: 'candy', ru: 'Карамель', en: 'Candy', hex: '#FF6AD5', hex2: '#FFC24B', unlock: { kind: 'pro' } },
+  { id: 'galaxy', ru: 'Галактика', en: 'Galaxy', hex: '#8B5CF6', hex2: '#EC4899', unlock: { kind: 'pro' } },
+  { id: 'ember', ru: 'Угли', en: 'Ember', hex: '#FBBF24', hex2: '#DC2626', unlock: { kind: 'pro' } },
 ];
 
-export type TrailId = 'solid' | 'dashed' | 'dots' | 'neon' | 'comet' | 'sparks' | 'rainbow' | 'chalk';
+export type TrailId = 'solid' | 'dashed' | 'dots' | 'neon' | 'comet' | 'sparks' | 'rainbow' | 'chalk' | 'lightning' | 'bubbles' | 'stars' | 'fire' | 'ribbon';
 export const TRAILS: (Item & { id: TrailId })[] = [
   { id: 'solid', ru: 'Линия', en: 'Line', unlock: { kind: 'free' } },
   { id: 'dashed', ru: 'Пунктир', en: 'Dashed', unlock: { kind: 'free' } },
@@ -32,9 +41,14 @@ export const TRAILS: (Item & { id: TrailId })[] = [
   { id: 'sparks', ru: 'Искры', en: 'Sparks', unlock: { kind: 'pro' } },
   { id: 'rainbow', ru: 'Радуга', en: 'Rainbow', unlock: { kind: 'pro' } },
   { id: 'chalk', ru: 'Мел', en: 'Chalk', unlock: { kind: 'stars', n: 20 } },
+  { id: 'ribbon', ru: 'Лента', en: 'Ribbon', unlock: { kind: 'stars', n: 16 } },
+  { id: 'bubbles', ru: 'Пузыри', en: 'Bubbles', unlock: { kind: 'wins', n: 12 } },
+  { id: 'lightning', ru: 'Молния', en: 'Lightning', unlock: { kind: 'pro' } },
+  { id: 'stars', ru: 'Звёздная пыль', en: 'Stardust', unlock: { kind: 'pro' } },
+  { id: 'fire', ru: 'Огонь', en: 'Fire', unlock: { kind: 'pro' } },
 ];
 
-export type BodyId = 'circle' | 'square' | 'diamond' | 'hex' | 'star' | 'blob';
+export type BodyId = 'circle' | 'square' | 'diamond' | 'hex' | 'star' | 'blob' | 'ufo' | 'robot' | 'ghost' | 'slime' | 'planet' | 'cat';
 export const BODIES: (Item & { id: BodyId })[] = [
   { id: 'circle', ru: 'Шар', en: 'Ball', unlock: { kind: 'free' } },
   { id: 'square', ru: 'Куб', en: 'Cube', unlock: { kind: 'free' } },
@@ -42,9 +56,15 @@ export const BODIES: (Item & { id: BodyId })[] = [
   { id: 'hex', ru: 'Соты', en: 'Hex', unlock: { kind: 'wins', n: 1 } },
   { id: 'star', ru: 'Звезда', en: 'Star', unlock: { kind: 'pro' } },
   { id: 'blob', ru: 'Капля', en: 'Blob', unlock: { kind: 'pro' } },
+  { id: 'slime', ru: 'Слизень', en: 'Slime', unlock: { kind: 'stars', n: 21 } },
+  { id: 'robot', ru: 'Робот', en: 'Robot', unlock: { kind: 'wins', n: 10 } },
+  { id: 'ufo', ru: 'НЛО', en: 'UFO', unlock: { kind: 'pro' } },
+  { id: 'ghost', ru: 'Призрак', en: 'Ghost', unlock: { kind: 'pro' } },
+  { id: 'planet', ru: 'Планета', en: 'Planet', unlock: { kind: 'pro' } },
+  { id: 'cat', ru: 'Котик', en: 'Cat', unlock: { kind: 'pro' } },
 ];
 
-export type HatId = 'none' | 'cap' | 'crown' | 'horns' | 'halo' | 'antenna' | 'wizard' | 'headphones' | 'bow' | 'tophat' | 'grad';
+export type HatId = 'none' | 'cap' | 'crown' | 'horns' | 'halo' | 'antenna' | 'wizard' | 'headphones' | 'bow' | 'tophat' | 'grad' | 'pirate' | 'chef' | 'viking' | 'cowboy' | 'santa' | 'helmet' | 'flower' | 'beanie';
 export const HATS: (Item & { id: HatId })[] = [
   { id: 'none', ru: 'Без шапки', en: 'None', unlock: { kind: 'free' } },
   { id: 'cap', ru: 'Кепка', en: 'Cap', unlock: { kind: 'free' } },
@@ -57,9 +77,17 @@ export const HATS: (Item & { id: HatId })[] = [
   { id: 'wizard', ru: 'Колпак мага', en: 'Wizard hat', unlock: { kind: 'pro' } },
   { id: 'bow', ru: 'Бантик', en: 'Bow', unlock: { kind: 'pro' } },
   { id: 'tophat', ru: 'Цилиндр', en: 'Top hat', unlock: { kind: 'pro' } },
+  { id: 'beanie', ru: 'Шапка с помпоном', en: 'Beanie', unlock: { kind: 'stars', n: 7 } },
+  { id: 'flower', ru: 'Цветок', en: 'Flower', unlock: { kind: 'stars', n: 13 } },
+  { id: 'cowboy', ru: 'Шляпа ковбоя', en: 'Cowboy hat', unlock: { kind: 'wins', n: 9 } },
+  { id: 'viking', ru: 'Шлем викинга', en: 'Viking helmet', unlock: { kind: 'wins', n: 14 } },
+  { id: 'pirate', ru: 'Треуголка', en: 'Pirate hat', unlock: { kind: 'pro' } },
+  { id: 'chef', ru: 'Колпак повара', en: 'Chef hat', unlock: { kind: 'pro' } },
+  { id: 'santa', ru: 'Шапка Деда Мороза', en: 'Santa hat', unlock: { kind: 'pro' } },
+  { id: 'helmet', ru: 'Шлем космонавта', en: 'Space helmet', unlock: { kind: 'pro' } },
 ];
 
-export type EyesId = 'dot' | 'smile' | 'glasses' | 'angry' | 'cyclops' | 'shades';
+export type EyesId = 'dot' | 'smile' | 'glasses' | 'angry' | 'cyclops' | 'shades' | 'heart' | 'star' | 'wink' | 'visor';
 export const EYES: (Item & { id: EyesId })[] = [
   { id: 'dot', ru: 'Глазок', en: 'Dot', unlock: { kind: 'free' } },
   { id: 'smile', ru: 'Улыбка', en: 'Smile', unlock: { kind: 'free' } },
@@ -67,9 +95,13 @@ export const EYES: (Item & { id: EyesId })[] = [
   { id: 'cyclops', ru: 'Циклоп', en: 'Cyclops', unlock: { kind: 'wins', n: 4 } },
   { id: 'glasses', ru: 'Очки', en: 'Glasses', unlock: { kind: 'pro' } },
   { id: 'shades', ru: 'Тёмные очки', en: 'Shades', unlock: { kind: 'pro' } },
+  { id: 'wink', ru: 'Подмигивает', en: 'Wink', unlock: { kind: 'stars', n: 5 } },
+  { id: 'star', ru: 'Звёзды в глазах', en: 'Starry', unlock: { kind: 'wins', n: 6 } },
+  { id: 'heart', ru: 'Влюблённый', en: 'In love', unlock: { kind: 'pro' } },
+  { id: 'visor', ru: 'Визор', en: 'Visor', unlock: { kind: 'pro' } },
 ];
 
-export type BlastId = 'ring' | 'star' | 'confetti' | 'pixels' | 'hearts' | 'shock';
+export type BlastId = 'ring' | 'star' | 'confetti' | 'pixels' | 'hearts' | 'shock' | 'firework' | 'atom' | 'flower';
 export const BLASTS: (Item & { id: BlastId })[] = [
   { id: 'ring', ru: 'Кольцо', en: 'Ring', unlock: { kind: 'free' } },
   { id: 'shock', ru: 'Ударная волна', en: 'Shockwave', unlock: { kind: 'stars', n: 18 } },
@@ -77,10 +109,13 @@ export const BLASTS: (Item & { id: BlastId })[] = [
   { id: 'confetti', ru: 'Конфетти', en: 'Confetti', unlock: { kind: 'pro' } },
   { id: 'pixels', ru: 'Пиксели', en: 'Pixels', unlock: { kind: 'pro' } },
   { id: 'hearts', ru: 'Сердечки', en: 'Hearts', unlock: { kind: 'pro' } },
+  { id: 'flower', ru: 'Цветение', en: 'Bloom', unlock: { kind: 'stars', n: 25 } },
+  { id: 'firework', ru: 'Салют', en: 'Firework', unlock: { kind: 'pro' } },
+  { id: 'atom', ru: 'Атом', en: 'Atom', unlock: { kind: 'pro' } },
 ];
 
-export type ThemeId = 'lab' | 'blueprint' | 'chalk' | 'notebook' | 'space' | 'terminal' | 'sunset';
-export interface Theme extends Item { id: ThemeId; bg: string; grid: string; grid5: string; axis: string; rock: [string, string]; text: string }
+export type ThemeId = 'lab' | 'blueprint' | 'chalk' | 'notebook' | 'space' | 'terminal' | 'sunset' | 'forest' | 'ocean' | 'aurora' | 'candy' | 'vapor';
+export interface Theme extends Item { id: ThemeId; bg: string; /** a second colour for a vertical gradient */ bg2?: string; grid: string; grid5: string; axis: string; rock: [string, string]; text: string }
 export const THEMES: Theme[] = [
   { id: 'lab', ru: 'Ночная лаборатория', en: 'Night lab', bg: '#0A1122', grid: '#121C33', grid5: '#1A2846', axis: '#2A3C66', rock: ['#3A4D78', '#22304F'], text: '#9AA7C7', unlock: { kind: 'free' } },
   { id: 'notebook', ru: 'Тетрадь в клетку', en: 'Squared paper', bg: '#FBFAF4', grid: '#DCE6F2', grid5: '#C3D3E8', axis: '#8FA6C4', rock: ['#C9C2B0', '#A79F8B'], text: '#5B6B82', unlock: { kind: 'free' } },
@@ -89,6 +124,31 @@ export const THEMES: Theme[] = [
   { id: 'space', ru: 'Космос', en: 'Deep space', bg: '#05040F', grid: '#0D0B22', grid5: '#17143A', axis: '#3A3478', rock: ['#5B4E8F', '#2E2659'], text: '#B8B0E8', unlock: { kind: 'pro' } },
   { id: 'terminal', ru: 'Ретро-терминал', en: 'Retro terminal', bg: '#020A02', grid: '#06200A', grid5: '#0A3312', axis: '#1E7A2E', rock: ['#1F5C2A', '#0F3A18'], text: '#5BFF7A', unlock: { kind: 'pro' } },
   { id: 'sunset', ru: 'Закат', en: 'Sunset', bg: '#2A1030', grid: '#3A1840', grid5: '#4A2250', axis: '#B0577A', rock: ['#7A3E6E', '#4E2348'], text: '#FFC9DD', unlock: { kind: 'pro' } },
+  { id: 'forest', ru: 'Лес', en: 'Forest', bg: '#0D1F14', bg2: '#132A1B', grid: '#183323', grid5: '#21452F', axis: '#7FD39A', rock: ['#4A6B3A', '#2F4A25'], text: '#CDEBD6', unlock: { kind: 'stars', n: 14 } },
+  { id: 'ocean', ru: 'Глубина', en: 'The deep', bg: '#03263D', bg2: '#04445E', grid: '#0A3550', grid5: '#0F4766', axis: '#5ED3F3', rock: ['#1F6F8B', '#145068'], text: '#BDEBFA', unlock: { kind: 'wins', n: 6 } },
+  { id: 'aurora', ru: 'Северное сияние', en: 'Northern lights', bg: '#06121F', bg2: '#1B0F3A', grid: '#10233A', grid5: '#1C3354', axis: '#4FF0C0', rock: ['#2E4A6B', '#1B2E47'], text: '#B9F5E4', unlock: { kind: 'pro' } },
+  { id: 'candy', ru: 'Сладкое', en: 'Candy', bg: '#FFE4F1', bg2: '#E9E4FF', grid: '#F6CFE3', grid5: '#E8B4D2', axis: '#C06AA0', rock: ['#F2A7C9', '#D884B0'], text: '#8A3E6B', unlock: { kind: 'pro' } },
+  { id: 'vapor', ru: 'Неон-80', en: 'Neon 80s', bg: '#1A0B2E', bg2: '#3B0F4D', grid: '#3A1A5C', grid5: '#5A2A7C', axis: '#FF6AD5', rock: ['#6B3FA0', '#45246E'], text: '#FFC0EC', unlock: { kind: 'pro' } },
+];
+
+/** whole skins: a matching set of parts and a field. An earned skin grants all its parts. */
+export interface Skin extends Item { look: Look; theme: ThemeId }
+export const SKINS: Skin[] = [
+  { id: 'scientist', ru: 'Учёный', en: 'Scientist', look: { color: 'white', trail: 'dashed', body: 'circle', hat: 'grad', eyes: 'glasses', blast: 'ring' }, theme: 'notebook', unlock: { kind: 'stars', n: 15 } },
+  { id: 'viking', ru: 'Викинг', en: 'Viking', look: { color: 'amber', trail: 'chalk', body: 'hex', hat: 'viking', eyes: 'angry', blast: 'shock' }, theme: 'forest', unlock: { kind: 'wins', n: 12 } },
+  { id: 'slime', ru: 'Слизень', en: 'Slime', look: { color: 'toxic', trail: 'bubbles', body: 'slime', hat: 'beanie', eyes: 'smile', blast: 'pixels' }, theme: 'terminal', unlock: { kind: 'stars', n: 21 } },
+  { id: 'gardener', ru: 'Садовник', en: 'Gardener', look: { color: 'mint', trail: 'ribbon', body: 'blob', hat: 'flower', eyes: 'smile', blast: 'flower' }, theme: 'forest', unlock: { kind: 'wins', n: 9 } },
+  { id: 'chef', ru: 'Шеф', en: 'Chef', look: { color: 'sunset', trail: 'dots', body: 'blob', hat: 'chef', eyes: 'smile', blast: 'confetti' }, theme: 'sunset', unlock: { kind: 'stars', n: 27 } },
+  { id: 'cowboy', ru: 'Ковбой', en: 'Cowboy', look: { color: 'amber', trail: 'dashed', body: 'square', hat: 'cowboy', eyes: 'shades', blast: 'star' }, theme: 'sunset', unlock: { kind: 'wins', n: 20 } },
+  { id: 'pirate', ru: 'Пират', en: 'Pirate', look: { color: 'ember', trail: 'fire', body: 'circle', hat: 'pirate', eyes: 'wink', blast: 'firework' }, theme: 'ocean', unlock: { kind: 'pro' } },
+  { id: 'astronaut', ru: 'Космонавт', en: 'Astronaut', look: { color: 'white', trail: 'stars', body: 'circle', hat: 'helmet', eyes: 'visor', blast: 'atom' }, theme: 'space', unlock: { kind: 'pro' } },
+  { id: 'robot', ru: 'Робот', en: 'Robot', look: { color: 'ice', trail: 'lightning', body: 'robot', hat: 'antenna', eyes: 'visor', blast: 'pixels' }, theme: 'terminal', unlock: { kind: 'pro' } },
+  { id: 'wizard', ru: 'Маг', en: 'Wizard', look: { color: 'galaxy', trail: 'sparks', body: 'star', hat: 'wizard', eyes: 'star', blast: 'confetti' }, theme: 'aurora', unlock: { kind: 'pro' } },
+  { id: 'kitty', ru: 'Котик', en: 'Kitty', look: { color: 'candy', trail: 'bubbles', body: 'cat', hat: 'bow', eyes: 'heart', blast: 'hearts' }, theme: 'candy', unlock: { kind: 'pro' } },
+  { id: 'ghost', ru: 'Призрак', en: 'Ghost', look: { color: 'lavender', trail: 'ribbon', body: 'ghost', hat: 'none', eyes: 'cyclops', blast: 'flower' }, theme: 'vapor', unlock: { kind: 'pro' } },
+  { id: 'alien', ru: 'Пришелец', en: 'Alien', look: { color: 'toxic', trail: 'neon', body: 'ufo', hat: 'none', eyes: 'cyclops', blast: 'atom' }, theme: 'space', unlock: { kind: 'pro' } },
+  { id: 'frost', ru: 'Дед Мороз', en: 'Father Frost', look: { color: 'ruby', trail: 'stars', body: 'circle', hat: 'santa', eyes: 'smile', blast: 'firework' }, theme: 'chalk', unlock: { kind: 'pro' } },
+  { id: 'planet', ru: 'Планета', en: 'Planet', look: { color: 'ocean', trail: 'comet', body: 'planet', hat: 'none', eyes: 'dot', blast: 'shock' }, theme: 'space', unlock: { kind: 'pro' } },
 ];
 
 export interface Look { color: string; trail: TrailId; body: BodyId; hat: HatId; eyes: EyesId; blast: BlastId }
@@ -98,6 +158,7 @@ export const DEFAULT_LOOKS: [Look, Look] = [
 ];
 
 export const colorHex = (id: string) => COLORS.find((c) => c.id === id)?.hex ?? '#39E1FF';
+export const colorHex2 = (id: string) => COLORS.find((c) => c.id === id)?.hex2;
 export const theme = (id: string | undefined) => THEMES.find((t) => t.id === id) ?? THEMES[0];
 
 /* ---------------- unlocks and storage ---------------- */
@@ -105,11 +166,24 @@ export const theme = (id: string | undefined) => THEMES.find((t) => t.id === id)
 export interface Progress { stars: number; wins: number; pro: boolean }
 export const unlocked = (u: Unlock, p: Progress) =>
   u.kind === 'free' || (u.kind === 'stars' && p.stars >= u.n) || (u.kind === 'wins' && p.wins >= u.n) || (u.kind === 'pro' && p.pro);
+
+/** parts granted by earned skins, as 'kind:id' (e.g. 'hat:viking') */
+export function granted(p: Progress): Set<string> {
+  const out = new Set<string>();
+  for (const sk of SKINS)
+    if (unlocked(sk.unlock, p)) {
+      for (const [k, v] of Object.entries(sk.look)) out.add(`${k}:${v}`);
+      out.add(`theme:${sk.theme}`);
+    }
+  return out;
+}
+/** an item is open when earned on its own or through a skin */
+export const itemOpen = (kind: string, item: { id: string; unlock: Unlock }, p: Progress, g = granted(p)) => unlocked(item.unlock, p) || g.has(`${kind}:${item.id}`);
 export const unlockText = (u: Unlock, lang: 'ru' | 'en') =>
   u.kind === 'stars' ? (lang === 'ru' ? `★ ${u.n} в кампании` : `★ ${u.n} in the campaign`) : u.kind === 'wins' ? (lang === 'ru' ? `${u.n} побед в рейтинге` : `${u.n} ranked wins`) : u.kind === 'pro' ? 'Pro' : '';
 
 const KEY = 'stem-funcwar-look';
-export interface Saved { look: Look; theme: ThemeId }
+export interface Saved { look: Look; theme: ThemeId; skin?: string }
 export function loadSaved(): Saved {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null') as Saved | null;
@@ -129,14 +203,15 @@ export function storeSaved(s: Saved) {
 
 /** a saved look, with anything no longer earned (say, Pro ended) swapped for the default */
 export function allowedLook(look: Look, p: Progress): Look {
-  const ok = <T extends { id: string; unlock: Unlock }>(list: T[], id: string, def: string) => (list.some((i) => i.id === id && unlocked(i.unlock, p)) ? id : def);
+  const g = granted(p);
+  const ok = <T extends { id: string; unlock: Unlock }>(kind: string, list: T[], id: string, def: string) => (list.some((i) => i.id === id && itemOpen(kind, i, p, g)) ? id : def);
   return {
-    color: ok(COLORS, look.color, DEFAULT_LOOKS[0].color),
-    trail: ok(TRAILS, look.trail, 'solid') as TrailId,
-    body: ok(BODIES, look.body, 'circle') as BodyId,
-    hat: ok(HATS, look.hat, 'none') as HatId,
-    eyes: ok(EYES, look.eyes, 'dot') as EyesId,
-    blast: ok(BLASTS, look.blast, 'ring') as BlastId,
+    color: ok('color', COLORS, look.color, DEFAULT_LOOKS[0].color),
+    trail: ok('trail', TRAILS, look.trail, 'solid') as TrailId,
+    body: ok('body', BODIES, look.body, 'circle') as BodyId,
+    hat: ok('hat', HATS, look.hat, 'none') as HatId,
+    eyes: ok('eyes', EYES, look.eyes, 'dot') as EyesId,
+    blast: ok('blast', BLASTS, look.blast, 'ring') as BlastId,
   };
 }
 
@@ -218,6 +293,75 @@ export function drawTrail(g: G, pts: { x: number; y: number }[], look: Look, alp
         g.stroke();
       }
       break;
+    case 'lightning': {
+      const zig = pts.map((pt, i) => ({ x: pt.x, y: pt.y + (i % 6 < 3 ? -3 : 3) * (i % 3 === 0 ? 0.3 : 1) }));
+      g.shadowColor = c;
+      g.shadowBlur = 12;
+      g.strokeStyle = c;
+      g.lineWidth = 3;
+      g.beginPath();
+      zig.forEach((q, i) => (i ? g.lineTo(q.x, q.y) : g.moveTo(q.x, q.y)));
+      g.stroke();
+      g.strokeStyle = '#FFFFFF';
+      g.lineWidth = 1;
+      g.stroke();
+      break;
+    }
+    case 'bubbles':
+      pts.forEach((q, i) => {
+        if (i % 5) return;
+        const r = 2 + ((i * 7) % 5);
+        g.strokeStyle = c;
+        g.lineWidth = 1.4;
+        g.globalAlpha = alpha * 0.85;
+        g.beginPath();
+        g.arc(q.x, q.y - Math.sin(i + t / 300) * 2, r, 0, Math.PI * 2);
+        g.stroke();
+        g.fillStyle = '#FFFFFF';
+        g.beginPath();
+        g.arc(q.x - r * 0.35, q.y - r * 0.35, 0.9, 0, Math.PI * 2);
+        g.fill();
+      });
+      break;
+    case 'stars':
+      g.globalAlpha = alpha * 0.4;
+      line(1.2, c);
+      g.globalAlpha = alpha;
+      pts.forEach((q, i) => {
+        if (i % 7) return;
+        const s = 2.5 + ((i * 13) % 3);
+        g.fillStyle = i % 14 ? '#FFFFFF' : c;
+        g.beginPath();
+        for (let k = 0; k < 8; k++) {
+          const a = (k * Math.PI) / 4 + t / 700;
+          const rr = k % 2 ? s * 0.35 : s;
+          g[k ? 'lineTo' : 'moveTo'](q.x + Math.cos(a) * rr, q.y + Math.sin(a) * rr);
+        }
+        g.closePath();
+        g.fill();
+      });
+      break;
+    case 'fire':
+      for (let i = 1; i < pts.length; i++) {
+        const k = i / pts.length;
+        g.strokeStyle = k > 0.85 ? '#FFF3B0' : k > 0.5 ? '#FFB020' : '#FF4D2E';
+        g.globalAlpha = alpha * (0.25 + 0.75 * k);
+        g.lineWidth = 1.5 + 4.5 * k + Math.sin(i * 1.7 + t / 60) * 0.8;
+        g.beginPath();
+        g.moveTo(pts[i - 1].x, pts[i - 1].y);
+        g.lineTo(pts[i].x, pts[i].y);
+        g.stroke();
+      }
+      break;
+    case 'ribbon':
+      for (const side of [1, -1]) {
+        g.strokeStyle = side > 0 ? c : (colorHex2(look.color) ?? '#FFFFFF');
+        g.lineWidth = 2;
+        g.beginPath();
+        pts.forEach((q, i) => (i ? g.lineTo(q.x, q.y + side * Math.sin(i / 5) * 3.5) : g.moveTo(q.x, q.y)));
+        g.stroke();
+      }
+      break;
     default:
       line(2.5, c);
   }
@@ -250,7 +394,76 @@ function shape(g: G, body: BodyId, x: number, y: number, r: number) {
     g.moveTo(x, y - r * 1.25);
     g.bezierCurveTo(x + r * 1.3, y - r * 0.2, x + r * 1.0, y + r, x, y + r);
     g.bezierCurveTo(x - r * 1.0, y + r, x - r * 1.3, y - r * 0.2, x, y - r * 1.25);
+  } else if (body === 'ufo') {
+    g.ellipse(x, y + r * 0.15, r * 1.35, r * 0.5, 0, 0, Math.PI * 2);
+    g.moveTo(x + r * 0.7, y);
+    g.arc(x, y, r * 0.7, 0, Math.PI, true);
+  } else if (body === 'robot') g.roundRect(x - r, y - r * 0.95, r * 2, r * 1.9, r * 0.18);
+  else if (body === 'ghost') {
+    g.moveTo(x - r, y + r);
+    g.lineTo(x - r, y);
+    g.arc(x, y, r, Math.PI, 0);
+    g.lineTo(x + r, y + r);
+    for (let i = 0; i < 4; i++) g.quadraticCurveTo(x + r - (i + 0.5) * (r / 2), y + r * (i % 2 ? 1.25 : 0.7), x + r - (i + 1) * (r / 2), y + r);
+    g.closePath();
+  } else if (body === 'slime') {
+    g.moveTo(x - r * 1.25, y + r * 0.9);
+    g.bezierCurveTo(x - r * 1.3, y - r * 0.6, x - r * 0.5, y - r * 1.2, x, y - r * 1.1);
+    g.bezierCurveTo(x + r * 0.5, y - r * 1.2, x + r * 1.3, y - r * 0.6, x + r * 1.25, y + r * 0.9);
+    g.closePath();
+  } else if (body === 'cat') {
+    g.arc(x, y, r, 0, Math.PI * 2);
+    for (const sd of [-1, 1]) {
+      g.moveTo(x + sd * r * 0.85, y - r * 0.3);
+      g.lineTo(x + sd * r * 0.75, y - r * 1.35);
+      g.lineTo(x + sd * r * 0.2, y - r * 0.92);
+      g.closePath();
+    }
   } else g.arc(x, y, r, 0, Math.PI * 2);
+}
+
+/** extra details drawn over some bodies */
+function details(g: G, body: BodyId, x: number, y: number, r: number, c: string) {
+  g.save();
+  if (body === 'planet') {
+    g.strokeStyle = '#FFE08A';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.ellipse(x, y + r * 0.1, r * 1.6, r * 0.42, -0.35, 0.1 * Math.PI, 0.9 * Math.PI);
+    g.stroke();
+  } else if (body === 'robot') {
+    g.fillStyle = '#8A95AD';
+    for (const sd of [-1, 1]) g.fillRect(x + sd * r * 1.05 - 2, y - 3, 4, 6);
+    g.strokeStyle = 'rgba(4,16,30,0.4)';
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(x - r * 0.5, y + r * 0.6);
+    g.lineTo(x + r * 0.5, y + r * 0.6);
+    g.stroke();
+  } else if (body === 'ufo') {
+    for (let i = -2; i <= 2; i++) {
+      g.fillStyle = i % 2 ? '#FFE08A' : '#FFFFFF';
+      g.beginPath();
+      g.arc(x + i * r * 0.5, y + r * 0.2, 1.6, 0, Math.PI * 2);
+      g.fill();
+    }
+  } else if (body === 'slime') {
+    g.fillStyle = 'rgba(255,255,255,0.55)';
+    g.beginPath();
+    g.ellipse(x - r * 0.45, y - r * 0.5, r * 0.22, r * 0.12, -0.6, 0, Math.PI * 2);
+    g.fill();
+  } else if (body === 'cat') {
+    g.strokeStyle = 'rgba(4,16,30,0.55)';
+    g.lineWidth = 1;
+    for (const sd of [-1, 1]) {
+      g.beginPath();
+      g.moveTo(x + sd * r * 0.25, y + r * 0.3);
+      g.lineTo(x + sd * r * 1.1, y + r * 0.2);
+      g.stroke();
+    }
+  }
+  g.restore();
+  void c;
 }
 
 function hat(g: G, id: HatId, x: number, y: number, r: number, c: string) {
@@ -364,6 +577,107 @@ function hat(g: G, id: HatId, x: number, y: number, r: number, c: string) {
       g.fillStyle = '#E5484D';
       g.fillRect(x - r * 0.6, top - r * 0.3, r * 1.2, 2);
       break;
+    case 'pirate':
+      g.fillStyle = '#16171A';
+      g.beginPath();
+      g.moveTo(x - r * 1.2, top + r * 0.1);
+      g.quadraticCurveTo(x, top - r * 1.1, x + r * 1.2, top + r * 0.1);
+      g.quadraticCurveTo(x, top - r * 0.2, x - r * 1.2, top + r * 0.1);
+      g.fill();
+      g.fillStyle = '#FFFFFF';
+      g.beginPath();
+      g.arc(x, top - r * 0.38, r * 0.16, 0, Math.PI * 2);
+      g.fill();
+      break;
+    case 'chef':
+      g.fillStyle = '#FFFFFF';
+      for (const [dx, dy, rr] of [[-0.45, -0.55, 0.42], [0, -0.75, 0.48], [0.45, -0.55, 0.42]] as const) {
+        g.beginPath();
+        g.arc(x + dx * r, top + dy * r, rr * r, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillRect(x - r * 0.7, top - r * 0.45, r * 1.4, r * 0.5);
+      break;
+    case 'viking':
+      g.fillStyle = '#9AA3B5';
+      g.beginPath();
+      g.arc(x, top + r * 0.25, r * 0.9, Math.PI, 0);
+      g.fill();
+      g.fillStyle = '#E8E1D0';
+      for (const sd of [-1, 1]) {
+        g.beginPath();
+        g.moveTo(x + sd * r * 0.75, top + r * 0.05);
+        g.quadraticCurveTo(x + sd * r * 1.55, top - r * 0.2, x + sd * r * 1.35, top - r * 1.0);
+        g.quadraticCurveTo(x + sd * r * 1.2, top - r * 0.35, x + sd * r * 0.6, top - r * 0.25);
+        g.fill();
+      }
+      break;
+    case 'cowboy':
+      g.fillStyle = '#8B5A2B';
+      g.beginPath();
+      g.ellipse(x, top, r * 1.45, r * 0.28, 0, 0, Math.PI * 2);
+      g.fill();
+      g.beginPath();
+      g.roundRect(x - r * 0.65, top - r * 0.85, r * 1.3, r * 0.85, r * 0.25);
+      g.fill();
+      g.fillStyle = '#5C3A1A';
+      g.fillRect(x - r * 0.65, top - r * 0.2, r * 1.3, r * 0.16);
+      break;
+    case 'santa':
+      g.fillStyle = '#E0245E';
+      g.beginPath();
+      g.moveTo(x - r * 0.9, top + r * 0.15);
+      g.quadraticCurveTo(x + r * 0.2, top - r * 1.6, x + r * 1.15, top - r * 0.55);
+      g.lineTo(x + r * 0.9, top + r * 0.15);
+      g.closePath();
+      g.fill();
+      g.fillStyle = '#FFFFFF';
+      g.beginPath();
+      g.roundRect(x - r * 1.0, top - r * 0.05, r * 2.0, r * 0.32, r * 0.16);
+      g.fill();
+      g.beginPath();
+      g.arc(x + r * 1.15, top - r * 0.55, r * 0.22, 0, Math.PI * 2);
+      g.fill();
+      break;
+    case 'helmet':
+      g.strokeStyle = 'rgba(220,235,255,0.9)';
+      g.lineWidth = 2;
+      g.fillStyle = 'rgba(180,215,255,0.16)';
+      g.beginPath();
+      g.arc(x, y, r * 1.38, 0, Math.PI * 2);
+      g.fill();
+      g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.75)';
+      g.beginPath();
+      g.arc(x, y, r * 1.12, 1.15 * Math.PI, 1.45 * Math.PI);
+      g.stroke();
+      break;
+    case 'flower':
+      for (let i = 0; i < 5; i++) {
+        const a = (i * 2 * Math.PI) / 5;
+        g.fillStyle = '#FF8FC8';
+        g.beginPath();
+        g.arc(x + r * 0.45 + Math.cos(a) * r * 0.32, top + r * 0.05 + Math.sin(a) * r * 0.32, r * 0.24, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillStyle = '#FFE08A';
+      g.beginPath();
+      g.arc(x + r * 0.45, top + r * 0.05, r * 0.2, 0, Math.PI * 2);
+      g.fill();
+      break;
+    case 'beanie':
+      g.fillStyle = c;
+      g.globalAlpha = 0.85;
+      g.beginPath();
+      g.arc(x, top + r * 0.35, r * 0.95, Math.PI, 0);
+      g.fill();
+      g.globalAlpha = 1;
+      g.fillStyle = '#FFFFFF';
+      g.fillRect(x - r * 0.98, top + r * 0.2, r * 1.96, r * 0.3);
+      g.beginPath();
+      g.arc(x, top - r * 0.65, r * 0.26, 0, Math.PI * 2);
+      g.fill();
+      break;
     default:
   }
   g.restore();
@@ -417,6 +731,45 @@ function eyes(g: G, id: EyesId, x: number, y: number, r: number, dir: number) {
       g.roundRect(x - r * 0.55 + dir * r * 0.15, ey - r * 0.2, r * 1.1, r * 0.36, r * 0.1);
       g.fill();
       break;
+    case 'heart': {
+      const s = r * 0.28;
+      g.fillStyle = '#E0245E';
+      g.beginPath();
+      g.moveTo(ex, ey + s * 0.9);
+      g.bezierCurveTo(ex - s * 1.4, ey - s * 0.2, ex - s * 0.5, ey - s * 1.2, ex, ey - s * 0.35);
+      g.bezierCurveTo(ex + s * 0.5, ey - s * 1.2, ex + s * 1.4, ey - s * 0.2, ex, ey + s * 0.9);
+      g.fill();
+      break;
+    }
+    case 'star':
+      g.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const a = -Math.PI / 2 + (k * Math.PI) / 5;
+        const rr = k % 2 ? r * 0.12 : r * 0.3;
+        g[k ? 'lineTo' : 'moveTo'](ex + Math.cos(a) * rr, ey + Math.sin(a) * rr);
+      }
+      g.closePath();
+      g.fill();
+      break;
+    case 'wink':
+      g.lineWidth = 1.8;
+      g.beginPath();
+      g.arc(ex, ey + r * 0.05, r * 0.2, 1.1 * Math.PI, 1.9 * Math.PI);
+      g.stroke();
+      g.beginPath();
+      g.arc(x + dir * r * 0.1, y + r * 0.2, r * 0.3, 0.2 * Math.PI, 0.8 * Math.PI);
+      g.stroke();
+      break;
+    case 'visor':
+      g.save();
+      g.shadowColor = '#39E1FF';
+      g.shadowBlur = 8;
+      g.fillStyle = '#39E1FF';
+      g.beginPath();
+      g.roundRect(x - r * 0.7, ey - r * 0.16, r * 1.4, r * 0.32, r * 0.16);
+      g.fill();
+      g.restore();
+      break;
     default:
       g.beginPath();
       g.arc(ex, ey, r * 0.22, 0, Math.PI * 2);
@@ -428,9 +781,18 @@ function eyes(g: G, id: EyesId, x: number, y: number, r: number, dir: number) {
 /** one soldier in its look; dir = 1 faces right */
 export function drawSoldier(g: G, x: number, y: number, r: number, look: Look, dir: number, hp?: number) {
   const c = colorHex(look.color);
-  g.fillStyle = c;
+  const c2 = colorHex2(look.color);
+  if (c2) {
+    const gr = g.createLinearGradient(x - r, y - r, x + r, y + r);
+    gr.addColorStop(0, c);
+    gr.addColorStop(1, c2);
+    g.fillStyle = gr;
+  } else g.fillStyle = c;
+  if (look.body === 'ghost') g.globalAlpha = 0.88;
   shape(g, look.body, x, y, r);
   g.fill();
+  g.globalAlpha = 1;
+  details(g, look.body, x, y, r, c);
   eyes(g, look.eyes, x, y, r, dir);
   hat(g, look.hat, x, y, r, c);
   if (hp !== undefined)
@@ -490,6 +852,51 @@ export function drawBlast(g: G, x: number, y: number, k: number, age: number, lo
           g.restore();
         }
       }
+      break;
+    case 'firework':
+      for (let i = 0; i < 12; i++) {
+        const an = (i * Math.PI) / 6;
+        const d = (0.2 + a * 2) * k;
+        const px = x + Math.cos(an) * d;
+        const py = y + Math.sin(an) * d + a * a * k * 0.6;
+        g.strokeStyle = `hsl(${i * 30}, 95%, 65%)`;
+        g.lineWidth = 1.5;
+        g.beginPath();
+        g.moveTo(x + Math.cos(an) * d * 0.5, y + Math.sin(an) * d * 0.5);
+        g.lineTo(px, py);
+        g.stroke();
+        g.fillStyle = '#FFFFFF';
+        g.beginPath();
+        g.arc(px, py, 1.8, 0, Math.PI * 2);
+        g.fill();
+      }
+      break;
+    case 'atom':
+      g.strokeStyle = c;
+      g.lineWidth = 1.8;
+      for (let i = 0; i < 3; i++) {
+        g.beginPath();
+        g.ellipse(x, y, (0.4 + a * 1.6) * k, (0.15 + a * 0.5) * k, (i * Math.PI) / 3 + a * 3, 0, Math.PI * 2);
+        g.stroke();
+      }
+      g.fillStyle = '#FFFFFF';
+      g.beginPath();
+      g.arc(x, y, 3, 0, Math.PI * 2);
+      g.fill();
+      break;
+    case 'flower':
+      for (let i = 0; i < 6; i++) {
+        const an = (i * Math.PI) / 3 + a;
+        const d = (0.2 + a * 1.2) * k;
+        g.fillStyle = i % 2 ? '#FF8FC8' : c;
+        g.beginPath();
+        g.ellipse(x + Math.cos(an) * d, y + Math.sin(an) * d, (0.15 + a * 0.4) * k, (0.08 + a * 0.2) * k, an, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillStyle = '#FFE08A';
+      g.beginPath();
+      g.arc(x, y, (0.1 + a * 0.2) * k, 0, Math.PI * 2);
+      g.fill();
       break;
     default:
       g.strokeStyle = '#FFD65A';

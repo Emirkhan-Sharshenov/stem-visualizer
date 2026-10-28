@@ -2,7 +2,7 @@
 import { applyShot, botMove, compile, fly, FormulaError, randomWorld } from './engine';
 import { LEVELS, levelWorld } from './levels';
 import { raceQuestion } from './race';
-import { CHAPTERS, chapterWorld } from './chapters';
+import { CHAPTERS, chapterWorld, fillTemplate } from './chapters';
 
 let failed = 0;
 const ok = (cond: boolean, msg: string) => {
@@ -103,6 +103,21 @@ for (const ch of CHAPTERS) {
     const targets = w.soldiers.filter((s) => s.team === 1).map((s) => s.id);
     const got = targets.every((id) => shot.killed.includes(id)) ? 'hit' : shot.end;
     ok(got === ex.expect, `guide ${ch.id}: “${ex.src}” → ${got} (expected ${ex.expect})`);
+  }
+}
+
+// every slider template compiles at its minimum, default and maximum
+for (const ch of CHAPTERS) {
+  if (!ch.play) continue;
+  for (const pick of ['min', 'value', 'max'] as const) {
+    const values = Object.fromEntries(ch.play.params.map((q) => [q.key, q[pick]]));
+    let fine = true;
+    try {
+      compile(fillTemplate(ch.play.template, values))(1);
+    } catch {
+      fine = false;
+    }
+    ok(fine, `guide ${ch.id}: slider template at ${pick}`);
   }
 }
 

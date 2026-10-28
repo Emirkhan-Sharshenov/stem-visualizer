@@ -214,7 +214,7 @@ const Paper: React.FC<{ s: TestSettings; variants: Variant[]; lang: Lang; footer
 export const TestBuilder: React.FC<{ lang: Lang }> = ({ lang }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const plan = usePlan();
-  const tier = plan.plan === 'teacher' ? 'teacher' : plan.pro ? 'pro' : 'free';
+  const tier = plan.plan === 'teacher' ? 'teacher' : plan.pro && !plan.trial ? 'pro' : 'free';
   const lim = LIMITS[tier];
   const [s, setS] = useState<TestSettings>(() => ({ ...DEFAULT_SETTINGS, seed: Math.floor(Math.random() * 1e6) }));
   const [templates, setTemplates] = useState(readTemplates);

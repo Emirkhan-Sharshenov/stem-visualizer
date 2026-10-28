@@ -35,7 +35,12 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
     { id: 'quick', icon: <Timer className="w-4 h-4" />, ru: 'Экспресс', en: 'Quick', dru: 'Быстрая проверка за перемену', den: 'A check in a break' },
     { id: 'problems', icon: <Calculator className="w-4 h-4" />, ru: 'Только задачи', en: 'Problems only', dru: 'Одни расчёты, от простых к сложным', den: 'Calculations only, easy to hard' },
   ];
+  // the free week includes two mock exams; paid Pro has no limit
+  const TRIAL_EXAMS = 2;
+  const trialFrom = plan.trial && plan.expiresAt ? plan.expiresAt.getTime() - 7 * 864e5 : 0;
+  const trialLeft = plan.trial ? Math.max(0, TRIAL_EXAMS - past.filter((t) => t.at >= trialFrom).length) : Infinity;
   const start = () => {
+    if (trialLeft <= 0) return window.dispatchEvent(new Event('open-pro'));
     const seed = Date.now() % 1000000;
     if (exam === 'ort') setRun({ seed, minutes: ORT_FORMATS[format].minutes, section: 'ort', qs: ortExam(subject, seed, format) });
     else setRun({ seed, minutes: BOARD_EXAMS[exam][subject as BoardSubject].minutes, section: exam, qs: boardExam(exam, subject as BoardSubject, seed) });
@@ -149,8 +154,15 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
             </span>
           </div>
           <Button size="lg" className="self-start text-sm font-medium" onPress={() => start()}>
-            {L('Начать экзамен', 'Start the exam')}
+            {trialLeft <= 0 ? L('Продолжить с Pro', 'Continue with Pro') : L('Начать экзамен', 'Start the exam')}
           </Button>
+          {plan.trial && (
+            <p className="text-sm text-[#B5651D]">
+              {trialLeft > 0
+                ? L(`В пробную неделю — ${TRIAL_EXAMS} пробных экзамена. Осталось: ${trialLeft}.`, `The free week includes ${TRIAL_EXAMS} mock exams. Left: ${trialLeft}.`)
+                : L('Пробные экзамены пробной недели закончились. С Pro — без ограничений.', 'The free week’s mock exams are used up. Pro has no limit.')}
+            </p>
+          )}
         </div>
         <aside className="bg-surface border border-line rounded-xl p-5">
           <h3 className="text-xs font-medium uppercase tracking-[0.05em] text-ink-2">{L('Мои попытки', 'My attempts')}</h3>

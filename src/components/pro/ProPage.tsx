@@ -138,7 +138,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
     { icon: <Presentation className="w-4 h-4" />, t: L('Презентации по темам', 'Slides for any topic'), d: L('Готовый .pptx в 3 оформлениях за секунду', 'A ready .pptx in 3 themes in a second') },
     { icon: <Route className="w-4 h-4" />, t: L('Персональный план', 'Personal plan'), d: L('Что повторить по твоим ошибкам', 'What to revise based on your mistakes') },
     { icon: <FileText className="w-4 h-4" />, t: L('Контрольные до 3 вариантов', 'Tests in up to 3 variants'), d: L('Свои шапки, баллы, ключи и шаблоны', 'Own headers, points, keys and templates') },
-    { icon: <Crosshair className="w-4 h-4" />, t: L('«Бой функций»: гайд и косметика', 'Function Wars: guide and cosmetics'), d: L('9 глав про продвинутые графики и 24 предмета внешнего вида — без преимуществ в бою', '9 chapters on advanced graphs and 24 cosmetic items — no edge in battle') },
+    { icon: <Crosshair className="w-4 h-4" />, t: L('«Бой функций»: гайд и косметика', 'Function Wars: guide and cosmetics'), d: L('16 уроков по функциям, 46 предметов и 9 образов — без преимуществ в бою', '16 function lessons, 46 items and 9 skins — no edge in battle') },
   ];
   const TEACHER = [
     L('Всё из Pro', 'Everything in Pro'),
@@ -173,6 +173,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             <span>
               <span className="block text-[16px] font-medium text-ink">{L('Попробуй Pro неделю бесплатно', 'Try Pro free for a week')}</span>
               <span className="block text-sm text-ink-2">{L('Без карты. Через 7 дней Pro просто выключится, ничего не спишется.', 'No card. After 7 days Pro just switches off; nothing is charged.')}</span>
+              <span className="block text-xs text-ink-3 mt-0.5">{L('Входит: наставник без лимита, работа над ошибками, план, готовность к экзаменам, 2 пробных экзамена и 5 уроков гайда по функциям. Только в полном Pro: скины Pro, скачивание презентаций и расширенный конструктор контрольных.', 'Includes: unlimited mentor, mistake review, plan, exam readiness, 2 mock exams and 5 guide lessons. Full Pro only: Pro skins, presentation downloads and the bigger test builder.')}</span>
             </span>
           </span>
           {user ? (

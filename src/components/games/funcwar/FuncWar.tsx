@@ -63,7 +63,9 @@ export const Field: React.FC<{
   /** how each side looks: [blue side, red side] */
   looks?: [Look, Look];
   themeId?: ThemeId;
-}> = ({ world, active, trails, flying, blast, onMeasure, measure = null, lang, looks = DEFAULT_LOOKS, themeId = 'lab' }) => {
+  /** a predicted path drawn as a bright dashed line (the guide's sliders) */
+  preview?: Pt[];
+}> = ({ world, active, trails, flying, blast, onMeasure, measure = null, lang, looks = DEFAULT_LOOKS, themeId = 'lab', preview }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 480 });
@@ -95,7 +97,15 @@ export const Field: React.FC<{
     const now = performance.now();
 
     // the paper and its unit grid, in the chosen theme
-    g.fillStyle = th.bg;
+    // a vertical gradient when the theme has a second colour; craters are cut with the same paint
+    let paper: string | CanvasGradient = th.bg;
+    if (th.bg2) {
+      const gr = g.createLinearGradient(0, 0, 0, size.h);
+      gr.addColorStop(0, th.bg);
+      gr.addColorStop(1, th.bg2);
+      paper = gr;
+    }
+    g.fillStyle = paper;
     g.fillRect(0, 0, size.w, size.h);
     if (th.id === 'space')
       for (let i = 0; i < 70; i++) {
@@ -155,7 +165,7 @@ export const Field: React.FC<{
       g.fill();
     }
     for (const h of world.holes) {
-      g.fillStyle = th.bg;
+      g.fillStyle = paper;
       g.beginPath();
       g.arc(X(h.x), Y(h.y), h.r * k, 0, Math.PI * 2);
       g.fill();
@@ -163,6 +173,16 @@ export const Field: React.FC<{
 
     // earlier shots, faint; the shot in flight, bright, with a white head
     for (const t of trails) drawTrail(g, t.path.map(P), looks[t.team], 0.3, now);
+    if (preview && preview.length > 1) {
+      g.save();
+      g.setLineDash([8, 6]);
+      g.strokeStyle = '#FFD65A';
+      g.lineWidth = 2.5;
+      g.beginPath();
+      preview.map(P).forEach((q, i) => (i ? g.lineTo(q.x, q.y) : g.moveTo(q.x, q.y)));
+      g.stroke();
+      g.restore();
+    }
     if (flying) {
       const pts = flying.path.slice(0, Math.max(1, flying.upto)).map(P);
       drawTrail(g, pts, looks[flying.team], 1, now);
@@ -226,7 +246,7 @@ export const Field: React.FC<{
       g.textAlign = 'left';
       g.fillText(label, bx + 6, by + 14);
     }
-  }, [world, active, trails, flying, blast, measure, size, lang, looks, themeId]);
+  }, [world, active, trails, flying, blast, measure, size, lang, looks, themeId, preview]);
 
   const toWorld = (e: React.PointerEvent): Pt => {
     const r = ref.current!.getBoundingClientRect();
@@ -672,14 +692,14 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string |
           <span className="w-11 h-11 rounded-xl bg-accent-soft text-accent flex items-center justify-center shrink-0"><Palette className="w-5 h-5" /></span>
           <span>
             <span className="block font-medium text-ink">{L('Мастерская', 'Workshop')}</span>
-            <span className="block text-sm text-ink-2">{L('Цвета, следы, шапки, лица, взрывы и поля — только внешний вид', 'Colours, trails, hats, faces, blasts and fields — looks only')}</span>
+            <span className="block text-sm text-ink-2">{L('97 предметов и 15 готовых образов: пират, космонавт, робот, маг… Только внешний вид', '97 items and 15 ready skins: pirate, astronaut, robot, wizard… Looks only')}</span>
           </span>
         </button>
         <button type="button" onClick={() => setScreen('guide')} className="text-left p-4 rounded-2xl border border-line bg-surface hover:border-accent cursor-pointer flex items-center gap-3">
           <span className="w-11 h-11 rounded-xl bg-[#FFF4DA] text-[#B5651D] flex items-center justify-center shrink-0"><BookOpen className="w-5 h-5" /></span>
           <span>
-            <span className="block font-medium text-ink">{L('Гайд: продвинутые графики', 'Guide: advanced graphs')}</span>
-            <span className="block text-sm text-ink-2">{L('Колокол Гаусса, ступенька th, сумма графиков, две цели одной параболой. 2 главы бесплатно, 9 с Pro', 'Gaussian bumps, tanh steps, adding graphs, two targets with one parabola. 2 chapters free, 9 with Pro')}</span>
+            <span className="block font-medium text-ink">{L('Гайд по функциям', 'Function guide')}</span>
+            <span className="block text-sm text-ink-2">{L('16 уроков: каждая функция — что это, параметры, как с ней выигрывать, ползунки. 2 урока бесплатно', '16 lessons: each function, its parameters, how to win with it, with sliders. 2 free')}</span>
           </span>
         </button>
       </div>

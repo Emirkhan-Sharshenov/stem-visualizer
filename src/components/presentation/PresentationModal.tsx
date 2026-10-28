@@ -184,6 +184,8 @@ interface Props {
 export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, modelEl, onClose }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const plan = usePlan();
+  // downloads are for paid Pro; the free week only previews
+  const paid = plan.pro && !plan.trial;
   const { user } = useSession();
   const teacher = plan.plan === 'teacher';
   const section: Section | undefined = sectionsFor(topic.subject, topic.grade).find((s) => s.id === topic.sectionId);
@@ -367,7 +369,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
     window.dispatchEvent(new Event('open-pro'));
   };
   const download = async () => {
-    if (!plan.pro) return upgrade();
+    if (!paid) return upgrade();
     if (waiting || !slides.length) return;
     if (ready) {
       await saveFile(ready, fileName(deck));
@@ -422,7 +424,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
             <h2 className="font-serif text-xl text-ink leading-tight">{L('Презентация по теме', 'Presentation')}</h2>
             <p className="text-sm text-ink-2 truncate">{useSection ? section!.title[lang] : topic.title[lang]}</p>
           </div>
-          {!plan.pro && (
+          {!paid && (
             <span className="hidden sm:inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-xs font-medium bg-[#FFF4DC] text-[#9A6400]">
               <Crown className="w-3.5 h-3.5" /> Pro
             </span>
@@ -596,19 +598,19 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
         </div>
 
         <footer className="flex flex-wrap items-center gap-3 px-5 py-3.5 border-t border-line bg-surface">
-          {inApp && plan.pro ? (
+          {inApp && paid ? (
             <p className="text-xs flex-1 min-w-[200px] text-amber-700 dark:text-amber-400">{L('Встроенный браузер приложения может не сохранять файлы. Если не скачается — откройте сайт в Safari или Chrome (меню ⋯ → «Открыть в браузере»).', 'In-app browsers may not save files. If nothing downloads, open the site in Safari or Chrome (⋯ menu → Open in browser).')}</p>
           ) : (
             <p className="text-xs text-ink-3 flex-1 min-w-[200px]">{ready ? L('Файл готов — нажмите «Сохранить» и выберите «Сохранить в Файлы» или нужное приложение.', 'The file is ready: tap Save and pick Save to Files or an app.') : L('Файл .pptx открывается в PowerPoint, Google Slides и Keynote — его можно редактировать.', 'The .pptx opens in PowerPoint, Google Slides and Keynote, and stays editable.')}</p>
           )}
           <button
             onClick={download}
-            disabled={busy || (plan.pro && waiting) || !slides.length}
+            disabled={busy || (paid && waiting) || !slides.length}
             className="h-11 px-5 rounded-lg text-sm font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-60 transition-transform active:scale-[0.98]"
-            style={{ background: ready ? '#16A34A' : plan.pro ? '#2F5BFF' : '#16171A', color: '#fff' }}
+            style={{ background: ready ? '#16A34A' : paid ? '#2F5BFF' : '#16171A', color: '#fff' }}
           >
-            {busy || (plan.pro && waiting) ? <Loader2 className="w-4 h-4 animate-spin" /> : done ? <Check className="w-4 h-4" /> : plan.pro ? <Download className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
-            {done ? L('Скачано', 'Downloaded') : ready ? L('Сохранить файл', 'Save file') : busy ? L('Собираем…', 'Building…') : plan.pro && waiting ? L('Готовим картинки…', 'Preparing pictures…') : plan.pro ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}
+            {busy || (paid && waiting) ? <Loader2 className="w-4 h-4 animate-spin" /> : done ? <Check className="w-4 h-4" /> : paid ? <Download className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
+            {done ? L('Скачано', 'Downloaded') : ready ? L('Сохранить файл', 'Save file') : busy ? L('Собираем…', 'Building…') : paid && waiting ? L('Готовим картинки…', 'Preparing pictures…') : paid ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}
           </button>
         </footer>
     </Dialog>

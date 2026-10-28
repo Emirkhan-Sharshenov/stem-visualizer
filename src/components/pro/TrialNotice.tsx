@@ -56,7 +56,7 @@ export const TrialNotice: React.FC<{ lang: Lang }> = ({ lang }) => {
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-medium text-ink">{L('Неделя Pro в подарок', 'A free week of Pro')}</p>
           <p className="mt-0.5 text-sm text-ink-2">
-            {L(`До ${gift.toLocaleDateString('ru-RU')}: наставник без лимита, работа над ошибками и пробный ОРТ. Карта не нужна.`, `Until ${gift.toLocaleDateString('en-GB')}: unlimited mentor, mistake review and mock exams. No card needed.`)}
+            {L(`До ${gift.toLocaleDateString('ru-RU')}: наставник без лимита, работа над ошибками, план и 2 пробных экзамена. Карта не нужна.`, `Until ${gift.toLocaleDateString('en-GB')}: unlimited mentor, mistake review, a study plan and 2 mock exams. No card needed.`)}
           </p>
           <Button size="sm" variant="ghost" className="mt-1 -ml-2 text-sm text-accent" onPress={() => { setGift(null); open(); }}>
             {L('Что входит в Pro →', 'What Pro includes →')}
