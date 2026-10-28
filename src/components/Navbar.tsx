@@ -4,7 +4,7 @@ import { LogoMark } from './brand/Logo';
 import { Search, User, BookOpen, FlaskConical, Target, Flame, Trophy, Gamepad2 } from 'lucide-react';
 import { dayStreak, useProgress } from '../lib/progress';
 import { signOut, useSession } from '../lib/supabase';
-import { LogOut, Crown, Users, GraduationCap, Moon, Sun, BarChart3 } from 'lucide-react';
+import { LogOut, Crown, Users, GraduationCap, Moon, Sun, BarChart3, FileText } from 'lucide-react';
 import { useIsAdmin } from '../lib/admin';
 import { Button } from '@heroui/react';
 import { useTheme } from '../lib/theme';
@@ -169,6 +169,10 @@ const AccountButton: React.FC<{ lang: 'ru' | 'en'; onSelect: (m: VisualMode) => 
           <button onClick={() => { setOpen(false); onSelect('teacher'); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
             <GraduationCap className="w-4 h-4 text-ink-2" strokeWidth={1.75} />
             {lang === 'ru' ? 'Кабинет учителя' : 'Teacher dashboard'}
+          </button>
+          <button onClick={() => { setOpen(false); onSelect('tests'); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
+            <FileText className="w-4 h-4 text-ink-2" strokeWidth={1.75} />
+            {lang === 'ru' ? 'Конструктор контрольных' : 'Test builder'}
           </button>
           <button onClick={() => { setOpen(false); onPro(); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-muted inline-flex items-center gap-2 cursor-pointer">
             <Crown className="w-4 h-4 text-[#B5651D]" strokeWidth={1.75} />

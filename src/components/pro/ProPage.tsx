@@ -1,6 +1,6 @@
 import { Button, Input } from '@heroui/react';
 import React, { useState } from 'react';
-import { Check, Crown, Gift, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
+import { Check, Crown, Crosshair, FileText, Gift, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
 import { Currency, PRICES, FREE_MENTOR_DAILY, localCurrency, money, openCheckout, paymentsEnabled, planChanged, redeemCode, redeemErrorText, startTrial, usePlan } from '../../lib/plan';
 import { cloudEnabled, useSession } from '../../lib/supabase';
 import { AskParent, ChargeNote, CurrencySwitch } from './pricing';
@@ -132,17 +132,20 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
   ];
   const PRO = [
     { icon: <Bot className="w-4 h-4" />, t: L('ИИ-наставник без лимита', 'Unlimited AI mentor'), d: L('Объясняет то, что видно в модели', 'Explains what’s on screen') },
-    { icon: <Target className="w-4 h-4" />, t: L('Пробные ОРТ-экзамены', 'ORT-style mock exams'), d: L('Полный вариант на время с разбором', 'Full timed papers with review') },
+    { icon: <Target className="w-4 h-4" />, t: L('Пробные ОРТ, ОГЭ и ЕГЭ', 'Mock ORT, OGE and EGE'), d: L('Полный вариант на время с разбором', 'Full timed papers with review') },
     { icon: <Gauge className="w-4 h-4" />, t: L('Готовность к ОРТ', 'Exam readiness'), d: L('Процент по каждому предмету и слабые темы', 'A score per subject and your weak topics') },
     { icon: <NotebookPen className="w-4 h-4" />, t: L('Работа над ошибками', 'Mistake review'), d: L('Ошибки возвращаются через 1, 3 и 7 дней', 'Mistakes come back after 1, 3 and 7 days') },
     { icon: <Presentation className="w-4 h-4" />, t: L('Презентации по темам', 'Slides for any topic'), d: L('Готовый .pptx в 3 оформлениях за секунду', 'A ready .pptx in 3 themes in a second') },
     { icon: <Route className="w-4 h-4" />, t: L('Персональный план', 'Personal plan'), d: L('Что повторить по твоим ошибкам', 'What to revise based on your mistakes') },
+    { icon: <FileText className="w-4 h-4" />, t: L('Контрольные до 3 вариантов', 'Tests in up to 3 variants'), d: L('Свои шапки, баллы, ключи и шаблоны', 'Own headers, points, keys and templates') },
+    { icon: <Crosshair className="w-4 h-4" />, t: L('«Бой функций»: гайд и косметика', 'Function Wars: guide and cosmetics'), d: L('9 глав про продвинутые графики и 24 предмета внешнего вида — без преимуществ в бою', '9 chapters on advanced graphs and 24 cosmetic items — no edge in battle') },
   ];
   const TEACHER = [
     L('Всё из Pro', 'Everything in Pro'),
     L('Презентации к уроку: тест-слайды, ответы, заметки, целый раздел', 'Lesson slides: quiz, answers, speaker notes, whole sections'),
     L('Классы: ученики входят по коду', 'Classes that students join with a code'),
     L('Задания по темам и разделам со сроком', 'Topic and section assignments with due dates'),
+    L('Контрольные до 8 вариантов, 40 заданий, без подписи сайта', 'Tests in up to 8 variants, 40 tasks, no site footer'),
     L('Таблица прогресса и ошибок учеников', 'Progress and mistakes of every student'),
     L('Сложные темы всего класса', 'The class’s trouble spots'),
   ];
@@ -191,7 +194,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             ✓ {plan.plan === 'teacher' ? L('Тариф «Учитель»', 'Teacher plan') + ' · ' : ''}{plan.trial ? L(`Пробная неделя Pro до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Free Pro week until ${plan.expiresAt.toLocaleDateString('en-GB')}`) : L(`Pro активен до ${plan.expiresAt.toLocaleDateString('ru-RU')}`, `Pro is active until ${plan.expiresAt.toLocaleDateString('en-GB')}`)}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" className="text-sm" onPress={() => onNavigate('practice')}>{L('Пробный ОРТ', 'Mock exam')}</Button>
+            <Button variant="outline" className="text-sm" onPress={() => onNavigate('practice')}>{L('Пробный экзамен', 'Mock exam')}</Button>
             <Button variant="outline" className="text-sm" onPress={() => onNavigate('progress')}>{L('Мой план', 'My plan')}</Button>
             {plan.plan === 'teacher' && <Button variant="outline" className="text-sm" onPress={() => onNavigate('teacher')}>{L('Кабинет учителя', 'Teacher dashboard')}</Button>}
           </div>

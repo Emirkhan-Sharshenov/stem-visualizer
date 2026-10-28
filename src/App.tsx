@@ -52,6 +52,7 @@ const ProgressPage = lazy(() => import('./components/progress/ProgressPage'));
 const ProPage = lazy(() => import('./components/pro/ProPage'));
 const TrialNotice = lazy(() => import('./components/pro/TrialNotice'));
 const AdminStats = lazy(() => import('./components/admin/AdminStats'));
+const TestBuilder = lazy(() => import('./components/tests/TestBuilder'));
 const TeacherPage = lazy(() => import('./components/teacher/TeacherPage'));
 const MechanicsSandbox = lazy(() => import('./components/sandbox/MechanicsSandbox'));
 const CircuitLab = lazy(() => import('./components/circuit/CircuitLab'));
@@ -138,7 +139,7 @@ export default function App({ lang, setLang }: AppProps) {
   // the light lab layer re-colours the labs (drawn for the night) only in the white theme
   const [theme] = useTheme();
   // deep links like #/app?lab=chemlab open a section directly (handy for social posts)
-  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'rating', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher', 'projectile', 'plotter', 'enzymes', 'galvanic', 'games', 'admin'];
+  const LINKABLE: VisualMode[] = ['textbook', 'labs', 'practice', 'course_map', 'progress', 'pro', 'sandbox', 'circuits', 'optics', 'heat', 'chemlab', 'molbuilder', 'genetics', 'ecosystem', 'space3d', 'efield', 'waves', 'titration', 'formulas', 'rating', 'atom', 'kinetics', 'selection', 'photosynthesis', 'classes', 'teacher', 'projectile', 'plotter', 'enzymes', 'galvanic', 'games', 'admin', 'tests'];
   const [currentMode, setCurrentMode] = useState<VisualMode>(() => {
     const lab = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('lab') as VisualMode | null;
     return lab && LINKABLE.includes(lab) ? lab : 'textbook';
@@ -524,6 +525,7 @@ export default function App({ lang, setLang }: AppProps) {
             {currentMode === 'rating' && <RatingPage lang={lang} />}
             {currentMode === 'pro' && <ProPage lang={lang} onNavigate={(m) => setCurrentMode(m)} />}
             {currentMode === 'admin' && <AdminStats lang={lang} />}
+            {currentMode === 'tests' && <TestBuilder lang={lang} />}
             {(currentMode === 'teacher' || currentMode === 'classes') && (
               <TeacherPage key={currentMode} lang={lang} onOpenTopic={openTopic} initialTab={currentMode === 'teacher' ? 'teacher' : 'student'} />
             )}

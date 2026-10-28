@@ -205,3 +205,32 @@ export function ortExam(subject: string, seed: number, format: OrtFormat = 'full
   if (format === 'problems') return problemsTest(subject, grades, f.questions, seed);
   return practiceTest(subject, grades, f.questions, seed, subject === 'mathematics' ? 2 : 3);
 }
+
+/** Russian state exams: the number of tasks and the time of the FIPI papers (the structure did not change for
+    2026). The tasks themselves are ours, built from the textbook, not taken from the FIPI bank. Part 1 is short
+    answers on the syllabus, part 2 is calculation problems from the upper grades. */
+export const BOARD_EXAMS = {
+  oge: {
+    mathematics: { part1: 19, part2: 6, minutes: 235, grades: [5, 9] },
+    physics: { part1: 17, part2: 5, minutes: 180, grades: [7, 9] },
+    chemistry: { part1: 19, part2: 4, minutes: 180, grades: [8, 9] },
+    biology: { part1: 21, part2: 5, minutes: 150, grades: [5, 9] },
+  },
+  ege: {
+    mathematics: { part1: 12, part2: 7, minutes: 235, grades: [5, 11] },
+    physics: { part1: 20, part2: 6, minutes: 235, grades: [7, 11] },
+    chemistry: { part1: 28, part2: 6, minutes: 210, grades: [8, 11] },
+    biology: { part1: 21, part2: 7, minutes: 235, grades: [5, 11] },
+  },
+} as const;
+export type BoardExam = keyof typeof BOARD_EXAMS;
+export type BoardSubject = keyof (typeof BOARD_EXAMS)['oge'];
+
+export function boardExam(exam: BoardExam, subject: BoardSubject, seed: number): Question[] {
+  const f = BOARD_EXAMS[exam][subject];
+  const grades: [number, number] = [f.grades[0], f.grades[1]];
+  const part1 = practiceTest(subject, grades, f.part1, seed, subject === 'mathematics' ? 2 : 4);
+  // part 2 leans on the last two grades of the range
+  const part2 = problemsTest(subject, [Math.max(grades[0], grades[1] - 2), grades[1]], f.part2, seed + 7);
+  return [...part1, ...part2];
+}

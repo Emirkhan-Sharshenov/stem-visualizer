@@ -35,6 +35,7 @@ export type VisualMode =
   | 'galvanic'
   | 'games'
  | 'admin'
+ | 'tests'
   | 'orbitals' 
   | 'deconstruction' 
   | 'physics_gravity' 

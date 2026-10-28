@@ -278,7 +278,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
             ['topics', L('По темам', 'By topic')],
             ['sections', L('Тесты по разделам', 'Section tests')],
             ['test', L('Тренировка', 'Practice test')],
-            ['ort', L('Пробный ОРТ ★', 'Mock ORT ★')],
+            ['ort', L('Экзамены ОРТ · ОГЭ · ЕГЭ ★', 'Mock exams ★')],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <Button variant={tab === id ? 'outline' : 'ghost'} className={`text-sm whitespace-nowrap ${tab === id ? 'font-medium' : ''}`} key={id} onPress={() => setTab(id)}>
