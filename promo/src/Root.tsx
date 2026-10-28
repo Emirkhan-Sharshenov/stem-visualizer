@@ -8,6 +8,8 @@ import { Reel2, REEL_IDS, reelLength } from './Reels2';
 import { ReelPhoto, REEL_PHOTO_LEN } from './reel/ReelPhoto';
 import { DailyReel, dailyLength, DAILY_COUNT } from './reel/daily/DailyReel';
 import { MistakeReel, mistakeLength, MISTAKE_COUNT } from './reel/mistake/MistakeReel';
+import { reelLength as beatsLength } from './reel/promo/runner';
+import { FEATURES } from './reel/promo/features';
 
 export const Root: React.FC = () => (
   <>
@@ -28,6 +30,10 @@ export const Root: React.FC = () => (
       ))}
       {Array.from({ length: MISTAKE_COUNT }, (_, i) => (
         <Composition key={`m${i}`} id={`Mistake${String(i + 1).padStart(2, '0')}`} component={MistakeReel} defaultProps={{ n: i + 1 }} durationInFrames={mistakeLength(i + 1)} fps={30} width={1080} height={1920} />
+      ))}
+      {FEATURES.map((p) => (
+        // the voice joins once the take is in public/<p.voice>
+        <Composition key={p.id} id={p.id} component={p.component} durationInFrames={beatsLength(p.beats)} fps={30} width={1080} height={1920} />
       ))}
     <Composition id="IntroVertical" component={Intro} durationInFrames={INTRO_LEN} fps={30} width={1080} height={1920} />
     <Composition id="IntroSquare" component={Intro} durationInFrames={INTRO_LEN} fps={30} width={1080} height={1080} />
