@@ -7,6 +7,7 @@ import { fwPvpResult } from '../../../lib/fwRating';
 import type { Lang } from '../common';
 import { Battle, type Online } from './FuncWar';
 import { parseAnswer, raceQuestion } from './race';
+import { loadSaved, type Look } from './looks';
 
 /* An online "Бой функций" duel by link, over a Supabase Realtime channel (broadcast + presence; nothing stored).
    The host is blue and the one who opened the link is red. Both screens run the same simulation from the same
@@ -37,6 +38,7 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
   const [phase, setPhase] = useState<'setup' | 'wait' | 'race' | 'battle'>(host && !ranked ? 'setup' : 'wait');
   const [peerUid, setPeerUid] = useState<string | null>(ranked?.opponent ?? null);
   const [note, setNote] = useState<React.ReactNode>(null);
+  const [peerLook, setPeerLook] = useState<Look | undefined>(undefined);
   const [game, setGame] = useState<{ seed: number; perSide: number; race: number; round: number } | null>(null);
   const [first, setFirst] = useState<0 | 1 | null>(null);
   const [peer, setPeer] = useState(false);
@@ -79,11 +81,13 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
     const channel = supabase.channel(`fw-${code}`, { config: { broadcast: { self: false }, presence: { key: host ? 'host' : `guest-${seed()}` } } });
     channel
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState<{ uid?: string }>();
+        const state = channel.presenceState<{ uid?: string; look?: Look }>();
         const others = Object.keys(state).filter((k) => (host ? k !== 'host' : k === 'host'));
         setPeer(others.length > 0);
         const uid = others.map((k) => state[k]?.[0]?.uid).find(Boolean);
         if (uid) setPeerUid(uid);
+        const look = others.map((k) => state[k]?.[0]?.look).find(Boolean);
+        if (look) setPeerLook(look);
         // the host (re)sends the start until the guest is in the race
         if (host && others.length && gameRef.current && phaseRef.current !== 'battle') send({ type: 'start', ...gameRef.current });
       })
@@ -98,7 +102,7 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
       })
       .on('broadcast', { event: 'shot' }, ({ payload }) => shotListeners.current.forEach((f) => f((payload as Extract<Msg, { type: 'shot' }>).src)))
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') channel.track({ at: Date.now(), uid: user?.id });
+        if (status === 'SUBSCRIBED') channel.track({ at: Date.now(), uid: user?.id, look: loadSaved().look });
       });
     ch.current = channel;
     return () => {
@@ -144,6 +148,7 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
       return () => shotListeners.current.delete(cb);
     },
     peerGone: !peer,
+    peerLook,
   };
   const onlineRef = useRef(online);
   onlineRef.current = online;
@@ -154,6 +159,7 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
     sendShot: (src: string) => onlineRef.current.sendShot(src),
     onShot: (cb: (src: string) => void) => onlineRef.current.onShot(cb),
     get peerGone() { return onlineRef.current.peerGone; },
+    get peerLook() { return onlineRef.current.peerLook; },
   }));
 
   const submit = () => {

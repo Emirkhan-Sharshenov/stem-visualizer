@@ -1,20 +1,22 @@
 import { Button, Card, Input } from '@heroui/react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Bot, BookOpen, Crosshair, Flame, Lightbulb, Lock, RotateCcw, Star, Swords, Users } from 'lucide-react';
+import { ArrowLeft, Bot, BookOpen, Crosshair, Flame, Lightbulb, Lock, Palette, RotateCcw, Star, Swords, Users } from 'lucide-react';
 import { progress } from '../../../lib/progress';
 import { Confetti } from '../../fx/Confetti';
 import type { Lang } from '../common';
 import { applyShot, botMove, compile, fly, FormulaError, H, randomWorld, type Pt, type Shot, type Soldier, type World, W, SOLDIER_R } from './engine';
 import { LEVELS, levelWorld, type Level } from './levels';
+import { colorHex, DEFAULT_LOOKS, drawBlast, drawSoldier, drawTrail, loadSaved, theme, type Look, type ThemeId } from './looks';
 import { OnlineDuel } from './OnlineDuel';
 import { Ranked, RankedCard } from './Ranked';
+import { Workshop } from './Workshop';
+import { Guide } from './Guide';
 
 /* "Бой функций": an artillery duel where shots fly along the graphs of functions the players type.
    Our twists on Graphwar: a campaign that teaches one family of graphs per level, rock that crumbles into
    craters, formulas written in the shooter's own coordinates (so both sides use the same maths), and a
    tap-to-measure sight that shows where a point is relative to the shooter. */
 
-const TEAM = ['#39E1FF', '#FF5A5F'];
 const CAMPAIGN_KEY = 'stem-funcwar-stars';
 const readStars = (): Record<string, number> => {
   try {
@@ -41,22 +43,27 @@ export interface Online {
   sendShot: (src: string) => void;
   onShot: (cb: (src: string) => void) => () => void;
   peerGone: boolean;
+  /** the opponent's chosen look, if they sent one */
+  peerLook?: Look;
 }
 const TURN_SECONDS = 60;
 interface Log { team: 0 | 1; name: string; src: string; note: string }
 
 /* ---------------- the battlefield canvas ---------------- */
 
-const Field: React.FC<{
+export const Field: React.FC<{
   world: World;
   active: Soldier | null;
   trails: { path: Pt[]; team: 0 | 1 }[];
   flying: { path: Pt[]; team: 0 | 1; upto: number } | null;
-  blast: { at: Pt; age: number } | null;
-  onMeasure: (p: Pt | null) => void;
-  measure: Pt | null;
+  blast: { at: Pt; age: number; team: 0 | 1 } | null;
+  onMeasure?: (p: Pt | null) => void;
+  measure?: Pt | null;
   lang: Lang;
-}> = ({ world, active, trails, flying, blast, onMeasure, measure, lang }) => {
+  /** how each side looks: [blue side, red side] */
+  looks?: [Look, Look];
+  themeId?: ThemeId;
+}> = ({ world, active, trails, flying, blast, onMeasure, measure = null, lang, looks = DEFAULT_LOOKS, themeId = 'lab' }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 480 });
@@ -75,6 +82,7 @@ const Field: React.FC<{
   useEffect(() => {
     const cv = ref.current;
     if (!cv) return;
+    const th = theme(themeId);
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     cv.width = size.w * dpr;
     cv.height = size.h * dpr;
@@ -83,20 +91,29 @@ const Field: React.FC<{
     const k = size.w / W;
     const X = (x: number) => (x + W / 2) * k;
     const Y = (y: number) => (H / 2 - y) * k;
+    const P = (p: Pt) => ({ x: X(p.x), y: Y(p.y) });
+    const now = performance.now();
 
-    // night-lab paper with a unit grid
-    g.fillStyle = '#0A1122';
+    // the paper and its unit grid, in the chosen theme
+    g.fillStyle = th.bg;
     g.fillRect(0, 0, size.w, size.h);
+    if (th.id === 'space')
+      for (let i = 0; i < 70; i++) {
+        const s = Math.sin(i * 91.7) * 43758.5453;
+        const f = s - Math.floor(s);
+        g.fillStyle = `rgba(255,255,255,${0.25 + 0.5 * Math.abs(Math.sin(now / 900 + i))})`;
+        g.fillRect(f * size.w, ((i * 0.6180339) % 1) * size.h, 1.5, 1.5);
+      }
     g.lineWidth = 1;
     for (let x = -W / 2; x <= W / 2; x++) {
-      g.strokeStyle = x === 0 ? '#2A3C66' : x % 5 === 0 ? '#1A2846' : '#121C33';
+      g.strokeStyle = x === 0 ? th.axis : x % 5 === 0 ? th.grid5 : th.grid;
       g.beginPath();
       g.moveTo(X(x), 0);
       g.lineTo(X(x), size.h);
       g.stroke();
     }
     for (let y = -H / 2; y <= H / 2; y++) {
-      g.strokeStyle = y === 0 ? '#2A3C66' : y % 5 === 0 ? '#1A2846' : '#121C33';
+      g.strokeStyle = y === 0 ? th.axis : y % 5 === 0 ? th.grid5 : th.grid;
       g.beginPath();
       g.moveTo(0, Y(y));
       g.lineTo(size.w, Y(y));
@@ -106,7 +123,8 @@ const Field: React.FC<{
     // the active shooter's own axes: x forward, ticks every 5 — the coordinates the formula is written in
     if (active && active.alive && !flying) {
       const dir = active.team === 0 ? 1 : -1;
-      g.strokeStyle = `${TEAM[active.team]}66`;
+      const c = colorHex(looks[active.team].color);
+      g.strokeStyle = `${c}88`;
       g.setLineDash([6, 6]);
       g.beginPath();
       g.moveTo(X(active.x), Y(active.y));
@@ -115,7 +133,7 @@ const Field: React.FC<{
       g.lineTo(X(active.x), size.h);
       g.stroke();
       g.setLineDash([]);
-      g.fillStyle = `${TEAM[active.team]}aa`;
+      g.fillStyle = th.text;
       g.font = `${Math.max(9, k * 0.45)}px IBM Plex Mono, monospace`;
       g.textAlign = 'center';
       for (let t = 5; t < W; t += 5) {
@@ -129,53 +147,38 @@ const Field: React.FC<{
     // rock, then craters bitten out of it
     for (const o of world.obstacles) {
       const grad = g.createRadialGradient(X(o.x - o.r * 0.3), Y(o.y + o.r * 0.3), 0, X(o.x), Y(o.y), o.r * k);
-      grad.addColorStop(0, '#3A4D78');
-      grad.addColorStop(1, '#22304F');
+      grad.addColorStop(0, th.rock[0]);
+      grad.addColorStop(1, th.rock[1]);
       g.fillStyle = grad;
       g.beginPath();
       g.arc(X(o.x), Y(o.y), o.r * k, 0, Math.PI * 2);
       g.fill();
     }
     for (const h of world.holes) {
-      g.fillStyle = '#0A1122';
+      g.fillStyle = th.bg;
       g.beginPath();
       g.arc(X(h.x), Y(h.y), h.r * k, 0, Math.PI * 2);
       g.fill();
     }
 
-    // earlier shots, faint
-    for (const t of trails) {
-      g.strokeStyle = `${TEAM[t.team]}40`;
-      g.lineWidth = 1.5;
-      g.beginPath();
-      t.path.forEach((p, i) => (i ? g.lineTo(X(p.x), Y(p.y)) : g.moveTo(X(p.x), Y(p.y))));
-      g.stroke();
-    }
-
-    // the shot in flight, with a glow
+    // earlier shots, faint; the shot in flight, bright, with a white head
+    for (const t of trails) drawTrail(g, t.path.map(P), looks[t.team], 0.3, now);
     if (flying) {
-      const pts = flying.path.slice(0, Math.max(1, flying.upto));
-      g.save();
-      g.shadowColor = TEAM[flying.team];
-      g.shadowBlur = 12;
-      g.strokeStyle = TEAM[flying.team];
-      g.lineWidth = 2.5;
-      g.beginPath();
-      pts.forEach((p, i) => (i ? g.lineTo(X(p.x), Y(p.y)) : g.moveTo(X(p.x), Y(p.y))));
-      g.stroke();
+      const pts = flying.path.slice(0, Math.max(1, flying.upto)).map(P);
+      drawTrail(g, pts, looks[flying.team], 1, now);
       const head = pts[pts.length - 1];
       g.fillStyle = '#fff';
       g.beginPath();
-      g.arc(X(head.x), Y(head.y), 3.5, 0, Math.PI * 2);
+      g.arc(head.x, head.y, 3.5, 0, Math.PI * 2);
       g.fill();
-      g.restore();
     }
 
     // soldiers
     for (const s of world.soldiers) {
       const r = SOLDIER_R * k;
       if (!s.alive) {
-        g.strokeStyle = '#5B6884';
+        g.strokeStyle = th.text;
+        g.globalAlpha = 0.6;
         g.lineWidth = 2;
         g.beginPath();
         g.moveTo(X(s.x) - r, Y(s.y) - r);
@@ -183,42 +186,20 @@ const Field: React.FC<{
         g.moveTo(X(s.x) + r, Y(s.y) - r);
         g.lineTo(X(s.x) - r, Y(s.y) + r);
         g.stroke();
+        g.globalAlpha = 1;
         continue;
       }
       if (active && s.id === active.id && !flying) {
-        g.strokeStyle = TEAM[s.team];
+        g.strokeStyle = colorHex(looks[s.team].color);
         g.lineWidth = 2;
         g.beginPath();
-        g.arc(X(s.x), Y(s.y), r + 6 + 2 * Math.sin(performance.now() / 200), 0, Math.PI * 2);
+        g.arc(X(s.x), Y(s.y), r + 7 + 2 * Math.sin(now / 200), 0, Math.PI * 2);
         g.stroke();
       }
-      g.fillStyle = TEAM[s.team];
-      g.beginPath();
-      g.arc(X(s.x), Y(s.y), r, 0, Math.PI * 2);
-      g.fill();
-      // lives left, as pips above the head
-      if (s.hp !== undefined)
-        for (let i = 0; i < 3; i++) {
-          g.fillStyle = i < s.hp ? '#FF5A7A' : '#2C3B5E';
-          g.beginPath();
-          g.arc(X(s.x) + (i - 1) * 7, Y(s.y) - r - 7, 2.6, 0, Math.PI * 2);
-          g.fill();
-        }
-      g.fillStyle = '#04101E';
-      g.beginPath();
-      g.arc(X(s.x) + (s.team === 0 ? r * 0.35 : -r * 0.35), Y(s.y) - r * 0.2, r * 0.22, 0, Math.PI * 2);
-      g.fill();
+      drawSoldier(g, X(s.x), Y(s.y), r, looks[s.team], s.team === 0 ? 1 : -1, s.hp);
     }
 
-    // the blast where a shot ended
-    if (blast) {
-      const a = Math.min(1, blast.age);
-      g.strokeStyle = `rgba(255, 214, 90, ${1 - a})`;
-      g.lineWidth = 3;
-      g.beginPath();
-      g.arc(X(blast.at.x), Y(blast.at.y), (0.4 + a * 1.4) * k, 0, Math.PI * 2);
-      g.stroke();
-    }
+    if (blast) drawBlast(g, X(blast.at.x), Y(blast.at.y), k, blast.age, looks[blast.team]);
 
     // the sight: a tapped point in the shooter's coordinates
     if (measure && active) {
@@ -245,7 +226,7 @@ const Field: React.FC<{
       g.textAlign = 'left';
       g.fillText(label, bx + 6, by + 14);
     }
-  }, [world, active, trails, flying, blast, measure, size, lang]);
+  }, [world, active, trails, flying, blast, measure, size, lang, looks, themeId]);
 
   const toWorld = (e: React.PointerEvent): Pt => {
     const r = ref.current!.getBoundingClientRect();
@@ -258,9 +239,9 @@ const Field: React.FC<{
         ref={ref}
         style={{ width: size.w, height: size.h }}
         className="block rounded-xl border border-line touch-none cursor-crosshair"
-        onPointerDown={(e) => onMeasure(toWorld(e))}
-        onPointerMove={(e) => e.pointerType === 'mouse' && onMeasure(toWorld(e))}
-        onPointerLeave={(e) => e.pointerType === 'mouse' && onMeasure(null)}
+        onPointerDown={(e) => onMeasure?.(toWorld(e))}
+        onPointerMove={(e) => e.pointerType === 'mouse' && onMeasure?.(toWorld(e))}
+        onPointerLeave={(e) => e.pointerType === 'mouse' && onMeasure?.(null)}
         role="img"
         aria-label={lang === 'ru' ? 'Поле боя: координатная плоскость с препятствиями и бойцами' : 'Battlefield: a coordinate plane with rocks and soldiers'}
       />
@@ -297,7 +278,7 @@ export const Battle: React.FC<{
   const [error, setError] = useState('');
   const [trails, setTrails] = useState<{ path: Pt[]; team: 0 | 1 }[]>([]);
   const [flying, setFlying] = useState<{ path: Pt[]; team: 0 | 1; upto: number } | null>(null);
-  const [blast, setBlast] = useState<{ at: Pt; age: number } | null>(null);
+  const [blast, setBlast] = useState<{ at: Pt; age: number; team: 0 | 1 } | null>(null);
   const [measure, setMeasure] = useState<Pt | null>(null);
   const [log, setLog] = useState<Log[]>([]);
   const [shots, setShots] = useState(0);
@@ -311,6 +292,15 @@ export const Battle: React.FC<{
   const isBotTurn = mode.kind === 'bot' && shooter?.team === 1;
   const isRemoteTurn = !!online && shooter?.team !== online.me;
   const waiting = isBotTurn || isRemoteTurn;
+  // my side wears my saved look; the other side its own (online) or the default, never in my colour
+  const [saved] = useState(loadSaved);
+  const looks = useMemo((): [Look, Look] => {
+    const mine = online ? online.me : 0;
+    let other: Look = online?.peerLook ?? DEFAULT_LOOKS[1 - mine];
+    if (other.color === saved.look.color) other = { ...other, color: saved.look.color === 'coral' ? 'cyan' : 'coral' };
+    return mine === 0 ? [saved.look, other] : [other, saved.look];
+  }, [online, online?.peerLook, saved]);
+  const teamColor = (t: 0 | 1) => colorHex(looks[t].color);
   const shooterRef = useRef(shooter);
   shooterRef.current = shooter;
 
@@ -377,11 +367,11 @@ export const Battle: React.FC<{
       const after = applyShot(world, shot);
       setFlying(null);
       setTrails((tr) => [...tr.slice(-5), { path: shot.path, team: who.team }]);
-      setBlast({ at: shot.impact, age: 0 });
+      setBlast({ at: shot.impact, age: 0, team: who.team });
       const b0 = performance.now();
       const fade = () => {
         const age = (performance.now() - b0) / 500;
-        setBlast(age < 1 ? { at: shot.impact, age } : null);
+        setBlast(age < 1 ? { at: shot.impact, age, team: who.team } : null);
         if (age < 1) requestAnimationFrame(fade);
       };
       requestAnimationFrame(fade);
@@ -468,7 +458,7 @@ export const Battle: React.FC<{
           <ArrowLeft className="w-4 h-4" /> {L('Меню', 'Menu')}
         </Button>
         <h2 className="font-serif text-xl text-ink">{title ?? (level ? `${mode.kind === 'campaign' ? mode.level + 1 : ''}. ${level.title[lang]}` : mode.kind === 'bot' ? L('Против бота', 'Versus bot') : online ? L(`Дуэль ${world.soldiers.length / 2} на ${world.soldiers.length / 2}`, `Duel ${world.soldiers.length / 2} v ${world.soldiers.length / 2}`) : L('Вдвоём', 'Two players'))}</h2>
-        {online && <span className="inline-flex items-center gap-1.5 text-xs text-ink-2"><span className="w-2 h-2 rounded-full" style={{ background: TEAM[online.me] }} />{online.me === 0 ? L('ты за синих', 'you are blue') : L('ты за красных', 'you are red')}</span>}
+        {online && <span className="inline-flex items-center gap-1.5 text-xs text-ink-2"><span className="w-2 h-2 rounded-full" style={{ background: teamColor(online.me) }} />{online.me === 0 ? L('ты за синих', 'you are blue') : L('ты за красных', 'you are red')}</span>}
         <span className="ml-auto font-mono text-xs text-ink-3">{level ? L(`выстрелов: ${shots}`, `shots: ${shots}`) : ''}</span>
       </div>
 
@@ -482,7 +472,7 @@ export const Battle: React.FC<{
         </p>
       )}
 
-      <Field world={world} active={winner === null ? shooter : null} trails={trails} flying={flying} blast={blast} onMeasure={setMeasure} measure={measure} lang={lang} />
+      <Field world={world} active={winner === null ? shooter : null} trails={trails} flying={flying} blast={blast} onMeasure={setMeasure} measure={measure} lang={lang} looks={looks} themeId={saved.theme} />
       <p className="text-xs text-ink-3 -mt-1">
         {L('Наведи или нажми на поле — увидишь координаты точки относительно стрелка. x — расстояние вперёд от него, y — высота над ним.', 'Hover or tap the field to see a point in the shooter’s coordinates: x is the distance ahead, y the height above.')}
       </p>
@@ -491,7 +481,7 @@ export const Battle: React.FC<{
         <Card className="p-4">
           <Card.Content className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-sm">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: TEAM[shooter?.team ?? 0] }} />
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: teamColor(shooter?.team ?? 0) }} />
               <span className="font-medium text-ink">{turnLabel}</span>
               {thinking && <span className="text-ink-3">{L('думает…', 'thinking…')}</span>}
               {left !== null && <span className={`ml-auto font-mono text-xs ${left < 10 ? 'text-[#CC2F35]' : 'text-ink-3'}`}>{Math.ceil(left)} {L('с', 's')}</span>}
@@ -576,7 +566,7 @@ export const Battle: React.FC<{
         <div className="flex flex-col gap-1 text-sm">
           {log.map((l, i) => (
             <div key={i} className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: TEAM[l.team] }} />
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: teamColor(l.team) }} />
               <span className="text-ink-3 shrink-0">{l.name}:</span>
               <span className="font-mono text-ink truncate">y = {l.src}</span>
               <span className="text-ink-3 shrink-0 ml-auto">{l.note}</span>
@@ -601,6 +591,9 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string |
   const seed = () => Math.floor(Math.random() * 1e9);
 
   const [ranked, setRanked] = useState(false);
+  const [screen, setScreen] = useState<'workshop' | 'guide' | null>(null);
+  if (screen === 'workshop') return <Workshop lang={lang} onExit={() => setScreen(null)} />;
+  if (screen === 'guide') return <Guide lang={lang} onExit={() => setScreen(null)} />;
   if (ranked) return <Ranked lang={lang} onExit={() => setRanked(false)} />;
   if (duel) return <OnlineDuel lang={lang} join={duel === 'host' ? undefined : duel} onExit={() => setDuel(null)} />;
 
@@ -673,6 +666,23 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string |
           })}
         </div>
       </section>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        <button type="button" onClick={() => setScreen('workshop')} className="text-left p-4 rounded-2xl border border-line bg-surface hover:border-accent cursor-pointer flex items-center gap-3">
+          <span className="w-11 h-11 rounded-xl bg-accent-soft text-accent flex items-center justify-center shrink-0"><Palette className="w-5 h-5" /></span>
+          <span>
+            <span className="block font-medium text-ink">{L('Мастерская', 'Workshop')}</span>
+            <span className="block text-sm text-ink-2">{L('Цвета, следы, шапки, лица, взрывы и поля — только внешний вид', 'Colours, trails, hats, faces, blasts and fields — looks only')}</span>
+          </span>
+        </button>
+        <button type="button" onClick={() => setScreen('guide')} className="text-left p-4 rounded-2xl border border-line bg-surface hover:border-accent cursor-pointer flex items-center gap-3">
+          <span className="w-11 h-11 rounded-xl bg-[#FFF4DA] text-[#B5651D] flex items-center justify-center shrink-0"><BookOpen className="w-5 h-5" /></span>
+          <span>
+            <span className="block font-medium text-ink">{L('Гайд: продвинутые графики', 'Guide: advanced graphs')}</span>
+            <span className="block text-sm text-ink-2">{L('Колокол Гаусса, ступенька th, сумма графиков, две цели одной параболой. 2 главы бесплатно, 9 с Pro', 'Gaussian bumps, tanh steps, adding graphs, two targets with one parabola. 2 chapters free, 9 with Pro')}</span>
+          </span>
+        </button>
+      </div>
 
       <RankedCard lang={lang} onPlay={() => setRanked(true)} />
 

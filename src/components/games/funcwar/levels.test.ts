@@ -2,6 +2,7 @@
 import { applyShot, botMove, compile, fly, FormulaError, randomWorld } from './engine';
 import { LEVELS, levelWorld } from './levels';
 import { raceQuestion } from './race';
+import { CHAPTERS, chapterWorld } from './chapters';
 
 let failed = 0;
 const ok = (cond: boolean, msg: string) => {
@@ -92,6 +93,17 @@ for (const l of LEVELS) {
   let whole = 0;
   for (let s = 1; s <= 300; s++) if (Number.isInteger(raceQuestion(s).answer)) whole++;
   ok(whole === 300, `race answers are whole numbers (${whole}/300)`);
+}
+
+// every guide example does what its caption says
+for (const ch of CHAPTERS) {
+  for (const ex of ch.examples) {
+    const w = chapterWorld(ch);
+    const shot = fly(w, w.soldiers[0], compile(ex.src));
+    const targets = w.soldiers.filter((s) => s.team === 1).map((s) => s.id);
+    const got = targets.every((id) => shot.killed.includes(id)) ? 'hit' : shot.end;
+    ok(got === ex.expect, `guide ${ch.id}: “${ex.src}” → ${got} (expected ${ex.expect})`);
+  }
 }
 
 console.log(failed ? `\n${failed} failed` : '\nall passed');
