@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState } from 'react';
-import { Brain, CalendarDays, Radio, Calculator, Flame, FlaskConical, Grid3x3, Layers, Swords, Trophy } from 'lucide-react';
+import { Brain, CalendarDays, Radio, Calculator, Crosshair, Flame, FlaskConical, Grid3x3, Layers, Swords, Trophy } from 'lucide-react';
 import { useProgress } from '../../lib/progress';
 import type { Lang } from './common';
 import { Duel, parseDuel } from './Duel';
@@ -11,8 +11,9 @@ const MathSprint = lazy(() => import('./MathSprint'));
 const ElementHunt = lazy(() => import('./ElementHunt'));
 const FormulaCards = lazy(() => import('./FormulaCards'));
 const LiveQuiz = lazy(() => import('./LiveQuiz'));
+const FuncWar = lazy(() => import('./funcwar/FuncWar'));
 
-type GameId = 'live' | 'daily' | 'duel' | 'cards' | 'balance' | 'memory' | 'sprint' | 'elements';
+type GameId = 'live' | 'daily' | 'funcwar' | 'duel' | 'cards' | 'balance' | 'memory' | 'sprint' | 'elements';
 
 const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: React.ReactNode; color: string; subject: { ru: string; en: string }; title: { ru: string; en: string }; text: { ru: string; en: string }; time: { ru: string; en: string } }[] = [
   {
@@ -34,6 +35,16 @@ const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: 
     title: { ru: 'Вызов дня', en: 'Daily challenge' },
     text: { ru: '10 задач — одни и те же для всех в мире сегодня. Одна попытка, серия дней и результат, которым можно похвастаться.', en: 'Ten problems, the same for everyone in the world today. One try, a streak of days and a result to show off.' },
     time: { ru: '1 попытка в день', en: 'one try a day' },
+  },
+  {
+    id: 'funcwar',
+    record: (g) => g.funcwar ?? 0,
+    icon: <Crosshair className="w-7 h-7" />,
+    color: '#3E63DD',
+    subject: { ru: 'Математика', en: 'Maths' },
+    title: { ru: 'Бой функций', en: 'Function Wars' },
+    text: { ru: 'Снаряд летит по графику твоей функции: обогни скалы и попади в соперника. Кампания от прямой до экспоненты, бой с ботом и вдвоём.', en: 'Your shot flies along the graph you type: curve round the rocks and hit the enemy. A campaign from lines to exponentials, the bot, or two players.' },
+    time: { ru: '10 уровней и бои', en: '10 levels and battles' },
   },
   {
     id: 'duel',
@@ -112,6 +123,7 @@ export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boo
       <Suspense fallback={<div className="h-[60vh] rounded-xl bg-muted animate-pulse" />}>
         {game === 'live' && <LiveQuiz lang={lang} onExit={exit} code={live && /^\d{5}$/.test(live) ? live : undefined} />}
         {game === 'daily' && <Daily lang={lang} onExit={exit} />}
+        {game === 'funcwar' && <FuncWar lang={lang} onExit={exit} />}
         {game === 'duel' && <Duel lang={lang} onExit={exit} challenge={challenge} />}
         {game === 'cards' && <FormulaCards lang={lang} onExit={exit} />}
         {game === 'balance' && <BalanceGame lang={lang} onExit={exit} />}
