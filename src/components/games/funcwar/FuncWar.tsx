@@ -7,6 +7,7 @@ import type { Lang } from '../common';
 import { applyShot, botMove, compile, fly, FormulaError, H, randomWorld, type Pt, type Shot, type Soldier, type World, W, SOLDIER_R } from './engine';
 import { LEVELS, levelWorld, type Level } from './levels';
 import { OnlineDuel } from './OnlineDuel';
+import { Ranked, RankedCard } from './Ranked';
 
 /* "Бой функций": an artillery duel where shots fly along the graphs of functions the players type.
    Our twists on Graphwar: a campaign that teaches one family of graphs per level, rock that crumbles into
@@ -31,7 +32,7 @@ const saveStars = (s: Record<string, number>) => {
 };
 const starsFor = (shots: number) => (shots <= 1 ? 3 : shots <= 2 ? 2 : 1);
 
-type Mode = { kind: 'campaign'; level: number } | { kind: 'bot'; level: 0 | 1 | 2; seed: number } | { kind: 'local'; seed: number } | { kind: 'online'; seed: number; perSide: number };
+type Mode = { kind: 'campaign'; level: number } | { kind: 'bot'; level: 0 | 1 | 2; seed: number; perSide?: number; lives?: number } | { kind: 'local'; seed: number } | { kind: 'online'; seed: number; perSide: number };
 
 /** an online duel as the battle sees it: which side is mine, who opens, and the wire for shots */
 export interface Online {
@@ -271,10 +272,23 @@ const Field: React.FC<{
 
 const KEYS = ['x', '^', '(', ')', '/', 'sin(', 'cos(', 'sqrt(', '|', 'pi', 'e^('];
 
-export const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: () => void; onRestart?: () => void; online?: Online }> = ({ lang, mode, onExit, onNext, onRestart, online }) => {
+export const Battle: React.FC<{
+  lang: Lang;
+  mode: Mode;
+  onExit: () => void;
+  onNext?: () => void;
+  onRestart?: () => void;
+  online?: Online;
+  /** a heading in place of the mode's own */
+  title?: string;
+  /** called once when the game ends, with whether the local player won (rated games report it) */
+  onResult?: (won: boolean) => void;
+  /** shown on the result card, e.g. the rating change */
+  resultNote?: React.ReactNode;
+}> = ({ lang, mode, onExit, onNext, onRestart, online, title, onResult, resultNote }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const level: Level | null = mode.kind === 'campaign' ? LEVELS[mode.level] : null;
-  const [world, setWorld] = useState<World>(() => (level ? levelWorld(level) : mode.kind === 'online' ? randomWorld(mode.seed, mode.perSide, 9, 3) : randomWorld(mode.kind === 'campaign' ? 1 : mode.seed)));
+  const [world, setWorld] = useState<World>(() => (level ? levelWorld(level) : mode.kind === 'online' ? randomWorld(mode.seed, mode.perSide, 9, 3) : mode.kind === 'bot' ? randomWorld(mode.seed, mode.perSide ?? 2, 9, mode.lives) : randomWorld(mode.kind === 'campaign' ? 1 : mode.seed)));
   const [turnId, setTurnId] = useState(() => (online ? world.soldiers.find((s) => s.team === online.first)! : world.soldiers[0]).id);
   // shots taken by each side so far: picks which soldier of a side is next, the same on both screens
   const taken = useRef<[number, number]>([0, 0]);
@@ -316,8 +330,13 @@ export const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNe
     return side[taken.current[other] % side.length].id;
   }, [mode.kind]);
 
+  const reported = useRef(false);
   const finish = useCallback((w: World, team: 0 | 1, shotCount: number) => {
     setWinner(team);
+    if (onResult && !reported.current) {
+      reported.current = true;
+      onResult(team === (online ? online.me : 0));
+    }
     if (mode.kind === 'campaign' && team === 0) {
       const all = readStars();
       const st = starsFor(shotCount);
@@ -330,7 +349,7 @@ export const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNe
     } else if (online && team === online.me) {
       progress.recordGame('funcwar', 0, 40);
     }
-  }, [mode, level, online]);
+  }, [mode, level, online, onResult]);
 
   const fire = useCallback((formula: string, who: Soldier, remote = false) => {
     let f: (x: number) => number;
@@ -448,7 +467,7 @@ export const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNe
         <Button variant="ghost" className="text-sm" onPress={onExit}>
           <ArrowLeft className="w-4 h-4" /> {L('Меню', 'Menu')}
         </Button>
-        <h2 className="font-serif text-xl text-ink">{level ? `${mode.kind === 'campaign' ? mode.level + 1 : ''}. ${level.title[lang]}` : mode.kind === 'bot' ? L('Против бота', 'Versus bot') : online ? L(`Дуэль ${world.soldiers.length / 2} на ${world.soldiers.length / 2}`, `Duel ${world.soldiers.length / 2} v ${world.soldiers.length / 2}`) : L('Вдвоём', 'Two players')}</h2>
+        <h2 className="font-serif text-xl text-ink">{title ?? (level ? `${mode.kind === 'campaign' ? mode.level + 1 : ''}. ${level.title[lang]}` : mode.kind === 'bot' ? L('Против бота', 'Versus bot') : online ? L(`Дуэль ${world.soldiers.length / 2} на ${world.soldiers.length / 2}`, `Duel ${world.soldiers.length / 2} v ${world.soldiers.length / 2}`) : L('Вдвоём', 'Two players'))}</h2>
         {online && <span className="inline-flex items-center gap-1.5 text-xs text-ink-2"><span className="w-2 h-2 rounded-full" style={{ background: TEAM[online.me] }} />{online.me === 0 ? L('ты за синих', 'you are blue') : L('ты за красных', 'you are red')}</span>}
         <span className="ml-auto font-mono text-xs text-ink-3">{level ? L(`выстрелов: ${shots}`, `shots: ${shots}`) : ''}</span>
       </div>
@@ -529,6 +548,7 @@ export const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNe
               </div>
             )}
             {level && <p className="text-sm text-ink-2">{L(`Выстрелов: ${shots}. Три звезды — за победу с одного выстрела.`, `Shots: ${shots}. Three stars for a one-shot win.`)}</p>}
+            {resultNote && <div className="text-sm text-ink">{resultNote}</div>}
             <div className="flex flex-wrap justify-center gap-2 mt-2">
               {onNext && winner === 0 && (
                 <Button size="lg" className="text-sm font-medium" onPress={onNext}>
@@ -580,6 +600,8 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string |
   const unlocked = (i: number) => i === 0 || (stars[LEVELS[i - 1].id] ?? 0) > 0;
   const seed = () => Math.floor(Math.random() * 1e9);
 
+  const [ranked, setRanked] = useState(false);
+  if (ranked) return <Ranked lang={lang} onExit={() => setRanked(false)} />;
   if (duel) return <OnlineDuel lang={lang} join={duel === 'host' ? undefined : duel} onExit={() => setDuel(null)} />;
 
   if (mode)
@@ -652,7 +674,9 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string |
         </div>
       </section>
 
-      <Card className="p-5 border-2 border-accent">
+      <RankedCard lang={lang} onPlay={() => setRanked(true)} />
+
+      <Card className="p-5">
         <Card.Content className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1">
             <h2 className="font-serif text-xl text-ink inline-flex items-center gap-2">

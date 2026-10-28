@@ -2,7 +2,8 @@ import { Button, Card, Input } from '@heroui/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { ArrowLeft, Check, Copy, Loader2, Send, Swords, Timer } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import { supabase, useSession } from '../../../lib/supabase';
+import { fwPvpResult } from '../../../lib/fwRating';
 import type { Lang } from '../common';
 import { Battle, type Online } from './FuncWar';
 import { parseAnswer, raceQuestion } from './race';
@@ -23,13 +24,19 @@ const newCode = () => String(10000 + Math.floor(Math.random() * 90000));
 const seed = () => Math.floor(Math.random() * 1e9);
 export const duelLink = (code: string) => `${window.location.origin}/#/app?lab=games&fw=${code}`;
 
-export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => void }> = ({ lang, join, onExit }) => {
+/** a ranked game found in the queue: a fixed room, 1 v 1, the result goes to the rating */
+export interface RankedRoom { code: string; host: boolean; opponent: string }
+
+export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => void; ranked?: RankedRoom }> = ({ lang, join, onExit, ranked }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
-  const host = !join;
+  const { user } = useSession();
+  const host = ranked ? ranked.host : !join;
   const me: 0 | 1 = host ? 0 : 1;
-  const [code] = useState(() => join ?? newCode());
-  const [perSide, setPerSide] = useState<number | null>(null);
-  const [phase, setPhase] = useState<'setup' | 'wait' | 'race' | 'battle'>(host ? 'setup' : 'wait');
+  const [code] = useState(() => ranked?.code ?? join ?? newCode());
+  const [perSide, setPerSide] = useState<number | null>(ranked ? 1 : null);
+  const [phase, setPhase] = useState<'setup' | 'wait' | 'race' | 'battle'>(host && !ranked ? 'setup' : 'wait');
+  const [peerUid, setPeerUid] = useState<string | null>(ranked?.opponent ?? null);
+  const [note, setNote] = useState<React.ReactNode>(null);
   const [game, setGame] = useState<{ seed: number; perSide: number; race: number; round: number } | null>(null);
   const [first, setFirst] = useState<0 | 1 | null>(null);
   const [peer, setPeer] = useState(false);
@@ -72,8 +79,11 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
     const channel = supabase.channel(`fw-${code}`, { config: { broadcast: { self: false }, presence: { key: host ? 'host' : `guest-${seed()}` } } });
     channel
       .on('presence', { event: 'sync' }, () => {
-        const others = Object.keys(channel.presenceState()).filter((k) => (host ? k !== 'host' : k === 'host'));
+        const state = channel.presenceState<{ uid?: string }>();
+        const others = Object.keys(state).filter((k) => (host ? k !== 'host' : k === 'host'));
         setPeer(others.length > 0);
+        const uid = others.map((k) => state[k]?.[0]?.uid).find(Boolean);
+        if (uid) setPeerUid(uid);
         // the host (re)sends the start until the guest is in the race
         if (host && others.length && gameRef.current && phaseRef.current !== 'battle') send({ type: 'start', ...gameRef.current });
       })
@@ -88,7 +98,7 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
       })
       .on('broadcast', { event: 'shot' }, ({ payload }) => shotListeners.current.forEach((f) => f((payload as Extract<Msg, { type: 'shot' }>).src)))
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') channel.track({ at: Date.now() });
+        if (status === 'SUBSCRIBED') channel.track({ at: Date.now(), uid: user?.id });
       });
     ch.current = channel;
     return () => {
@@ -96,7 +106,7 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
       supabase!.removeChannel(channel);
       ch.current = null;
     };
-  }, [code, host, send, decide, beginRace]);
+  }, [code, host, send, decide, beginRace, user?.id]);
 
   // the host starts the race once the opponent is in
   useEffect(() => {
@@ -185,7 +195,17 @@ export const OnlineDuel: React.FC<{ lang: Lang; join?: string; onExit: () => voi
         mode={{ kind: 'online', seed: game.seed, perSide: game.perSide }}
         online={stable}
         onExit={onExit}
-        onRestart={host ? () => {
+        title={ranked ? L('Рейтинговый бой', 'Ranked battle') : undefined}
+        resultNote={note}
+        onResult={ranked && peerUid ? (won) => {
+          const day = new Date().toISOString().slice(0, 10);
+          fwPvpResult(`${day}-${code}-${game.round}`, peerUid, won)
+            .then((r) => setNote(r.pending
+              ? L('Победа засчитается, когда соперник подтвердит результат (или через 10 минут).', 'The win counts once your opponent confirms it (or after 10 minutes).')
+              : L(`Рейтинг: ${r.rating} (${r.delta >= 0 ? '+' : ''}${r.delta})`, `Rating: ${r.rating} (${r.delta >= 0 ? '+' : ''}${r.delta})`)))
+            .catch(() => setNote(L('Не удалось записать результат.', 'Could not save the result.')));
+        } : undefined}
+        onRestart={host && !ranked ? () => {
           const g = { seed: seed(), perSide: game.perSide, race: seed(), round: game.round + 1 };
           beginRace(g);
           send({ type: 'start', ...g });
