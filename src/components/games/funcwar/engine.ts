@@ -10,7 +10,7 @@ export const CRATER_R = 1.1;
 
 export interface Pt { x: number; y: number }
 export interface Circle extends Pt { r: number }
-export interface Soldier extends Pt { id: number; team: 0 | 1; alive: boolean; name: string }
+export interface Soldier extends Pt { id: number; team: 0 | 1; alive: boolean; name: string; /** lives left; without it one hit kills */ hp?: number }
 export interface World { obstacles: Circle[]; holes: Circle[]; soldiers: Soldier[] }
 
 export type Ending = 'obstacle' | 'edge' | 'jump' | 'undefined' | 'range';
@@ -191,12 +191,17 @@ export function fly(w: World, shooter: Soldier, f: Fn): Shot {
   return { path, killed: [...killed], end: 'range', impact: last };
 }
 
-/** the shot's consequences: dead soldiers and a crater where it struck */
+/** the shot's consequences: a life lost (or death) for everyone hit and a crater where it struck */
 export function applyShot(w: World, shot: Shot): World {
   return {
     obstacles: w.obstacles,
     holes: shot.end === 'obstacle' ? [...w.holes, { ...shot.impact, r: CRATER_R }] : w.holes,
-    soldiers: w.soldiers.map((s) => (shot.killed.includes(s.id) ? { ...s, alive: false } : s)),
+    soldiers: w.soldiers.map((s) => {
+      if (!shot.killed.includes(s.id)) return s;
+      if (s.hp === undefined) return { ...s, alive: false };
+      const hp = s.hp - 1;
+      return { ...s, hp, alive: hp > 0 };
+    }),
   };
 }
 
@@ -213,7 +218,7 @@ export function rng(seed: number) {
 }
 
 /** a random field: obstacles in the middle, `perSide` soldiers on each half, nobody inside rock */
-export function randomWorld(seed: number, perSide = 2, rocks = 9): World {
+export function randomWorld(seed: number, perSide = 2, rocks = 9, lives?: number): World {
   const r = rng(seed);
   const obstacles: Circle[] = [];
   for (let i = 0; i < rocks; i++) obstacles.push({ x: (r() - 0.5) * 30, y: (r() - 0.5) * 20, r: 1.2 + r() * 2.6 });
@@ -225,7 +230,7 @@ export function randomWorld(seed: number, perSide = 2, rocks = 9): World {
       let tries = 0;
       do {
         const x = team === 0 ? -19 + r() * 13 : 6 + r() * 13;
-        s = { id: team * 10 + k, team, x, y: (r() - 0.5) * 20, alive: true, name: NAMES[team][k] };
+        s = { id: team * 10 + k, team, x, y: (r() - 0.5) * 20, alive: true, name: NAMES[team][k], ...(lives ? { hp: lives } : {}) };
         tries++;
       } while (tries < 200 && (obstacles.some((o) => inside(o, s.x, s.y, 1.2)) || soldiers.some((o) => Math.hypot(o.x - s.x, o.y - s.y) < 3)));
       soldiers.push(s);

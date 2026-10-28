@@ -109,11 +109,11 @@ const GAMES: { id: GameId; record: (g: Record<string, number>) => number; icon: 
 ];
 
 /** short arcade games for practice; every game gives XP for the league */
-export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boolean; live?: string | null }> = ({ lang, duel, daily, live }) => {
+export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boolean; live?: string | null; fw?: string | null }> = ({ lang, duel, daily, live, fw }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   // a duel link opens straight into the challenge
   const [challenge] = useState(() => parseDuel(duel ?? null));
-  const [game, setGame] = useState<GameId | null>(live ? 'live' : challenge ? 'duel' : daily ? 'daily' : null);
+  const [game, setGame] = useState<GameId | null>(live ? 'live' : fw ? 'funcwar' : challenge ? 'duel' : daily ? 'daily' : null);
   const p = useProgress();
   const records = p.games ?? {};
   const exit = () => setGame(null);
@@ -123,7 +123,7 @@ export const GamesPage: React.FC<{ lang: Lang; duel?: string | null; daily?: boo
       <Suspense fallback={<div className="h-[60vh] rounded-xl bg-muted animate-pulse" />}>
         {game === 'live' && <LiveQuiz lang={lang} onExit={exit} code={live && /^\d{5}$/.test(live) ? live : undefined} />}
         {game === 'daily' && <Daily lang={lang} onExit={exit} />}
-        {game === 'funcwar' && <FuncWar lang={lang} onExit={exit} />}
+        {game === 'funcwar' && <FuncWar lang={lang} onExit={exit} join={fw} />}
         {game === 'duel' && <Duel lang={lang} onExit={exit} challenge={challenge} />}
         {game === 'cards' && <FormulaCards lang={lang} onExit={exit} />}
         {game === 'balance' && <BalanceGame lang={lang} onExit={exit} />}

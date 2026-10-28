@@ -1,6 +1,7 @@
 /* Checks the "Бой функций" rules and campaign. Run: npx tsx src/components/games/funcwar/levels.test.ts */
 import { applyShot, botMove, compile, fly, FormulaError, randomWorld } from './engine';
 import { LEVELS, levelWorld } from './levels';
+import { raceQuestion } from './race';
 
 let failed = 0;
 const ok = (cond: boolean, msg: string) => {
@@ -73,6 +74,24 @@ for (const l of LEVELS) {
     if (shot.killed.some((id) => w.soldiers.find((x) => x.id === id)!.team === 0)) kills++;
   }
   ok(kills >= 12, `hard bot kills in ${kills}/20 random fields`);
+}
+
+// three lives: a hit takes one, the third kills
+{
+  const w = randomWorld(3, 1, 0, 3);
+  const [a, b] = w.soldiers;
+  const k = (b.y - a.y) / (b.x - a.x);
+  let cur = w;
+  for (let i = 1; i <= 3; i++) cur = applyShot(cur, fly(cur, cur.soldiers[0], compile(`${k}x`)));
+  const target = cur.soldiers[1];
+  ok(target.hp === 0 && !target.alive, `three hits use up three lives (hp ${target.hp}, alive ${target.alive})`);
+}
+
+// the opening race always has a whole-number answer
+{
+  let whole = 0;
+  for (let s = 1; s <= 300; s++) if (Number.isInteger(raceQuestion(s).answer)) whole++;
+  ok(whole === 300, `race answers are whole numbers (${whole}/300)`);
 }
 
 console.log(failed ? `\n${failed} failed` : '\nall passed');

@@ -1,11 +1,12 @@
 import { Button, Card, Input } from '@heroui/react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Bot, BookOpen, Crosshair, Flame, Lightbulb, Lock, RotateCcw, Star, Users } from 'lucide-react';
+import { ArrowLeft, Bot, BookOpen, Crosshair, Flame, Lightbulb, Lock, RotateCcw, Star, Swords, Users } from 'lucide-react';
 import { progress } from '../../../lib/progress';
 import { Confetti } from '../../fx/Confetti';
 import type { Lang } from '../common';
 import { applyShot, botMove, compile, fly, FormulaError, H, randomWorld, type Pt, type Shot, type Soldier, type World, W, SOLDIER_R } from './engine';
 import { LEVELS, levelWorld, type Level } from './levels';
+import { OnlineDuel } from './OnlineDuel';
 
 /* "Бой функций": an artillery duel where shots fly along the graphs of functions the players type.
    Our twists on Graphwar: a campaign that teaches one family of graphs per level, rock that crumbles into
@@ -30,7 +31,17 @@ const saveStars = (s: Record<string, number>) => {
 };
 const starsFor = (shots: number) => (shots <= 1 ? 3 : shots <= 2 ? 2 : 1);
 
-type Mode = { kind: 'campaign'; level: number } | { kind: 'bot'; level: 0 | 1 | 2; seed: number } | { kind: 'local'; seed: number };
+type Mode = { kind: 'campaign'; level: number } | { kind: 'bot'; level: 0 | 1 | 2; seed: number } | { kind: 'local'; seed: number } | { kind: 'online'; seed: number; perSide: number };
+
+/** an online duel as the battle sees it: which side is mine, who opens, and the wire for shots */
+export interface Online {
+  me: 0 | 1;
+  first: 0 | 1;
+  sendShot: (src: string) => void;
+  onShot: (cb: (src: string) => void) => () => void;
+  peerGone: boolean;
+}
+const TURN_SECONDS = 60;
 interface Log { team: 0 | 1; name: string; src: string; note: string }
 
 /* ---------------- the battlefield canvas ---------------- */
@@ -184,6 +195,14 @@ const Field: React.FC<{
       g.beginPath();
       g.arc(X(s.x), Y(s.y), r, 0, Math.PI * 2);
       g.fill();
+      // lives left, as pips above the head
+      if (s.hp !== undefined)
+        for (let i = 0; i < 3; i++) {
+          g.fillStyle = i < s.hp ? '#FF5A7A' : '#2C3B5E';
+          g.beginPath();
+          g.arc(X(s.x) + (i - 1) * 7, Y(s.y) - r - 7, 2.6, 0, Math.PI * 2);
+          g.fill();
+        }
       g.fillStyle = '#04101E';
       g.beginPath();
       g.arc(X(s.x) + (s.team === 0 ? r * 0.35 : -r * 0.35), Y(s.y) - r * 0.2, r * 0.22, 0, Math.PI * 2);
@@ -252,11 +271,14 @@ const Field: React.FC<{
 
 const KEYS = ['x', '^', '(', ')', '/', 'sin(', 'cos(', 'sqrt(', '|', 'pi', 'e^('];
 
-const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: () => void; onRestart: () => void }> = ({ lang, mode, onExit, onNext, onRestart }) => {
+export const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: () => void; onRestart?: () => void; online?: Online }> = ({ lang, mode, onExit, onNext, onRestart, online }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const level: Level | null = mode.kind === 'campaign' ? LEVELS[mode.level] : null;
-  const [world, setWorld] = useState<World>(() => (level ? levelWorld(level) : randomWorld(mode.kind === 'campaign' ? 1 : mode.seed)));
-  const [turnId, setTurnId] = useState(() => world.soldiers[0].id);
+  const [world, setWorld] = useState<World>(() => (level ? levelWorld(level) : mode.kind === 'online' ? randomWorld(mode.seed, mode.perSide, 9, 3) : randomWorld(mode.kind === 'campaign' ? 1 : mode.seed)));
+  const [turnId, setTurnId] = useState(() => (online ? world.soldiers.find((s) => s.team === online.first)! : world.soldiers[0]).id);
+  // shots taken by each side so far: picks which soldier of a side is next, the same on both screens
+  const taken = useRef<[number, number]>([0, 0]);
+  const [turnStart, setTurnStart] = useState(() => performance.now());
   const [src, setSrc] = useState('');
   const [error, setError] = useState('');
   const [trails, setTrails] = useState<{ path: Pt[]; team: 0 | 1 }[]>([]);
@@ -273,6 +295,10 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
 
   const shooter = world.soldiers.find((s) => s.id === turnId) ?? null;
   const isBotTurn = mode.kind === 'bot' && shooter?.team === 1;
+  const isRemoteTurn = !!online && shooter?.team !== online.me;
+  const waiting = isBotTurn || isRemoteTurn;
+  const shooterRef = useRef(shooter);
+  shooterRef.current = shooter;
 
   // the active ring breathes
   useEffect(() => {
@@ -287,9 +313,8 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
     const other = (1 - after.team) as 0 | 1;
     const side = w.soldiers.filter((s) => s.team === other && s.alive);
     if (!side.length) return null;
-    const lastOfSide = log.filter((l) => l.team === other).length;
-    return side[lastOfSide % side.length].id;
-  }, [mode.kind, log]);
+    return side[taken.current[other] % side.length].id;
+  }, [mode.kind]);
 
   const finish = useCallback((w: World, team: 0 | 1, shotCount: number) => {
     setWinner(team);
@@ -302,10 +327,12 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
       progress.recordGame('funcwar', total, before ? 5 : 10 + st * 5);
     } else if (mode.kind === 'bot' && team === 0) {
       progress.recordGame('funcwar', 0, 15 + mode.level * 15);
+    } else if (online && team === online.me) {
+      progress.recordGame('funcwar', 0, 40);
     }
-  }, [mode, level]);
+  }, [mode, level, online]);
 
-  const fire = useCallback((formula: string, who: Soldier) => {
+  const fire = useCallback((formula: string, who: Soldier, remote = false) => {
     let f: (x: number) => number;
     try {
       f = compile(formula);
@@ -315,6 +342,8 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
     }
     setError('');
     setMeasure(null);
+    if (online && !remote) online.sendShot(formula);
+    taken.current[who.team]++;
     const shot: Shot = fly(world, who, f);
     const n = shots + (who.team === 0 ? 1 : 0);
     if (who.team === 0) setShots(n);
@@ -337,9 +366,12 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
         if (age < 1) requestAnimationFrame(fade);
       };
       requestAnimationFrame(fade);
-      const kills = shot.killed.map((id) => after.soldiers.find((s) => s.id === id)!.name);
+      const kills = shot.killed.map((id) => {
+        const s = after.soldiers.find((x) => x.id === id)!;
+        return s.alive && s.hp !== undefined ? `${s.name} −1❤` : `✕ ${s.name}`;
+      });
       const why = { obstacle: L('в скалу', 'into rock'), edge: L('за край поля', 'off the field'), jump: L('разрыв графика', 'a break in the graph'), undefined: L('функция не определена', 'undefined value'), range: L('слишком далеко', 'too far') }[shot.end];
-      setLog((l) => [{ team: who.team, name: who.name, src: formula, note: kills.length ? `✕ ${kills.join(', ')}` : why }, ...l].slice(0, 8));
+      setLog((l) => [{ team: who.team, name: who.name, src: formula, note: kills.length ? kills.join(', ') : why }, ...l].slice(0, 8));
       setWorld(after);
       const alive = (t: 0 | 1) => after.soldiers.some((s) => s.team === t && s.alive);
       if (!alive(1)) return finish(after, 0, n);
@@ -347,10 +379,11 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
       const next = nextTurn(after, who);
       if (next === null) return finish(after, who.team, n);
       setTurnId(next);
+      setTurnStart(performance.now());
       setSrc('');
     };
     requestAnimationFrame(step);
-  }, [world, shots, lang, finish, nextTurn]);
+  }, [world, shots, lang, finish, nextTurn, online]);
 
   // the bot plays its turn after a short think
   useEffect(() => {
@@ -366,6 +399,21 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, turnId, flying, winner]);
 
+  useEffect(() => {
+    if (!online) return;
+    return online.onShot((formula) => {
+      const who = shooterRef.current;
+      if (who && who.team !== online.me) fire(formula, who, true);
+    });
+  }, [online, fire]);
+
+  const left = online && winner === null && !flying ? Math.max(0, TURN_SECONDS - (performance.now() - turnStart) / 1000) : null;
+  // out of time on my turn: the shot goes straight ahead, y = 0
+  useEffect(() => {
+    if (left === 0 && online && shooter && shooter.team === online.me && !flying) fire('0', shooter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [left === 0]);
+
   const insert = (k: string) => {
     const el = input.current;
     const at = el?.selectionStart ?? src.length;
@@ -379,7 +427,11 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
 
   const turnLabel = !shooter
     ? ''
-    : mode.kind === 'campaign'
+    : online
+      ? shooter.team === online.me
+        ? L(`Твой ход · ${shooter.name}`, `Your turn · ${shooter.name}`)
+        : L(`Ход соперника · ${shooter.name}`, `Opponent’s turn · ${shooter.name}`)
+      : mode.kind === 'campaign'
       ? L('Твой выстрел', 'Your shot')
       : mode.kind === 'bot'
         ? shooter.team === 0
@@ -387,7 +439,7 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
           : L(`Ход бота · ${shooter.name}`, `Bot’s turn · ${shooter.name}`)
         : L(`Ходит ${shooter.team === 0 ? 'синий' : 'красный'} · ${shooter.name}`, `${shooter.team === 0 ? 'Blue' : 'Red'} to move · ${shooter.name}`);
 
-  const won = winner === 0 || (mode.kind === 'local' && winner !== null);
+  const won = online ? winner === online.me : winner === 0 || (mode.kind === 'local' && winner !== null);
   const stars = level && winner === 0 ? starsFor(shots) : 0;
 
   return (
@@ -396,7 +448,8 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
         <Button variant="ghost" className="text-sm" onPress={onExit}>
           <ArrowLeft className="w-4 h-4" /> {L('Меню', 'Menu')}
         </Button>
-        <h2 className="font-serif text-xl text-ink">{level ? `${mode.kind === 'campaign' ? mode.level + 1 : ''}. ${level.title[lang]}` : mode.kind === 'bot' ? L('Против бота', 'Versus bot') : L('Вдвоём', 'Two players')}</h2>
+        <h2 className="font-serif text-xl text-ink">{level ? `${mode.kind === 'campaign' ? mode.level + 1 : ''}. ${level.title[lang]}` : mode.kind === 'bot' ? L('Против бота', 'Versus bot') : online ? L(`Дуэль ${world.soldiers.length / 2} на ${world.soldiers.length / 2}`, `Duel ${world.soldiers.length / 2} v ${world.soldiers.length / 2}`) : L('Вдвоём', 'Two players')}</h2>
+        {online && <span className="inline-flex items-center gap-1.5 text-xs text-ink-2"><span className="w-2 h-2 rounded-full" style={{ background: TEAM[online.me] }} />{online.me === 0 ? L('ты за синих', 'you are blue') : L('ты за красных', 'you are red')}</span>}
         <span className="ml-auto font-mono text-xs text-ink-3">{level ? L(`выстрелов: ${shots}`, `shots: ${shots}`) : ''}</span>
       </div>
 
@@ -422,12 +475,13 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: TEAM[shooter?.team ?? 0] }} />
               <span className="font-medium text-ink">{turnLabel}</span>
               {thinking && <span className="text-ink-3">{L('думает…', 'thinking…')}</span>}
+              {left !== null && <span className={`ml-auto font-mono text-xs ${left < 10 ? 'text-[#CC2F35]' : 'text-ink-3'}`}>{Math.ceil(left)} {L('с', 's')}</span>}
             </div>
             <form
               className="flex gap-2"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (shooter && !flying && !isBotTurn) fire(src, shooter);
+                if (shooter && !flying && !waiting) fire(src, shooter);
               }}
             >
               <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -439,24 +493,25 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
                   placeholder={L('например 0,5x или 3sin(x/2)', 'e.g. 0.5x or 3sin(x/2)')}
                   aria-label={L('Функция выстрела', 'Shot function')}
                   className="flex-1 min-w-0 font-mono"
-                  disabled={!!flying || isBotTurn}
+                  disabled={!!flying || waiting}
                   autoComplete="off"
                   autoCapitalize="off"
                   spellCheck={false}
                 />
               </div>
-              <Button type="submit" size="lg" className="text-sm font-medium" isDisabled={!!flying || isBotTurn || !src.trim()}>
+              <Button type="submit" size="lg" className="text-sm font-medium" isDisabled={!!flying || waiting || !src.trim()}>
                 <Flame className="w-4 h-4" /> {L('Огонь', 'Fire')}
               </Button>
             </form>
             <div className="flex flex-wrap gap-1.5">
               {KEYS.map((k) => (
-                <button key={k} type="button" onClick={() => insert(k)} disabled={!!flying || isBotTurn} className="h-8 min-w-9 px-2.5 rounded-lg border border-line bg-muted font-mono text-sm text-ink hover:border-accent cursor-pointer disabled:opacity-40">
+                <button key={k} type="button" onClick={() => insert(k)} disabled={!!flying || waiting} className="h-8 min-w-9 px-2.5 rounded-lg border border-line bg-muted font-mono text-sm text-ink hover:border-accent cursor-pointer disabled:opacity-40">
                   {k}
                 </button>
               ))}
             </div>
             {error && <p className="text-sm text-[#CC2F35]">{error}</p>}
+            {online?.peerGone && <p className="text-sm text-[#CC2F35]">{L('Соперник отключился. Подожди немного — может, вернётся.', 'Your opponent disconnected. Wait a little, they may come back.')}</p>}
           </Card.Content>
         </Card>
       ) : (
@@ -464,7 +519,7 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
           {won && <Confetti count={40} />}
           <Card.Content className="flex flex-col items-center text-center gap-2">
             <div className="font-serif text-3xl text-ink">
-              {mode.kind === 'local' ? L(`Победил ${winner === 0 ? 'синий' : 'красный'}!`, `${winner === 0 ? 'Blue' : 'Red'} wins!`) : winner === 0 ? L('Победа!', 'Victory!') : L('Бот победил', 'The bot won')}
+              {mode.kind === 'local' ? L(`Победил ${winner === 0 ? 'синий' : 'красный'}!`, `${winner === 0 ? 'Blue' : 'Red'} wins!`) : online ? (won ? L('Победа!', 'Victory!') : L('Соперник победил', 'Your opponent won')) : winner === 0 ? L('Победа!', 'Victory!') : L('Бот победил', 'The bot won')}
             </div>
             {level && (
               <div className="flex gap-1" aria-label={L(`${stars} из 3 звёзд`, `${stars} of 3 stars`)}>
@@ -480,9 +535,13 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
                   {L('Следующий уровень →', 'Next level →')}
                 </Button>
               )}
-              <Button variant="outline" size="lg" className="text-sm" onPress={onRestart}>
-                <RotateCcw className="w-4 h-4" /> {L('Ещё раз', 'Again')}
-              </Button>
+              {onRestart ? (
+                <Button variant="outline" size="lg" className="text-sm" onPress={onRestart}>
+                  <RotateCcw className="w-4 h-4" /> {online ? L('Реванш', 'Rematch') : L('Ещё раз', 'Again')}
+                </Button>
+              ) : (
+                online && <p className="w-full text-sm text-ink-3">{L('Реванш запускает тот, кто создал дуэль.', 'The duel’s creator can start a rematch.')}</p>
+              )}
               {level && (
                 <Button variant="ghost" size="lg" className="text-sm" onPress={() => window.dispatchEvent(new CustomEvent('open-topic', { detail: level.topic }))}>
                   <BookOpen className="w-4 h-4" /> {L('Тема в учебнике', 'Topic in the textbook')}
@@ -511,13 +570,17 @@ const Battle: React.FC<{ lang: Lang; mode: Mode; onExit: () => void; onNext?: ()
 
 /* ---------------- menu ---------------- */
 
-export const FuncWar: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onExit }) => {
+export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string | null }> = ({ lang, onExit, join }) => {
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   const [mode, setMode] = useState<Mode | null>(null);
+  // a duel link (?fw=12345) opens straight into that room; 'host' opens a new one
+  const [duel, setDuel] = useState<string | null>(join && /^\d{5}$/.test(join) ? join : null);
   const [round, setRound] = useState(0);
   const stars = useMemo(readStars, [mode]);
   const unlocked = (i: number) => i === 0 || (stars[LEVELS[i - 1].id] ?? 0) > 0;
   const seed = () => Math.floor(Math.random() * 1e9);
+
+  if (duel) return <OnlineDuel lang={lang} join={duel === 'host' ? undefined : duel} onExit={() => setDuel(null)} />;
 
   if (mode)
     return (
@@ -588,6 +651,20 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, on
           })}
         </div>
       </section>
+
+      <Card className="p-5 border-2 border-accent">
+        <Card.Content className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1">
+            <h2 className="font-serif text-xl text-ink inline-flex items-center gap-2">
+              <Swords className="w-5 h-5 text-accent" /> {L('Дуэль по ссылке', 'Duel by link')}
+            </h2>
+            <p className="mt-1 text-sm text-ink-2">{L('1 на 1, 2 на 2 или 3 на 3 с другом онлайн. У каждого бойца 3 жизни, а первым стреляет тот, кто быстрее решит задачу на функцию.', '1 v 1, 2 v 2 or 3 v 3 with a friend online. Every soldier has 3 lives, and whoever solves a function question first shoots first.')}</p>
+          </div>
+          <Button size="lg" className="text-sm font-medium" onPress={() => setDuel('host')}>
+            {L('Создать дуэль', 'Create a duel')}
+          </Button>
+        </Card.Content>
+      </Card>
 
       <section className="grid sm:grid-cols-2 gap-3">
         <Card className="p-5">
