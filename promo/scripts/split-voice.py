@@ -13,7 +13,7 @@ PROMO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FF = PROMO + r'\node_modules\@remotion\compositor-win32-x64-msvc\ffmpeg.exe'
 SCRIPT, AUDIO, OUT = (sys.argv[1:4] if len(sys.argv) > 3 else ['DAILY-PROBLEM-SCRIPT.md', 'public/vo5', 'src/reel/daily/voice.json'])
 script = open(os.path.join(PROMO, SCRIPT), encoding='utf-8').read().split('## Ударения')[0]
-sections = re.split(r'^## ([a-z]+-\d\d)[^\n]*\n', script, flags=re.M)
+sections = re.split(r'^## ([a-z]+-[a-z0-9]+)\b[^\n]*\n', script, flags=re.M)
 texts = {sections[i]: [l for l in sections[i + 1].strip().split('\n') if l and not l.startswith('#')] for i in range(1, len(sections), 2)}
 
 VOWELS = 'аеёиоуыэюяaeiou'

@@ -5,7 +5,8 @@ import { clamp, CYAN, DIM, INK, Mono, prog, Stage, useIn } from '../kit';
 import { applyShot, compile, fly, type World } from '../../../../src/components/games/funcwar/engine';
 import { LEVELS, levelWorld } from '../../../../src/components/games/funcwar/levels';
 import { DEFAULT_LOOKS, drawSoldier, HATS, COLORS, type Look } from '../../../../src/components/games/funcwar/looks';
-import { Cta, FeatureReel, FieldSvg, Hook, Typed, upto, type Beat } from './runner';
+import { Cta, FeatureReel, FieldSvg, Hook, Typed, upto, withVoice, type Beat } from './runner';
+import VOICE from './voice.json';
 
 const RED = '#FF5A5F';
 const GREEN = '#3DD68C';
@@ -517,11 +518,15 @@ export const EXAM_BEATS: Beat[] = [
 ];
 
 /** one composition per reel; the scenes are functions, so they live here rather than in (JSON) props */
-const reel = (beats: Beat[], voice?: string): React.FC => () => <FeatureReel beats={beats} voice={voice} />;
+const SPANS = VOICE as unknown as Record<string, [number, number][]>;
+const make = (id: string, beats: Beat[], take: string) => {
+  const timed = withVoice(beats, SPANS[take]);
+  const component: React.FC = () => <FeatureReel beats={timed} voice={SPANS[take] ? `vo7/${take}.mp3` : undefined} />;
+  return { id, beats: timed, component };
+};
 export const FEATURES: { id: string; beats: Beat[]; component: React.FC }[] = [
-  // pass the take, e.g. reel(GAME_BEATS, 'vo7/promo-game.mp3'), once it is recorded and split
-  { id: 'PromoGame', beats: GAME_BEATS, component: reel(GAME_BEATS) },
-  { id: 'PromoDuel', beats: DUEL_BEATS, component: reel(DUEL_BEATS) },
-  { id: 'PromoTests', beats: TESTS_BEATS, component: reel(TESTS_BEATS) },
-  { id: 'PromoExams', beats: EXAM_BEATS, component: reel(EXAM_BEATS) },
+  make('PromoGame', GAME_BEATS, 'promo-game'),
+  make('PromoDuel', DUEL_BEATS, 'promo-duel'),
+  make('PromoTests', TESTS_BEATS, 'promo-tests'),
+  make('PromoExams', EXAM_BEATS, 'promo-exams'),
 ];

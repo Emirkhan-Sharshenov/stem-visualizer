@@ -16,7 +16,13 @@ export interface Beat {
   scene: React.FC<{ len: number }>;
   /** the scene already shows its words big on screen */
   noCaption?: boolean;
+  /** where this line sits in the voice take, in seconds */
+  say?: [number, number];
 }
+
+/** fits beats to a recorded take: each beat plays its own line and lasts at least as long as the line */
+export const withVoice = (beats: Beat[], spans: [number, number][] | undefined): Beat[] =>
+  spans ? beats.map((b, i) => ({ ...b, say: spans[i], frames: Math.max(b.frames, Math.round((spans[i][1] - spans[i][0]) * 30) + 16) })) : beats;
 
 export const reelLength = (beats: Beat[]) => beats.reduce((a, b) => a + b.frames, 0);
 
@@ -43,13 +49,14 @@ export const FeatureReel: React.FC<{ beats: Beat[]; voice?: string }> = ({ beats
         <Sequence key={i} from={starts[i]} durationInFrames={b.frames}>
           <b.scene len={b.frames} />
           {!b.noCaption && <Caption text={b.line} len={b.frames} />}
+          {voice && b.say && (
+            // each line starts with its scene; the pauses of the take are dropped
+            <Sequence from={4} durationInFrames={Math.round((b.say[1] - b.say[0]) * 30) + 8}>
+              <Audio src={staticFile(voice)} trimBefore={Math.max(0, Math.round(b.say[0] * 30) - 2)} />
+            </Sequence>
+          )}
         </Sequence>
       ))}
-      {voice && (
-        <Sequence from={6}>
-          <Audio src={staticFile(voice)} />
-        </Sequence>
-      )}
       <Audio src={staticFile('music-labs.wav')} volume={(f) => interpolate(f, [0, 10, total - 30, total], [0, voice ? 0.14 : 0.3, voice ? 0.14 : 0.3, 0], clamp)} />
       {starts.slice(1).map((s) => (
         <Sequence key={s} from={s - 4} durationInFrames={30}>
