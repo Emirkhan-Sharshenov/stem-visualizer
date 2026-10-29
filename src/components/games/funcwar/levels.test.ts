@@ -3,6 +3,7 @@ import { applyShot, botMove, compile, fly, FormulaError, randomWorld } from './e
 import { LEVELS, levelWorld } from './levels';
 import { raceQuestion } from './race';
 import { CHAPTERS, chapterWorld, fillTemplate } from './chapters';
+import { BOTS, botNear, botThink } from './bots';
 
 let failed = 0;
 const ok = (cond: boolean, msg: string) => {
@@ -119,6 +120,36 @@ for (const ch of CHAPTERS) {
     }
     ok(fine, `guide ${ch.id}: slider template at ${pick}`);
   }
+}
+
+// the roster: strong bots hit on most random fields, the weakest clearly less often
+{
+  const rate = async (id: string, fields: number) => {
+    const bot = BOTS.find((b) => b.id === id)!;
+    let kills = 0;
+    let friendly = 0;
+    for (let seed = 1; seed <= fields; seed++) {
+      const w = randomWorld(seed * 31, 2);
+      const me = w.soldiers.find((x) => x.team === 1)!;
+      const src = await botThink(w, me, bot, seed);
+      const shot = fly(w, me, compile(src));
+      const hit = (team: number) => shot.killed.some((k) => w.soldiers.find((x) => x.id === k)!.team === team);
+      if (hit(0)) kills++;
+      if (hit(1)) friendly++;
+    }
+    return { kills, friendly };
+  };
+  const t0 = performance.now();
+  const boss = await rate('singularity', 20);
+  const time = (performance.now() - t0) / 20;
+  const mid = await rate('fighter', 20);
+  const weak = await rate('intern', 20);
+  ok(boss.kills >= 17, `Сингулярность hits in ${boss.kills}/20 fields (${Math.round(time)} ms a turn)`);
+  ok(boss.friendly === 0, `Сингулярность spares its side (${boss.friendly} friendly hits)`);
+  ok(mid.kills >= 10, `Боец hits in ${mid.kills}/20 fields`);
+  ok(weak.kills < boss.kills, `Стажёр hits less: ${weak.kills}/20`);
+  ok(BOTS.every((b, i) => i === 0 || b.rating > BOTS[i - 1].rating), 'bots are ordered by rating');
+  ok(botNear(1000).rating === 950 || botNear(1000).rating === 1050, 'the ranked bot is the nearest by rating');
 }
 
 console.log(failed ? `\n${failed} failed` : '\nall passed');

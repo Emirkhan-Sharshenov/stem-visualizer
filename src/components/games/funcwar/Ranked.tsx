@@ -3,13 +3,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { ArrowLeft, Bot, Loader2, Medal, Trophy } from 'lucide-react';
 import { supabase, useSession } from '../../../lib/supabase';
-import { botFor, fwBotResult, fwMe, fwTop, type FwMe, type FwRow } from '../../../lib/fwRating';
+import { fwBotResult, fwMe, fwTop, type FwMe, type FwRow } from '../../../lib/fwRating';
 import type { Lang } from '../common';
 import { Battle } from './FuncWar';
+import { botNear } from './bots';
 import { OnlineDuel, type RankedRoom } from './OnlineDuel';
 
 /* Ranked "Бой функций": wait in a shared queue for a live opponent; if nobody turns up in 20 s, a bot of your
-   level steps in. Both kinds of game move your Elo rating (the server applies it, see 0011_funcwar_rating.sql). */
+   level steps in. Both kinds of game move your Elo rating (the server applies it, see 0011_funcwar_rating.sql and 0012_funcwar_bots.sql). */
 
 const SEARCH_SECONDS = 20;
 const newCode = () => String(10000 + Math.floor(Math.random() * 90000));
@@ -135,11 +136,11 @@ export const Ranked: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onE
   if (phase === 'pvp' && room) return <OnlineDuel lang={lang} ranked={room} onExit={onExit} />;
 
   if (phase === 'bot' && me) {
-    const bot = botFor(me.rating);
+    const bot = botNear(me.rating);
     return (
       <Battle
         lang={lang}
-        mode={{ kind: 'bot', level: bot.level, seed: botSeed, perSide: 1, lives: 3 }}
+        mode={{ kind: 'bot', bot: bot.id, seed: botSeed, perSide: 1, lives: 3 }}
         title={L(`Рейтинговый бой · бот «${bot.ru}» (${bot.rating})`, `Ranked · bot “${bot.en}” (${bot.rating})`)}
         onExit={onExit}
         resultNote={note}
@@ -171,7 +172,7 @@ export const Ranked: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onE
           </div>
           <p className="text-xs text-ink-3 inline-flex items-center gap-1.5">
             <Bot className="w-3.5 h-3.5" />
-            {me && L(`Если за ${Math.ceil(left)} с никого не найдём — сыграешь с ботом «${botFor(me.rating).ru}» (${botFor(me.rating).rating}), он тоже меняет рейтинг.`, `If nobody shows up in ${Math.ceil(left)} s you’ll face the bot “${botFor(me.rating).en}” (${botFor(me.rating).rating}); it counts too.`)}
+            {me && L(`Если за ${Math.ceil(left)} с никого не найдём — сыграешь с ботом «${botNear(me.rating).ru}» (${botNear(me.rating).rating}), он тоже меняет рейтинг.`, `If nobody shows up in ${Math.ceil(left)} s you’ll face the bot “${botNear(me.rating).en}” (${botNear(me.rating).rating}); it counts too.`)}
           </p>
         </Card.Content>
       </Card>

@@ -4,13 +4,14 @@ import { ArrowLeft, Bot, BookOpen, Crosshair, Flame, Lightbulb, Lock, Palette, R
 import { progress } from '../../../lib/progress';
 import { Confetti } from '../../fx/Confetti';
 import type { Lang } from '../common';
-import { applyShot, botMove, compile, fly, FormulaError, H, randomWorld, type Pt, type Shot, type Soldier, type World, W, SOLDIER_R } from './engine';
+import { applyShot, compile, fly, FormulaError, H, randomWorld, type Pt, type Shot, type Soldier, type World, W, SOLDIER_R } from './engine';
 import { LEVELS, levelWorld, type Level } from './levels';
 import { colorHex, DEFAULT_LOOKS, drawBlast, drawSoldier, drawTrail, loadSaved, theme, type Look, type ThemeId } from './looks';
 import { OnlineDuel } from './OnlineDuel';
 import { Ranked, RankedCard } from './Ranked';
 import { Workshop } from './Workshop';
 import { Guide } from './Guide';
+import { BOTS, botById, botThink } from './bots';
 
 /* "Бой функций": an artillery duel where shots fly along the graphs of functions the players type.
    Our twists on Graphwar: a campaign that teaches one family of graphs per level, rock that crumbles into
@@ -34,7 +35,7 @@ const saveStars = (s: Record<string, number>) => {
 };
 const starsFor = (shots: number) => (shots <= 1 ? 3 : shots <= 2 ? 2 : 1);
 
-type Mode = { kind: 'campaign'; level: number } | { kind: 'bot'; level: 0 | 1 | 2; seed: number; perSide?: number; lives?: number } | { kind: 'local'; seed: number } | { kind: 'online'; seed: number; perSide: number };
+type Mode = { kind: 'campaign'; level: number } | { kind: 'bot'; bot: string; seed: number; perSide?: number; lives?: number } | { kind: 'local'; seed: number } | { kind: 'online'; seed: number; perSide: number };
 
 /** an online duel as the battle sees it: which side is mine, who opens, and the wire for shots */
 export interface Online {
@@ -310,16 +311,17 @@ export const Battle: React.FC<{
 
   const shooter = world.soldiers.find((s) => s.id === turnId) ?? null;
   const isBotTurn = mode.kind === 'bot' && shooter?.team === 1;
+  const bot = mode.kind === 'bot' ? botById(mode.bot) : null;
   const isRemoteTurn = !!online && shooter?.team !== online.me;
   const waiting = isBotTurn || isRemoteTurn;
   // my side wears my saved look; the other side its own (online) or the default, never in my colour
   const [saved] = useState(loadSaved);
   const looks = useMemo((): [Look, Look] => {
     const mine = online ? online.me : 0;
-    let other: Look = online?.peerLook ?? DEFAULT_LOOKS[1 - mine];
+    let other: Look = online?.peerLook ?? bot?.look ?? DEFAULT_LOOKS[1 - mine];
     if (other.color === saved.look.color) other = { ...other, color: saved.look.color === 'coral' ? 'cyan' : 'coral' };
     return mine === 0 ? [saved.look, other] : [other, saved.look];
-  }, [online, online?.peerLook, saved]);
+  }, [online, online?.peerLook, saved, bot]);
   const teamColor = (t: 0 | 1) => colorHex(looks[t].color);
   const shooterRef = useRef(shooter);
   shooterRef.current = shooter;
@@ -355,7 +357,7 @@ export const Battle: React.FC<{
       const total = Object.values({ ...all, [level!.id]: Math.max(st, before) }).reduce((a, b) => a + b, 0);
       progress.recordGame('funcwar', total, before ? 5 : 10 + st * 5);
     } else if (mode.kind === 'bot' && team === 0) {
-      progress.recordGame('funcwar', 0, 15 + mode.level * 15);
+      progress.recordGame('funcwar', 0, 10 + Math.round((botById(mode.bot).rating - 800) / 20));
     } else if (online && team === online.me) {
       progress.recordGame('funcwar', 0, 40);
     }
@@ -418,13 +420,22 @@ export const Battle: React.FC<{
   useEffect(() => {
     if (!isBotTurn || flying || winner !== null || !shooter || mode.kind !== 'bot') return;
     setThinking(true);
-    const id = setTimeout(() => {
-      const formula = botMove(world, shooter, mode.level, mode.seed + log.length * 7919);
-      setSrc(formula);
-      setThinking(false);
-      setTimeout(() => fire(formula, shooter), 500);
-    }, 700);
-    return () => clearTimeout(id);
+    let gone = false;
+    let id = 0;
+    const started = performance.now();
+    // thinks in slices so the page stays responsive; a quick answer still waits a moment to read as a move
+    botThink(world, shooter, botById(mode.bot), mode.seed + taken.current[1] * 7919).then((formula) => {
+      if (gone) return;
+      id = window.setTimeout(() => {
+        setSrc(formula);
+        setThinking(false);
+        id = window.setTimeout(() => fire(formula, shooter), 500);
+      }, Math.max(0, 700 - (performance.now() - started)));
+    });
+    return () => {
+      gone = true;
+      clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, turnId, flying, winner]);
 
@@ -465,7 +476,7 @@ export const Battle: React.FC<{
       : mode.kind === 'bot'
         ? shooter.team === 0
           ? L(`Твой ход · ${shooter.name}`, `Your turn · ${shooter.name}`)
-          : L(`Ход бота · ${shooter.name}`, `Bot’s turn · ${shooter.name}`)
+          : L(`Ход бота ${bot!.ru} · ${shooter.name}`, `${bot!.en}’s turn · ${shooter.name}`)
         : L(`Ходит ${shooter.team === 0 ? 'синий' : 'красный'} · ${shooter.name}`, `${shooter.team === 0 ? 'Blue' : 'Red'} to move · ${shooter.name}`);
 
   const won = online ? winner === online.me : winner === 0 || (mode.kind === 'local' && winner !== null);
@@ -477,7 +488,7 @@ export const Battle: React.FC<{
         <Button variant="ghost" className="text-sm" onPress={onExit}>
           <ArrowLeft className="w-4 h-4" /> {L('Меню', 'Menu')}
         </Button>
-        <h2 className="font-serif text-xl text-ink">{title ?? (level ? `${mode.kind === 'campaign' ? mode.level + 1 : ''}. ${level.title[lang]}` : mode.kind === 'bot' ? L('Против бота', 'Versus bot') : online ? L(`Дуэль ${world.soldiers.length / 2} на ${world.soldiers.length / 2}`, `Duel ${world.soldiers.length / 2} v ${world.soldiers.length / 2}`) : L('Вдвоём', 'Two players'))}</h2>
+        <h2 className="font-serif text-xl text-ink">{title ?? (level ? `${mode.kind === 'campaign' ? mode.level + 1 : ''}. ${level.title[lang]}` : bot ? L(`Против: ${bot.ru} · ${bot.rating}`, `Versus ${bot.en} · ${bot.rating}`) : online ? L(`Дуэль ${world.soldiers.length / 2} на ${world.soldiers.length / 2}`, `Duel ${world.soldiers.length / 2} v ${world.soldiers.length / 2}`) : L('Вдвоём', 'Two players'))}</h2>
         {online && <span className="inline-flex items-center gap-1.5 text-xs text-ink-2"><span className="w-2 h-2 rounded-full" style={{ background: teamColor(online.me) }} />{online.me === 0 ? L('ты за синих', 'you are blue') : L('ты за красных', 'you are red')}</span>}
         <span className="ml-auto font-mono text-xs text-ink-3">{level ? L(`выстрелов: ${shots}`, `shots: ${shots}`) : ''}</span>
       </div>
@@ -598,6 +609,23 @@ export const Battle: React.FC<{
   );
 };
 
+/** a bot's portrait in its own look, facing left like on the field */
+const BotFace: React.FC<{ look: Look }> = ({ look }) => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const cv = ref.current!;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = 48 * dpr;
+    cv.height = 48 * dpr;
+    const g = cv.getContext('2d')!;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#0A1122';
+    g.fillRect(0, 0, 48, 48);
+    drawSoldier(g, 24, 28, 12, look, -1);
+  }, [look]);
+  return <canvas ref={ref} style={{ width: 48, height: 48 }} className="rounded-xl shrink-0" aria-hidden="true" />;
+};
+
 /* ---------------- menu ---------------- */
 
 export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string | null }> = ({ lang, onExit, join }) => {
@@ -611,6 +639,7 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string |
   const seed = () => Math.floor(Math.random() * 1e9);
 
   const [ranked, setRanked] = useState(false);
+  const [perSide, setPerSide] = useState(2);
   const [screen, setScreen] = useState<'workshop' | 'guide' | null>(null);
   if (screen === 'workshop') return <Workshop lang={lang} onExit={() => setScreen(null)} />;
   if (screen === 'guide') return <Guide lang={lang} onExit={() => setScreen(null)} />;
@@ -720,22 +749,45 @@ export const FuncWar: React.FC<{ lang: Lang; onExit: () => void; join?: string |
         </Card.Content>
       </Card>
 
-      <section className="grid sm:grid-cols-2 gap-3">
-        <Card className="p-5">
-          <Card.Content className="flex flex-col gap-3">
-            <h2 className="font-serif text-xl text-ink inline-flex items-center gap-2">
-              <Bot className="w-5 h-5 text-accent" /> {L('Против бота', 'Versus the bot')}
+      <Card className="p-5">
+        <Card.Content className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-serif text-xl text-ink inline-flex items-center gap-2 flex-1 min-w-[200px]">
+              <Bot className="w-5 h-5 text-accent" /> {L('Против бота', 'Versus a bot')}
             </h2>
-            <p className="text-sm text-ink-2">{L('Двое на двое на случайном поле. Бот тоже пишет функции — и показывает какие.', 'Two on two on a random field. The bot writes functions too, and shows you which.')}</p>
-            <div className="flex flex-wrap gap-2">
-              {([0, 1, 2] as const).map((lv) => (
-                <Button key={lv} variant={lv === 1 ? 'primary' : 'outline'} className="text-sm" onPress={() => setMode({ kind: 'bot', level: lv, seed: seed() })}>
-                  {[L('Новичок', 'Rookie'), L('Боец', 'Fighter'), L('Профи', 'Pro')][lv]}
+            <div className="flex gap-1" role="group" aria-label={L('Бойцов на сторону', 'Soldiers a side')}>
+              {[1, 2, 3].map((k) => (
+                <Button key={k} size="sm" variant={perSide === k ? 'primary' : 'outline'} className="text-sm" onPress={() => setPerSide(k)}>
+                  {k} {L('на', 'v')} {k}
                 </Button>
               ))}
             </div>
-          </Card.Content>
-        </Card>
+          </div>
+          <p className="text-sm text-ink-2">{L(`${BOTS.length} ботов от Стажёра до босса Сингулярности. Каждый пишет функции по-своему и показывает, какие. У всех по 3 жизни.`, `${BOTS.length} bots from the Intern to the boss, Singularity. Each writes functions its own way and shows you which. Everyone has 3 lives.`)}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {BOTS.map((b, i) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setMode({ kind: 'bot', bot: b.id, seed: seed(), perSide, lives: 3 })}
+                className="text-left rounded-xl border border-line bg-surface hover:border-accent transition-colors p-3 flex gap-3 items-start"
+              >
+                <BotFace look={b.look} />
+                <span className="min-w-0">
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-medium text-ink">{L(b.ru, b.en)}</span>
+                    <span className="text-xs text-ink-2 tabular-nums">{b.rating}</span>
+                    {i === BOTS.length - 1 && <span className="text-xs font-medium text-[#E0245E]">{L('босс', 'boss')}</span>}
+                  </span>
+                  <span className="block text-sm text-ink-2">{L(b.about.ru, b.about.en)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </Card.Content>
+      </Card>
+
+      <section className="grid gap-3">
         <Card className="p-5">
           <Card.Content className="flex flex-col gap-3">
             <h2 className="font-serif text-xl text-ink inline-flex items-center gap-2">

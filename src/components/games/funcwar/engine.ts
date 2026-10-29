@@ -161,11 +161,12 @@ const inside = (c: Circle, x: number, y: number, pad = 0) => (x - c.x) ** 2 + (y
 export const solid = (w: World, x: number, y: number) => w.obstacles.some((o) => inside(o, x, y)) && !w.holes.some((h) => inside(h, x, y));
 
 /** the path of a shot; does not change the world (see applyShot) */
-export function fly(w: World, shooter: Soldier, f: Fn): Shot {
+/** `step` is the sampling distance; the bots search with a coarse one and check their pick with the fine default */
+export function fly(w: World, shooter: Soldier, f: Fn, step = 0.004): Shot {
   const dir = shooter.team === 0 ? 1 : -1;
   const f0 = f(0);
   if (!Number.isFinite(f0)) return { path: [{ x: shooter.x, y: shooter.y }], killed: [], end: 'undefined', impact: { x: shooter.x, y: shooter.y } };
-  const STEP = 0.004;
+  const STEP = step;
   const path: Pt[] = [{ x: shooter.x, y: shooter.y }];
   const killed = new Set<number>();
   let prevY = shooter.y;
@@ -175,7 +176,7 @@ export function fly(w: World, shooter: Soldier, f: Fn): Shot {
     const x = shooter.x + dir * t;
     const y = shooter.y + fy - f0;
     if (!Number.isFinite(fy)) return { path, killed: [...killed], end: 'undefined', impact: last };
-    if (Math.abs(y - prevY) > 0.6) return { path, killed: [...killed], end: 'jump', impact: last }; // a break in the graph
+    if (Math.abs(y - prevY) > 150 * STEP) return { path, killed: [...killed], end: 'jump', impact: last }; // a break in the graph
     if (Math.abs(x) > W / 2 || Math.abs(y) > H / 2) return { path, killed: [...killed], end: 'edge', impact: last };
     for (const s of w.soldiers) if (s.alive && s.id !== shooter.id && !killed.has(s.id) && inside({ ...s, r: SOLDIER_R }, x, y)) killed.add(s.id);
     // the shooter can be hit by their own shot only after it has left them
