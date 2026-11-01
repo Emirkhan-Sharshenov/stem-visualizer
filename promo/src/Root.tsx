@@ -8,6 +8,7 @@ import { Reel2, REEL_IDS, reelLength } from './Reels2';
 import { ReelPhoto, REEL_PHOTO_LEN } from './reel/ReelPhoto';
 import { DailyReel, dailyLength, DAILY_COUNT } from './reel/daily/DailyReel';
 import { MistakeReel, mistakeLength, MISTAKE_COUNT } from './reel/mistake/MistakeReel';
+import { DebateReel, DEBATE_LEN } from './reel/debate/DebateReel';
 import { reelLength as beatsLength } from './reel/promo/runner';
 import { FEATURES } from './reel/promo/features';
 
@@ -35,6 +36,7 @@ export const Root: React.FC = () => (
         // the voice joins once the take is in public/<p.voice>
         <Composition key={p.id} id={p.id} component={p.component} durationInFrames={beatsLength(p.beats)} fps={30} width={1080} height={1920} />
       ))}
+    <Composition id="Debate01" component={DebateReel} durationInFrames={DEBATE_LEN} fps={30} width={1080} height={1920} />
     <Composition id="IntroVertical" component={Intro} durationInFrames={INTRO_LEN} fps={30} width={1080} height={1920} />
     <Composition id="IntroSquare" component={Intro} durationInFrames={INTRO_LEN} fps={30} width={1080} height={1080} />
     <Composition id="IntroWide" component={Intro} durationInFrames={INTRO_LEN} fps={30} width={1920} height={1080} />
