@@ -192,8 +192,10 @@ export function problemsTest(subject: string, grades: [number, number], count: n
 }
 
 /** mock exams modelled on the ORT subject test; maths takes grades 5–11 and has more calculations */
+/** subject tests in the CEEATM brochure for 2025: 40 tasks in 80 minutes, 60 for biology */
+export const ORT_SUBJECT_MINUTES: Record<string, number> = { physics: 80, chemistry: 80, mathematics: 80, biology: 60 };
 export const ORT_FORMATS = {
-  full: { questions: 40, minutes: 60 },
+  full: { questions: 40, minutes: 80 },
   quick: { questions: 20, minutes: 25 },
   problems: { questions: 20, minutes: 40 },
 } as const;

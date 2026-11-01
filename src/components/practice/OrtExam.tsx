@@ -1,13 +1,16 @@
 import { Button } from '@heroui/react';
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { ArrowLeft, Calculator, Clock, ListChecks, Timer, Trophy } from 'lucide-react';
-import { BOARD_EXAMS, boardExam, type BoardExam, type BoardSubject, ORT_FORMATS, OrtFormat, ortExam, Question } from '../../lib/quiz';
+import { BOARD_EXAMS, boardExam, type BoardExam, type BoardSubject, ORT_FORMATS, ORT_SUBJECT_MINUTES, OrtFormat, ortExam, Question } from '../../lib/quiz';
+import { ORT_SECTIONS, ortSavedRun, type OrtRunPlan, type OrtSectionId } from '../../lib/ort/sections';
 import { localCurrency } from '../../lib/plan';
 import { progress, useProgress } from '../../lib/progress';
 import { usePlan } from '../../lib/plan';
 import { ProGate } from '../pro/ProPage';
 import { Quiz } from './Quiz';
 import { OrtReadiness } from './OrtReadiness';
+
+const OrtMainRun = lazy(() => import('./OrtMain'));
 
 type Lang = 'ru' | 'en';
 const SUBJ = [
@@ -24,12 +27,17 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
   const [format, setFormat] = useState<OrtFormat>('full');
   // Kyrgyzstan sits the ORT; everyone else most likely the Russian OGE/EGE
   const [exam, setExam] = useState<'ort' | BoardExam>(() => (localCurrency() === 'KGS' ? 'ort' : 'ege'));
+  // the main test everyone sits, or a subject test on top of it
+  const [ortKind, setOrtKind] = useState<'main' | 'subject'>('main');
+  const [mainRun, setMainRun] = useState<OrtRunPlan | null>(null);
   const [run, setRun] = useState<{ qs: Question[]; seed: number; minutes: number; section: string } | null>(null);
   const { tests } = useProgress();
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
-  const past = tests.filter((t) => t.section === 'ort' || t.section === 'oge' || t.section === 'ege');
+  const past = tests.filter((t) => t.section === 'ort' || t.section === 'oge' || t.section === 'ege' || t.section === 'ort-main');
+  const saved = ortSavedRun();
   const board = exam === 'ort' ? null : BOARD_EXAMS[exam][subject as BoardSubject];
-  const ORT = board ? { questions: board.part1 + board.part2, minutes: board.minutes } : ORT_FORMATS[format];
+  const subjectMinutes = (f: OrtFormat) => (f === 'full' ? ORT_SUBJECT_MINUTES[subject] : ORT_FORMATS[f].minutes);
+  const ORT = board ? { questions: board.part1 + board.part2, minutes: board.minutes } : { questions: ORT_FORMATS[format].questions, minutes: subjectMinutes(format) };
   const FORMATS: { id: OrtFormat; icon: React.ReactNode; ru: string; en: string; dru: string; den: string }[] = [
     { id: 'full', icon: <Trophy className="w-4 h-4" />, ru: 'Полный вариант', en: 'Full paper', dru: 'Как на настоящем экзамене', den: 'Like the real exam' },
     { id: 'quick', icon: <Timer className="w-4 h-4" />, ru: 'Экспресс', en: 'Quick', dru: 'Быстрая проверка за перемену', den: 'A check in a break' },
@@ -42,9 +50,23 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
   const start = () => {
     if (trialLeft <= 0) return window.dispatchEvent(new Event('open-pro'));
     const seed = Date.now() % 1000000;
-    if (exam === 'ort') setRun({ seed, minutes: ORT_FORMATS[format].minutes, section: 'ort', qs: ortExam(subject, seed, format) });
+    if (exam === 'ort') setRun({ seed, minutes: subjectMinutes(format), section: 'ort', qs: ortExam(subject, seed, format) });
     else setRun({ seed, minutes: BOARD_EXAMS[exam][subject as BoardSubject].minutes, section: exam, qs: boardExam(exam, subject as BoardSubject, seed) });
   };
+
+  const startMain = (sections: OrtSectionId[]) => {
+    // only the full test uses up one of the free week's mock exams; practising a section doesn't
+    if (sections.length > 1 && trialLeft <= 0) return window.dispatchEvent(new Event('open-pro'));
+    setMainRun({ seed: Date.now() % 1000000, sections });
+  };
+
+  if (mainRun && plan.pro) {
+    return (
+      <Suspense fallback={null}>
+        <OrtMainRun key={mainRun.seed} lang={lang} plan={mainRun} onExit={() => setMainRun(null)} onRetry={() => setMainRun({ seed: Date.now() % 1000000, sections: mainRun.sections })} />
+      </Suspense>
+    );
+  }
 
   if (run && plan.pro) {
     return (
@@ -73,7 +95,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
       pro={plan.pro}
       onUpgrade={() => window.dispatchEvent(new Event('open-pro'))}
       title={L('Пробные ОРТ, ОГЭ и ЕГЭ — в Pro', 'Mock ORT, OGE and EGE are part of Pro')}
-      text={L('Полный вариант на время с разбором ошибок: ОРТ, ОГЭ или ЕГЭ по числу заданий и времени настоящего экзамена, плюс процент готовности и темы, которые нужно подтянуть.', 'Full timed papers with review — ORT, OGE or EGE with the real number of tasks and time — plus your readiness and the topics to fix first.')}
+      text={L('Полный вариант на время с разбором ошибок: основной и предметные тесты ОРТ, ОГЭ или ЕГЭ по числу заданий и времени настоящего экзамена, плюс процент готовности и темы, которые нужно подтянуть.', 'Full timed papers with review — ORT, OGE or EGE with the real number of tasks and time — plus your readiness and the topics to fix first.')}
     >
       <div className="flex flex-col gap-5">
       <OrtReadiness lang={lang} onOpenTopic={onOpenTopic} />
@@ -90,7 +112,55 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
               </Button>
             ))}
           </div>
-          {board ? (
+          {exam === 'ort' && (
+            <div className="flex flex-wrap gap-1.5">
+              <Button size="sm" variant={ortKind === 'main' ? 'primary' : 'outline'} className="text-xs" onPress={() => setOrtKind('main')}>
+                {L('Основной тест', 'Main test')}
+              </Button>
+              <Button size="sm" variant={ortKind === 'subject' ? 'primary' : 'outline'} className="text-xs" onPress={() => setOrtKind('subject')}>
+                {L('Предметные тесты', 'Subject tests')}
+              </Button>
+            </div>
+          )}
+          {exam === 'ort' && ortKind === 'main' ? (
+            <>
+              <div>
+                <h2 className="font-serif text-2xl text-ink">{L('Пробный основной тест ОРТ', 'Mock ORT main test')}</h2>
+                <p className="mt-1 text-sm text-ink-2">
+                  {L(
+                    'Основной тест сдают все абитуриенты: 150 заданий и 215 минут, как в брошюре ЦООМО. У каждого раздела своё время, а в закрытый раздел вернуться нельзя. Калькулятора нет, правильные ответы и разбор появятся в конце. Задания составлены для этого сайта, это не настоящие варианты.',
+                    'Every applicant sits the main test: 150 tasks in 215 minutes, as in the official brochure. Each section has its own time and a closed section cannot be reopened. No calculator; answers and review come at the end. The tasks are written for this site, and the verbal sections are in Russian.',
+                  )}
+                </p>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {ORT_SECTIONS.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-line p-3">
+                    <div className="flex-1 min-w-[200px]">
+                      <p className="text-sm font-medium text-ink">{s[lang]}</p>
+                      <p className="mt-0.5 text-xs text-ink-2">{lang === 'ru' ? s.dru : s.den}</p>
+                      <p className="mt-1 text-xs font-mono text-ink-3">
+                        {s.questions} · {s.minutes} {L('мин', 'min')}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline" className="text-xs" onPress={() => startMain([s.id])}>
+                      {L('Только этот раздел', 'This section only')}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap gap-2">
+                {saved && (
+                  <Button size="lg" className="text-sm font-medium" onPress={() => setMainRun(saved)}>
+                    {L('Продолжить начатый тест', 'Resume your test')}
+                  </Button>
+                )}
+                <Button size="lg" variant={saved ? 'outline' : 'primary'} className="text-sm font-medium" onPress={() => startMain(ORT_SECTIONS.map((s) => s.id))}>
+                  {trialLeft <= 0 ? L('Продолжить с Pro', 'Continue with Pro') : L('Начать весь тест', 'Start the whole test')}
+                </Button>
+              </div>
+            </>
+          ) : board ? (
             <div>
               <h2 className="font-serif text-2xl text-ink">{exam === 'oge' ? L('Пробный ОГЭ', 'Mock OGE') : L('Пробный ЕГЭ', 'Mock EGE')}</h2>
               <p className="mt-1 text-sm text-ink-2">
@@ -111,7 +181,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
             </p>
           </div>
           )}
-          {!board && (
+          {!board && !(exam === 'ort' && ortKind === 'main') && (
           <div className="grid sm:grid-cols-3 gap-2">
             {FORMATS.map((f) => (
               <button
@@ -125,12 +195,14 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
                 </span>
                 <span className="mt-1 block text-xs text-ink-2">{lang === 'ru' ? f.dru : f.den}</span>
                 <span className="mt-1.5 block text-xs font-mono text-ink-3">
-                  {ORT_FORMATS[f.id].questions} · {ORT_FORMATS[f.id].minutes} {L('мин', 'min')}
+                  {ORT_FORMATS[f.id].questions} · {subjectMinutes(f.id)} {L('мин', 'min')}
                 </span>
               </button>
             ))}
           </div>
           )}
+          {!(exam === 'ort' && ortKind === 'main') && (
+          <>
           <div className="flex flex-wrap gap-2">
             {SUBJ.map((s) => (
               <button
@@ -156,6 +228,8 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
           <Button size="lg" className="self-start text-sm font-medium" onPress={() => start()}>
             {trialLeft <= 0 ? L('Продолжить с Pro', 'Continue with Pro') : L('Начать экзамен', 'Start the exam')}
           </Button>
+          </>
+          )}
           {plan.trial && (
             <p className="text-sm text-[#B5651D]">
               {trialLeft > 0
@@ -174,7 +248,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
               .map((r) => (
                 <li key={r.at} className="flex items-center justify-between text-sm">
                   <span className="text-ink-2">
-                    {({ ort: 'ОРТ', oge: 'ОГЭ', ege: 'ЕГЭ' } as Record<string, string>)[r.section ?? 'ort']} · {SUBJ.find((s) => s.id === r.subject)?.[lang] ?? r.subject} · {new Date(r.at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB')}
+                    {r.section === 'ort-main' ? L('ОРТ · основной тест', 'ORT · main test') : `${({ ort: 'ОРТ', oge: 'ОГЭ', ege: 'ЕГЭ' } as Record<string, string>)[r.section ?? 'ort']} · ${SUBJ.find((s) => s.id === r.subject)?.[lang] ?? r.subject}`} · {new Date(r.at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB')}
                   </span>
                   <span className={`font-mono ${r.score / r.total >= 0.6 ? 'text-[#1E7A4C]' : 'text-[#CC2F35]'}`}>{Math.round((r.score / r.total) * 100)}%</span>
                 </li>
