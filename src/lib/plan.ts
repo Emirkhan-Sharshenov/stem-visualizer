@@ -196,3 +196,4 @@ export async function authHeaders(): Promise<Record<string, string>> {
 
 /** the mentor: the local Express server in development, a Supabase Edge Function in production */
 export const MENTOR_URL = import.meta.env.DEV || !SUPABASE_URL ? '/api/mentor' : `${SUPABASE_URL}/functions/v1/mentor`;
+export const CHECK_URL = import.meta.env.DEV || !SUPABASE_URL ? '/api/check-solution' : `${SUPABASE_URL}/functions/v1/check-solution`;

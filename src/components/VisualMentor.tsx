@@ -21,10 +21,10 @@ interface Msg {
   topicId?: string;
 }
 
-/** shrinks a photo to 1280 px on the long side as JPEG, small enough to send */
-async function shrinkPhoto(file: File): Promise<{ url: string; data: string }> {
+/** shrinks a photo to 1280 px (or `side`) on the long side as JPEG, small enough to send */
+export async function shrinkPhoto(file: File, side = 1280): Promise<{ url: string; data: string }> {
   const bmp = await createImageBitmap(file);
-  const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+  const k = Math.min(1, side / Math.max(bmp.width, bmp.height));
   const c = document.createElement('canvas');
   c.width = Math.round(bmp.width * k);
   c.height = Math.round(bmp.height * k);
@@ -200,7 +200,7 @@ function parseBlocks(src: string): Block[] {
   return out;
 }
 
-const Rich = React.memo(function Rich({ text, lang }: { text: string; lang: Lang }) {
+export const Rich = React.memo(function Rich({ text, lang }: { text: string; lang: Lang }) {
   const blocks = useMemo(() => parseBlocks(prepareAnswer(text)), [text]);
   return (
     <div className="flex flex-col gap-2.5 min-w-0 break-words">

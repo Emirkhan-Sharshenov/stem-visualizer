@@ -5,6 +5,9 @@ project_id = "bhkvpppmixxxorqumxvg"
 [functions.mentor]
 verify_jwt = false
 
+[functions.check-solution]
+verify_jwt = false
+
 [functions.freemius-webhook]
 verify_jwt = false
 

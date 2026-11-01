@@ -1,6 +1,6 @@
 import { Button, Input } from '@heroui/react';
 import React, { useState } from 'react';
-import { Check, Crown, Crosshair, FileText, Gift, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
+import { Camera, Check, Crown, Crosshair, FileText, Gift, GraduationCap, Loader2, Sparkles, Target, Bot, Route, Gauge, NotebookPen, Presentation } from 'lucide-react';
 import { Currency, PRICES, FREE_MENTOR_DAILY, localCurrency, money, openCheckout, paymentsEnabled, planChanged, redeemCode, redeemErrorText, startTrial, usePlan } from '../../lib/plan';
 import { cloudEnabled, useSession } from '../../lib/supabase';
 import { AskParent, ChargeNote, CurrencySwitch } from './pricing';
@@ -131,6 +131,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
     L(`Наставник — ${FREE_MENTOR_DAILY} вопросов в день`, `Mentor: ${FREE_MENTOR_DAILY} questions a day`),
   ];
   const PRO = [
+    { icon: <Camera className="w-4 h-4" />, t: L('Проверка решения по фото', 'Solution check from a photo'), d: L('ИИ находит ошибку в твоём решении из тетради', 'The AI finds the mistake in your notebook solution') },
     { icon: <Bot className="w-4 h-4" />, t: L('ИИ-наставник без лимита', 'Unlimited AI mentor'), d: L('Объясняет то, что видно в модели', 'Explains what’s on screen') },
     { icon: <Target className="w-4 h-4" />, t: L('Пробные ОРТ, ОГЭ и ЕГЭ', 'Mock ORT, OGE and EGE'), d: L('Полный вариант на время с разбором', 'Full timed papers with review') },
     { icon: <Gauge className="w-4 h-4" />, t: L('Готовность к ОРТ', 'Exam readiness'), d: L('Процент по каждому предмету и слабые темы', 'A score per subject and your weak topics') },
@@ -173,7 +174,7 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
             <span>
               <span className="block text-[16px] font-medium text-ink">{L('Попробуй Pro неделю бесплатно', 'Try Pro free for a week')}</span>
               <span className="block text-sm text-ink-2">{L('Без карты. Через 7 дней Pro просто выключится, ничего не спишется.', 'No card. After 7 days Pro just switches off; nothing is charged.')}</span>
-              <span className="block text-xs text-ink-3 mt-0.5">{L('Входит: наставник без лимита, работа над ошибками, план, готовность к экзаменам, 2 пробных экзамена и 5 уроков гайда по функциям. Только в полном Pro: скины Pro, скачивание презентаций и расширенный конструктор контрольных.', 'Includes: unlimited mentor, mistake review, plan, exam readiness, 2 mock exams and 5 guide lessons. Full Pro only: Pro skins, presentation downloads and the bigger test builder.')}</span>
+              <span className="block text-xs text-ink-3 mt-0.5">{L('Входит: наставник без лимита, работа над ошибками, план, готовность к экзаменам, 2 пробных экзамена и 5 уроков гайда по функциям. Только в полном Pro: проверка решения по фото, скины Pro, скачивание презентаций и расширенный конструктор контрольных.', 'Includes: unlimited mentor, mistake review, plan, exam readiness, 2 mock exams and 5 guide lessons. Full Pro only: solution check from a photo, Pro skins, presentation downloads and the bigger test builder.')}</span>
             </span>
           </span>
           {user ? (

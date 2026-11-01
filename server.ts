@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import { CHECK_CONFIG, CHECK_MODELS, checkContents, checkPhoto, checkSystem, isPaidSub, parseCheck } from './supabase/functions/_shared/solutionCheck';
 import { createClient } from '@supabase/supabase-js';
 import path from 'path';
 import crypto from 'crypto';
@@ -154,6 +155,34 @@ const splitTopic = (text: string): { answer: string; topic?: string } => {
   const m = text.match(/\n?\s*#\s*(?:тема|topic)\s*:\s*(.+?)\s*$/i);
   return m ? { answer: text.slice(0, m.index).trimEnd(), topic: m[1].replace(/[«»"*]/g, '').slice(0, 80) } : { answer: text };
 };
+
+// The photo check in local development; production uses supabase/functions/check-solution
+app.post('/api/check-solution', async (req, res) => {
+  const token = (req.headers.authorization || '').replace(/^Bearer /, '');
+  const { data: who } = token && sbPublic ? await sbPublic.auth.getUser(token) : { data: { user: null } };
+  if (!who.user || !sbAdmin) return res.status(401).json({ error: 'not_signed_in' });
+  const { data: sub } = await sbAdmin.from('subscriptions').select('status, expires_at, source').eq('user_id', who.user.id).maybeSingle();
+  if (!isPaidSub(sub)) return res.status(402).json({ error: 'paid_only' });
+  const photo = checkPhoto(req.body?.image);
+  if (!photo) return res.status(400).json({ error: 'bad_photo' });
+  if (!ai) return res.status(503).json({ error: 'failed' });
+  const ru = req.body?.lang !== 'en';
+  for (const model of [process.env.GEMINI_MODEL, ...CHECK_MODELS].filter(Boolean) as string[]) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: checkContents(photo, clip(req.body?.task, 1000).trim(), ru),
+        config: { systemInstruction: checkSystem(ru), ...CHECK_CONFIG } as any,
+      });
+      const check = response.text ? parseCheck(response.text) : null;
+      if (check) return res.json({ check, left: null });
+    } catch (error: any) {
+      if ((error?.status ?? error?.code) === 429) return res.status(503).json({ error: 'busy' });
+      console.warn(`[check-solution] ${model} failed:`, String(error?.message || error).slice(0, 200));
+    }
+  }
+  return res.status(503).json({ error: 'failed' });
+});
 
 app.post('/api/mentor', async (req, res) => {
   const body = req.body || {};

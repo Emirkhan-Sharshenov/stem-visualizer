@@ -9,6 +9,7 @@ import { Quiz } from './Quiz';
 import { DailyCard, SectionTests, TopicsBrowser } from './PracticeBlocks';
 import { ProblemTrainer } from './ProblemTrainer';
 import { OrtExam } from './OrtExam';
+import { SolutionCheck } from './SolutionCheck';
 import { MistakesReview } from './MistakesReview';
 import { questionDetail, useScreenDetail } from '../../lib/pageContext';
 import { gradeName } from '../../data/curriculum/index';
@@ -16,7 +17,7 @@ import { gradeName } from '../../data/curriculum/index';
 const SimById = lazy(() => import('../sims/SimById'));
 
 type Lang = 'ru' | 'en';
-type Tab = 'predict' | 'problems' | 'mistakes' | 'topics' | 'sections' | 'test' | 'ort';
+type Tab = 'predict' | 'problems' | 'check' | 'mistakes' | 'topics' | 'sections' | 'test' | 'ort';
 
 const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
   all: { ru: 'Все предметы', en: 'All subjects', color: '#2F5BFF' },
@@ -274,6 +275,7 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
           [
             ['predict', L('Предскажи, потом проверь', 'Predict, then check')],
             ['problems', L('Задачи', 'Problems')],
+            ['check', L('Проверка по фото ★', 'Photo check ★')],
             ['mistakes', L(`Работа над ошибками${dueCount ? ` · ${dueCount}` : ''} ★`, `Mistakes${dueCount ? ` · ${dueCount}` : ''} ★`)],
             ['topics', L('По темам', 'By topic')],
             ['sections', L('Тесты по разделам', 'Section tests')],
@@ -289,6 +291,8 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
 
       {tab === 'problems' ? (
         <ProblemTrainer lang={lang} onOpenTopic={onOpenTopic} />
+      ) : tab === 'check' ? (
+        <SolutionCheck lang={lang} />
       ) : tab === 'mistakes' ? (
         <MistakesReview lang={lang} onOpenTopic={onOpenTopic} />
       ) : tab === 'topics' ? (
