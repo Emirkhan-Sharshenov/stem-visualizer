@@ -3,6 +3,7 @@ import React, { lazy, Suspense, useState } from 'react';
 import { ArrowLeft, Calculator, Clock, ListChecks, Timer, Trophy } from 'lucide-react';
 import { BOARD_EXAMS, boardExam, type BoardExam, type BoardSubject, ORT_FORMATS, ORT_SUBJECT_MINUTES, OrtFormat, ortExam, Question } from '../../lib/quiz';
 import { ORT_SECTIONS, ortSavedRun, type OrtRunPlan, type OrtSectionId } from '../../lib/ort/sections';
+import { ORT_DRILLS, type OrtDrill } from '../../lib/ort/paper';
 import { localCurrency } from '../../lib/plan';
 import { progress, useProgress } from '../../lib/progress';
 import { usePlan } from '../../lib/plan';
@@ -11,6 +12,7 @@ import { Quiz } from './Quiz';
 import { OrtReadiness } from './OrtReadiness';
 
 const OrtMainRun = lazy(() => import('./OrtMain'));
+const OrtTraining = lazy(() => import('./OrtMain').then((m) => ({ default: m.OrtTraining })));
 
 type Lang = 'ru' | 'en';
 const SUBJ = [
@@ -30,6 +32,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
   // the main test everyone sits, or a subject test on top of it
   const [ortKind, setOrtKind] = useState<'main' | 'subject'>('main');
   const [mainRun, setMainRun] = useState<OrtRunPlan | null>(null);
+  const [drill, setDrill] = useState<OrtDrill | null>(null);
   const [run, setRun] = useState<{ qs: Question[]; seed: number; minutes: number; section: string } | null>(null);
   const { tests } = useProgress();
   const L = (ru: string, en: string) => (lang === 'ru' ? ru : en);
@@ -50,6 +53,8 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
   const start = () => {
     if (trialLeft <= 0) return window.dispatchEvent(new Event('open-pro'));
     const seed = Date.now() % 1000000;
+    // the full subject test runs like the real one: answer sheet, no answers until the end
+    if (exam === 'ort' && format === 'full') return setMainRun({ seed, sections: [`subj:${subject}`] });
     if (exam === 'ort') setRun({ seed, minutes: subjectMinutes(format), section: 'ort', qs: ortExam(subject, seed, format) });
     else setRun({ seed, minutes: BOARD_EXAMS[exam][subject as BoardSubject].minutes, section: exam, qs: boardExam(exam, subject as BoardSubject, seed) });
   };
@@ -60,10 +65,18 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
     setMainRun({ seed: Date.now() % 1000000, sections });
   };
 
+  if (drill && plan.pro) {
+    return (
+      <Suspense fallback={null}>
+        <OrtTraining key={drill} lang={lang} drill={drill} onExit={() => setDrill(null)} />
+      </Suspense>
+    );
+  }
+
   if (mainRun && plan.pro) {
     return (
       <Suspense fallback={null}>
-        <OrtMainRun key={mainRun.seed} lang={lang} plan={mainRun} onExit={() => setMainRun(null)} onRetry={() => setMainRun({ seed: Date.now() % 1000000, sections: mainRun.sections })} />
+        <OrtMainRun key={mainRun.seed} lang={lang} plan={mainRun} onExit={() => setMainRun(null)} onRetry={() => setMainRun({ seed: Date.now() % 1000000, sections: mainRun.sections })} onTrain={(d) => (setMainRun(null), setDrill(d))} />
       </Suspense>
     );
   }
@@ -158,6 +171,18 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
                 <Button size="lg" variant={saved ? 'outline' : 'primary'} className="text-sm font-medium" onPress={() => startMain(ORT_SECTIONS.map((s) => s.id))}>
                   {trialLeft <= 0 ? L('Продолжить с Pro', 'Continue with Pro') : L('Начать весь тест', 'Start the whole test')}
                 </Button>
+              </div>
+              <div className="border-t border-line pt-4">
+                <h3 className="font-serif text-xl text-ink">{L('Тренировка по типам заданий', 'Practice by kind of task')}</h3>
+                <p className="mt-1 text-sm text-ink-2">{L('Как решать каждый тип, и 10 заданий без таймера с разбором сразу.', 'How to tackle each kind, then 10 untimed tasks with the answer right away.')}</p>
+                <div className="mt-3 grid sm:grid-cols-2 gap-2">
+                  {ORT_DRILLS.map((d) => (
+                    <button key={d.id} type="button" onClick={() => setDrill(d.id)} className="text-left rounded-xl border border-line bg-surface hover:border-accent transition-colors p-3 cursor-pointer">
+                      <span className="block text-sm font-medium text-ink">{d[lang]}</span>
+                      <span className="mt-0.5 block text-xs text-ink-2">{d.tips[0]}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           ) : board ? (

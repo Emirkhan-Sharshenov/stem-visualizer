@@ -1,37 +1,12 @@
 import { rng, shuffle, type Option, type Question } from '../quiz';
+import { days, frac, gcd, int, lcm, num, pick, sub, T, type Compare, type Pick5, type R, type T2 } from './kit';
+import { COMPARE_MORE, FIGURE_COMPARE, FIGURE_PICK5, PICK5_MORE } from './mathMore';
 
 /* The maths part of the ORT main test: part 1 compares two quantities, part 2 picks one of five answers. The topics follow
    the official list in the CEEATM brochure for 2025 (arithmetic, algebra, geometry, trigonometry), and within each part the
    tasks go from easy to hard, as the brochure says. The tasks are generated here, none comes from the real paper. */
 
-type T2 = { ru: string; en: string };
-type R = () => number;
-const T = (ru: string, en: string = ru): T2 => ({ ru, en });
-const int = (r: R, lo: number, hi: number) => lo + Math.floor(r() * (hi - lo + 1));
-const pick = <V,>(r: R, list: readonly V[]) => list[Math.floor(r() * list.length)];
-const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : Math.abs(a));
-const lcm = (a: number, b: number) => (a * b) / gcd(a, b);
-/** a number the way a Russian paper writes it */
-const num = (v: number) => String(Math.round(v * 1000) / 1000).replace('.', ',').replace('-', '−');
-const frac = (a: number, b: number) => {
-  const g = gcd(a, b);
-  return b / g === 1 ? num(a / g) : `${num(a / g)}/${num(b / g)}`;
-};
-
-const days = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? 'день' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'дня' : 'дней');
-const sub = (n: number) => String(n).replace(/\d/g, (c) => '₀₁₂₃₄₅₆₇₈₉'[Number(c)]);
-
 /* ---------------- part 1: comparing two quantities ---------------- */
-
-interface Compare {
-  level: number;
-  given?: T2;
-  a: string | T2;
-  b: string | T2;
-  /** the two values, or null when the given facts don't settle it */
-  values: [number, number] | null;
-  why: T2;
-}
 
 const COMPARE_OPTIONS: Option[] = [
   T('Больше величина в колонке А', 'Column A is greater'),
@@ -40,7 +15,7 @@ const COMPARE_OPTIONS: Option[] = [
   T('По этим данным определить нельзя', 'Cannot be determined from the information given'),
 ];
 
-const COMPARE: ((r: R) => Compare)[] = [
+const COMPARE_BASE: ((r: R) => Compare)[] = [
   (r) => {
     const [p, q] = pick(r, [[1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [1, 8], [3, 8], [7, 10]] as const);
     const v = p / q;
@@ -167,20 +142,14 @@ function compareQuestion(c: Compare, id: string): Question {
     options: COMPARE_OPTIONS,
     correct,
     explain: c.why,
+    figure: c.figure,
+    columns: { given: c.given, a: typeof c.a === 'string' ? T(c.a) : c.a, b: typeof c.b === 'string' ? T(c.b) : c.b },
   };
 }
 
 /* ---------------- part 2: one of five answers ---------------- */
 
-interface Pick5 {
-  level: number;
-  prompt: T2;
-  /** the right answer first, then wrong ones; duplicates are thrown out and replaced */
-  answers: string[];
-  why: T2;
-}
-
-const PICK5: ((r: R) => Pick5)[] = [
+const PICK5_BASE: ((r: R) => Pick5)[] = [
   (r) => {
     const price = pick(r, [200, 400, 500, 800, 1000, 1200]);
     const pct = pick(r, [10, 20, 25, 30, 50]);
@@ -366,7 +335,7 @@ function pick5Question(p: Pick5, r: R, id: string): Question {
     }
   }
   const options = shuffle(unique.slice(0, 5), r);
-  return { id, topicId: '', prompt: p.prompt, options: options.map((s) => T(s)), correct: options.indexOf(unique[0]), explain: p.why };
+  return { id, topicId: '', prompt: p.prompt, options: options.map((s) => T(s)), correct: options.indexOf(unique[0]), explain: p.why, figure: p.figure };
 }
 
 /* ---------------- a paper ---------------- */
@@ -387,6 +356,9 @@ function take<V extends { level: number }>(gens: ((r: R) => V)[], count: number,
   return out.sort((a, b) => a.level - b.level);
 }
 
+const COMPARE = [...COMPARE_BASE, ...COMPARE_MORE, ...FIGURE_COMPARE];
+const PICK5 = [...PICK5_BASE, ...PICK5_MORE, ...FIGURE_PICK5];
+
 /** the brochure gives two parts and 60 tasks in all; the even split is ours */
 export const MATH_PART = 30;
 
@@ -398,4 +370,14 @@ export function ortMathPart1(seed: number, count = MATH_PART): Question[] {
 export function ortMathPart2(seed: number, count = MATH_PART): Question[] {
   const r = rng(seed ^ 0x7a3b);
   return take(PICK5, count, r).map((p, k) => pick5Question(p, r, `ort-math2-${seed}-${k}`));
+}
+
+/** practice on drawings, charts and graphs only: comparisons and five-option tasks mixed */
+export function ortMathFigures(seed: number, count = 10): { compare: Question[]; pick5: Question[] } {
+  const r = rng(seed ^ 0x2f19);
+  const half = Math.ceil(count / 2);
+  return {
+    compare: take(FIGURE_COMPARE, count - half, r).map((c, k) => compareQuestion(c, `ort-fig1-${seed}-${k}`)),
+    pick5: take(FIGURE_PICK5, half, r).map((p, k) => pick5Question(p, r, `ort-fig2-${seed}-${k}`)),
+  };
 }

@@ -16,6 +16,12 @@ export interface Question {
   correct: number;
   /** worked solution shown after answering */
   explain?: T2;
+  /** a drawing, chart or graph that comes with the task (SVG markup made by the site, never user input) */
+  figure?: string;
+  /** the text a reading question is about */
+  passage?: { title: string; text: string };
+  /** a comparison task: what is given, then the two quantities to compare in columns A and B */
+  columns?: { given?: T2; a: T2; b: T2 };
 }
 
 /** small deterministic RNG so a quiz is stable between renders */

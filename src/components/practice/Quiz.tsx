@@ -7,8 +7,12 @@ import { topicById } from '../../data/curriculum';
 import { Formula } from '../Formula';
 import { progress } from '../../lib/progress';
 import { questionDetail, useScreenDetail } from '../../lib/pageContext';
+import { letter, OrtTaskBody } from './OrtTask';
 
 type Lang = 'ru' | 'en';
+
+/** a task's drawing: SVG the site generates itself, drawn in the text colour */
+export const Figure: React.FC<{ svg: string }> = ({ svg }) => <div className="text-ink [&_svg]:mx-auto [&_svg]:h-auto" dangerouslySetInnerHTML={{ __html: svg }} />;
 
 /** One-question-at-a-time quiz with instant feedback, optional timer and a review at the end */
 export const Quiz: React.FC<{
@@ -19,7 +23,9 @@ export const Quiz: React.FC<{
   onRetry?: () => void;
   onOpenTopic?: (id: string) => void;
   passMark?: number;
-}> = ({ lang, questions, timeLimit, onFinish, onRetry, onOpenTopic, passMark = 0.75 }) => {
+  /** set the task out as the ORT booklet does: boxed columns, I–II–III on lines, options (А)…(Д) */
+  ort?: boolean;
+}> = ({ lang, questions, timeLimit, onFinish, onRetry, onOpenTopic, passMark = 0.75, ort }) => {
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState<(number | null)[]>(() => questions.map(() => null));
   const [done, setDone] = useState(false);
@@ -40,7 +46,7 @@ export const Quiz: React.FC<{
   const finish = () => {
     if (done) return;
     setDone(true);
-    progress.recordMistakes(questions.filter((q, k) => picked[k] !== null && picked[k] !== q.correct));
+    progress.recordMistakes(questions.filter((q, k) => !q.passage && picked[k] !== null && picked[k] !== q.correct));
     onFinish(score, questions.length, Math.floor((Date.now() - start) / 1000));
   };
 
@@ -122,7 +128,36 @@ export const Quiz: React.FC<{
           </span>
         )}
       </div>
-      <h3 key={`h${i}`} className="font-serif text-xl text-ink leading-snug anim-q">{q.prompt[lang]}</h3>
+      {q.passage && (i === 0 || questions[i - 1].passage?.title !== q.passage.title) && (
+        <article className="bg-surface border border-line rounded-xl p-5 max-h-80 overflow-y-auto">
+          <h4 className="font-serif text-lg text-ink">{q.passage.title}</h4>
+          <div className="mt-2 flex flex-col gap-3 text-[15px] leading-relaxed text-ink">
+            {q.passage.text.split('\n\n').map((p, k) => (
+              <p key={k}>{p}</p>
+            ))}
+          </div>
+        </article>
+      )}
+      {q.passage && i > 0 && questions[i - 1].passage?.title === q.passage.title && (
+        <details className="text-sm text-ink-2">
+          <summary className="cursor-pointer">{L(`Текст «${q.passage.title}»`, `Text “${q.passage.title}”`)}</summary>
+          <div className="mt-2 flex flex-col gap-3 text-[15px] leading-relaxed text-ink">
+            {q.passage.text.split('\n\n').map((p, k) => (
+              <p key={k}>{p}</p>
+            ))}
+          </div>
+        </details>
+      )}
+      {ort ? (
+        <div key={`h${i}`} className="anim-q">
+          <OrtTaskBody q={q} lang={lang} n={i + 1} />
+        </div>
+      ) : (
+        <>
+          <h3 key={`h${i}`} className="font-serif text-xl text-ink leading-snug anim-q">{q.prompt[lang]}</h3>
+          {q.figure && <Figure svg={q.figure} />}
+        </>
+      )}
       <div key={`o${i}`} className="flex flex-col gap-2 anim-stagger">
         {q.options.map((o, k) => {
           const chosen = answer === k;
@@ -143,7 +178,7 @@ export const Quiz: React.FC<{
                       : 'bg-surface border-line text-ink-3'
               }`}
             >
-              <span className="font-mono text-xs text-ink-3 mr-2">{String.fromCharCode(65 + k)}</span>
+              <span className={ort ? 'font-semibold mr-2' : 'font-mono text-xs text-ink-3 mr-2'}>{ort ? `(${letter(k, lang)})` : String.fromCharCode(65 + k)}</span>
               {o.tex ? <Formula tex={o.ru} /> : o[lang]}
             </button>
           );

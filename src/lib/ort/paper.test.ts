@@ -1,5 +1,5 @@
 /* Checks the ORT main test bank. Run: npx tsx src/lib/ort/paper.test.ts */
-import { ortSection } from './paper';
+import { ORT_DRILLS, ortDrill, ortSection } from './paper';
 import { ORT_SECTIONS } from './sections';
 import { PASSAGES } from './reading';
 import { ANALOGIES, COMPLETIONS, GRAMMAR } from './verbal';
@@ -59,6 +59,32 @@ for (const r of COMPLETIONS) {
   for (const a of r.slice(1, 5)) ok(a.split(' / ').length === gaps, `· completion «${r[0]}»: «${a}» fills ${a.split(' / ').length} of ${gaps} gaps`);
 }
 ok(PASSAGES.every((p) => p.questions.length === 8), `${PASSAGES.length} texts with 8 questions each`);
+
+// drills: every kind gives tasks with valid answers, and the drawings are present where promised
+for (const d of ORT_DRILLS) {
+  for (let seed = 1; seed <= 40; seed++) {
+    const qs = ortDrill(d.id, seed * 17);
+    ok(qs.length >= 8, `· drill ${d.id} seed ${seed}: ${qs.length} tasks`);
+    for (const q of qs) {
+      const texts = q.options.map((o) => o.ru);
+      ok(new Set(texts).size === texts.length && q.correct >= 0 && q.correct < texts.length, `· drill ${d.id}: bad options ${texts.join(' | ')}: ${q.prompt.ru}`);
+      ok(!/undefined|NaN|Infinity/.test(`${q.prompt.ru} ${texts.join(' ')} ${q.explain?.ru} ${q.figure ?? ''}`), `· drill ${d.id}: bad text ${q.prompt.ru} ${texts.join(' | ')}`);
+    }
+    if (d.id === 'figure') ok(qs.every((q) => q.figure?.startsWith('<svg')), `· figure drill seed ${seed}: every task has a drawing`);
+    if (d.id === 'reading') ok(qs.every((q) => q.passage), `· reading drill seed ${seed}: every task has its text`);
+  }
+  ok(true, `drill ${d.id}: 40 sets checked`);
+}
+// a full maths section now mixes in drawings
+ok(Array.from({ length: 20 }, (_, s) => ortSection('math', s + 1).filter((q) => q.figure).length).every((n) => n >= 2), 'every maths paper has tasks with drawings');
+
+// subject tests: 40 tasks of four or five options each, the same for a seed
+for (const subj of ['physics', 'chemistry', 'biology', 'mathematics']) {
+  const qs = ortSection(`subj:${subj}`, 4242);
+  ok(qs.length === 40 && qs.every((q) => q.options.length >= 4 && q.options.length <= 5 && q.correct >= 0 && q.correct < q.options.length), `subject ${subj}: ${qs.length} tasks with 4–5 options`);
+}
+// comparisons carry their two columns for the booklet layout
+ok(ortSection('math', 3).filter((q) => q.kind === 'compare').every((q) => q.columns?.a.ru && q.columns.b.ru), 'every comparison has columns A and B');
 
 console.log(failed ? `\n${failed} failed` : '\nall passed');
 process.exit(failed ? 1 : 0);

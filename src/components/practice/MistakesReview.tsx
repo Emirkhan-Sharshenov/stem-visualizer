@@ -4,6 +4,7 @@ import { Check, NotebookPen, X } from 'lucide-react';
 import { progress, REVIEW_DAYS, useProgress } from '../../lib/progress';
 import { usePlan } from '../../lib/plan';
 import { topicById } from '../../data/curriculum';
+import { Figure } from './Quiz';
 import { ProGate } from '../pro/ProPage';
 import { Formula } from '../Formula';
 import { questionDetail, useScreenDetail } from '../../lib/pageContext';
@@ -41,6 +42,7 @@ export const MistakesReview: React.FC<{ lang: Lang; onOpenTopic: (id: string) =>
               <span>{L(`ошибок: ${card.misses}`, `missed ${card.misses}×`)}</span>
             </div>
             <p className="font-serif text-xl leading-snug text-ink">{card.q.prompt[lang]}</p>
+            {card.q.figure && <Figure svg={card.q.figure} />}
             <div className="grid sm:grid-cols-2 gap-2">
               {card.q.options.map((o, k) => {
                 const state = answer === null ? 'idle' : k === card.q.correct ? 'right' : k === answer ? 'wrong' : 'dim';
