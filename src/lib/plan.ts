@@ -89,6 +89,8 @@ export async function openCheckout(period: 'month' | 'year', email: string, onPa
     billing_cycle: period === 'month' ? 'monthly' : 'annual',
     user_email: email,
     readonly_user: true,
+    // the checkout in the buyer's language where Freemius has it, English otherwise
+    language: 'auto',
     success: onPaid,
   });
 }
