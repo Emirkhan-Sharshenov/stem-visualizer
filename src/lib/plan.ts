@@ -138,7 +138,8 @@ export function usePlan(): Plan {
         if (!alive) return;
         const exp = data?.expires_at ? new Date(data.expires_at) : null;
         const active = !!data && data.status === 'active' && !!exp && exp > new Date();
-        setState({ pro: active, plan: active ? data!.plan : null, expiresAt: exp, trial: active && data!.source === 'trial', canTrial: !data && !error, loading: false });
+        // free weeks are over: a running one still counts as Pro until it ends, but no new one can start
+        setState({ pro: active, plan: active ? data!.plan : null, expiresAt: exp, trial: active && data!.source === 'trial', canTrial: false, loading: false });
       });
     return () => {
       alive = false;
@@ -147,13 +148,9 @@ export function usePlan(): Plan {
   return { ...state, refresh: () => setTick((n) => n + 1) };
 }
 
-/** starts the free week of Pro (once per account; the server checks) and returns when it ends */
+/** the free week of Pro is no longer offered; kept so a stale call fails cleanly */
 export async function startTrial(): Promise<Date> {
-  if (!supabase) throw new Error('offline');
-  const { data, error } = await supabase.rpc('start_trial');
-  if (error) throw error;
-  planChanged();
-  return new Date(data as string);
+  throw new Error('trial_closed');
 }
 
 /** the learner's secret link for a parent: progress and a pay button */

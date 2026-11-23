@@ -165,30 +165,6 @@ export const ProPage: React.FC<{ lang: Lang; onNavigate: (mode: 'practice' | 'pr
         </p>
       </header>
 
-      {!plan.pro && !plan.loading && (plan.canTrial || (ready && !user && cloudEnabled)) && (
-        <div className="max-w-3xl mx-auto w-full rounded-2xl border-2 border-accent bg-surface px-5 py-4 flex flex-wrap items-center justify-between gap-3">
-          <span className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-xl bg-accent-soft text-accent flex items-center justify-center shrink-0">
-              <Gift className="w-5 h-5" strokeWidth={1.75} />
-            </span>
-            <span>
-              <span className="block text-[16px] font-medium text-ink">{L('Попробуй Pro неделю бесплатно', 'Try Pro free for a week')}</span>
-              <span className="block text-sm text-ink-2">{L('Без карты. Через 7 дней Pro просто выключится, ничего не спишется.', 'No card. After 7 days Pro just switches off; nothing is charged.')}</span>
-              <span className="block text-xs text-ink-3 mt-0.5">{L('Входит: наставник без лимита, работа над ошибками, план, готовность к экзаменам, 2 пробных экзамена и 5 уроков гайда по функциям. Только в полном Pro: проверка решения по фото, скины Pro, скачивание презентаций и расширенный конструктор контрольных.', 'Includes: unlimited mentor, mistake review, plan, exam readiness, 2 mock exams and 5 guide lessons. Full Pro only: solution check from a photo, Pro skins, presentation downloads and the bigger test builder.')}</span>
-            </span>
-          </span>
-          {user ? (
-            <Button className="text-sm font-medium" onPress={tryFree} isDisabled={trialBusy}>
-              {trialBusy && <Loader2 className="w-4 h-4 animate-spin" />}
-              {L('Включить бесплатно', 'Start free week')}
-            </Button>
-          ) : (
-            <Button className="text-sm font-medium" onPress={() => (window.location.hash = '#/register')}>
-              {L('Зарегистрироваться', 'Sign up')}
-            </Button>
-          )}
-        </div>
-      )}
 
       {plan.pro && plan.expiresAt && (
         <div className="max-w-3xl mx-auto w-full rounded-xl bg-[#EAF6EF] border border-[#BFE3CC] px-5 py-4 flex flex-wrap items-center justify-between gap-3">

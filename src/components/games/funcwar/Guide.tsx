@@ -235,8 +235,8 @@ export const Guide: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onEx
         </h1>
         <p className="mt-1 text-sm text-ink-2">
           {L(
-            `${CHAPTERS.length} уроков: каждая функция — что это, как выглядит график, что делают параметры и как с ней выигрывать. Бесплатно — ${free} урока, в пробную неделю — ${trial}, в Pro — все.`,
-            `${CHAPTERS.length} lessons: each function — what it is, its graph, its parameters and how to win with it. Free: ${free}; the free week: ${trial}; Pro: all.`,
+            `${CHAPTERS.length} уроков: каждая функция — что это, как выглядит график, что делают параметры и как с ней выигрывать. Бесплатно — ${free} урока, в Pro — все.`,
+            `${CHAPTERS.length} lessons: each function — what it is, its graph, its parameters and how to win with it. Free: ${free}; Pro: all.`,
           )}
         </p>
       </header>

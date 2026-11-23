@@ -7,7 +7,6 @@ import { ORT_DRILLS, type OrtDrill } from '../../lib/ort/paper';
 import { localCurrency } from '../../lib/plan';
 import { progress, useProgress } from '../../lib/progress';
 import { usePlan } from '../../lib/plan';
-import { ProGate } from '../pro/ProPage';
 import { Quiz } from './Quiz';
 import { OrtReadiness } from './OrtReadiness';
 
@@ -46,12 +45,37 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
     { id: 'quick', icon: <Timer className="w-4 h-4" />, ru: 'Экспресс', en: 'Quick', dru: 'Быстрая проверка за перемену', den: 'A check in a break' },
     { id: 'problems', icon: <Calculator className="w-4 h-4" />, ru: 'Только задачи', en: 'Problems only', dru: 'Одни расчёты, от простых к сложным', den: 'Calculations only, easy to hard' },
   ];
-  // the free week includes two mock exams; paid Pro has no limit
+  // without Pro: one practice set a day and one section of the main test, to see how it works; the rest is Pro
+  const freeUsed = (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  };
+  const useFree = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // still allowed this time
+    }
+  };
+  const today = new Date().toISOString().slice(0, 10);
+  const freeDrill = !plan.pro && freeUsed('stem-ort-free-drill') !== today;
+  const freeSection = !plan.pro && !freeUsed('stem-ort-free-section');
+  const toPro = () => window.dispatchEvent(new Event('open-pro'));
+  const openDrill = (d: OrtDrill) => {
+    if (plan.pro) return setDrill(d);
+    if (!freeDrill) return toPro();
+    useFree('stem-ort-free-drill', today);
+    setDrill(d);
+  };
+  // a free week that is still running keeps its two mock exams
   const TRIAL_EXAMS = 2;
   const trialFrom = plan.trial && plan.expiresAt ? plan.expiresAt.getTime() - 7 * 864e5 : 0;
   const trialLeft = plan.trial ? Math.max(0, TRIAL_EXAMS - past.filter((t) => t.at >= trialFrom).length) : Infinity;
   const start = () => {
-    if (trialLeft <= 0) return window.dispatchEvent(new Event('open-pro'));
+    if (!plan.pro || trialLeft <= 0) return toPro();
     const seed = Date.now() % 1000000;
     // the full subject test runs like the real one: answer sheet, no answers until the end
     if (exam === 'ort' && format === 'full') return setMainRun({ seed, sections: [`subj:${subject}`] });
@@ -61,11 +85,14 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
 
   const startMain = (sections: OrtSectionId[]) => {
     // only the full test uses up one of the free week's mock exams; practising a section doesn't
-    if (sections.length > 1 && trialLeft <= 0) return window.dispatchEvent(new Event('open-pro'));
+    if (!plan.pro) {
+      if (sections.length > 1 || !freeSection) return toPro();
+      useFree('stem-ort-free-section', today);
+    } else if (sections.length > 1 && trialLeft <= 0) return toPro();
     setMainRun({ seed: Date.now() % 1000000, sections });
   };
 
-  if (drill && plan.pro) {
+  if (drill) {
     return (
       <Suspense fallback={null}>
         <OrtTraining key={drill} lang={lang} drill={drill} onExit={() => setDrill(null)} />
@@ -73,7 +100,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
     );
   }
 
-  if (mainRun && plan.pro) {
+  if (mainRun) {
     return (
       <Suspense fallback={null}>
         <OrtMainRun key={mainRun.seed} lang={lang} plan={mainRun} onExit={() => setMainRun(null)} onRetry={() => setMainRun({ seed: Date.now() % 1000000, sections: mainRun.sections })} onTrain={(d) => (setMainRun(null), setDrill(d))} />
@@ -81,7 +108,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
     );
   }
 
-  if (run && plan.pro) {
+  if (run) {
     return (
       <div className="flex flex-col gap-4 max-w-3xl">
         <Button variant="ghost" className="self-start text-sm" onPress={() => setRun(null)}>
@@ -103,15 +130,20 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
   }
 
   return (
-    <ProGate
-      lang={lang}
-      pro={plan.pro}
-      onUpgrade={() => window.dispatchEvent(new Event('open-pro'))}
-      title={L('Пробные ОРТ, ОГЭ и ЕГЭ — в Pro', 'Mock ORT, OGE and EGE are part of Pro')}
-      text={L('Полный вариант на время с разбором ошибок: основной и предметные тесты ОРТ, ОГЭ или ЕГЭ по числу заданий и времени настоящего экзамена, плюс процент готовности и темы, которые нужно подтянуть.', 'Full timed papers with review — ORT, OGE or EGE with the real number of tasks and time — plus your readiness and the topics to fix first.')}
-    >
+    <>
       <div className="flex flex-col gap-5">
-      <OrtReadiness lang={lang} onOpenTopic={onOpenTopic} />
+      {plan.pro ? (
+        <OrtReadiness lang={lang} onOpenTopic={onOpenTopic} />
+      ) : (
+        <div className="rounded-xl border-2 border-accent bg-surface p-4 flex flex-wrap items-center gap-3">
+          <p className="flex-1 min-w-[240px] text-sm text-ink">
+            {L('Бесплатно: одна тренировка по типу заданий в день и один раздел основного теста ОРТ. Полный ОРТ, предметные тесты, ОГЭ и ЕГЭ — в Pro.', 'Free: one practice set a day and one section of the ORT main test. The full ORT, subject tests, OGE and EGE are in Pro.')}
+          </p>
+          <Button size="sm" className="text-sm font-medium" onPress={toPro}>
+            {L('Открыть всё в Pro', 'Unlock everything with Pro')}
+          </Button>
+        </div>
+      )}
       <div className="grid lg:grid-cols-[1fr_320px] gap-5 items-start">
         <div className="bg-surface border border-line rounded-xl p-5 sm:p-6 flex flex-col gap-5">
           <div className="flex flex-wrap gap-1.5">
@@ -157,7 +189,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
                       </p>
                     </div>
                     <Button size="sm" variant="outline" className="text-xs" onPress={() => startMain([s.id])}>
-                      {L('Только этот раздел', 'This section only')}
+                      {plan.pro || freeSection ? L('Только этот раздел', 'This section only') : L('Раздел — в Pro', 'Section in Pro')}
                     </Button>
                   </li>
                 ))}
@@ -169,7 +201,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
                   </Button>
                 )}
                 <Button size="lg" variant={saved ? 'outline' : 'primary'} className="text-sm font-medium" onPress={() => startMain(ORT_SECTIONS.map((s) => s.id))}>
-                  {trialLeft <= 0 ? L('Продолжить с Pro', 'Continue with Pro') : L('Начать весь тест', 'Start the whole test')}
+                  {!plan.pro || trialLeft <= 0 ? L('Весь тест — в Pro', 'Whole test in Pro') : L('Начать весь тест', 'Start the whole test')}
                 </Button>
               </div>
               <div className="border-t border-line pt-4">
@@ -177,7 +209,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
                 <p className="mt-1 text-sm text-ink-2">{L('Как решать каждый тип, и 10 заданий без таймера с разбором сразу.', 'How to tackle each kind, then 10 untimed tasks with the answer right away.')}</p>
                 <div className="mt-3 grid sm:grid-cols-2 gap-2">
                   {ORT_DRILLS.map((d) => (
-                    <button key={d.id} type="button" onClick={() => setDrill(d.id)} className="text-left rounded-xl border border-line bg-surface hover:border-accent transition-colors p-3 cursor-pointer">
+                    <button key={d.id} type="button" onClick={() => openDrill(d.id)} className="text-left rounded-xl border border-line bg-surface hover:border-accent transition-colors p-3 cursor-pointer">
                       <span className="block text-sm font-medium text-ink">{d[lang]}</span>
                       <span className="mt-0.5 block text-xs text-ink-2">{d.tips[0]}</span>
                     </button>
@@ -251,7 +283,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
             </span>
           </div>
           <Button size="lg" className="self-start text-sm font-medium" onPress={() => start()}>
-            {trialLeft <= 0 ? L('Продолжить с Pro', 'Continue with Pro') : L('Начать экзамен', 'Start the exam')}
+            {!plan.pro || trialLeft <= 0 ? L('Экзамен — в Pro', 'Exam in Pro') : L('Начать экзамен', 'Start the exam')}
           </Button>
           </>
           )}
@@ -282,7 +314,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
         </aside>
       </div>
       </div>
-    </ProGate>
+    </>
   );
 };
 
