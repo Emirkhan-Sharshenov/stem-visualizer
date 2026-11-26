@@ -17,7 +17,7 @@ const SUBJ_NAME: Record<string, { ru: string; en: string }> = {
   mathematics: { ru: 'Математика', en: 'Maths' },
   astronomy: { ru: 'Астрономия', en: 'Astronomy' },
 };
-const ACCENTS = ['#2F5BFF', '#16171A', '#E5484D', '#30A46C', '#8E4EC6', '#F76B15', '#0EA5A4'];
+const ACCENTS = ['#5B4BFF', '#16171A', '#E5484D', '#30A46C', '#8E4EC6', '#F76B15', '#0EA5A4'];
 const TEMPLATES_KEY = 'stem-testgen-templates';
 const LIMITS = { free: { variants: 1, count: 10 }, pro: { variants: 3, count: 25 }, teacher: { variants: 8, count: 40 } };
 

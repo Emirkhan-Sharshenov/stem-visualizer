@@ -1,229 +1,208 @@
 import { RangeSlider } from './ui/RangeSlider';
-import { Button } from '@heroui/react';
-import React, { useState } from 'react';
-import { HelpCircle, RotateCcw, Scale, Zap } from 'lucide-react';
+import { SimShell } from './ui/SimShell';
+import React, { useEffect, useRef, useState } from 'react';
+import { fitCanvas } from '../lib/canvas';
+import { clamp01, drawStage, glow, pill, runStage, STAGE } from '../lib/stage';
 
 interface MomentLeverProps {
   lang: 'ru' | 'en';
 }
 
+// the scene (canvas 800×360): a beam on a fulcrum with a load hanging on each side
+const FX = 400;
+const FY = 150;
+const PPM = 80; // pixels per metre along the beam
+const HALF = 4; // m each side
+const MAX_TILT = (16 * Math.PI) / 180;
+const G = 9.8;
+const fmt = (x: number, d: number, ru: boolean) => (ru ? x.toFixed(d).replace('.', ',') : x.toFixed(d));
+
 export const MomentLever: React.FC<MomentLeverProps> = ({ lang }) => {
-  const [m1, setM1] = useState<number>(30); // kg
-  const [l1, setL1] = useState<number>(2.0); // meters
-  const [m2, setM2] = useState<number>(15); // kg
-  const [l2, setL2] = useState<number>(4.0); // meters
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [m1, setM1] = useState(30);
+  const [l1, setL1] = useState(2);
+  const [m2, setM2] = useState(15);
+  const [l2, setL2] = useState(3);
 
-  // Torque / Moment of force
-  const g = 9.8;
-  const torque1 = m1 * g * l1;
-  const torque2 = m2 * g * l2;
-  const netTorque = torque1 - torque2;
+  const live = useRef({ m1, l1, m2, l2, lang });
+  live.current = { m1, l1, m2, l2, lang };
 
-  // Visual tilt angle (capped between -20 and +20 degrees)
-  const tiltAngle = Math.max(-18, Math.min(18, (netTorque / 150) * 12));
-  const isBalanced = Math.abs(netTorque) < 5;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const s = { th: 0, om: 0, sw1: 0, sv1: 0, sw2: 0, sv2: 0, prevOm: 0 };
 
+    return runStage(canvas, (dt, t, still) => {
+      const { w, h } = fitCanvas(canvas, ctx);
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const M1 = L.m1 * G * L.l1;
+      const M2 = L.m2 * G * L.l2;
+      const net = M1 - M2; // positive turns the left side down
+
+      // the beam: I·θ'' = net torque · cos θ − damping; it rests on the ground at ±16°
+      const I = L.m1 * L.l1 * L.l1 + L.m2 * L.l2 * L.l2 + 40;
+      if (still) s.th = Math.abs(net) < 5 ? 0 : -Math.sign(net) * MAX_TILT;
+      else {
+        const acc = ((-net * Math.cos(s.th)) / I) * 0.9 - 1.6 * s.om;
+        s.om += acc * dt;
+        s.th += s.om * dt;
+        if (Math.abs(s.th) > MAX_TILT) {
+          s.th = Math.sign(s.th) * MAX_TILT;
+          s.om = -s.om * 0.25; // a small knock on the ground
+        }
+        // the loads swing a little when the beam jerks
+        const kick = (s.om - s.prevOm) / Math.max(dt, 1e-3);
+        s.prevOm = s.om;
+        for (const k of [1, 2] as const) {
+          const key = k === 1 ? 'sw1' : 'sw2';
+          const vk = k === 1 ? 'sv1' : 'sv2';
+          s[vk] += (-18 * s[key] - 1.8 * s[vk] - kick * 0.02) * dt;
+          s[key] += s[vk] * dt;
+        }
+      }
+
+      drawStage(ctx, w, h, { x: FX, y: FY });
+
+      // ground and the fulcrum
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.beginPath();
+      ctx.roundRect(FX - 70, FY + 98, 140, 10, 5);
+      ctx.fill();
+      const fg = ctx.createLinearGradient(FX - 30, 0, FX + 30, 0);
+      fg.addColorStop(0, '#4A5068');
+      fg.addColorStop(0.5, '#A8B0C6');
+      fg.addColorStop(1, '#3A4058');
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.moveTo(FX, FY + 6);
+      ctx.lineTo(FX - 34, FY + 98);
+      ctx.lineTo(FX + 34, FY + 98);
+      ctx.closePath();
+      ctx.fill();
+
+      // the beam with metre marks
+      const cos = Math.cos(s.th);
+      const sin = Math.sin(s.th);
+      const at = (d: number) => [FX + d * PPM * cos, FY + d * PPM * sin] as const; // d < 0 is the left side
+      const balanced = Math.abs(net) < 5;
+      ctx.save();
+      ctx.translate(FX, FY);
+      ctx.rotate(s.th);
+      const bg = ctx.createLinearGradient(0, -9, 0, 9);
+      bg.addColorStop(0, '#E9D2A6');
+      bg.addColorStop(0.5, '#C9A26A');
+      bg.addColorStop(1, '#8C6A3C');
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.roundRect(-HALF * PPM - 10, -8, HALF * PPM * 2 + 20, 16, 6);
+      ctx.fill();
+      for (let d = -HALF; d <= HALF; d++) {
+        ctx.fillStyle = 'rgba(60,40,20,0.5)';
+        ctx.fillRect(d * PPM - 0.75, -8, 1.5, d === 0 ? 16 : 7);
+      }
+      ctx.restore();
+      if (balanced) glow(ctx, FX, FY, 200, '80,220,140', 0.18);
+
+      // loads: ropes from the beam and a weight whose size follows its mass
+      const load = (d: number, m: number, swing: number, col: string) => {
+        const [ax, ay] = at(d);
+        const rope = 44;
+        const bx = ax + Math.sin(swing) * rope;
+        const by = ay + Math.cos(swing) * rope;
+        ctx.strokeStyle = 'rgba(230,236,250,0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+        const sz = 18 + Math.cbrt(m) * 9;
+        const g = ctx.createLinearGradient(bx - sz / 2, 0, bx + sz / 2, 0);
+        g.addColorStop(0, `${col}AA`);
+        g.addColorStop(0.45, col);
+        g.addColorStop(1, `${col}88`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.roundRect(bx - sz / 2, by, sz, sz * 0.9, 6);
+        ctx.fill();
+        ctx.fillStyle = '#0B0E18';
+        ctx.font = `800 12px ${STAGE.font}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${m} ${ru ? 'кг' : 'kg'}`, bx, by + sz * 0.45);
+        // the arm, measured along the beam
+        const [mx, my] = at(d / 2);
+        pill(ctx, mx, my - 26, `l = ${fmt(Math.abs(d), 1, ru)} ${ru ? 'м' : 'm'}`, col);
+      };
+      load(-L.l1, L.m1, s.sw1, '#9B8CFF');
+      load(L.l2, L.m2, s.sw2, '#5FDDFF');
+
+      // the two moments as arcs round the fulcrum: the bigger one wins
+      const arc = (dir: 1 | -1, M: number, col: string) => {
+        const span = 0.25 + clamp01(M / 1200) * 1.6;
+        const r = 46;
+        const a0 = -Math.PI / 2;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(FX, FY, r, a0, a0 - dir * span, dir === 1);
+        ctx.stroke();
+        const ae = a0 - dir * span;
+        const ex = FX + r * Math.cos(ae);
+        const ey = FY + r * Math.sin(ae);
+        const tx = -Math.sin(ae) * -dir;
+        const ty = Math.cos(ae) * -dir;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(ex + tx * 9, ey + ty * 9);
+        ctx.lineTo(ex - ty * 6, ey + tx * 6);
+        ctx.lineTo(ex + ty * 6, ey - tx * 6);
+        ctx.closePath();
+        ctx.fill();
+      };
+      arc(1, M1, '#9B8CFF');
+      arc(-1, M2, '#5FDDFF');
+
+      pill(
+        ctx,
+        FX,
+        34,
+        balanced ? (ru ? 'равновесие: F₁·l₁ = F₂·l₂' : 'balance: F₁·l₁ = F₂·l₂') : net > 0 ? (ru ? 'перевешивает левая сторона' : 'the left side wins') : ru ? 'перевешивает правая сторона' : 'the right side wins',
+        balanced ? '#6FE3A0' : STAGE.ink,
+      );
+      void t;
+    });
+  }, []);
+
+  const ru = lang === 'ru';
+  const M1 = m1 * G * l1;
+  const M2 = m2 * G * l2;
+  const balanced = Math.abs(M1 - M2) < 5;
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full max-w-7xl mx-auto py-2">
-      {/* Simulation Stage */}
-      <div className="flex-1 flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        {/* Header Bar */}
-        <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <Scale className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{lang === 'ru' ? 'Рычаг Архимеда: Правило моментов' : 'The Lever Rule: Torque Equilibrium'}</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-800">
-                  {lang === 'ru' ? '5-6 Класс' : 'Grade 5-6'}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ru' ? 'F₁ · L₁ = F₂ · L₂ — «Дайте мне точку опоры, и я переверну Землю»' : 'F₁ · L₁ = F₂ · L₂ — Give me a place to stand and I will move the Earth'}
-              </p>
-            </div>
-          </div>
-
-          <Button variant="outline" size="sm" className="text-xs font-semibold" onPress={() => { setM1(30); setL1(2); setM2(15); setL2(4); }}>
-            <RotateCcw className="w-4 h-4" />
-            <span>{lang === 'ru' ? 'Сброс' : 'Reset'}</span>
-          </Button>
-        </div>
-
-        {/* Live Gauges Bar */}
-        <div className="px-4 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex items-center justify-between text-xs font-mono">
-          <div className="flex items-center gap-6">
-            <span>
-              {lang === 'ru' ? 'Момент слева M₁:' : 'Left Torque M₁:'}{' '}
-              <strong className="text-cyan-400">{torque1.toFixed(0)} {lang === 'ru' ? 'Н·м' : 'N·m'}</strong>
-            </span>
-            <span>
-              {lang === 'ru' ? 'Момент справа M₂:' : 'Right Torque M₂:'}{' '}
-              <strong className="text-amber-400">{torque2.toFixed(0)} {lang === 'ru' ? 'Н·м' : 'N·m'}</strong>
-            </span>
-          </div>
-
-          <span className={`px-2.5 py-0.5 rounded font-bold ${
-            isBalanced ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'
-          }`}>
-            {isBalanced ? (lang === 'ru' ? 'РАВНОВЕСИЕ!' : 'BALANCED!') : (lang === 'ru' ? 'НЕТ РАВНОВЕСИЯ' : 'UNBALANCED')}
-          </span>
-        </div>
-
-        {/* Visual Lever SVG Scene */}
-        <div className="lab-stage relative w-full h-[380px] bg-slate-950 flex items-center justify-center p-6 overflow-hidden">
-          <svg className="w-full h-full" viewBox="0 0 600 340">
-            {/* Ground */}
-            <line x1="40" y1="280" x2="560" y2="280" stroke="#34363C" strokeWidth="4" />
-
-            {/* Fulcrum Pivot Triangle */}
-            <polygon points="300,210 275,280 325,280" fill="#4A4D55" stroke="#64748b" strokeWidth="2" />
-            <circle cx="300" cy="210" r="5" fill="#f8fafc" />
-
-            {/* Tilting Beam Group */}
-            <g transform={`rotate(${tiltAngle} 300 210)`}>
-              {/* Wooden beam */}
-              <rect x="60" y="202" width="480" height="16" rx="4" fill="#92400e" stroke="#b45309" strokeWidth="2" />
-
-              {/* Pivot center indicator */}
-              <line x1="300" y1="195" x2="300" y2="225" stroke="#f1f5f9" strokeWidth="2" strokeDasharray="3 3" />
-
-              {/* Left Weight */}
-              {(() => {
-                const posX = 300 - l1 * 45;
-                const size = Math.max(24, Math.min(55, Math.sqrt(m1) * 7));
-                return (
-                  <g>
-                    <rect
-                      x={posX - size / 2}
-                      y={202 - size}
-                      width={size}
-                      height={size}
-                      rx="6"
-                      fill="#0284c7"
-                      stroke="#38bdf8"
-                      strokeWidth="2"
-                    />
-                    <text
-                      x={posX}
-                      y={202 - size / 2 + 4}
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize="11"
-                      fontWeight="bold"
-                      fontFamily="Fira Code, monospace"
-                    >
-                      {m1}kg
-                    </text>
-                    {/* Distance arrow */}
-                    <line x1="300" y1="185" x2={posX} y2="185" stroke="#38bdf8" strokeWidth="1.5" />
-                    <text x={(300 + posX) / 2} y="178" textAnchor="middle" fill="#38bdf8" fontSize="10" fontFamily="Fira Code">
-                      L₁ = {l1}m
-                    </text>
-                  </g>
-                );
-              })()}
-
-              {/* Right Weight */}
-              {(() => {
-                const posX = 300 + l2 * 45;
-                const size = Math.max(24, Math.min(55, Math.sqrt(m2) * 7));
-                return (
-                  <g>
-                    <rect
-                      x={posX - size / 2}
-                      y={202 - size}
-                      width={size}
-                      height={size}
-                      rx="6"
-                      fill="#d97706"
-                      stroke="#f59e0b"
-                      strokeWidth="2"
-                    />
-                    <text
-                      x={posX}
-                      y={202 - size / 2 + 4}
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize="11"
-                      fontWeight="bold"
-                      fontFamily="Fira Code, monospace"
-                    >
-                      {m2}kg
-                    </text>
-                    {/* Distance arrow */}
-                    <line x1="300" y1="185" x2={posX} y2="185" stroke="#f59e0b" strokeWidth="1.5" />
-                    <text x={(300 + posX) / 2} y="178" textAnchor="middle" fill="#f59e0b" fontSize="10" fontFamily="Fira Code">
-                      L₂ = {l2}m
-                    </text>
-                  </g>
-                );
-              })()}
-            </g>
-          </svg>
-        </div>
-
-        {/* Sliders Grid */}
-        <div className="p-4 bg-slate-950/70 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Масса слева M₁' : 'Left Mass M₁'}</span>
-              <span className="font-mono text-cyan-400 font-bold">{m1} kg</span>
-            </div>
-            <RangeSlider value={m1} onChange={(v) => setM1(v)} min={5} max={60} />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Плечо слева L₁' : 'Left Arm L₁'}</span>
-              <span className="font-mono text-cyan-400 font-bold">{l1} m</span>
-            </div>
-            <RangeSlider value={l1} onChange={(v) => setL1(v)} min={0.5} max={5.0} step={0.5} />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Масса справа M₂' : 'Right Mass M₂'}</span>
-              <span className="font-mono text-amber-400 font-bold">{m2} kg</span>
-            </div>
-            <RangeSlider value={m2} onChange={(v) => setM2(v)} min={5} max={60} />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Плечо справа L₂' : 'Right Arm L₂'}</span>
-              <span className="font-mono text-amber-400 font-bold">{l2} m</span>
-            </div>
-            <RangeSlider value={l2} onChange={(v) => setL2(v)} min={0.5} max={5.0} step={0.5} />
-          </div>
-        </div>
-      </div>
-
-      {/* Textbook Insight */}
-      <div className="w-full xl:w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <h3 className="font-bold text-slate-100 text-sm">
-              {lang === 'ru' ? 'В чем золотое правило механики?' : 'Golden Rule of Mechanics'}
-            </h3>
-          </div>
-
-          <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            {lang === 'ru'
-              ? 'Рычаг дает выигрыш в силе ровно во столько раз, во сколько раз длиннее плечо! Если твое плечо в 4 раза длиннее, ты сможешь поднять груз в 4 раза тяжелее себя. Но при этом придется пройти в 4 раза больший путь.'
-              : 'A lever multiplies force by the ratio of lever arm lengths. An arm 4 times longer lets you lift 4 times your weight, but you must move through 4 times the distance!'}
-          </p>
-
-          <div className="p-3 rounded-xl bg-slate-950 border border-amber-900/40 text-xs font-mono text-amber-300">
-            <code>F₁ · L₁ = F₂ · L₂</code>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SimShell
+      badge={ru ? '7 класс · Физика' : 'Grade 7 · Physics'}
+      formula="F₁ · l₁ = F₂ · l₂"
+      title={ru ? 'Рычаг: выигрыш в силе — проигрыш в расстоянии' : 'The lever: gain in force, loss in distance'}
+      readouts={[
+        { label: ru ? 'Момент слева' : 'Left moment', value: `${Math.round(M1)} ${ru ? 'Н·м' : 'N·m'}`, color: '#6E54E0' },
+        { label: ru ? 'Момент справа' : 'Right moment', value: `${Math.round(M2)} ${ru ? 'Н·м' : 'N·m'}`, color: '#1E88C8' },
+        { label: ru ? 'Итог' : 'Result', value: balanced ? (ru ? 'равновесие' : 'balance') : M1 > M2 ? (ru ? 'влево' : 'left down') : ru ? 'вправо' : 'right down', color: balanced ? '#1A8F50' : undefined },
+      ]}
+      controls={[
+        { label: ru ? 'Масса слева' : 'Left mass', value: `${m1} ${ru ? 'кг' : 'kg'}`, color: '#6E54E0', input: <RangeSlider value={m1} onChange={setM1} min={5} max={60} step={5} /> },
+        { label: ru ? 'Плечо слева' : 'Left arm', value: `${fmt(l1, 1, ru)} ${ru ? 'м' : 'm'}`, color: '#6E54E0', input: <RangeSlider value={l1} onChange={setL1} min={0.5} max={4} step={0.5} /> },
+        { label: ru ? 'Масса справа' : 'Right mass', value: `${m2} ${ru ? 'кг' : 'kg'}`, color: '#1E88C8', input: <RangeSlider value={m2} onChange={setM2} min={5} max={60} step={5} /> },
+        { label: ru ? 'Плечо справа' : 'Right arm', value: `${fmt(l2, 1, ru)} ${ru ? 'м' : 'm'}`, color: '#1E88C8', input: <RangeSlider value={l2} onChange={setL2} min={0.5} max={4} step={0.5} /> },
+      ]}
+      insight={{
+        title: ru ? 'Попробуй уравновесить' : 'Try to balance it',
+        text: ru
+          ? '30 кг на плече 2 м уравновешивают 15 кг на плече 4 м: вдвое меньший груз на вдвое длинном плече. Так ломом поднимают тяжёлый камень — но длинный конец приходится опускать на большее расстояние.'
+          : '30 kg at 2 m balances 15 kg at 4 m: half the load on twice the arm. That is how a crowbar lifts a heavy stone, but the long end has to move further.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={360} className="block w-full h-auto" aria-label={ru ? 'Рычаг на опоре с двумя грузами' : 'A lever on a fulcrum with two loads'} />
+    </SimShell>
   );
 };

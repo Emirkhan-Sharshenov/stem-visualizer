@@ -21,7 +21,7 @@ import { gradeName } from '../../data/curriculum/index';
 
 const FREE_SEATS = 8;
 const MAX_SEATS = 60;
-const COLORS = ['#E5484D', '#2F5BFF', '#F5A524', '#30A46C'];
+const COLORS = ['#E5484D', '#5B4BFF', '#F5A524', '#30A46C'];
 const SHAPES = ['▲', '◆', '●', '■'];
 const ID_KEY = 'stem-live-id';
 const NAME_KEY = 'stem-duel-name';

@@ -429,7 +429,7 @@ const RateChart: React.FC<{ lang: 'ru' | 'en'; light: number; co2: number; temp:
         <line x1="0" y1={H} x2={W} y2={H} stroke="#D6D4CE" />
         <line x1="0" y1="0" x2="0" y2={H} stroke="#D6D4CE" />
         <polyline points={pts} fill="none" stroke="#30A46C" strokeWidth="2.5" strokeLinejoin="round" />
-        <circle cx={(light / 100) * W} cy={H - cur * (H - 8)} r="5" fill="#2F5BFF" stroke="#fff" strokeWidth="2" />
+        <circle cx={(light / 100) * W} cy={H - cur * (H - 8)} r="5" fill="#5B4BFF" stroke="#fff" strokeWidth="2" />
         <text x={W / 2} y={H + 18} textAnchor="middle" fontSize="11" fill="#6B6B6B" fontFamily="Inter">{lang === 'ru' ? 'освещённость' : 'light'}</text>
         <text x="-10" y={H / 2} textAnchor="middle" fontSize="11" fill="#6B6B6B" fontFamily="Inter" transform={`rotate(-90 -10 ${H / 2})`}>{lang === 'ru' ? 'скорость' : 'rate'}</text>
       </svg>

@@ -607,7 +607,7 @@ export const PresentationModal: React.FC<Props> = ({ topic, lang, formulaEl, mod
             onClick={download}
             disabled={busy || (paid && waiting) || !slides.length}
             className="h-11 px-5 rounded-lg text-sm font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-60 transition-transform active:scale-[0.98]"
-            style={{ background: ready ? '#16A34A' : paid ? '#2F5BFF' : '#16171A', color: '#fff' }}
+            style={{ background: ready ? '#16A34A' : paid ? '#5B4BFF' : '#16171A', color: '#fff' }}
           >
             {busy || (paid && waiting) ? <Loader2 className="w-4 h-4 animate-spin" /> : done ? <Check className="w-4 h-4" /> : paid ? <Download className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
             {done ? L('Скачано', 'Downloaded') : ready ? L('Сохранить файл', 'Save file') : busy ? L('Собираем…', 'Building…') : paid && waiting ? L('Готовим картинки…', 'Preparing pictures…') : paid ? L(`Скачать .pptx · ${slides.length} слайдов`, `Download .pptx · ${slides.length} slides`) : L('Скачать — в Pro', 'Download with Pro')}

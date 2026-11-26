@@ -233,7 +233,7 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
             </div>
             <svg viewBox={`0 0 ${CW} ${CH}`} className="w-full">
               {/* indicator range */}
-              <rect x={40} width={CW - 56} y={PY(ind.range[1])} height={PY(ind.range[0]) - PY(ind.range[1])} fill="#2F5BFF" opacity="0.07" />
+              <rect x={40} width={CW - 56} y={PY(ind.range[1])} height={PY(ind.range[0]) - PY(ind.range[1])} fill="#5B4BFF" opacity="0.07" />
               {[0, 2, 4, 6, 7, 8, 10, 12, 14].map((p) => (
                 <g key={p}>
                   <line x1={40} x2={CW - 16} y1={PY(p)} y2={PY(p)} stroke={p === 7 ? '#C9CDD3' : '#EEEEEA'} strokeDasharray={p === 7 ? '4 4' : undefined} />
@@ -251,8 +251,8 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                 V({an.titrant.tex.replace(/\\mathrm\{|\}/g, '')}), {L('мл', 'mL')}
               </text>
               {theory && <path d={path(curve)} fill="none" stroke="#B5B8C0" strokeWidth="1.5" strokeDasharray="4 4" />}
-              {points.length > 0 && <path d={path([[0, pH(an, conc, VA, CT, 0)], ...points])} fill="none" stroke="#2F5BFF" strokeWidth="2.5" />}
-              {points.map(([v, p], i) => (i % Math.max(1, Math.floor(points.length / 60)) === 0 ? <circle key={i} cx={PX(v)} cy={PY(p)} r="2.2" fill="#2F5BFF" /> : null))}
+              {points.length > 0 && <path d={path([[0, pH(an, conc, VA, CT, 0)], ...points])} fill="none" stroke="#5B4BFF" strokeWidth="2.5" />}
+              {points.map(([v, p], i) => (i % Math.max(1, Math.floor(points.length / 60)) === 0 ? <circle key={i} cx={PX(v)} cy={PY(p)} r="2.2" fill="#5B4BFF" /> : null))}
               {passed && task === null && (
                 <g>
                   <line x1={PX(veq)} x2={PX(veq)} y1={12} y2={CH - 28} stroke="#30A46C" strokeDasharray="3 3" />
@@ -262,7 +262,7 @@ export const TitrationLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                   </text>
                 </g>
               )}
-              <circle cx={PX(vt)} cy={PY(ph)} r="5" fill="#fff" stroke="#2F5BFF" strokeWidth="2.5" />
+              <circle cx={PX(vt)} cy={PY(ph)} r="5" fill="#fff" stroke="#5B4BFF" strokeWidth="2.5" />
             </svg>
             <p className="text-[11px] text-ink-3 mt-1">{L(`Синяя полоса — где ${ind.name.ru.toLowerCase()} меняет цвет (pH ${ind.range[0]}–${ind.range[1]}).`, `Blue band: where ${ind.name.en.toLowerCase()} changes colour (pH ${ind.range[0]}–${ind.range[1]}).`)}</p>
           </div>

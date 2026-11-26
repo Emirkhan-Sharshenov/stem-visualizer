@@ -6,7 +6,7 @@ export type Unlock = { kind: 'free' } | { kind: 'stars'; n: number } | { kind: '
 interface Item { id: string; ru: string; en: string; unlock: Unlock }
 
 export const COLORS: (Item & { hex: string; hex2?: string })[] = [
-  { id: 'cyan', ru: 'Неон', en: 'Neon', hex: '#39E1FF', unlock: { kind: 'free' } },
+  { id: 'cyan', ru: 'Неон', en: 'Neon', hex: '#3DD6FF', unlock: { kind: 'free' } },
   { id: 'coral', ru: 'Коралл', en: 'Coral', hex: '#FF5A5F', unlock: { kind: 'free' } },
   { id: 'lime', ru: 'Лайм', en: 'Lime', hex: '#9BE15D', unlock: { kind: 'free' } },
   { id: 'amber', ru: 'Янтарь', en: 'Amber', hex: '#FFC24B', unlock: { kind: 'free' } },
@@ -157,7 +157,7 @@ export const DEFAULT_LOOKS: [Look, Look] = [
   { color: 'coral', trail: 'solid', body: 'circle', hat: 'none', eyes: 'dot', blast: 'ring' },
 ];
 
-export const colorHex = (id: string) => COLORS.find((c) => c.id === id)?.hex ?? '#39E1FF';
+export const colorHex = (id: string) => COLORS.find((c) => c.id === id)?.hex ?? '#3DD6FF';
 export const colorHex2 = (id: string) => COLORS.find((c) => c.id === id)?.hex2;
 export const theme = (id: string | undefined) => THEMES.find((t) => t.id === id) ?? THEMES[0];
 
@@ -762,9 +762,9 @@ function eyes(g: G, id: EyesId, x: number, y: number, r: number, dir: number) {
       break;
     case 'visor':
       g.save();
-      g.shadowColor = '#39E1FF';
+      g.shadowColor = '#3DD6FF';
       g.shadowBlur = 8;
-      g.fillStyle = '#39E1FF';
+      g.fillStyle = '#3DD6FF';
       g.beginPath();
       g.roundRect(x - r * 0.7, ey - r * 0.16, r * 1.4, r * 0.32, r * 0.16);
       g.fill();

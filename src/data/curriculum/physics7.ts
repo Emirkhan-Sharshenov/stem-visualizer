@@ -140,7 +140,7 @@ export const PHYSICS_7 = [
         ['Относительность движения', 'Relativity of motion', 'Пассажир неподвижен относительно вагона, но движется относительно перрона.', 'A passenger is still relative to the carriage but moving relative to the platform.'],
         ['Тело отсчёта', 'Reference body', 'Тело, относительно которого мы описываем движение: Земля, вагон, Солнце.', 'The body we describe motion against: the Earth, a carriage, the Sun.'],
       ],
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics_frames' },
     },
     {
       id: 'p7-speed',
@@ -156,7 +156,7 @@ export const PHYSICS_7 = [
         ['Средняя скорость', 'Average speed', 'Весь путь делим на всё время. Это не среднее арифметическое скоростей!', 'Total distance over total time. It is not the average of the speeds!'],
       ],
       formula: 'v = \\frac{s}{t}, \\quad v_{ср} = \\frac{s_{весь}}{t_{всё}}',
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics' },
     },
     {
       id: 'p7-distance-time',
@@ -171,7 +171,7 @@ export const PHYSICS_7 = [
         ['График скорости', 'Speed graph', 'Горизонтальная линия. Площадь под ней равна пройденному пути.', 'A horizontal line. The area under it equals the distance travelled.'],
       ],
       formula: 's = v t',
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics' },
     },
     {
       id: 'p7-inertia',

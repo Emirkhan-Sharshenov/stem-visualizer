@@ -7,7 +7,7 @@ import { SITE, shareCard, useCard } from '../../lib/shareCard';
 
 /** names and colours for the story picture of each game */
 const STORY: Record<string, { ru: string; en: string; color: string }> = {
-  sprint: { ru: 'Устный счёт', en: 'Mental maths', color: '#2F5BFF' },
+  sprint: { ru: 'Устный счёт', en: 'Mental maths', color: '#5B4BFF' },
   balance: { ru: 'Уравняй реакцию', en: 'Balance the equation', color: '#30A46C' },
   elements: { ru: 'Охота на элементы', en: 'Element hunt', color: '#E5484D' },
   cards: { ru: 'Карточки формул', en: 'Formula cards', color: '#0EA5A4' },

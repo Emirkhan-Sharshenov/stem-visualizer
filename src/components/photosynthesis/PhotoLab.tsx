@@ -191,7 +191,7 @@ export const PhotoLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               </text>
               {measuring && (
                 <g>
-                  <rect x="290" y="14" width="100" height="26" rx="6" fill="#2F5BFF" />
+                  <rect x="290" y="14" width="100" height="26" rx="6" fill="#5B4BFF" />
                   <text x="340" y="31" fontSize="12" textAnchor="middle" fill="#fff" fontFamily="JetBrains Mono, monospace">
                     {measuring.count} · {Math.round(progressPct * 60)} {L('с', 's')}
                   </text>

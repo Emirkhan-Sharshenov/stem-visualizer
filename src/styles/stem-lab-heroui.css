@@ -1,6 +1,6 @@
 /* HeroUI v3 variables for the STEM Lab theme (kept in step with storybook-lab/src/themes/stem-lab.css), in two modes:
-   data-theme="stem-lab"       white: clean lab bench, deep cyan accent that stays readable on white
-   data-theme="stem-lab-dark"  night: deep navy, glowing cyan readouts, violet particles
+   data-theme="stem-lab"       white: clean lab bench, indigo accent that stays readable on white
+   data-theme="stem-lab-dark"  night: deep navy, light indigo accent, cyan readouts
    Only theme variables are set here; component styles stay HeroUI's. */
 
 @layer base {
@@ -12,14 +12,14 @@
     --field-border-width: 1px;
     --field-border: var(--border);
     /* signature colours shared by both modes */
-    --lab-cyan: oklch(0.86 0.14 210);   /* #39E1FF, the glow */
-    --lab-violet: oklch(0.58 0.24 285); /* #7B5CFF, particles and XP */
+    --lab-cyan: oklch(0.82 0.13 215);   /* #3DD6FF, the cut face of the cube */
+    --lab-violet: oklch(0.55 0.25 285); /* #5B4BFF, the brand indigo */
   }
 
   [data-theme="stem-lab"] {
     color-scheme: light;
-    --background: oklch(0.985 0.004 240);          /* #F7F9FC */
-    --foreground: oklch(0.2 0.035 260);            /* deep navy ink */
+    --background: oklch(0.977 0.006 270);          /* #F6F7FB */
+    --foreground: oklch(0.18 0.04 275);            /* #0E1024, night ink */
     --surface: oklch(1 0 0);
     --surface-foreground: var(--foreground);
     --surface-secondary: oklch(0.97 0.008 240);
@@ -31,7 +31,7 @@
     --muted: oklch(0.52 0.03 255);
     --default: oklch(0.95 0.01 240);
     --default-foreground: var(--foreground);
-    --accent: oklch(0.55 0.13 222);                /* deep cyan, AA on white */
+    --accent: oklch(0.55 0.25 285);                /* #5B4BFF indigo, AA on white */
     --accent-foreground: oklch(1 0 0);
     --success: oklch(0.6 0.16 155);
     --success-foreground: oklch(1 0 0);
@@ -50,16 +50,16 @@
     --link: var(--accent);
     --backdrop: rgba(11, 18, 32, 0.45);
     /* readouts on white: ink with a cyan tint, no glow */
-    --readout: oklch(0.45 0.12 225);
+    --readout: oklch(0.45 0.2 285);
     --readout-glow: transparent;
     --stage: oklch(0.97 0.012 235);               /* the area around a model */
   }
 
   [data-theme="stem-lab-dark"] {
     color-scheme: dark;
-    --background: oklch(0.13 0.03 265);            /* #070B16 */
-    --foreground: oklch(0.92 0.03 260);            /* #DDE6FF */
-    --surface: oklch(0.19 0.04 265);               /* #111A30 */
+    --background: oklch(0.13 0.02 275);            /* #070912 */
+    --foreground: oklch(0.94 0.02 270);            /* #E8ECFA */
+    --surface: oklch(0.18 0.035 275);              /* #0F1222 */
     --surface-foreground: var(--foreground);
     --surface-secondary: oklch(0.23 0.045 265);
     --surface-secondary-foreground: var(--foreground);
@@ -70,8 +70,8 @@
     --muted: oklch(0.66 0.05 262);
     --default: oklch(0.25 0.045 265);
     --default-foreground: var(--foreground);
-    --accent: var(--lab-cyan);
-    --accent-foreground: oklch(0.16 0.04 250);     /* dark ink on the glowing cyan */
+    --accent: oklch(0.67 0.19 288);                /* #8B7CFF, light indigo for the night */
+    --accent-foreground: oklch(0.15 0.04 285);     /* dark ink on the light indigo */
     --success: oklch(0.75 0.17 155);
     --success-foreground: oklch(0.16 0.04 250);
     --warning: oklch(0.8 0.15 75);

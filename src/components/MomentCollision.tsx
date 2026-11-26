@@ -1,319 +1,289 @@
 import { RangeSlider } from './ui/RangeSlider';
-import { Check } from './ui/Check';
+import { SimShell } from './ui/SimShell';
 import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
+import { RotateCcw } from 'lucide-react';
 import { fitCanvas } from '../lib/canvas';
-import { Play, Pause, RotateCcw, FastForward, HelpCircle, Zap } from 'lucide-react';
+import { drawStage, glow, pill, runStage, STAGE } from '../lib/stage';
 
 interface MomentCollisionProps {
   lang: 'ru' | 'en';
 }
 
+// the scene (canvas 800×380): a track with two carts, momentum and energy bars underneath
+const PPM = 64; // pixels per metre
+const X0 = 40;
+const TRACK = 11.25; // m
+const TY = 170; // the rail
+const K = 6000; // stiffness of the bumpers, N/m
+const fmt = (x: number, d: number, ru: boolean) => (ru ? x.toFixed(d).replace('.', ',') : x.toFixed(d));
+const widthOf = (m: number) => 0.55 + 0.17 * m; // a heavier cart is bigger, m
+
 export const MomentCollision: React.FC<MomentCollisionProps> = ({ lang }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [m1, setM1] = useState<number>(2.0); // kg
-  const [v1, setV1] = useState<number>(3.0); // m/s
-  const [m2, setM2] = useState<number>(1.0); // kg
-  const [v2, setV2] = useState<number>(-2.0); // m/s
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [autoSlowMo, setAutoSlowMo] = useState<boolean>(true);
-  const [timeScale, setTimeScale] = useState<number>(1.0);
+  const [m1, setM1] = useState(2);
+  const [v1, setV1] = useState(3);
+  const [m2, setM2] = useState(1);
+  const [v2, setV2] = useState(-2);
+  const [e, setE] = useState(1);
+  const [run, setRun] = useState(0);
+  const [shown, setShown] = useState({ p: 0, ek: 0, ek0: 0, hit: false });
 
-  // Dynamic simulation physics state
-  const cartsRef = useRef<{
-    c1: { x: number; vx: number; radius: number };
-    c2: { x: number; vx: number; radius: number };
-    inImpact: boolean;
-    impactForce: number;
-  }>({
-    c1: { x: 140, vx: 3.0, radius: 24 },
-    c2: { x: 440, vx: -2.0, radius: 20 },
-    inImpact: false,
-    impactForce: 0
-  });
+  const live = useRef({ m1, v1, m2, v2, e, lang });
+  live.current = { m1, v1, m2, v2, e, lang };
 
-  const resetCarts = () => {
-    cartsRef.current = {
-      c1: { x: 140, vx: v1, radius: Math.sqrt(m1) * 16 },
-      c2: { x: 440, vx: v2, radius: Math.sqrt(m2) * 16 },
-      inImpact: false,
-      impactForce: 0
-    };
-  };
-
-  useEffect(() => {
-    resetCarts();
-  }, [m1, v1, m2, v2]);
-
-  // Momentum calculation
-  const pTotal = m1 * v1 + m2 * v2;
-
-  // Animation Loop
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const start = () => ({ x1: 2.2, x2: 8.6, u1: live.current.v1, u2: live.current.v2, stuck: false, hit: false, after: 0, force: 0, d: 0, wait: 0 });
+    let s = start();
+    let report = 0;
 
-    let animId: number;
-
-    const render = () => {
-      animId = requestAnimationFrame(render);
+    return runStage(canvas, (dtRaw, _t, still) => {
       const { w, h } = fitCanvas(canvas, ctx);
-      const trackY = 240;
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const w1 = widthOf(L.m1);
+      const w2 = widthOf(L.m2);
 
-      // Dark track background
-      ctx.fillStyle = '#111214';
-      ctx.fillRect(0, 0, w, h);
-
-      // Air track base
-      ctx.fillStyle = '#26282D';
-      ctx.fillRect(20, trackY, w - 40, 20);
-      ctx.strokeStyle = '#4A4D55';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(20, trackY, w - 40, 20);
-
-      // Track millimeter marks
-      ctx.strokeStyle = '#34363C';
-      ctx.lineWidth = 1;
-      for (let x = 40; x < w - 40; x += 25) {
-        ctx.beginPath();
-        ctx.moveTo(x, trackY);
-        ctx.lineTo(x, trackY + 8);
-        ctx.stroke();
-      }
-
-      const { c1, c2 } = cartsRef.current;
-      const dist = c2.x - c1.x;
-      const minDist = c1.radius + c2.radius;
-
-      // Check collision
-      let currentScale = timeScale;
-      if (dist <= minDist + 2) {
-        cartsRef.current.inImpact = true;
-        if (autoSlowMo) {
-          currentScale = 0.15; // Automatic dramatic slow-motion during impact microsecond!
+      // slow motion around the impact, so the squeeze can be seen
+      const gap = s.x2 - w2 / 2 - (s.x1 + w1 / 2);
+      const slow = s.stuck ? 1 : gap < 0.6 && gap > -0.3 && (s.u1 - s.u2 > 0 || s.force > 0) ? 0.12 : 1;
+      const dt = still ? 0 : dtRaw * slow;
+      const steps = 30;
+      s.force = 0;
+      for (let i = 0; i < steps; i++) {
+        const h2 = dt / steps;
+        const g2 = s.x2 - w2 / 2 - (s.x1 + w1 / 2);
+        if (s.stuck) {
+          // perfectly inelastic: they move off together
+        } else if (g2 < 0) {
+          if (!s.hit) s.hit = true;
+          if (L.e < 0.05) {
+            const vc = (L.m1 * s.u1 + L.m2 * s.u2) / (L.m1 + L.m2);
+            s.u1 = vc;
+            s.u2 = vc;
+            s.stuck = true;
+          } else {
+            // a spring with a damper: the damping is chosen so the bounce returns e of the closing speed
+            const mu = (L.m1 * L.m2) / (L.m1 + L.m2);
+            const ln = Math.log(L.e);
+            const zeta = -ln / Math.sqrt(Math.PI * Math.PI + ln * ln);
+            const c = 2 * zeta * Math.sqrt(K * mu);
+            const F = Math.max(0, K * -g2 + c * (s.u1 - s.u2));
+            s.u1 -= (F / L.m1) * h2;
+            s.u2 += (F / L.m2) * h2;
+            s.force = Math.max(s.force, F);
+          }
         }
+        s.x1 += s.u1 * h2;
+        s.x2 += s.u2 * h2;
+      }
+      s.d = Math.max(0, -(s.x2 - w2 / 2 - (s.x1 + w1 / 2)));
+      if (s.hit) s.after += dtRaw;
+      // replay once both are gone, or a little while after the hit
+      const off = (x: number) => x < -1 || x > TRACK + 1;
+      if (!still && ((off(s.x1) && off(s.x2)) || s.after > 3.2 || (!s.hit && Math.abs(L.v1 - L.v2) < 1e-6 && (s.wait += dtRaw) > 4))) s = start();
 
-        // Elastic 1D collision formula
-        const u1 = c1.vx;
-        const u2 = c2.vx;
-        const newV1 = ((m1 - m2) * u1 + 2 * m2 * u2) / (m1 + m2);
-        const newV2 = ((m2 - m1) * u2 + 2 * m1 * u1) / (m1 + m2);
-
-        c1.vx = newV1;
-        c2.vx = newV2;
-        cartsRef.current.impactForce = Math.abs(newV1 - u1) * m1 * 40;
-      } else {
-        cartsRef.current.inImpact = false;
-        cartsRef.current.impactForce = 0;
+      const p = L.m1 * s.u1 + L.m2 * s.u2;
+      const ek = 0.5 * L.m1 * s.u1 * s.u1 + 0.5 * L.m2 * s.u2 * s.u2;
+      const ek0 = 0.5 * L.m1 * L.v1 * L.v1 + 0.5 * L.m2 * L.v2 * L.v2;
+      report += dtRaw;
+      if (report > 0.12) {
+        report = 0;
+        setShown({ p, ek, ek0, hit: s.hit });
       }
 
-      if (isPlaying) {
-        c1.x += c1.vx * currentScale;
-        c2.x += c2.vx * currentScale;
+      drawStage(ctx, w, h, { x: 400, y: TY });
 
-        // Bounce track ends
-        if (c1.x < 50) { c1.x = 50; c1.vx *= -1; }
-        if (c2.x > w - 50) { c2.x = w - 50; c2.vx *= -1; }
+      // the rail
+      const rail = ctx.createLinearGradient(0, TY + 32, 0, TY + 42);
+      rail.addColorStop(0, '#9AA2B8');
+      rail.addColorStop(1, '#3A4058');
+      ctx.fillStyle = rail;
+      ctx.fillRect(X0 - 10, TY + 32, TRACK * PPM + 20, 8);
+      for (let m = 0; m <= TRACK; m += 1) {
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(X0 + m * PPM - 0.5, TY + 44, 1, 6);
       }
 
-      // Draw Cart 1 (Blue)
-      ctx.fillStyle = '#0284c7';
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(c1.x - c1.radius, trackY - c1.radius * 1.5, c1.radius * 2, c1.radius * 1.5, 6);
-      ctx.fill();
-      ctx.stroke();
-
-      // Cart 1 Wheels
-      ctx.fillStyle = '#64748b';
-      ctx.beginPath();
-      ctx.arc(c1.x - c1.radius * 0.5, trackY, 5, 0, Math.PI * 2);
-      ctx.arc(c1.x + c1.radius * 0.5, trackY, 5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Velocity Arrow for Cart 1
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(c1.x, trackY - c1.radius * 1.8);
-      ctx.lineTo(c1.x + c1.vx * 15, trackY - c1.radius * 1.8);
-      ctx.stroke();
-
-      // Draw Cart 2 (Amber)
-      ctx.fillStyle = '#d97706';
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(c2.x - c2.radius, trackY - c2.radius * 1.5, c2.radius * 2, c2.radius * 1.5, 6);
-      ctx.fill();
-      ctx.stroke();
-
-      // Cart 2 Wheels
-      ctx.fillStyle = '#64748b';
-      ctx.beginPath();
-      ctx.arc(c2.x - c2.radius * 0.5, trackY, 5, 0, Math.PI * 2);
-      ctx.arc(c2.x + c2.radius * 0.5, trackY, 5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Velocity Arrow for Cart 2
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(c2.x, trackY - c2.radius * 1.8);
-      ctx.lineTo(c2.x + c2.vx * 15, trackY - c2.radius * 1.8);
-      ctx.stroke();
-
-      // Impact Shockwave & Newton's 3rd Law Equal Force Vectors F12 = -F21
-      if (cartsRef.current.inImpact) {
-        const midX = (c1.x + c2.x) / 2;
-        ctx.strokeStyle = '#f43f5e';
-        ctx.lineWidth = 3;
+      // carts: bodies squash at the bumper, wheels roll
+      const cart = (x: number, wm: number, m: number, u: number, col: string, side: 1 | -1, label: string) => {
+        const wpx = wm * PPM - s.d * PPM * 0.5;
+        const hpx = 34 + m * 5;
+        const cx = X0 + x * PPM - (side * s.d * PPM) / 4;
+        const left = cx - wpx / 2;
+        const top = TY + 22 - hpx;
+        const sh = ctx.createRadialGradient(cx, TY + 40, 4, cx, TY + 40, wpx);
+        sh.addColorStop(0, 'rgba(0,0,0,0.45)');
+        sh.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = sh;
+        ctx.fillRect(cx - wpx, TY + 30, wpx * 2, 16);
+        const g = ctx.createLinearGradient(0, top, 0, top + hpx);
+        g.addColorStop(0, col);
+        g.addColorStop(1, `${col}99`);
+        ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(midX, trackY - 20, 28, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.roundRect(left, top, wpx, hpx, 9);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(left + 6, top + 5, wpx - 12, 4);
+        ctx.fillStyle = '#0B0E18';
+        ctx.font = `800 13px ${STAGE.font}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, cx, top + hpx / 2 + 2);
+        for (const wx of [left + 14, left + wpx - 14]) {
+          const ang = (x * PPM) / 9;
+          ctx.fillStyle = '#1B1F2C';
+          ctx.beginPath();
+          ctx.arc(wx, TY + 26, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#9AA2B8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(wx, TY + 26);
+          ctx.lineTo(wx + Math.cos(ang) * 7, TY + 26 + Math.sin(ang) * 7);
+          ctx.stroke();
+        }
+        // velocity arrow
+        if (Math.abs(u) > 0.02) {
+          const len = u * 26;
+          const ay = top - 16;
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(cx, ay);
+          ctx.lineTo(cx + len, ay);
+          ctx.stroke();
+          const d = Math.sign(len);
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(cx + len + d * 8, ay);
+          ctx.lineTo(cx + len, ay - 6);
+          ctx.lineTo(cx + len, ay + 6);
+          ctx.closePath();
+          ctx.fill();
+          pill(ctx, cx, ay - 20, `${fmt(u, 1, ru)} ${ru ? 'м/с' : 'm/s'}`, col);
+        }
+        return { cx, left, right: left + wpx, top, hpx };
+      };
+      const c1 = cart(s.x1, w1, L.m1, s.u1, '#9B8CFF', 1, `${fmt(L.m1, 1, ru)} ${ru ? 'кг' : 'kg'}`);
+      const c2 = cart(s.x2, w2, L.m2, s.u2, '#5FDDFF', -1, `${fmt(L.m2, 1, ru)} ${ru ? 'кг' : 'kg'}`);
 
-        // Equal and opposite force vectors
-        ctx.fillStyle = '#f43f5e';
-        ctx.font = 'bold 11px Fira Code';
-        ctx.fillText('F₁₂ (on 1)', c1.x - 30, trackY - 60);
-        ctx.fillText('F₂₁ = -F₁₂', c2.x + 5, trackY - 60);
+      // during contact: two equal and opposite forces
+      if (s.force > 1) {
+        const fy = Math.min(c1.top, c2.top) + 18;
+        const mid = (c1.right + c2.left) / 2;
+        const len = Math.min(90, 14 + s.force / 60);
+        glow(ctx, mid, TY + 5, 50, '255,120,100', 0.5);
+        for (const d of [-1, 1]) {
+          ctx.strokeStyle = '#FF6B6B';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(mid, fy - 40);
+          ctx.lineTo(mid + d * len, fy - 40);
+          ctx.stroke();
+          ctx.fillStyle = '#FF6B6B';
+          ctx.beginPath();
+          ctx.moveTo(mid + d * (len + 9), fy - 40);
+          ctx.lineTo(mid + d * len, fy - 46);
+          ctx.lineTo(mid + d * len, fy - 34);
+          ctx.closePath();
+          ctx.fill();
+        }
+        pill(ctx, mid, fy - 64, ru ? 'F₁₂ = −F₂₁' : 'F₁₂ = −F₂₁', '#FF8A8A');
       }
-    };
+      if (slow < 1) pill(ctx, 400, 24, ru ? 'замедленная съёмка' : 'slow motion', STAGE.soft);
+      if (s.stuck) pill(ctx, (c1.cx + c2.cx) / 2, TY + 74, ru ? 'слиплись и едут вместе' : 'stuck, moving together', '#FFC46B');
 
-    animId = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animId);
-  }, [m1, m2, isPlaying, timeScale, autoSlowMo]);
+      // momentum and energy bars: momentum always conserved, energy only in an elastic hit
+      const p0 = L.m1 * L.v1 + L.m2 * L.v2;
+      const scale = Math.max(Math.abs(L.m1 * L.v1), Math.abs(L.m2 * L.v2), Math.abs(p0), 1);
+      const bar = (y: number, label: string, val: number, max: number, col: string, ref?: number) => {
+        const zx = 400;
+        const half = 300;
+        ctx.fillStyle = STAGE.soft;
+        ctx.font = `600 11px ${STAGE.font}`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, zx - half - 10, y);
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(zx - half, y - 6, half * 2, 12);
+        ctx.fillStyle = col;
+        const wv = (val / max) * half;
+        ctx.fillRect(Math.min(zx, zx + wv), y - 6, Math.abs(wv), 12);
+        if (ref !== undefined) {
+          ctx.fillStyle = '#FFD25E';
+          ctx.fillRect(zx + (ref / max) * half - 1, y - 10, 2, 20);
+        }
+      };
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(399.5, 250, 1, 112);
+      bar(262, 'p₁', L.m1 * s.u1, scale, '#9B8CFF');
+      bar(284, 'p₂', L.m2 * s.u2, scale, '#5FDDFF');
+      bar(306, ru ? 'Σp' : 'Σp', p, scale, '#E8ECFA', p0);
+      const ekMax = Math.max(ek0, 1);
+      bar(336, ru ? 'Eк' : 'KE', ek, ekMax, '#FFB45E', ek0);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = STAGE.soft;
+      ctx.fillText(ru ? 'жёлтая черта — значение до удара' : 'the yellow mark is the value before the hit', 100, 358);
+    });
+  }, [run]);
 
+  const ru = lang === 'ru';
+  const lost = shown.hit && shown.ek0 > 0 ? Math.max(0, 1 - shown.ek / shown.ek0) : 0;
+  const restart = () => setRun((r) => r + 1);
+  const slider = (v: number, set: (x: number) => void, min: number, max: number, step: number) => (
+    <RangeSlider
+      value={v}
+      onChange={(x) => {
+        set(x);
+        restart();
+      }}
+      min={min}
+      max={max}
+      step={step}
+    />
+  );
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full max-w-7xl mx-auto py-2">
-      {/* Simulation Stage */}
-      <div className="flex-1 flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        {/* Header Bar */}
-        <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <Zap className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{lang === 'ru' ? 'Упругий удар: Законы Ньютона и импульс' : 'Elastic Collision & Newton\'s Laws'}</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
-                  {lang === 'ru' ? '9 Класс' : 'Grade 9'}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ru' ? 'Замедленная съемка микросекунды удара: действие равно противодействию' : 'Slow-mo impact microsecond: Action equals reaction'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-            </Button>
-
-            <Button variant="outline" onPress={() => resetCarts()}>
-              <RotateCcw className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Momentum Conservation Gauge */}
-        <div className="px-4 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex items-center justify-between text-xs font-mono">
-          <div className="flex items-center gap-6">
-            <span>
-              {lang === 'ru' ? 'Суммарный импульс P = m₁v₁ + m₂v₂:' : 'Total Momentum P = m₁v₁ + m₂v₂:'}{' '}
-              <strong className="text-emerald-400">{pTotal.toFixed(2)} {lang === 'ru' ? 'кг·м/с' : 'kg·m/s'}</strong>
-            </span>
-          </div>
-
-          <Check checked={autoSlowMo} onChange={(v) => setAutoSlowMo(v)}>{lang === 'ru' ? 'Авто-замедление в момент удара' : 'Auto Slow-Mo at Impact'}</Check>
-        </div>
-
-        {/* Canvas Display */}
-        <div className="lab-stage relative w-full flex items-center justify-center p-3">
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={340}
-            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
-          />
-
-          <div className="absolute bottom-6 left-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-mono font-bold text-cyan-400">
-              {lang === 'ru' ? 'МОМЕНТ СОУДАРЕНИЯ' : 'MOMENT OF IMPACT'}
-            </span>
-            <p className="text-[11px] text-slate-300 leading-tight">
-              {lang === 'ru'
-                ? 'Силы F₁₂ и F₂₁ в точности равны в каждую микросекунду соприкосновения! Если тело легкое, равная сила дает ему гигантское ускорение a = F/m.'
-                : 'Forces F₁₂ and F₂₁ are strictly equal at every microsecond. A lighter mass experiences much higher acceleration a = F/m.'}
-            </p>
-          </div>
-        </div>
-
-        {/* Sliders Grid */}
-        <div className="p-4 bg-slate-950/70 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Масса M₁' : 'Mass M₁'}</span>
-              <span className="font-mono text-cyan-400 font-bold">{m1} kg</span>
-            </div>
-            <RangeSlider value={m1} onChange={(v) => setM1(v)} min={0.5} max={5.0} step={0.5} />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Скорость V₁' : 'Speed V₁'}</span>
-              <span className="font-mono text-cyan-400 font-bold">{v1} m/s</span>
-            </div>
-            <RangeSlider value={v1} onChange={(v) => setV1(v)} min={0.5} max={6.0} step={0.5} />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Масса M₂' : 'Mass M₂'}</span>
-              <span className="font-mono text-amber-400 font-bold">{m2} kg</span>
-            </div>
-            <RangeSlider value={m2} onChange={(v) => setM2(v)} min={0.5} max={5.0} step={0.5} />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Скорость V₂' : 'Speed V₂'}</span>
-              <span className="font-mono text-amber-400 font-bold">{v2} m/s</span>
-            </div>
-            <RangeSlider value={v2} onChange={(v) => setV2(v)} min={-6.0} max={-0.5} step={0.5} />
-          </div>
-        </div>
-      </div>
-
-      {/* Textbook Insight */}
-      <div className="w-full xl:w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <h3 className="font-bold text-slate-100 text-sm">
-              {lang === 'ru' ? '3-й закон Ньютона в деталях' : 'Newton\'s 3rd Law in Detail'}
-            </h3>
-          </div>
-
-          <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            {lang === 'ru'
-              ? 'Силы всегда рождаются парами! Невозможно толкнуть стену, не будучи оттолкнутым стеной с абсолютно такой же силой. При соударении двух тел суммарный импульс замкнутой системы остается неизменным до и после удара.'
-              : 'Forces always come in pairs. You cannot push a wall without the wall pushing you back with the exact same force. Total system momentum is strictly conserved.'}
-          </p>
-
-          <div className="p-3 rounded-xl bg-slate-950 border border-cyan-900/40 text-xs font-mono text-cyan-300">
-            <code>{"F₁₂ = -F₂₁,  m₁v₁ + m₂v₂ = const"}</code>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SimShell
+      badge={ru ? '9–10 класс · Физика' : 'Grades 9–10 · Physics'}
+      formula="m₁v₁ + m₂v₂ = m₁v₁′ + m₂v₂′"
+      title={ru ? 'Соударение тележек: импульс сохраняется всегда' : 'Colliding carts: momentum is always conserved'}
+      actions={
+        <Button variant="outline" size="sm" className="font-semibold" onPress={restart}>
+          <RotateCcw className="w-4 h-4" strokeWidth={2} />
+          {ru ? 'Заново' : 'Again'}
+        </Button>
+      }
+      readouts={[
+        { label: ru ? 'Импульс системы' : 'Total momentum', value: `${fmt(shown.p, 2, ru)} ${ru ? 'кг·м/с' : 'kg·m/s'}`, color: '#4A3BEB' },
+        { label: ru ? 'Кинетическая энергия' : 'Kinetic energy', value: `${fmt(shown.ek, 1, ru)} ${ru ? 'Дж' : 'J'}`, color: '#B7791F' },
+        { label: ru ? 'Ушло в тепло' : 'Lost to heat', value: `${Math.round(lost * 100)}%`, color: lost > 0.02 ? '#D9534F' : '#1A8F50' },
+        { label: ru ? 'Удар' : 'Collision', value: e >= 0.97 ? (ru ? 'упругий' : 'elastic') : e < 0.05 ? (ru ? 'неупругий' : 'inelastic') : ru ? 'частично' : 'partial' },
+      ]}
+      controls={[
+        { label: ru ? 'Масса левой m₁' : 'Left mass m₁', value: `${fmt(m1, 1, ru)} ${ru ? 'кг' : 'kg'}`, color: '#6E54E0', input: slider(m1, setM1, 0.5, 5, 0.5) },
+        { label: ru ? 'Скорость левой v₁' : 'Left speed v₁', value: `${fmt(v1, 1, ru)} ${ru ? 'м/с' : 'm/s'}`, color: '#6E54E0', input: slider(v1, setV1, -2, 5, 0.5) },
+        { label: ru ? 'Масса правой m₂' : 'Right mass m₂', value: `${fmt(m2, 1, ru)} ${ru ? 'кг' : 'kg'}`, color: '#1E88C8', input: slider(m2, setM2, 0.5, 5, 0.5) },
+        { label: ru ? 'Скорость правой v₂' : 'Right speed v₂', value: `${fmt(v2, 1, ru)} ${ru ? 'м/с' : 'm/s'}`, color: '#1E88C8', input: slider(v2, setV2, -5, 2, 0.5) },
+        {
+          label: ru ? 'Упругость удара' : 'Bounciness',
+          value: e < 0.05 ? (ru ? 'слипаются' : 'stick') : `${Math.round(e * 100)}%`,
+          input: slider(e, setE, 0, 1, 0.05),
+          hint: ru ? '100% — как бильярдные шары, 0 — как пластилин. Импульс сохраняется в обоих случаях, а энергия — только при упругом.' : '100% is like billiard balls, 0 like clay. Momentum is kept either way; energy only when the hit is elastic.',
+        },
+      ]}
+      insight={{
+        title: ru ? 'Третий закон Ньютона' : "Newton's third law",
+        text: ru
+          ? 'В момент удара тележки давят друг на друга с равными силами в противоположные стороны — даже если одна в пять раз тяжелее. Поэтому сколько импульса потеряла одна, столько получила другая.'
+          : 'At impact the carts push on each other with equal and opposite forces, even if one is five times heavier. So whatever momentum one loses, the other gains.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={380} className="block w-full h-auto" aria-label={ru ? 'Две тележки на рельсах сталкиваются; внизу столбики импульсов и энергии' : 'Two carts collide on a track; momentum and energy bars below'} />
+    </SimShell>
   );
 };

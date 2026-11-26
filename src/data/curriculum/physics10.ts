@@ -16,7 +16,7 @@ export const PHYSICS_10 = [
         ['Сложение векторов', 'Adding vectors', 'По правилу треугольника или параллелограмма. 3 км на восток + 4 км на север = 5 км по диагонали.', 'By the triangle or parallelogram rule: 3 km east + 4 km north = 5 km diagonally.'],
         ['Проекции', 'Projections', 'Вектор раскладывают на проекции по осям и складывают их отдельно.', 'Split vectors into axis projections and add those separately.'],
       ],
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics_frames' },
     },
     {
       id: 'p10-uniform',
@@ -30,7 +30,7 @@ export const PHYSICS_10 = [
         ['Относительность движения', 'Relativity of motion', 'v = v_отн + v_пер: лодка, плывущая поперёк реки, сносится течением.', 'v = v_rel + v_frame: a boat crossing a river drifts downstream.'],
       ],
       formula: '\\vec v = \\vec v_{отн} + \\vec v_{пер}',
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics_frames' },
     },
     {
       id: 'p10-accelerated',
@@ -59,7 +59,7 @@ export const PHYSICS_10 = [
         ['Бросок под углом', 'Angled throw', 'Дальность L = v₀² sin2α/g — максимальна при 45°. Высота H = v₀² sin²α/2g.', 'Range L = v₀² sin2α/g is greatest at 45°. Height H = v₀² sin²α/2g.'],
       ],
       formula: 'L = \\frac{v_0^2 \\sin 2\\alpha}{g}',
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'projectile' },
     },
     {
       id: 'p10-circular',

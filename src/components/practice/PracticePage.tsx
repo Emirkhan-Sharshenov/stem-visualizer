@@ -20,7 +20,7 @@ type Lang = 'ru' | 'en';
 type Tab = 'predict' | 'problems' | 'check' | 'mistakes' | 'topics' | 'sections' | 'test' | 'ort';
 
 const SUBJECTS: Record<string, { ru: string; en: string; color: string }> = {
-  all: { ru: 'Все предметы', en: 'All subjects', color: '#2F5BFF' },
+  all: { ru: 'Все предметы', en: 'All subjects', color: '#5B4BFF' },
   physics: { ru: 'Физика', en: 'Physics', color: '#E5484D' },
   chemistry: { ru: 'Химия', en: 'Chemistry', color: '#30A46C' },
   biology: { ru: 'Биология', en: 'Biology', color: '#F5A524' },

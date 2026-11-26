@@ -143,7 +143,7 @@ export const ModelLab: React.FC<ModelLabProps> = ({ lang, model, focus, compact 
             if (hit) pos.copy(root.worldToLocal(hit.point.clone()));
           }
           const g = new THREE.Group();
-          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), new THREE.MeshStandardMaterial({ color: '#2F5BFF', emissive: '#2F5BFF', emissiveIntensity: 0.8 }));
+          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), new THREE.MeshStandardMaterial({ color: '#5B4BFF', emissive: '#5B4BFF', emissiveIntensity: 0.8 }));
           const halo = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 12), new THREE.MeshBasicMaterial({ color: '#8fa4ff', transparent: true, opacity: 0.25, depthWrite: false }));
           g.add(dot, halo);
           g.position.copy(pos);

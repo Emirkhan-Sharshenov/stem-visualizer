@@ -1,264 +1,301 @@
 import { RangeSlider } from './ui/RangeSlider';
+import { SimShell } from './ui/SimShell';
 import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
-import { Compass, HelpCircle, RotateCcw, Sparkles } from 'lucide-react';
+import { drawStage, glow, pill, runStage, STAGE } from '../lib/stage';
 
 interface MomentOpticsProps {
   lang: 'ru' | 'en';
 }
 
+type Mode = 'mirror' | 'refract' | 'prism';
+type V = [number, number];
+const OX = 400;
+const OY = 190;
+const LEN = 330;
+const add = (a: V, b: V, k = 1): V => [a[0] + b[0] * k, a[1] + b[1] * k];
+const dot = (a: V, b: V) => a[0] * b[0] + a[1] * b[1];
+const norm = (a: V): V => {
+  const l = Math.hypot(a[0], a[1]) || 1;
+  return [a[0] / l, a[1] / l];
+};
+/** Snell's law for a direction d hitting a surface with normal nrm (pointing back towards d); null = total internal reflection */
+function refract(d: V, nrm: V, n1: number, n2: number): V | null {
+  const r = n1 / n2;
+  const c = -dot(nrm, d);
+  const k = 1 - r * r * (1 - c * c);
+  if (k < 0) return null;
+  return norm(add([d[0] * r, d[1] * r], nrm, r * c - Math.sqrt(k)));
+}
+const reflect = (d: V, nrm: V): V => add(d, nrm, -2 * dot(d, nrm));
+/** where the ray p + t·d first crosses segment a–b */
+function hit(p: V, d: V, a: V, b: V): number | null {
+  const e: V = [b[0] - a[0], b[1] - a[1]];
+  const den = d[0] * e[1] - d[1] * e[0];
+  if (Math.abs(den) < 1e-9) return null;
+  const t = ((a[0] - p[0]) * e[1] - (a[1] - p[1]) * e[0]) / den;
+  const u = ((a[0] - p[0]) * d[1] - (a[1] - p[1]) * d[0]) / den;
+  return t > 1e-6 && u >= 0 && u <= 1 ? t : null;
+}
+// visible colours with an exaggerated dispersion so the fan is easy to see
+const SPECTRUM: [number, string][] = [[700, '255,60,60'], [620, '255,140,40'], [580, '255,230,60'], [530, '80,230,90'], [490, '60,200,255'], [450, '80,110,255'], [410, '170,90,255']];
+const nGlass = (lam: number) => 1.5 + 14000 / (lam * lam);
+
 export const MomentOptics: React.FC<MomentOpticsProps> = ({ lang }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [angleDeg, setAngleDeg] = useState<number>(45); // 0 to 85 degrees
-  const [n1, setN1] = useState<number>(1.0); // Air
-  const [n2, setN2] = useState<number>(1.5); // Glass
-  const [isReverse, setIsReverse] = useState<boolean>(false); // From dense to air
+  const [mode, setMode] = useState<Mode>('refract');
+  const [angle, setAngle] = useState(40);
+  const [n2, setN2] = useState(1.33);
+  const [fromBelow, setFromBelow] = useState(false);
+  const [shown, setShown] = useState({ out: 0, tir: false, crit: 0 });
 
-  // Calculate refraction angle by Snell's law: n1 sin(a) = n2 sin(b)
-  const actualN1 = isReverse ? n2 : n1;
-  const actualN2 = isReverse ? n1 : n2;
+  const live = useRef({ mode, angle, n2, fromBelow, lang });
+  live.current = { mode, angle, n2, fromBelow, lang };
 
-  const alphaRad = (angleDeg * Math.PI) / 180;
-  const sinBeta = (actualN1 / actualN2) * Math.sin(alphaRad);
-  const isTotalInternalReflection = sinBeta > 1.0;
-  const betaRad = isTotalInternalReflection ? alphaRad : Math.asin(sinBeta);
-  const betaDeg = isTotalInternalReflection ? angleDeg : (betaRad * 180) / Math.PI;
-
-  // Critical angle if light travels from dense to rare
-  const criticalAngleDeg = actualN1 > actualN2 ? (Math.asin(actualN2 / actualN1) * 180) / Math.PI : null;
-
-  // Draw optics scene
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    let report = 0;
 
-    const { w, h } = fitCanvas(canvas, ctx);
-    const midY = h / 2;
-    const midX = w / 2;
-
-    // Clear
-    ctx.fillStyle = '#111214';
-    ctx.fillRect(0, 0, w, h);
-
-    // Medium 1 (Top half)
-    ctx.fillStyle = isReverse ? 'rgba(56, 189, 248, 0.15)' : '#17181B';
-    ctx.fillRect(0, 0, w, midY);
-
-    // Medium 2 (Bottom half - denser)
-    ctx.fillStyle = isReverse ? '#17181B' : 'rgba(56, 189, 248, 0.18)';
-    ctx.fillRect(0, midY, w, midY);
-
-    // Boundary interface line
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, midY);
-    ctx.lineTo(w, midY);
-    ctx.stroke();
-
-    // Normal line (vertical dashed line)
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 6]);
-    ctx.beginPath();
-    ctx.moveTo(midX, 20);
-    ctx.lineTo(midX, h - 20);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Medium Labels
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '12px Plus Jakarta Sans, sans-serif';
-    ctx.fillText(`${lang === 'ru' ? 'Среда 1' : 'Medium 1'}: n = ${actualN1.toFixed(2)}`, 25, 35);
-    ctx.fillText(`${lang === 'ru' ? 'Среда 2' : 'Medium 2'}: n = ${actualN2.toFixed(2)}`, 25, midY + 35);
-
-    // Incident Ray (Incoming from top-left toward midX, midY)
-    const rayLength = 220;
-    const srcX = midX - Math.sin(alphaRad) * rayLength;
-    const srcY = midY - Math.cos(alphaRad) * rayLength;
-
-    // Glowing laser beam
-    ctx.strokeStyle = '#f43f5e';
-    ctx.lineWidth = 4;
-    ctx.shadowColor = '#f43f5e';
-    ctx.shadowBlur = 12;
-    ctx.beginPath();
-    ctx.moveTo(srcX, srcY);
-    ctx.lineTo(midX, midY);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Arrow on incident ray
-    const midIncX = (srcX + midX) / 2;
-    const midIncY = (srcY + midY) / 2;
-    ctx.fillStyle = '#f43f5e';
-    ctx.beginPath();
-    ctx.arc(midIncX, midIncY, 5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Reflected Ray (always present, but bright when Total Internal Reflection)
-    const reflX = midX + Math.sin(alphaRad) * rayLength;
-    const reflY = midY - Math.cos(alphaRad) * rayLength;
-    ctx.strokeStyle = isTotalInternalReflection ? '#f43f5e' : 'rgba(244, 63, 94, 0.3)';
-    ctx.lineWidth = isTotalInternalReflection ? 4 : 1.5;
-    if (isTotalInternalReflection) {
-      ctx.shadowColor = '#f43f5e';
-      ctx.shadowBlur = 12;
-    }
-    ctx.beginPath();
-    ctx.moveTo(midX, midY);
-    ctx.lineTo(reflX, reflY);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Refracted Ray into Medium 2 (if not total internal reflection)
-    if (!isTotalInternalReflection) {
-      const refrX = midX + Math.sin(betaRad) * rayLength;
-      const refrY = midY + Math.cos(betaRad) * rayLength;
-
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 4;
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 12;
+    const beam = (pts: V[], rgb: string, a: number, t: number, width = 3) => {
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = `rgba(${rgb},${0.25 * a})`;
+      ctx.lineWidth = width + 8;
       ctx.beginPath();
-      ctx.moveTo(midX, midY);
-      ctx.lineTo(refrX, refrY);
+      pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
       ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // Draw angle arcs
-      ctx.strokeStyle = '#ec4899';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = `rgba(${rgb},${a})`;
+      ctx.lineWidth = width;
+      ctx.stroke();
+      // light travelling along the beam
+      ctx.strokeStyle = `rgba(255,255,255,${0.55 * a})`;
+      ctx.lineWidth = width * 0.6;
+      ctx.setLineDash([4, 26]);
+      ctx.lineDashOffset = -t * 120;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    };
+    const angleArc = (from: number, to: number, r: number, col: string, label: string) => {
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(midX, midY, 40, -Math.PI / 2 - alphaRad, -Math.PI / 2);
+      ctx.arc(OX, OY, r, Math.min(from, to), Math.max(from, to));
       ctx.stroke();
+      const m = (from + to) / 2;
+      ctx.fillStyle = col;
+      ctx.font = `600 12px ${STAGE.mono}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, OX + Math.cos(m) * (r + 16), OY + Math.sin(m) * (r + 16));
+    };
 
-      ctx.strokeStyle = '#06b6d4';
-      ctx.beginPath();
-      ctx.arc(midX, midY, 45, Math.PI / 2 - betaRad, Math.PI / 2);
-      ctx.stroke();
-    }
-  }, [angleDeg, n1, n2, isReverse, alphaRad, betaRad, isTotalInternalReflection, actualN1, actualN2, lang]);
+    return runStage(canvas, (dt, t, still) => {
+      const { w, h } = fitCanvas(canvas, ctx);
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const tt = still ? 0 : t;
+      drawStage(ctx, w, h);
+      const a = (L.angle * Math.PI) / 180;
+      let out = 0;
+      let tir = false;
+      let crit = 0;
 
+      if (L.mode !== 'prism') {
+        const below = L.mode === 'refract' && L.fromBelow;
+        const nTop = 1;
+        const nBot = L.mode === 'refract' ? L.n2 : 1;
+        // the media
+        if (L.mode === 'refract') {
+          const g = ctx.createLinearGradient(0, OY, 0, h);
+          g.addColorStop(0, `rgba(80,160,255,${0.1 + (L.n2 - 1) * 0.12})`);
+          g.addColorStop(1, `rgba(40,100,220,${0.18 + (L.n2 - 1) * 0.12})`);
+          ctx.fillStyle = g;
+          ctx.fillRect(0, OY, w, h - OY);
+          ctx.strokeStyle = 'rgba(160,210,255,0.5)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, OY);
+          ctx.lineTo(w, OY);
+          ctx.stroke();
+        } else {
+          const g = ctx.createLinearGradient(0, OY, 0, OY + 14);
+          g.addColorStop(0, '#E8ECF5');
+          g.addColorStop(1, '#7A8296');
+          ctx.fillStyle = g;
+          ctx.fillRect(110, OY, 580, 12);
+          for (let x = 110; x < 690; x += 14) {
+            ctx.strokeStyle = 'rgba(160,170,190,0.5)';
+            ctx.beginPath();
+            ctx.moveTo(x, OY + 12);
+            ctx.lineTo(x - 10, OY + 26);
+            ctx.stroke();
+          }
+        }
+        // the normal
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.setLineDash([5, 6]);
+        ctx.beginPath();
+        ctx.moveTo(OX, 20);
+        ctx.lineTo(OX, h - 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const n1 = below ? nBot : nTop;
+        const n2b = below ? nTop : nBot;
+        const src: V = below ? [OX - Math.sin(a) * LEN, OY + Math.cos(a) * LEN] : [OX - Math.sin(a) * LEN, OY - Math.cos(a) * LEN];
+        const d = norm([OX - src[0], OY - src[1]]);
+        const nrm: V = below ? [0, 1] : [0, -1];
+        const refl = reflect(d, nrm);
+        const refr = L.mode === 'refract' ? refract(d, nrm, n1, n2b) : null;
+        // how much light is reflected (Schlick's approximation of Fresnel)
+        const R0 = ((n1 - n2b) / (n1 + n2b)) ** 2;
+        const cosI = Math.cos(a);
+        let R = L.mode === 'mirror' ? 1 : R0 + (1 - R0) * (1 - cosI) ** 5;
+        if (L.mode === 'refract' && !refr) R = 1;
+        tir = L.mode === 'refract' && !refr;
+        if (n1 > n2b) crit = (Math.asin(n2b / n1) * 180) / Math.PI;
+
+        // the laser
+        ctx.save();
+        ctx.translate(src[0], src[1]);
+        ctx.rotate(Math.atan2(d[1], d[0]));
+        ctx.fillStyle = '#3A4058';
+        ctx.beginPath();
+        ctx.roundRect(-34, -9, 40, 18, 5);
+        ctx.fill();
+        ctx.fillStyle = '#FF5C7A';
+        ctx.fillRect(4, -4, 4, 8);
+        ctx.restore();
+        beam([src, [OX, OY]], '255,90,110', 1, tt);
+        beam([[OX, OY], add([OX, OY], refl, LEN)], '255,90,110', Math.max(0.15, R), tt);
+        if (refr) beam([[OX, OY], add([OX, OY], refr, LEN)], '255,90,110', 1 - R * 0.8, tt);
+        glow(ctx, OX, OY, 30, '255,120,140', 0.7);
+        const inc = Math.atan2(-d[1], -d[0]);
+        const normUp = below ? Math.PI / 2 : -Math.PI / 2;
+        angleArc(normUp, inc, 46, '#FFB3C0', `${Math.round(L.angle)}°`);
+        if (refr) {
+          const outAng = Math.atan2(refr[1], refr[0]);
+          out = (Math.acos(Math.abs(refr[1])) * 180) / Math.PI;
+          angleArc(below ? -Math.PI / 2 : Math.PI / 2, outAng, 58, '#9FD8FF', `${Math.round(out)}°`);
+        } else if (L.mode === 'mirror') out = L.angle;
+        if (L.mode === 'mirror') pill(ctx, OX, 30, ru ? 'угол падения = углу отражения' : 'angle of incidence = angle of reflection', STAGE.ink);
+        else if (tir) pill(ctx, OX, 30, ru ? `полное внутреннее отражение: угол больше ${Math.round(crit)}°` : `total internal reflection: past ${Math.round(crit)}°`, '#FFC46B');
+        else pill(ctx, OX, 30, `n₁·sin α = n₂·sin β`, STAGE.ink);
+        if (L.mode === 'refract') {
+          pill(ctx, 70, OY - 22, ru ? 'воздух n = 1' : 'air n = 1', STAGE.soft, 'left');
+          pill(ctx, 70, OY + 24, `${ru ? 'среда' : 'medium'} n = ${L.n2.toFixed(2)}`, '#9FD8FF', 'left');
+        }
+      } else {
+        // a glass prism splitting white light
+        const A: V = [420, 70];
+        const B: V = [300, 290];
+        const Cc: V = [540, 290];
+        const g = ctx.createLinearGradient(B[0], 0, Cc[0], 0);
+        g.addColorStop(0, 'rgba(200,220,255,0.14)');
+        g.addColorStop(1, 'rgba(200,220,255,0.06)');
+        ctx.fillStyle = g;
+        ctx.strokeStyle = 'rgba(220,235,255,0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(A[0], A[1]);
+        ctx.lineTo(B[0], B[1]);
+        ctx.lineTo(Cc[0], Cc[1]);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        const P: V = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+        const outward = norm([-(B[1] - A[1]), B[0] - A[0]]); // left face, pointing out of the glass
+        const inn: V = [-outward[0], -outward[1]];
+        const ca = Math.cos(-a);
+        const sa = Math.sin(-a);
+        const d: V = norm([inn[0] * ca - inn[1] * sa, inn[0] * sa + inn[1] * ca]);
+        const src = add(P, d, -300);
+        beam([src, P], '255,255,255', 1, tt, 4);
+        let spread = 0;
+        for (const [lam, rgb] of SPECTRUM) {
+          const n = nGlass(lam);
+          const d1 = refract(d, outward, 1, n);
+          if (!d1) continue;
+          const tAC = hit(P, d1, A, Cc);
+          const tBC = hit(P, d1, B, Cc);
+          const t1 = tAC ?? tBC;
+          if (t1 === null) continue;
+          const Q = add(P, d1, t1);
+          const face = tAC !== null ? [A, Cc] : [B, Cc];
+          const fo = norm([face[1][1] - face[0][1], -(face[1][0] - face[0][0])]);
+          const outN: V = dot(fo, d1) > 0 ? [-fo[0], -fo[1]] : fo;
+          const d2 = refract(d1, outN, n, 1);
+          beam([P, Q], rgb, 0.6, tt, 1.6);
+          if (d2) {
+            beam([Q, add(Q, d2, 360)], rgb, 0.95, tt, 2.4);
+            spread = Math.max(spread, Math.atan2(d2[1], d2[0]));
+          } else {
+            tir = true;
+            beam([Q, add(Q, reflect(d1, outN), 160)], rgb, 0.6, tt, 1.6);
+          }
+        }
+        pill(ctx, 400, 30, tir ? (ru ? 'часть света отражается внутри призмы' : 'some light reflects inside the prism') : ru ? 'фиолетовый преломляется сильнее красного' : 'violet bends more than red', tir ? '#FFC46B' : STAGE.ink);
+        pill(ctx, 120, 350, ru ? 'дисперсия увеличена для наглядности' : 'dispersion exaggerated for clarity', STAGE.soft);
+        void spread;
+      }
+
+      report += still ? 1 : dt;
+      if (report > 0.1) {
+        report = 0;
+        setShown({ out, tir, crit });
+      }
+    });
+  }, []);
+
+  const ru = lang === 'ru';
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full max-w-7xl mx-auto py-2">
-      {/* Simulation Viewport */}
-      <div className="flex-1 flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        {/* Header Bar */}
-        <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Compass className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{lang === 'ru' ? 'Преломление света и закон Снеллиуса' : 'Light Refraction & Snell\'s Law'}</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">
-                  {lang === 'ru' ? '7-8 Класс' : 'Grade 7-8'}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ru' ? 'Меняй угол падения и наблюдай преломление и полное внутреннее отражение' : 'Adjust incident angle and observe refraction and total internal reflection'}
-              </p>
-            </div>
-          </div>
-
-          <Button variant="outline" size="sm" className="text-xs font-semibold" onPress={() => setIsReverse(!isReverse)}>
-            {isReverse
-              ? (lang === 'ru' ? 'Направление: Стекло → Воздух' : 'Direction: Glass → Air')
-              : (lang === 'ru' ? 'Направление: Воздух → Стекло' : 'Direction: Air → Glass')}
-          </Button>
-        </div>
-
-        {/* Live Gauges Bar */}
-        <div className="px-4 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-          <div className="flex items-center gap-4">
-            <span>{lang === 'ru' ? 'Угол падения' : 'Angle of incidence'} α = <strong className="text-rose-400">{angleDeg}°</strong></span>
-            <span>
-              {lang === 'ru' ? 'Угол преломления' : 'Angle of refraction'} β ={' '}
-              <strong className={isTotalInternalReflection ? 'text-amber-400' : 'text-cyan-400'}>
-                {isTotalInternalReflection ? (lang === 'ru' ? 'НЕТ (Полное отражение!)' : 'None (Total Internal Reflection!)') : `${betaDeg.toFixed(1)}°`}
-              </strong>
-            </span>
-          </div>
-
-          {criticalAngleDeg && (
-            <span className="text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">
-              {lang === 'ru' ? 'Критический угол' : 'Critical Angle'}: {criticalAngleDeg.toFixed(1)}°
-            </span>
+    <SimShell
+      badge={ru ? '8–11 класс · Физика' : 'Grades 8–11 · Physics'}
+      formula={mode === 'mirror' ? 'α = γ' : 'n₁ sin α = n₂ sin β'}
+      title={ru ? 'Лучи света: отражение, преломление и дисперсия' : 'Light rays: reflection, refraction and dispersion'}
+      actions={
+        <>
+          {(['mirror', 'refract', 'prism'] as Mode[]).map((m) => (
+            <Button key={m} variant={mode === m ? 'primary' : 'outline'} size="sm" className="font-semibold" onPress={() => setMode(m)}>
+              {m === 'mirror' ? (ru ? 'Зеркало' : 'Mirror') : m === 'refract' ? (ru ? 'Преломление' : 'Refraction') : ru ? 'Призма' : 'Prism'}
+            </Button>
+          ))}
+          {mode === 'refract' && (
+            <Button variant={fromBelow ? 'primary' : 'outline'} size="sm" className="font-semibold" onPress={() => setFromBelow(!fromBelow)}>
+              {ru ? 'Из воды в воздух' : 'Water to air'}
+            </Button>
           )}
-        </div>
-
-        {/* Canvas */}
-        <div className="lab-stage relative w-full flex items-center justify-center p-3">
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={380}
-            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
-          />
-
-          {isTotalInternalReflection && (
-            <div className="absolute top-6 right-6 p-3 bg-amber-950/90 border border-amber-500/60 backdrop-blur-md rounded-xl text-xs text-amber-200 max-w-xs shadow-xl animate-pulse">
-              <span className="font-bold font-mono">{lang === 'ru' ? 'ПОЛНОЕ ВНУТРЕННЕЕ ОТРАЖЕНИЕ!' : 'TOTAL INTERNAL REFLECTION!'}</span>
-              <p className="text-[11px] mt-1">
-                {lang === 'ru'
-                  ? 'Свет не может выйти в воздух, потому что угол падения превысил критический. Луч на 100% отражается обратно! (Так работает оптоволоконный интернет).'
-                  : 'Light cannot escape into the air. 100% of light is trapped and reflected back! This powers modern fiber-optic internet.'}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Sliders */}
-        <div className="p-4 bg-slate-950/70 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Угол падения луча α' : 'Incident Angle α'}</span>
-              <span className="font-mono text-rose-400 font-bold">{angleDeg}°</span>
-            </div>
-            <RangeSlider value={angleDeg} onChange={(v) => setAngleDeg(v)} min={0} max={85} />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Показатель преломления стекла n₂' : 'Refractive Index n₂'}</span>
-              <span className="font-mono text-cyan-400 font-bold">{n2.toFixed(2)}</span>
-            </div>
-            <RangeSlider value={n2} onChange={(v) => setN2(v)} min={1.1} max={2.4} step={0.05} />
-          </div>
-        </div>
-      </div>
-
-      {/* Textbook Insight */}
-      <div className="w-full xl:w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <h3 className="font-bold text-slate-100 text-sm">
-              {lang === 'ru' ? 'Почему луч сгибается?' : 'Why does light bend?'}
-            </h3>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 text-xs text-slate-300 leading-relaxed">
-            <span className="text-[10px] font-mono uppercase font-bold text-cyan-400 block mb-1">
-              {lang === 'ru' ? 'АНАЛОГИЯ С КОЛЕСАМИ В ПЕСКЕ:' : 'THE LAWNMOWER ANALOGY:'}
-            </span>
-            {lang === 'ru'
-              ? 'Свет сгибается не потому, что его что-то «ломает», а потому что в стекле фазовая скорость света МЕНЬШЕ, чем в воздухе (v = c/n). Край светового фронта, входящий в стекло первым, притормаживает — и луч плавно поворачивает!'
-              : 'Light bends simply because it travels SLOWER in glass than in air (v = c/n). The side of the wavefront entering glass first decelerates, turning the entire beam!'}
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950 border border-indigo-900/40 text-xs font-mono text-indigo-300">
-            <code>n₁ · sin(α) = n₂ · sin(β)</code>
-          </div>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+      readouts={[
+        { label: ru ? 'Угол падения' : 'Angle in', value: `${angle}°`, color: '#D9534F' },
+        { label: mode === 'mirror' ? (ru ? 'Угол отражения' : 'Angle out') : ru ? 'Угол преломления' : 'Angle refracted', value: mode === 'prism' ? '—' : shown.tir ? (ru ? 'нет' : 'none') : `${Math.round(shown.out)}°`, color: '#1E88C8' },
+        ...(mode === 'refract' && fromBelow ? [{ label: ru ? 'Предельный угол' : 'Critical angle', value: `${Math.round(shown.crit)}°`, color: '#B7791F' }] : []),
+      ]}
+      controls={[
+        { label: ru ? 'Угол падения' : 'Angle of incidence', value: `${angle}°`, color: '#D9534F', input: <RangeSlider value={angle} onChange={setAngle} min={0} max={mode === 'prism' ? 60 : 85} /> },
+        ...(mode === 'refract'
+          ? [
+              {
+                label: ru ? 'Показатель преломления среды' : 'Refractive index of the medium',
+                value: ru ? n2.toFixed(2).replace('.', ',') : n2.toFixed(2),
+                color: '#1E88C8',
+                input: <RangeSlider value={n2} onChange={setN2} min={1} max={2.42} step={0.01} />,
+                hint: ru ? 'Вода 1,33, стекло 1,5, алмаз 2,42. Чем больше n, тем сильнее луч прижимается к нормали.' : 'Water 1.33, glass 1.5, diamond 2.42. The larger n, the more the ray bends towards the normal.',
+              },
+            ]
+          : []),
+      ]}
+      insight={{
+        title: ru ? 'Попробуй' : 'Try this',
+        text: ru
+          ? 'Включи «Из воды в воздух» и увеличивай угол: после предельного угла свет перестаёт выходить и целиком отражается. Так свет бежит по оптоволокну. Алмаз блестит потому, что у него предельный угол всего 24°.'
+          : 'Turn on “Water to air” and raise the angle: past the critical angle no light gets out and it all reflects. That is how light runs along optical fibre, and why a diamond, with a critical angle of just 24°, sparkles.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={380} className="block w-full h-auto" aria-label={ru ? 'Лазерный луч, зеркало, граница сред и призма' : 'A laser beam, a mirror, an interface and a prism'} />
+    </SimShell>
   );
 };

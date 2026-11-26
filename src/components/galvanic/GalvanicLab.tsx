@@ -103,7 +103,7 @@ export const GalvanicLab: React.FC<{ lang: Lang }> = ({ lang }) => {
         <rect x={x - w / 2} y={70} width={w} height={150} rx={3} fill={m.color} stroke="#16171A" strokeOpacity="0.4" />
         {!isAnode && charge > 0.2 && <rect x={x - w / 2} y={150} width={w} height={70} rx={3} fill={cathode.color} opacity={0.9} />}
         <text x={x} y={62} textAnchor="middle" fontSize="15" fontWeight="700" fill="#16171A">{m.sym}</text>
-        <text x={x} y={248} textAnchor="middle" fontSize="12" fontWeight="700" fill={isAnode ? '#E5484D' : '#2F5BFF'}>
+        <text x={x} y={248} textAnchor="middle" fontSize="12" fontWeight="700" fill={isAnode ? '#E5484D' : '#5B4BFF'}>
           {isAnode ? L('анод (−)', 'anode (−)') : L('катод (+)', 'cathode (+)')}
         </text>
       </g>
@@ -156,7 +156,7 @@ export const GalvanicLab: React.FC<{ lang: Lang }> = ({ lang }) => {
                   y = 30 + (s - 40 - Math.abs(xC - xA));
                 }
                 if (Math.abs(x - 300) < 24 && y === 30) return null;
-                return <circle key={i} cx={x} cy={y} r={4} fill="#2F5BFF" />;
+                return <circle key={i} cx={x} cy={y} r={4} fill="#5B4BFF" />;
               })}
             {/* ions leaving the anode and settling on the cathode */}
             {flowOn &&
@@ -182,7 +182,7 @@ export const GalvanicLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           </div>
           <div className="rounded-xl border border-line bg-surface p-3">
             <div className="text-xs text-ink-2">{L('Катод: восстановление', 'Cathode: reduction')}</div>
-            <div className="font-mono text-sm text-[#2F5BFF]">{cathode.ion} + {cathode.z}e⁻ → {cathode.sym}</div>
+            <div className="font-mono text-sm text-[#5B4BFF]">{cathode.ion} + {cathode.z}e⁻ → {cathode.sym}</div>
           </div>
         </div>
         <div className="rounded-xl border border-line bg-surface p-3 text-sm">

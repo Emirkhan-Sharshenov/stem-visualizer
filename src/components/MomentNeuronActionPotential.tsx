@@ -472,7 +472,7 @@ const Oscilloscope: React.FC<{ lang: 'ru' | 'en'; trace: number[] }> = ({ lang, 
           </g>
         ))}
         <text x={W - 4} y={y(THRESHOLD) - 6} textAnchor="end" fontSize="11" fill="#B97300" fontFamily="Inter">{lang === 'ru' ? 'порог' : 'threshold'}</text>
-        <polyline points={pts} fill="none" stroke="#2F5BFF" strokeWidth="2.25" strokeLinejoin="round" />
+        <polyline points={pts} fill="none" stroke="#5B4BFF" strokeWidth="2.25" strokeLinejoin="round" />
       </svg>
     </div>
   );

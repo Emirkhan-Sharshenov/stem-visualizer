@@ -4,8 +4,8 @@
   "description": "Интерактивный учебник физики, химии и биологии для 5–11 классов: 3D-модели, 16 конструкторов опытов, задачи и тесты, подготовка к ОРТ и ИИ-наставник. Бесплатно.",
   "start_url": "/#/app",
   "display": "standalone",
-  "background_color": "#FAFAF7",
-  "theme_color": "#2F5BFF",
+  "background_color": "#F6F7FB",
+  "theme_color": "#5B4BFF",
   "lang": "ru",
   "icons": [
     {

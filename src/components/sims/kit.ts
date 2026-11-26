@@ -73,7 +73,7 @@ export const C = {
   text: '#EDEDED',
   dim: '#8C8F98',
   faint: '#5A5D66',
-  accent: '#2F5BFF',
+  accent: '#5B4BFF',
   blue: '#5B8CFF',
   sky: '#8FA4FF',
   cyan: '#3DD6F5',

@@ -100,7 +100,7 @@ export const YearRecap: React.FC<{ lang: Lang; progress: Progress; onClose: () =
 
   const slides: { bg: string; body: React.ReactNode }[] = [
     {
-      bg: 'linear-gradient(160deg,#1B2A8C,#2F5BFF 55%,#7AA2FF)',
+      bg: 'linear-gradient(160deg,#1B2A8C,#5B4BFF 55%,#7AA2FF)',
       body: (
         <>
           <p className="text-lg opacity-80">{L('Твой год в', 'Your year in')}</p>

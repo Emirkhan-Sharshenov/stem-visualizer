@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-const COLORS = ['#2F5BFF', '#30A46C', '#F5A524', '#E5484D', '#8E4EC6'];
+const COLORS = ['#5B4BFF', '#30A46C', '#F5A524', '#E5484D', '#8E4EC6'];
 
 /** a short burst of falling confetti over the parent (which must be position: relative) */
 export const Confetti: React.FC<{ count?: number }> = ({ count = 36 }) => {

@@ -65,7 +65,7 @@ export const ProgressPage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
       </header>
 
       {new Set(p.days).size >= 3 && (
-        <button onClick={() => setRecap(true)} className="lift text-left rounded-2xl p-5 flex items-center gap-4 cursor-pointer" style={{ background: 'linear-gradient(120deg,#2F5BFF,#8E4EC6 60%,#F76B15)', color: '#fff' }}>
+        <button onClick={() => setRecap(true)} className="lift text-left rounded-2xl p-5 flex items-center gap-4 cursor-pointer" style={{ background: 'linear-gradient(120deg,#5B4BFF,#8E4EC6 60%,#F76B15)', color: '#fff' }}>
           <Sparkles className="w-8 h-8 shrink-0" />
           <span className="flex-1">
             <span className="block font-serif text-2xl leading-tight">{L('Твой год в STEM Visualizer', 'Your year in STEM Visualizer')}</span>

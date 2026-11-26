@@ -85,7 +85,7 @@ export const Daily: React.FC<{ lang: Lang; onExit: () => void }> = ({ lang, onEx
   const text = res
     ? `STEM Visualizer · ${L('Вызов дня', 'Daily challenge')} ${date}\n${res.marks.map((m) => (m ? '🟩' : '🟥')).join('')} ${right}/${COUNT} · ${res.secs} ${L('с', 's')}\n🔥 ${L(`серия ${streak}`, `streak ${streak}`)}\n${link}`
     : '';
-  const card = useCard(res ? { kicker: L(`Вызов дня · ${date}`, `Daily challenge · ${date}`), big: `${right}/${COUNT}`, sub: L(`за ${res.secs} с · серия ${streak} 🔥`, `in ${res.secs} s · streak ${streak} 🔥`), marks: res.marks, call: L('А ты сможешь?', 'Can you do it?'), color: '#2F5BFF' } : null);
+  const card = useCard(res ? { kicker: L(`Вызов дня · ${date}`, `Daily challenge · ${date}`), big: `${right}/${COUNT}`, sub: L(`за ${res.secs} с · серия ${streak} 🔥`, `in ${res.secs} s · streak ${streak} 🔥`), marks: res.marks, call: L('А ты сможешь?', 'Can you do it?'), color: '#5B4BFF' } : null);
 
   const shareText = async () => {
     if (navigator.share) {

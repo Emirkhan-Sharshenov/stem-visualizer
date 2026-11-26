@@ -182,7 +182,7 @@ export const AtomLab: React.FC<{ lang: Lang }> = ({ lang }) => {
 
         <div className="flex flex-col gap-3">
           <div className="bg-surface border border-line rounded-xl p-4 flex gap-4 items-center">
-            <div className="w-20 h-20 rounded-xl border-2 flex flex-col items-center justify-center shrink-0" style={{ borderColor: el ? '#2F5BFF' : '#E5E5E0' }}>
+            <div className="w-20 h-20 rounded-xl border-2 flex flex-col items-center justify-center shrink-0" style={{ borderColor: el ? '#5B4BFF' : '#E5E5E0' }}>
               <span className="text-[11px] text-ink-3 self-start ml-2">{p || ''}</span>
               <span className="text-3xl font-semibold text-ink -mt-1">{el?.sym ?? '?'}</span>
               <span className="text-[10px] text-ink-3">{el?.mass ?? ''}</span>

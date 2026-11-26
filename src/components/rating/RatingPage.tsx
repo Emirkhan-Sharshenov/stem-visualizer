@@ -31,7 +31,7 @@ function timeLeft(ends: string, lang: Lang) {
 const Avatar: React.FC<{ nick: string; me?: boolean }> = ({ nick, me }) => {
   const hue = [...nick].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
   return (
-    <span className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0" style={{ background: me ? '#2F5BFF' : `hsl(${hue} 55% 88%)`, color: me ? '#fff' : `hsl(${hue} 45% 30%)` }}>
+    <span className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0" style={{ background: me ? '#5B4BFF' : `hsl(${hue} 55% 88%)`, color: me ? '#fff' : `hsl(${hue} 45% 30%)` }}>
       {nick.slice(0, 1).toUpperCase()}
     </span>
   );

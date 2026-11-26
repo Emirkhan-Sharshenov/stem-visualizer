@@ -41,7 +41,7 @@ interface Preset {
 const VW = 640;
 const VH = 400;
 const U = 40;
-const C1 = '#2F5BFF';
+const C1 = '#5B4BFF';
 const C2 = '#E5484D';
 const C3 = '#30A46C';
 const C4 = '#8E4EC6';

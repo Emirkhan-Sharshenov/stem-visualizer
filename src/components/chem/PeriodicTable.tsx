@@ -14,7 +14,7 @@ const mix = (a: string, b: string, k: number) => {
 
 function cellColor(e: El, mode: TableMode) {
   if (mode === 'category') return CATEGORY_INFO[e.cat].color;
-  if (mode === 'eneg') return e.en === null ? '#3A3D45' : mix('#2F5BFF', '#E5484D', (e.en - 0.7) / 3.3);
+  if (mode === 'eneg') return e.en === null ? '#3A3D45' : mix('#5B4BFF', '#E5484D', (e.en - 0.7) / 3.3);
   if (mode === 'metal') return e.cat === 'nonmetal' || e.cat === 'halogen' || e.cat === 'noble' ? '#30A46C' : e.cat === 'metalloid' ? '#F5A524' : '#8FA4FF';
   // trends: metallic character grows down-left
   const k = ((e.col - 1) / 17) * 0.6 + (1 - (Math.min(e.period, 7) - 1) / 6) * 0.4;

@@ -1,126 +1,181 @@
 import { Button } from '@heroui/react';
-import React, { useState } from 'react';
-import { Dna, Sparkles, CheckCircle2, RotateCcw } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { RotateCcw, Sprout } from 'lucide-react';
+import { SimShell } from './ui/SimShell';
 
 interface MomentMendelProps {
   lang: 'ru' | 'en';
 }
 
-type Allele = 'A' | 'a';
+type Geno = 'AA' | 'Aa' | 'aa';
+const PURPLE = '#9B7BFF';
+const WHITE = '#F4F2FF';
+const isPurple = (g: string) => g.includes('A');
+const norm = (a: string, b: string) => (a === 'A' ? a + b : b + a) as Geno;
+
+/** a pea flower: five petals round a yellow heart on a stem */
+const Flower: React.FC<{ purple: boolean; size?: number; className?: string }> = ({ purple, size = 44, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 44 44" className={className} aria-hidden="true">
+    <path d="M22 40V26" stroke="#3FA55B" strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M22 34c-4 0-7-2-8-5 4-.5 7 1 8 5z" fill="#4CBF6A" />
+    {[0, 72, 144, 216, 288].map((a) => (
+      <ellipse key={a} cx="22" cy="10.5" rx="5.2" ry="7.4" transform={`rotate(${a} 22 18)`} fill={purple ? PURPLE : WHITE} stroke={purple ? '#6E54E0' : '#C9C4E6'} strokeWidth="0.8" />
+    ))}
+    <circle cx="22" cy="18" r="3.6" fill="#FFD25E" />
+  </svg>
+);
 
 export const MomentMendel: React.FC<MomentMendelProps> = ({ lang }) => {
-  // Parent 1 (Mother) and Parent 2 (Father) alleles
-  const [p1Allele1, setP1Allele1] = useState<Allele>('A');
-  const [p1Allele2, setP1Allele2] = useState<Allele>('a');
+  const ru = lang === 'ru';
+  const [mother, setMother] = useState<Geno>('Aa');
+  const [father, setFather] = useState<Geno>('Aa');
+  const [field, setField] = useState<Geno[]>([]);
+  const [growing, setGrowing] = useState(false);
+  const timer = useRef<number | null>(null);
 
-  const [p2Allele1, setP2Allele1] = useState<Allele>('A');
-  const [p2Allele2, setP2Allele2] = useState<Allele>('a');
+  const mg = mother.split('');
+  const fg = father.split('');
+  const cells = mg.flatMap((m) => fg.map((f) => norm(m, f)));
+  const purpleCells = cells.filter(isPurple).length;
 
-  // Offspring in 4 squares of Punnett grid
-  const cell1 = `${p1Allele1}${p2Allele1}`; // Top-left
-  const cell2 = `${p1Allele1}${p2Allele2}`; // Top-right
-  const cell3 = `${p1Allele2}${p2Allele1}`; // Bottom-left
-  const cell4 = `${p1Allele2}${p2Allele2}`; // Bottom-right
+  const stop = () => {
+    if (timer.current) window.clearInterval(timer.current);
+    timer.current = null;
+    setGrowing(false);
+  };
+  useEffect(() => stop, []);
+  // changing a parent starts a fresh field
+  useEffect(() => {
+    stop();
+    setField([]);
+  }, [mother, father]);
 
-  const cells = [cell1, cell2, cell3, cell4];
+  const plant = () => {
+    stop();
+    setField([]);
+    setGrowing(true);
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const one = () => norm(mg[Math.random() < 0.5 ? 0 : 1], fg[Math.random() < 0.5 ? 0 : 1]);
+    if (reduced) {
+      setField(Array.from({ length: 100 }, one));
+      setGrowing(false);
+      return;
+    }
+    // two plants per tick; the whole bed is drawn up front so the updater stays pure
+    const bed = Array.from({ length: 100 }, one);
+    let n = 0;
+    timer.current = window.setInterval(() => {
+      n = Math.min(100, n + 2);
+      setField(bed.slice(0, n));
+      if (n >= 100) stop();
+    }, 45);
+  };
 
-  // Helper to determine phenotype: 'A' is dominant (Purple flower), 'aa' is recessive (White flower)
-  const isDominant = (genotype: string) => genotype.includes('A');
+  const p = field.filter(isPurple).length;
+  const wht = field.length - p;
+  const expected = purpleCells / 4;
 
-  const dominantCount = cells.filter(isDominant).length;
-  const recessiveCount = 4 - dominantCount;
-
-  return (
-    <div className="flex flex-col gap-4 w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 font-mono font-bold border border-emerald-800">
-              {lang === 'ru' ? '9–10 Класс • Генетика' : 'Grade 9-10 • Genetics'}
-            </span>
-            <span className="text-xs font-mono uppercase text-slate-400 font-bold">
-              {lang === 'ru' ? 'Законы Менделя и Решетка Пеннета' : "Mendel's Laws & Punnett Square"}
-            </span>
-          </div>
-          <h3 className="text-base font-bold text-slate-100 mt-1">
-            {lang === 'ru' ? 'Расщепление признаков: закон чистоты гамет и соотношение 3 : 1' : 'Allele Segregation: Why Recessive Traits Reappear (3 : 1 Ratio)'}
-          </h3>
-        </div>
-
-        {/* Ratio badges */}
-        <div className="flex items-center gap-3 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
-          <div>
-            <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'ФЕНОТИП (ВНЕШНИЙ ВИД)' : 'PHENOTYPE RATIO'}</span>
-            <span className="font-bold text-purple-400 font-mono text-sm">{dominantCount} : {recessiveCount} </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Interactive Punnett Grid */}
-      <div className="flex flex-col md:flex-row gap-6 items-center justify-center bg-slate-950 p-6 rounded-xl border border-slate-800">
-        {/* Parent 1 Controls (Mother - Top) */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="text-xs font-mono text-slate-400">
-            {lang === 'ru' ? 'Генотип Матери (P₁):' : 'Mother Genotype (P₁):'}
-            <div className="flex gap-2 mt-1">
-              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP1Allele1(p1Allele1 === 'A' ? 'a' : 'A')}>
-                {p1Allele1}
-              </Button>
-              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP1Allele2(p1Allele2 === 'A' ? 'a' : 'A')}>
-                {p1Allele2}
-              </Button>
-            </div>
-          </div>
-
-          <div className="text-xs font-mono text-slate-400">
-            {lang === 'ru' ? 'Генотип Отца (P₂):' : 'Father Genotype (P₂):'}
-            <div className="flex gap-2 mt-1">
-              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP2Allele1(p2Allele1 === 'A' ? 'a' : 'A')}>
-                {p2Allele1}
-              </Button>
-              <Button variant="outline" size="sm" className="w-8 font-bold font-mono" onPress={() => setP2Allele2(p2Allele2 === 'A' ? 'a' : 'A')}>
-                {p2Allele2}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* 2x2 Punnett Square Grid */}
-        <div className="grid grid-cols-2 gap-3 w-72 h-72">
-          {cells.map((cellGenotype, idx) => {
-            const dominant = isDominant(cellGenotype);
-            return (
-              <div
-                key={idx}
-                className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
-                  dominant
-                    ? 'bg-purple-950/40 border-purple-500/60 text-purple-200'
-                    : 'bg-slate-800/40 border-slate-600/60 text-slate-200'
-                }`}
-              >
-                <span className="text-2xl">{dominant ? '' : ''}</span>
-                <span className="text-base font-mono font-bold tracking-widest">{cellGenotype}</span>
-                <span className="text-[10px] font-mono opacity-80">
-                  {dominant
-                    ? (lang === 'ru' ? 'Пурпурный (Доминант)' : 'Purple (Dominant)')
-                    : (lang === 'ru' ? 'Белый (Рецессив)' : 'White (Recessive)')}
-                </span>
-                <span className="text-[10px] font-mono text-cyan-400">{lang === 'ru' ? '25% шанс' : '25% chance'}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Explanation Box */}
-      <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed">
-        <span className="font-bold text-cyan-400 block mb-1">
-          {lang === 'ru' ? 'Почему рецессивный признак возвращается через поколение?' : 'Why recessive traits skip a generation:'}
-        </span>
-        {lang === 'ru'
-          ? 'Если оба родителя внешне пурпурные (гетерозиготы Aa), скрытый ген «a» прячется в ДНК. В 25% случаев при мейозе две рецессивные гаметы сливаются (a + a = aa), и рождается чисто белый цветок!'
-          : 'When both parents look purple (heterozygotes Aa), the hidden recessive "a" allele persists silently. In 25% of fertilizations, two recessive gametes unite (a + a = aa), yielding pure white flowers!'}
+  const picker = (who: string, value: Geno, set: (g: Geno) => void) => (
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-semibold uppercase tracking-[0.05em] text-[#9AA3C7]">{who}</span>
+      <div className="flex gap-1.5">
+        {(['AA', 'Aa', 'aa'] as Geno[]).map((g) => (
+          <button
+            key={g}
+            onClick={() => set(g)}
+            aria-pressed={value === g}
+            className={`h-10 px-3 rounded-xl font-mono font-bold text-[15px] transition-[background-color,transform] active:scale-[0.96] cursor-pointer ${value === g ? 'bg-[#5B4BFF] text-white' : 'bg-white/[0.07] text-[#C6CBE3] hover:bg-white/[0.12]'}`}
+          >
+            {g}
+          </button>
+        ))}
       </div>
     </div>
+  );
+
+  return (
+    <SimShell
+      badge={ru ? '9–10 класс · Генетика' : 'Grades 9–10 · Genetics'}
+      formula={ru ? 'Aa × Aa → 3 : 1' : 'Aa × Aa → 3 : 1'}
+      title={ru ? 'Законы Менделя: почему белый цветок возвращается через поколение' : "Mendel's laws: why the white flower comes back a generation later"}
+      actions={
+        <>
+          <Button size="sm" className="font-semibold" onPress={plant} isDisabled={growing}>
+            <Sprout className="w-4 h-4" strokeWidth={2} />
+            {ru ? 'Посадить 100 горошин' : 'Plant 100 peas'}
+          </Button>
+          {field.length > 0 && !growing && (
+            <Button size="sm" variant="outline" isIconOnly aria-label={ru ? 'Очистить грядку' : 'Clear the bed'} onPress={() => setField([])}>
+              <RotateCcw className="w-4 h-4" strokeWidth={2} />
+            </Button>
+          )}
+        </>
+      }
+      readouts={[
+        { label: ru ? 'По решётке' : 'By the square', value: `${purpleCells} : ${4 - purpleCells}`, color: '#6E54E0' },
+        { label: ru ? 'Выросло' : 'Grown', value: `${field.length}` },
+        { label: ru ? 'Пурпурных' : 'Purple', value: field.length ? `${p} (${Math.round((p / field.length) * 100)}%)` : '—', color: '#6E54E0' },
+        { label: ru ? 'Белых' : 'White', value: field.length ? `${wht} (${Math.round((wht / field.length) * 100)}%)` : '—' },
+      ]}
+      insight={{
+        title: ru ? 'Закон расщепления' : 'The law of segregation',
+        text: ru
+          ? 'Каждый родитель отдаёт потомку только одну из двух своих копий гена. У двух пурпурных гетерозигот Aa каждый четвёртый потомок получает две «a» и цветёт белым. На 100 растениях доля белых получается около 25%, но не ровно: это случайность.'
+          : 'Each parent passes on just one of its two copies of the gene. Two purple Aa parents give white aa offspring one time in four. Over 100 plants white comes out near 25%, but rarely exactly: it is chance.',
+      }}
+    >
+      <div className="grid lg:grid-cols-[auto_1fr] gap-6 p-5 sm:p-6 text-[#E8ECFA]">
+        {/* parents and the Punnett square */}
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-wrap gap-5">
+            {picker(ru ? 'Мать' : 'Mother', mother, setMother)}
+            {picker(ru ? 'Отец' : 'Father', father, setFather)}
+          </div>
+          <div className="grid grid-cols-[40px_repeat(2,minmax(0,120px))] gap-2 items-center">
+            <span />
+            {fg.map((g, i) => (
+              <span key={i} className="text-center font-mono font-bold text-[#7FE3FF]">{g}</span>
+            ))}
+            {mg.map((m, r) => (
+              <React.Fragment key={r}>
+                <span className="text-center font-mono font-bold text-[#FFB37A]">{m}</span>
+                {fg.map((f, c) => {
+                  const g = norm(m, f);
+                  return (
+                    <div key={`${r}${c}${g}`} className={`rounded-2xl border p-2.5 flex flex-col items-center gap-0.5 [animation:score-pop_420ms_cubic-bezier(0.22,1,0.36,1)_both] ${isPurple(g) ? 'border-[#6E54E0]/60 bg-[#6E54E0]/15' : 'border-white/15 bg-white/[0.05]'}`} style={{ animationDelay: `${(r * 2 + c) * 60}ms` }}>
+                      <Flower purple={isPurple(g)} />
+                      <span className="font-mono font-bold tracking-wider">{g}</span>
+                      <span className="text-[11px] text-[#9AA3C7]">25%</span>
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
+        {/* the field: random fertilisations, one pair of plants at a time */}
+        <div className="flex flex-col gap-3 min-w-0">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.05em] text-[#9AA3C7]">{ru ? 'Грядка' : 'The bed'}</span>
+            <span className="text-xs text-[#9AA3C7]">{ru ? `ожидаем ${Math.round(expected * 100)}% пурпурных` : `expect ${Math.round(expected * 100)}% purple`}</span>
+          </div>
+          <div className="grid grid-cols-10 gap-1 rounded-2xl bg-[#2A2116]/60 border border-[#4A3A22]/60 p-2 min-h-[200px] content-start">
+            {field.map((g, i) => (
+              <div key={i} className="aspect-square grid place-items-center [animation:score-pop_360ms_cubic-bezier(0.22,1,0.36,1)_both]" title={g}>
+                <Flower purple={isPurple(g)} size={30} />
+              </div>
+            ))}
+            {field.length === 0 && <span className="col-span-10 py-16 text-center text-sm text-[#9AA3C7]">{ru ? 'Нажми «Посадить 100 горошин»' : 'Press “Plant 100 peas”'}</span>}
+          </div>
+          {/* the tally against what the square predicts */}
+          <div className="relative h-4 rounded-full bg-white/[0.08] overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-[#9B7BFF] transition-[width] duration-200" style={{ width: `${field.length ? (p / field.length) * 100 : 0}%` }} />
+            <div className="absolute inset-y-[-3px] w-0.5 bg-[#FFD25E]" style={{ left: `${expected * 100}%` }} />
+          </div>
+          <span className="text-xs text-[#9AA3C7]">{ru ? 'Жёлтая черта — сколько предсказывает решётка Пеннета.' : 'The yellow mark is what the Punnett square predicts.'}</span>
+        </div>
+      </div>
+    </SimShell>
   );
 };

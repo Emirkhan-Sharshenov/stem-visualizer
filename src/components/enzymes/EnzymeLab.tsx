@@ -166,7 +166,7 @@ export const EnzymeLab: React.FC<{ lang: Lang }> = ({ lang }) => {
     }
     if (e.bubbles)
       for (const b of bubbles.current) {
-        ctx.strokeStyle = '#2F5BFF';
+        ctx.strokeStyle = '#5B4BFF';
         ctx.lineWidth = 1.5 * dpr;
         ctx.beginPath();
         ctx.arc(PX(b.x), PY(b.y), b.r * dpr, 0, Math.PI * 2);
@@ -236,7 +236,7 @@ export const EnzymeLab: React.FC<{ lang: Lang }> = ({ lang }) => {
               </p>
             </div>
             {curve((t) => fT(t, enz.tOpt), 0, 80, T, L('Активность от температуры', 'Activity vs temperature'), '°C', '#E5484D')}
-            {curve((p) => fPH(p, enz.phOpt), 1, 12, pH, L('Активность от pH', 'Activity vs pH'), 'pH', '#2F5BFF')}
+            {curve((p) => fPH(p, enz.phOpt), 1, 12, pH, L('Активность от pH', 'Activity vs pH'), 'pH', '#5B4BFF')}
           </div>
         </div>
         {log.length > 0 && (
@@ -276,7 +276,7 @@ export const EnzymeLab: React.FC<{ lang: Lang }> = ({ lang }) => {
           ))}
         </div>
         {slider(<><Thermometer className="w-3.5 h-3.5" /> {L('Температура', 'Temperature')}</>, T, setT, 0, 80, 1, '°C', '#E5484D')}
-        {slider('pH', pH, setPH, 1, 12, 0.1, '', '#2F5BFF')}
+        {slider('pH', pH, setPH, 1, 12, 0.1, '', '#5B4BFF')}
         {slider(L('Концентрация субстрата', 'Substrate amount'), S, setS, 0, 20, 0.5, L('усл. ед.', 'units'), '#F5A524')}
         <div className="flex gap-2">
           <Button className="flex-1 text-sm font-medium" onPress={() => setLog([...log.slice(-9), { enz: lang === 'ru' ? enz.ru : enz.en, T, pH, S, v }])}>

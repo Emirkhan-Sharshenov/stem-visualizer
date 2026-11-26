@@ -1,251 +1,161 @@
 import { RangeSlider } from './ui/RangeSlider';
-import { Button } from '@heroui/react';
+import { SimShell } from './ui/SimShell';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
-import { Play, Pause, Rocket, HelpCircle, Clock, Zap } from 'lucide-react';
+import { drawStage, glow, pill, runStage, STAGE } from '../lib/stage';
 
 interface MomentRelativityProps {
   lang: 'ru' | 'en';
 }
 
+// light clocks (canvas 800×380): one at rest on top, one flying past below
+const H = 90; // distance between the mirrors, px
+const C = 150; // the speed of light in the drawing, px/s
+const fmt = (x: number, d: number, ru: boolean) => (ru ? x.toFixed(d).replace('.', ',') : x.toFixed(d));
+
 export const MomentRelativity: React.FC<MomentRelativityProps> = ({ lang }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [velocityFraction, setVelocityFraction] = useState<number>(0.85); // 0 to 0.99 c
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [beta, setBeta] = useState(0.8);
+  const [ticks, setTicks] = useState({ rest: 0, moving: 0 });
+  const live = useRef({ beta, lang });
+  live.current = { beta, lang };
 
-  // Lorentz factor gamma = 1 / sqrt(1 - v^2/c^2)
-  const gamma = 1 / Math.sqrt(Math.max(0.001, 1 - velocityFraction * velocityFraction));
-
-  // Running clocks (Earth vs Rocket)
-  const [earthTime, setEarthTime] = useState<number>(0);
-  const [rocketTime, setRocketTime] = useState<number>(0);
-
-  // Clock progression
-  useEffect(() => {
-    if (!isPlaying) return;
-    const interval = setInterval(() => {
-      setEarthTime((e) => e + 0.1);
-      setRocketTime((r) => r + 0.1 / gamma);
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isPlaying, gamma]);
-
-  // Canvas visual animation of light clock photon trajectory
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const s = { t: 0, x: 120, trail: [] as [number, number][], restTicks: 0, moveTicks: 0, lastBeta: live.current.beta, report: 0 };
 
-    let animId: number;
-    let t = 0;
-
-    const render = () => {
-      animId = requestAnimationFrame(render);
+    return runStage(canvas, (dt, _t, still) => {
       const { w, h } = fitCanvas(canvas, ctx);
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const b = L.beta;
+      const gamma = 1 / Math.sqrt(1 - b * b);
+      if (b !== s.lastBeta) {
+        s.lastBeta = b;
+        s.t = 0;
+        s.x = 120;
+        s.trail = [];
+        s.restTicks = 0;
+        s.moveTicks = 0;
+      }
+      if (!still) s.t += dt;
+      const v = b * C;
+      // the moving clock: its photon runs diagonally at speed c, so one tick takes γ times longer
+      const tickRest = (2 * H) / C;
+      const tickMove = tickRest * gamma;
+      const restPhase = (s.t % tickRest) / tickRest;
+      const movePhase = (s.t % tickMove) / tickMove;
+      const restCount = Math.floor(s.t / tickRest);
+      const moveCount = Math.floor(s.t / tickMove);
+      s.x = 120 + ((v * s.t) % 560);
+      if (s.x < 125) s.trail = [];
 
-      ctx.fillStyle = '#111214';
-      ctx.fillRect(0, 0, w, h);
-
-      // Stars
-      ctx.fillStyle = '#64748b';
-      for (let i = 0; i < 40; i++) {
-        const sx = (i * 37 + (isPlaying ? t * 2 : 0)) % w;
-        const sy = (i * 73) % h;
-        ctx.fillRect(sx, sy, 1.5, 1.5);
+      s.report += dt;
+      if (s.report > 0.1) {
+        s.report = 0;
+        setTicks({ rest: restCount, moving: moveCount });
       }
 
-      if (isPlaying) t += 0.8;
+      drawStage(ctx, w, h);
+      // stars streaming past
+      for (let i = 0; i < 40; i++) {
+        const sx = (((i * 137) % 800) - ((s.t * v * 0.5) % 800) + 800) % 800;
+        const sy = (i * 71) % 380;
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(sx, sy, 1.5 + b * 6, 1.2);
+      }
 
-      // Two visual frames:
-      // Left Frame: Inside Rocket (Observer moving with rocket)
-      // Right Frame: Outside on Earth (Stationary observer watching rocket pass)
-      const dividerX = w / 2;
-      ctx.strokeStyle = '#26282D';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(dividerX, 0);
-      ctx.lineTo(dividerX, h);
-      ctx.stroke();
+      const clock = (cx: number, top: number, phase: number, count: number, label: string, contract: number) => {
+        const yBot = top + H;
+        const bounce = phase < 0.5 ? phase * 2 : 2 - phase * 2; // 0 at the bottom mirror, 1 at the top
+        const py = yBot - bounce * H;
+        // the ship body, shorter along the motion by 1/γ
+        const sw = 120 / contract;
+        ctx.fillStyle = 'rgba(160,170,210,0.12)';
+        ctx.strokeStyle = 'rgba(200,210,255,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(cx - sw / 2, top - 16, sw, H + 32, 14);
+        ctx.fill();
+        ctx.stroke();
+        for (const y of [top, yBot]) {
+          const g = ctx.createLinearGradient(0, y - 3, 0, y + 3);
+          g.addColorStop(0, '#F2F4FA');
+          g.addColorStop(1, '#8A92A6');
+          ctx.fillStyle = g;
+          ctx.fillRect(cx - 30 / contract, y - 3, 60 / contract, 6);
+        }
+        glow(ctx, cx, py, 22, '255,230,120', 0.9);
+        ctx.fillStyle = '#FFF3B0';
+        ctx.beginPath();
+        ctx.arc(cx, py, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        pill(ctx, cx, top - 34, `${label}: ${count}`, STAGE.ink);
+        return py;
+      };
 
-      // Titles
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '11px Plus Jakarta Sans, sans-serif';
-      ctx.fillText(lang === 'ru' ? 'СИСТЕМА КОСМОНАВТА (Внутри корабля)' : 'ASTRONAUT FRAME (Inside Rocket)', 30, 30);
-      ctx.fillText(lang === 'ru' ? 'СИСТЕМА ЗЕМЛИ (Внешний наблюдатель)' : 'EARTH FRAME (Stationary Observer)', dividerX + 30, 30);
+      // the clock at rest
+      clock(150, 52, restPhase, restCount, ru ? 'часы в покое, тиков' : 'clock at rest, ticks', 1);
+      ctx.fillStyle = STAGE.soft;
+      ctx.font = `500 12px ${STAGE.font}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(ru ? 'фотон летит вверх-вниз: путь 2h' : 'the photon goes up and down: path 2h', 230, 100);
 
-      // Top and bottom mirrors in rocket frame
-      const mirrorH = 140;
-      const mirrorTop = 90;
-      const mirrorBottom = mirrorTop + mirrorH;
-
-      // Draw inside rocket light clock
-      const rocketClockX = 140;
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(rocketClockX - 30, mirrorTop - 4, 60, 8);
-      ctx.fillRect(rocketClockX - 30, mirrorBottom - 4, 60, 8);
-
-      // Photon bouncing purely vertical inside rocket
-      const cycle1 = (t * 0.08) % 2;
-      const photon1Y = cycle1 <= 1
-        ? mirrorTop + cycle1 * mirrorH
-        : mirrorBottom - (cycle1 - 1) * mirrorH;
-
-      ctx.fillStyle = '#f43f5e';
-      ctx.shadowColor = '#f43f5e';
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(rocketClockX, photon1Y, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      // Vertical path dashed line
-      ctx.strokeStyle = 'rgba(244, 63, 94, 0.3)';
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(rocketClockX, mirrorTop);
-      ctx.lineTo(rocketClockX, mirrorBottom);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Draw Earth observer view: Rocket moving forward at velocity v!
-      const earthBaseX = dividerX + 40;
-      const dxTravel = (t * velocityFraction * 2.2) % (w / 2 - 80);
-      const currentShipX = earthBaseX + dxTravel;
-
-      // Mirrors moving with ship
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(currentShipX - 30, mirrorTop - 4, 60, 8);
-      ctx.fillRect(currentShipX - 30, mirrorBottom - 4, 60, 8);
-
-      // Photon follows diagonal hypotenuse trajectory!
-      const cycle2 = (t * 0.08 / gamma) % 2;
-      const photon2Y = cycle2 <= 1
-        ? mirrorTop + cycle2 * mirrorH
-        : mirrorBottom - (cycle2 - 1) * mirrorH;
-
-      ctx.fillStyle = '#f43f5e';
-      ctx.shadowColor = '#f43f5e';
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(currentShipX, photon2Y, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      // Diagonal path trail
-      ctx.strokeStyle = 'rgba(244, 63, 94, 0.4)';
+      // the moving clock, with the photon's zig-zag drawn as seen from outside
+      const py = clock(s.x, 232, movePhase, moveCount, ru ? 'летящие часы' : 'moving clock', gamma);
+      s.trail.push([s.x, py]);
+      if (s.trail.length > 400) s.trail.shift();
+      ctx.strokeStyle = 'rgba(255,230,120,0.45)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(earthBaseX, mirrorTop);
-      ctx.lineTo(currentShipX, photon2Y);
+      s.trail.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       ctx.stroke();
-    };
+      if (b > 0.02) {
+        ctx.strokeStyle = '#3DD6FF';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(s.x + 70 / gamma, 222);
+        ctx.lineTo(s.x + 70 / gamma + b * 60, 222);
+        ctx.stroke();
+      }
+      pill(ctx, 680, 352, `γ = ${fmt(gamma, 2, ru)}`, '#FFC46B');
+    });
+  }, []);
 
-    animId = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animId);
-  }, [velocityFraction, isPlaying, gamma, lang]);
-
+  const ru = lang === 'ru';
+  const gamma = 1 / Math.sqrt(1 - beta * beta);
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full max-w-7xl mx-auto py-2">
-      {/* Simulation Stage */}
-      <div className="flex-1 flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        {/* Header Bar */}
-        <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <Rocket className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{lang === 'ru' ? 'Релятивистское замедление времени (СТО)' : 'Special Relativity: Time Dilation'}</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">
-                  {lang === 'ru' ? '10-11 Класс' : 'Grade 10-11'}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ru' ? 'Световые часы Эйнштейна: почему движущиеся часы тикают медленнее' : 'Einstein\'s Light Clock: Why moving clocks tick slower'}
-              </p>
-            </div>
-          </div>
-
-          <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-          </Button>
-        </div>
-
-        {/* Live Gauges Bar */}
-        <div className="px-4 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-          <div className="flex items-center gap-6">
-            <span>
-              {lang === 'ru' ? 'Земные часы Δt:' : 'Earth Clock Δt:'}{' '}
-              <strong className="text-cyan-400">{earthTime.toFixed(1)} {lang === 'ru' ? 'сек' : 's'}</strong>
-            </span>
-            <span>
-              {lang === 'ru' ? 'Часы космонавта Δt₀:' : 'Rocket Clock Δt₀:'}{' '}
-              <strong className="text-rose-400">{rocketTime.toFixed(1)} {lang === 'ru' ? 'сек' : 's'}</strong>
-            </span>
-          </div>
-
-          <span className="text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-800/40 font-bold">
-            {lang === 'ru' ? 'Фактор Лоренца' : 'Lorentz factor'} γ = {gamma.toFixed(2)}x
-          </span>
-        </div>
-
-        {/* Canvas Display */}
-        <div className="lab-stage relative w-full flex items-center justify-center p-3">
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={340}
-            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
-          />
-
-          <div className="absolute bottom-6 left-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-mono font-bold text-rose-400">
-              {lang === 'ru' ? 'СУТЬ ГЕОМЕТРИИ ЭЙНШТЕЙНА' : 'EINSTEIN GEOMETRY'}
-            </span>
-            <p className="text-[11px] text-slate-300 leading-tight">
-              {lang === 'ru'
-                ? 'Для покоящегося наблюдателя фотон летит не вертикально, а по длинной диагонали (гипотенузе прямоугольного треугольника). Так как скорость света c постоянна, пролет длинного пути занимает больше земных секунд!'
-                : 'To Earth, the photon travels along a longer diagonal hypotenuse path. Since the speed of light c is invariant, this longer path takes more Earth seconds!'}
-            </p>
-          </div>
-        </div>
-
-        {/* Velocity Slider */}
-        <div className="p-4 bg-slate-950/70 border-t border-slate-800 text-xs">
-          <div className="flex justify-between text-slate-300 mb-1">
-            <span>{lang === 'ru' ? 'Скорость ракеты v (в долях от скорости света c)' : 'Rocket Speed v (% of c)'}</span>
-            <span className="font-mono text-rose-400 font-bold">{(velocityFraction * 100).toFixed(0)}% c ({(velocityFraction * 299792).toFixed(0)} {lang === 'ru' ? 'км/с' : 'km/s'})</span>
-          </div>
-          <RangeSlider value={velocityFraction} onChange={(v) => setVelocityFraction(v)} min={0} max={0.99} step={0.01} />
-        </div>
-      </div>
-
-      {/* Textbook Insight */}
-      <div className="w-full xl:w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <span className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <h3 className="font-bold text-slate-100 text-sm">
-              {lang === 'ru' ? 'Теорема Пифагора рождает СТО' : 'Pythagoras yields Relativity'}
-            </h3>
-          </div>
-
-          <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            {lang === 'ru'
-              ? 'Формула замедления времени выводится прямо из школьной теоремы Пифагора! Катет — это высота часов L = c·Δt₀, второй катет — путь поезда v·Δt, а гипотенуза — путь света c·Δt: (c·Δt)² = (c·Δt₀)² + (v·Δt)². Отсюда сразу получается фактор Лоренца γ!'
-              : 'Time dilation is derived directly from the Pythagorean theorem! Leg 1 is mirror height c·Δt₀, leg 2 is rocket motion v·Δt, and the hypotenuse is light distance c·Δt.'}
-          </p>
-
-          <div className="p-3 rounded-xl bg-slate-950 border border-rose-900/40 text-xs font-mono text-rose-300">
-            <code>{"Δt = Δt₀ / √(1 - v²/c²)"}</code>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SimShell
+      badge={ru ? '11 класс · Физика' : 'Grade 11 · Physics'}
+      formula="Δt = γ·Δt₀,  γ = 1 / √(1 − v²/c²)"
+      title={ru ? 'Световые часы: почему движущееся время идёт медленнее' : 'Light clocks: why moving time runs slow'}
+      readouts={[
+        { label: ru ? 'Скорость' : 'Speed', value: `${fmt(beta, 2, ru)} c`, color: '#1E88C8' },
+        { label: 'γ', value: fmt(gamma, 2, ru), color: '#B7791F' },
+        { label: ru ? 'Тиков в покое' : 'Ticks at rest', value: String(ticks.rest) },
+        { label: ru ? 'Тиков в полёте' : 'Ticks in flight', value: String(ticks.moving), color: '#4A3BEB' },
+      ]}
+      controls={[
+        {
+          label: ru ? 'Скорость корабля v / c' : 'Ship speed v / c',
+          value: `${fmt(beta, 2, ru)} c`,
+          color: '#1E88C8',
+          input: <RangeSlider value={beta} onChange={setBeta} min={0} max={0.98} step={0.02} />,
+          hint: ru
+            ? 'Свет в обоих часах летит с одной скоростью c. Снаружи видно, что в летящих часах фотону приходится бежать по диагонали — длиннее, и тик занимает в γ раз больше времени. При 0,87c время идёт вдвое медленнее.'
+            : 'Light in both clocks moves at the same speed c. From outside, the photon in the moving clock runs a longer diagonal, so each tick takes γ times longer. At 0.87c time runs half as fast.',
+        },
+      ]}
+      insight={{
+        title: ru ? 'Это не фокус часов' : 'It is not a trick of the clocks',
+        text: ru
+          ? 'Замедляется всё: пульс космонавта, распад частиц, старение. Мюоны из космических лучей живут всего 2 мкс, но долетают до Земли — потому что летят почти со скоростью света. А корабль при этом ещё и сокращается в длину в те же γ раз.'
+          : 'Everything slows: an astronaut’s pulse, particle decay, ageing. Cosmic-ray muons live just 2 μs yet reach the ground because they fly near light speed. And the ship also shrinks along its motion by the same γ.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={380} className="block w-full h-auto" aria-label={ru ? 'Двое световых часов: в покое и в полёте' : 'Two light clocks: at rest and in flight'} />
+    </SimShell>
   );
 };

@@ -78,7 +78,7 @@ export const DEFAULT_SETTINGS: TestSettings = {
   solutions: false,
   newPagePerVariant: true,
   showTopics: false,
-  accent: '#2F5BFF',
+  accent: '#5B4BFF',
 };
 
 export interface Task {

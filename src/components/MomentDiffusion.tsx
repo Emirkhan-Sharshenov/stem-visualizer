@@ -1,345 +1,257 @@
-import { Check } from './ui/Check';
 import { RangeSlider } from './ui/RangeSlider';
+import { SimShell } from './ui/SimShell';
 import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 import { fitCanvas } from '../lib/canvas';
-import { Play, Pause, RotateCcw, FastForward, Clock, Zap, HelpCircle } from 'lucide-react';
+import { drawStage, glow, pill, runStage, STAGE } from '../lib/stage';
 
 interface MomentDiffusionProps {
   lang: 'ru' | 'en';
+  /** kept for the lab page that passes it; the moment itself unlocks nothing */
   onUnlockMilestone?: (id: string) => void;
+}
+
+// two vessels side by side (canvas 800×380): cold water on the left, hot on the right
+const VESSELS = [
+  { x0: 24, x1: 388, T: 10, D: 45, tint: '90,160,255' },
+  { x0: 412, x1: 776, T: 80, D: 207, tint: '255,140,80' },
+];
+const VY0 = 34;
+const VY1 = 292;
+const N_DYE = 170;
+const N_WATER = 70;
+const gauss = () => Math.sqrt(-2 * Math.log(Math.random() + 1e-9)) * Math.cos(2 * Math.PI * Math.random());
+
+interface Box {
+  dye: [number, number][];
+  water: [number, number, number, number][];
+  grain: [number, number];
+  trail: [number, number][];
 }
 
 export const MomentDiffusion: React.FC<MomentDiffusionProps> = ({ lang }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [temperature, setTemperature] = useState<number>(300); // Kelvin
-  const [timeScale, setTimeScale] = useState<number>(1.0); // 0.1x, 0.5x, 1x, 2x
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [collisionCount, setCollisionCount] = useState<number>(0);
-  const [showWaterMolecules, setShowWaterMolecules] = useState<boolean>(true);
-  const [showTraces, setShowTraces] = useState<boolean>(true);
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState(1);
+  const [drop, setDrop] = useState(0);
+  const [shown, setShown] = useState({ t: 0, cold: 0, hot: 0 });
 
-  // Particles state ref so animation loop runs butter-smooth at 60 FPS
-  const simState = useRef<{
-    dyeParticles: { x: number; y: number; vx: number; vy: number; radius: number; trail: { x: number; y: number }[] }[];
-    waterMolecules: { x: number; y: number; vx: number; vy: number; radius: number }[];
-    totalCollisions: number;
-  }>({
-    dyeParticles: [],
-    waterMolecules: [],
-    totalCollisions: 0
-  });
+  const live = useRef({ playing, speed, lang });
+  live.current = { playing, speed, lang };
 
-  // Initialize particles
-  const initSimulation = () => {
-    const dye: any[] = [];
-    // Start with a concentrated drop of dye particles in center-left
-    for (let i = 0; i < 18; i++) {
-      dye.push({
-        x: 180 + (Math.random() - 0.5) * 45,
-        y: 180 + (Math.random() - 0.5) * 45,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        radius: 8,
-        trail: []
-      });
-    }
-
-    const water: any[] = [];
-    const count = 120;
-    for (let i = 0; i < count; i++) {
-      water.push({
-        x: Math.random() * 560 + 20,
-        y: Math.random() * 340 + 20,
-        vx: (Math.random() - 0.5) * 3,
-        vy: (Math.random() - 0.5) * 3,
-        radius: 3.5
-      });
-    }
-
-    simState.current = {
-      dyeParticles: dye,
-      waterMolecules: water,
-      totalCollisions: 0
-    };
-    setCollisionCount(0);
-  };
-
-  useEffect(() => {
-    initSimulation();
-  }, []);
-
-  // Main canvas animation loop
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let lastTime = performance.now();
-
-    const render = (time: number) => {
-      animId = requestAnimationFrame(render);
-      const dt = Math.min(32, time - lastTime);
-      lastTime = time;
-
-      const { w, h } = fitCanvas(canvas, ctx);
-
-      // Dark background
-      ctx.fillStyle = '#111214';
-      ctx.fillRect(0, 0, w, h);
-
-      // Subtle container beaker outline
-      ctx.strokeStyle = '#26282D';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(10, 10, w - 20, h - 20);
-
-      const state = simState.current;
-      const speedMultiplier = (Math.sqrt(temperature / 300)) * (timeScale) * (isPlaying ? 1 : 0);
-
-      // Update and draw water molecules
-      if (isPlaying) {
-        state.waterMolecules.forEach((wm) => {
-          wm.x += wm.vx * speedMultiplier;
-          wm.y += wm.vy * speedMultiplier;
-
-          // Bounce walls
-          if (wm.x < 15 || wm.x > w - 15) wm.vx *= -1;
-          if (wm.y < 15 || wm.y > h - 15) wm.vy *= -1;
-        });
-
-        // Update dye particles and check collisions with water molecules
-        state.dyeParticles.forEach((dp) => {
-          dp.x += dp.vx * timeScale;
-          dp.y += dp.vy * timeScale;
-
-          // Damping drag
-          dp.vx *= 0.985;
-          dp.vy *= 0.985;
-
-          // Bounce walls
-          if (dp.x < 25) { dp.x = 25; dp.vx *= -1; }
-          if (dp.x > w - 25) { dp.x = w - 25; dp.vx *= -1; }
-          if (dp.y < 25) { dp.y = 25; dp.vy *= -1; }
-          if (dp.y > h - 25) { dp.y = h - 25; dp.vy *= -1; }
-
-          // Collision with water molecules (Brownian kicks)
-          state.waterMolecules.forEach((wm) => {
-            const dx = dp.x - wm.x;
-            const dy = dp.y - wm.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < dp.radius + wm.radius) {
-              state.totalCollisions++;
-              // Momentum transfer
-              const angle = Math.atan2(dy, dx);
-              const kick = 0.25 * speedMultiplier;
-              dp.vx += Math.cos(angle) * kick;
-              dp.vy += Math.sin(angle) * kick;
-              wm.vx -= Math.cos(angle) * 1.5;
-              wm.vy -= Math.sin(angle) * 1.5;
-            }
-          });
-
-          // Record trail
-          if (showTraces && Math.random() < 0.3) {
-            dp.trail.push({ x: dp.x, y: dp.y });
-            if (dp.trail.length > 25) dp.trail.shift();
-          }
-        });
-      }
-
-      // Draw trails
-      if (showTraces) {
-        state.dyeParticles.forEach((dp) => {
-          if (dp.trail.length < 2) return;
-          ctx.beginPath();
-          ctx.moveTo(dp.trail[0].x, dp.trail[0].y);
-          for (let i = 1; i < dp.trail.length; i++) {
-            ctx.lineTo(dp.trail[i].x, dp.trail[i].y);
-          }
-          ctx.strokeStyle = 'rgba(236, 72, 153, 0.25)';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        });
-      }
-
-      // Draw water molecules (small cyan circles)
-      if (showWaterMolecules) {
-        ctx.fillStyle = '#38bdf8';
-        state.waterMolecules.forEach((wm) => {
-          ctx.beginPath();
-          ctx.arc(wm.x, wm.y, wm.radius, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
-
-      // Draw dye particles (large glowing magenta drops)
-      state.dyeParticles.forEach((dp) => {
-        // Outer glow
-        const grad = ctx.createRadialGradient(dp.x, dp.y, 2, dp.x, dp.y, dp.radius * 2);
-        grad.addColorStop(0, '#ec4899');
-        grad.addColorStop(0.7, 'rgba(219, 39, 119, 0.6)');
-        grad.addColorStop(1, 'rgba(219, 39, 119, 0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(dp.x, dp.y, dp.radius * 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Inner solid core
-        ctx.fillStyle = '#f43f5e';
-        ctx.beginPath();
-        ctx.arc(dp.x, dp.y, dp.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Update collision counter state periodically
-      if (state.totalCollisions % 10 === 0) {
-        setCollisionCount(state.totalCollisions);
-      }
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const cy = (VY0 + VY1) / 2;
+    const boxes: Box[] = VESSELS.map((v) => {
+      const cx = (v.x0 + v.x1) / 2;
+      return {
+        dye: Array.from({ length: N_DYE }, () => [cx + gauss() * 5, cy + gauss() * 5] as [number, number]),
+        water: Array.from({ length: N_WATER }, () => {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 40 * Math.sqrt((v.T + 273) / 283);
+          return [v.x0 + 10 + Math.random() * (v.x1 - v.x0 - 20), VY0 + 10 + Math.random() * (VY1 - VY0 - 20), Math.cos(a) * sp, Math.sin(a) * sp] as [number, number, number, number];
+        }),
+        grain: [cx + 70, cy - 60] as [number, number],
+        trail: [],
+      };
+    });
+    const s = { t: 0, splash: 0, report: 0 };
+    const spread = (b: Box, v: (typeof VESSELS)[number]) => {
+      const cx = (v.x0 + v.x1) / 2;
+      let sum = 0;
+      for (const [x, y] of b.dye) sum += (x - cx) ** 2 + (y - cy) ** 2;
+      return Math.sqrt(sum / b.dye.length / 2);
     };
 
-    animId = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animId);
-  }, [temperature, timeScale, isPlaying, showWaterMolecules, showTraces]);
+    return runStage(canvas, (dtRaw, t, still) => {
+      const { w, h } = fitCanvas(canvas, ctx);
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const run = L.playing && !still;
+      const dt = dtRaw * L.speed;
 
+      if (run) {
+        s.t += dt;
+        s.splash += dtRaw;
+        VESSELS.forEach((v, i) => {
+          const b = boxes[i];
+          // Brownian steps: each one √(2D·dt) in size, so the spot grows as √t
+          const step = Math.sqrt(2 * v.D * dt);
+          for (const p of b.dye) {
+            p[0] += gauss() * step;
+            p[1] += gauss() * step;
+            if (p[0] < v.x0 + 6) p[0] = 2 * (v.x0 + 6) - p[0];
+            if (p[0] > v.x1 - 6) p[0] = 2 * (v.x1 - 6) - p[0];
+            if (p[1] < VY0 + 6) p[1] = 2 * (VY0 + 6) - p[1];
+            if (p[1] > VY1 - 6) p[1] = 2 * (VY1 - 6) - p[1];
+          }
+          const gs = Math.sqrt(2 * (v.D / 5) * dt);
+          b.grain[0] = Math.max(v.x0 + 14, Math.min(v.x1 - 14, b.grain[0] + gauss() * gs));
+          b.grain[1] = Math.max(VY0 + 14, Math.min(VY1 - 14, b.grain[1] + gauss() * gs));
+          b.trail.push([b.grain[0], b.grain[1]]);
+          if (b.trail.length > 240) b.trail.shift();
+          for (const m of b.water) {
+            m[0] += m[2] * dt;
+            m[1] += m[3] * dt;
+            if (m[0] < v.x0 + 4 || m[0] > v.x1 - 4) m[2] *= -1;
+            if (m[1] < VY0 + 4 || m[1] > VY1 - 4) m[3] *= -1;
+            if (Math.random() < 0.6 * dt) {
+              const a = Math.random() * Math.PI * 2;
+              const sp = Math.hypot(m[2], m[3]);
+              m[2] = Math.cos(a) * sp;
+              m[3] = Math.sin(a) * sp;
+            }
+          }
+        });
+      }
+      s.report += dtRaw;
+      if (s.report > 0.2) {
+        s.report = 0;
+        setShown({ t: s.t, cold: spread(boxes[0], VESSELS[0]), hot: spread(boxes[1], VESSELS[1]) });
+      }
+
+      drawStage(ctx, w, h);
+      VESSELS.forEach((v, i) => {
+        const b = boxes[i];
+        const cx = (v.x0 + v.x1) / 2;
+        // water, tinted by its temperature
+        const wg = ctx.createLinearGradient(0, VY0, 0, VY1);
+        wg.addColorStop(0, `rgba(${v.tint},0.06)`);
+        wg.addColorStop(1, `rgba(${v.tint},0.14)`);
+        ctx.fillStyle = wg;
+        ctx.beginPath();
+        ctx.roundRect(v.x0, VY0, v.x1 - v.x0, VY1 - VY0, 14);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(200,220,255,0.28)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // water molecules: fast and tiny
+        ctx.fillStyle = `rgba(${v.tint},0.45)`;
+        for (const [x, y] of b.water) {
+          ctx.beginPath();
+          ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // the dye, drawn as a soft cloud plus its particles
+        ctx.globalCompositeOperation = 'lighter';
+        for (const [x, y] of b.dye) {
+          const g = ctx.createRadialGradient(x, y, 0, x, y, 9);
+          g.addColorStop(0, 'rgba(190,110,255,0.22)');
+          g.addColorStop(1, 'rgba(190,110,255,0)');
+          ctx.fillStyle = g;
+          ctx.fillRect(x - 9, y - 9, 18, 18);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(225,190,255,0.9)';
+        for (const [x, y] of b.dye) {
+          ctx.beginPath();
+          ctx.arc(x, y, 1.7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // a drop splash for the first moment
+        if (s.splash < 0.8) {
+          const k = s.splash / 0.8;
+          ctx.strokeStyle = `rgba(225,190,255,${0.7 * (1 - k)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 8 + k * 50, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        // a pollen grain shaken by the invisible molecules, with its zig-zag path
+        ctx.strokeStyle = 'rgba(255,214,120,0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        b.trail.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.stroke();
+        glow(ctx, b.grain[0], b.grain[1], 22, '255,200,110', 0.5);
+        const gg = ctx.createRadialGradient(b.grain[0] - 3, b.grain[1] - 3, 1, b.grain[0], b.grain[1], 9);
+        gg.addColorStop(0, '#FFF1C4');
+        gg.addColorStop(1, '#D99A2B');
+        ctx.fillStyle = gg;
+        ctx.beginPath();
+        ctx.arc(b.grain[0], b.grain[1], 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // the concentration across the vessel: it starts as a spike and flattens out
+        const bins = 36;
+        const hist = new Array(bins).fill(0);
+        for (const [x] of b.dye) hist[Math.max(0, Math.min(bins - 1, Math.floor(((x - v.x0) / (v.x1 - v.x0)) * bins)))]++;
+        const peak = Math.max(...hist, 1);
+        const base = 368;
+        ctx.beginPath();
+        ctx.moveTo(v.x0, base);
+        hist.forEach((c, k) => {
+          const x = v.x0 + ((k + 0.5) / bins) * (v.x1 - v.x0);
+          ctx.lineTo(x, base - (c / Math.max(peak, N_DYE * 0.12)) * 56);
+        });
+        ctx.lineTo(v.x1, base);
+        ctx.closePath();
+        const pg = ctx.createLinearGradient(0, base - 56, 0, base);
+        pg.addColorStop(0, 'rgba(190,110,255,0.7)');
+        pg.addColorStop(1, 'rgba(190,110,255,0.08)');
+        ctx.fillStyle = pg;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(v.x0, base);
+        ctx.lineTo(v.x1, base);
+        ctx.stroke();
+
+        pill(ctx, cx, VY0 + 18, `${v.T} °C · ${i ? (ru ? 'горячая' : 'hot') : ru ? 'холодная' : 'cold'}`, i ? '#FFB37A' : '#8FC4FF');
+      });
+      ctx.fillStyle = STAGE.soft;
+      ctx.font = `500 11px ${STAGE.font}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(ru ? 'концентрация краски поперёк сосуда' : 'dye concentration across the vessel', 26, 312);
+    });
+  }, [drop]);
+
+  const ru = lang === 'ru';
+  const ratio = shown.cold > 8 ? shown.hot / shown.cold : 0;
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full max-w-7xl mx-auto py-2">
-      {/* Simulation Stage */}
-      <div className="flex-1 flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        {/* Header Bar */}
-        <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/20">
-              <Zap className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{lang === 'ru' ? 'Симуляция момента: Броуновские удары и Диффузия' : 'Moment Simulation: Brownian Kicks & Diffusion'}</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 border border-pink-800">
-                  {lang === 'ru' ? '5-6 Класс' : 'Grade 5-6'}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ru' ? 'Посмотри в замедленной съемке: невидимые молекулы воды толкают тяжелую каплю краски!' : 'Slow down time to watch water molecules bombard the dye drop!'}
-              </p>
-            </div>
-          </div>
-
-          {/* Controls: Play/Pause & Reset */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-            </Button>
-
-            <Button aria-label={lang === 'ru' ? 'Капнуть краску заново' : 'Reset drop'} variant="outline" onPress={() => initSimulation()}>
-              <RotateCcw className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Time Scale Bar (Slow-Mo 0.1x, 0.5x, 1x, 2x) */}
-        <div className="px-4 py-2 bg-slate-950/40 border-b border-slate-800/80 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-cyan-400" />
-            <span className="text-slate-400 font-medium">{lang === 'ru' ? 'Скорость времени:' : 'Time Scale:'}</span>
-            {[
-              { val: 0.1, label: '0.1x (Slow-Mo)' },
-              { val: 0.5, label: '0.5x' },
-              { val: 1.0, label: lang === 'ru' ? '1.0x (Реал)' : '1.0x (Real)' },
-              { val: 2.0, label: '2.0x' },
-            ].map((ts) => (
-              <Button variant={timeScale === ts.val ? 'primary' : 'secondary'} size="sm" className="font-mono font-bold" key={ts.val} onPress={() => setTimeScale(ts.val)}>
-                {ts.label}
-              </Button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3 font-mono text-[11px] text-slate-400">
-            <span>{lang === 'ru' ? 'Ударов молекул:' : 'Micro-collisions:'} <strong className="text-pink-400">{collisionCount}</strong></span>
-          </div>
-        </div>
-
-        {/* 2D Canvas Mount */}
-        <div className="lab-stage relative w-full flex items-center justify-center p-3">
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={380}
-            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
-          />
-
-          {/* Floating live moment prompt */}
-          <div className="absolute bottom-6 left-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-mono font-bold text-pink-400">
-              {lang === 'ru' ? 'ЧТО ПРОИСХОДИТ В ЭТУ СЕКУНДУ?' : 'WHAT HAPPENS IN THIS INSTANT?'}
-            </span>
-            <p className="text-[11px] text-slate-300 leading-tight">
-              {lang === 'ru'
-                ? 'Каждая розовая частица красителя испытывает до миллиона хаотичных микроударов молекул воды в секунду, из-за чего капля медленно расползается по всему стакану.'
-                : 'Each pink dye particle receives millions of random water molecule impacts per second, creating a macroscopic spreading effect.'}
-            </p>
-          </div>
-        </div>
-
-        {/* Sliders bar: Temperature */}
-        <div className="p-4 bg-slate-950/70 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div>
-            <div className="flex justify-between text-slate-300 mb-1">
-              <span>{lang === 'ru' ? 'Температура воды T (Кельвины)' : 'Water Temperature T (Kelvin)'}</span>
-              <span className="font-mono text-cyan-400 font-bold">
-                {temperature} K ({temperature - 273}°C — {temperature < 320 ? (lang === 'ru' ? 'Холодная' : 'Cold') : (lang === 'ru' ? 'Кипяток' : 'Hot')})
-              </span>
-            </div>
-            <RangeSlider value={temperature} onChange={(v) => setTemperature(v)} min={275} max={373} />
-          </div>
-
-          <div className="flex items-center gap-4 pt-4 sm:pt-0">
-            <Check checked={showWaterMolecules} onChange={(v) => setShowWaterMolecules(v)}>{lang === 'ru' ? 'Показать молекулы воды' : 'Show Water Molecules'}</Check>
-
-            <Check checked={showTraces} onChange={(v) => setShowTraces(v)}>{lang === 'ru' ? 'Траектории частиц' : 'Show Particle Trails'}</Check>
-          </div>
-        </div>
-      </div>
-
-      {/* Textbook Insight Side Panel */}
-      <div className="w-full xl:w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <h3 className="font-bold text-slate-100 text-sm">
-              {lang === 'ru' ? 'Объяснение для 5-6 класса' : 'Explanation for Middle School'}
-            </h3>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80">
-              <div className="text-[10px] font-mono uppercase font-bold text-slate-400 mb-1">
-                {lang === 'ru' ? 'ЧТО ПИШУТ В УЧЕБНИКЕ:' : 'IN THE TEXTBOOK:'}
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed italic">
-                {lang === 'ru'
-                  ? '«Диффузия — взаимное проникновение соприкасающихся веществ вследствие теплового движения молекул».'
-                  : '"Diffusion is the intermingling of substances by natural movement of particles."'}
-              </p>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-800/50">
-              <div className="text-[10px] font-mono uppercase font-bold text-indigo-300 mb-1">
-                {lang === 'ru' ? 'ПРЕДСТАВЬ НА ПАЛЬЦАХ:' : 'INTUITIVE ANALOGY:'}
-              </div>
-              <p className="text-xs text-indigo-200 leading-relaxed">
-                {lang === 'ru'
-                  ? 'В горячем кипятке молекулы несутся с бешеной скоростью сотен метров в секунду! Они яростно пинают частицы красителя во все стороны, поэтому чай заваривается мгновенно.'
-                  : 'In boiling water, molecules sprint at hundreds of meters per second, violently kicking the dye particles apart in seconds!'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SimShell
+      badge={ru ? '7 класс · Физика' : 'Grade 7 · Physics'}
+      formula="σ = √(2Dt),  D ∝ T / η"
+      title={ru ? 'Диффузия: в горячей воде краска расходится быстрее' : 'Diffusion: dye spreads faster in hot water'}
+      actions={
+        <>
+          <Button variant="outline" size="sm" isIconOnly aria-label={playing ? (ru ? 'Пауза' : 'Pause') : ru ? 'Пуск' : 'Play'} onPress={() => setPlaying(!playing)}>
+            {playing ? <Pause className="w-4 h-4" strokeWidth={2} /> : <Play className="w-4 h-4" strokeWidth={2} />}
+          </Button>
+          <Button variant="outline" size="sm" className="font-semibold" onPress={() => setDrop((d) => d + 1)}>
+            <RotateCcw className="w-4 h-4" strokeWidth={2} />
+            {ru ? 'Капнуть снова' : 'New drop'}
+          </Button>
+        </>
+      }
+      readouts={[
+        { label: ru ? 'Прошло' : 'Elapsed', value: `${Math.floor(shown.t)} ${ru ? 'с' : 's'}` },
+        { label: ru ? 'Пятно в холодной' : 'Spot, cold', value: `${Math.round(shown.cold)}`, color: '#2B7BD6' },
+        { label: ru ? 'Пятно в горячей' : 'Spot, hot', value: `${Math.round(shown.hot)}`, color: '#D9822B' },
+        { label: ru ? 'Горячая быстрее в' : 'Hot is faster by', value: ratio ? `×${(ratio).toFixed(1).replace('.', ru ? ',' : '.')}` : '—', color: '#4A3BEB' },
+      ]}
+      controls={[
+        {
+          label: ru ? 'Скорость времени' : 'Time speed',
+          value: `×${speed}`,
+          input: <RangeSlider value={speed} onChange={(v) => setSpeed(v)} min={0.5} max={4} step={0.5} />,
+          hint: ru
+            ? 'Пятно растёт как √t: чтобы стать вдвое шире, ему нужно вчетверо больше времени. В горячей воде молекулы бьют чаще и сильнее, а вода менее вязкая — поэтому быстрее.'
+            : 'The spot grows as √t: to get twice as wide it needs four times longer. In hot water the molecules hit harder and more often, and the water is less viscous, so it is faster.',
+        },
+      ]}
+      insight={{
+        title: ru ? 'Жёлтая пылинка' : 'The yellow grain',
+        text: ru
+          ? 'Это броуновское движение: пылинку толкают со всех сторон невидимые молекулы воды, и она дрожит по случайной ломаной. Сама краска расходится так же — без всякого перемешивания.'
+          : 'This is Brownian motion: invisible water molecules knock the grain from every side and it jitters along a random zig-zag. The dye spreads the same way, with no stirring at all.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={380} className="block w-full h-auto" aria-label={ru ? 'Два сосуда с водой, холодной и горячей, в которые капнули краску' : 'Two vessels of water, cold and hot, with a drop of dye in each'} />
+    </SimShell>
   );
 };

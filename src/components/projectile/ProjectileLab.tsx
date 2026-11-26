@@ -16,7 +16,7 @@ const PLANETS = [
   { id: 'mars', ru: 'Марс', en: 'Mars', g: 3.71 },
   { id: 'jupiter', ru: 'Юпитер', en: 'Jupiter', g: 24.8 },
 ];
-const COLORS = ['#2F5BFF', '#E5484D', '#30A46C', '#F5A524', '#8E4EC6'];
+const COLORS = ['#5B4BFF', '#E5484D', '#30A46C', '#F5A524', '#8E4EC6'];
 const n = (x: number, d = 1) => (Math.round(x * 10 ** d) / 10 ** d).toString().replace('.', ',');
 
 interface Shot {

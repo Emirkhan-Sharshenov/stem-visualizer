@@ -180,7 +180,7 @@ const EnergyDiagram: React.FC<{ lang: Lang; dH: number; barrier: number; catalys
         <line x1="14" y1="10" x2="14" y2={H - 10} stroke="var(--color-line-strong, #C9CBD1)" />
         <text x="18" y="16" fontSize="10" fill="#8C8F98">E</text>
         {catalysed && <path d={curve(peakCat)} fill="none" stroke="#30A46C" strokeWidth="2" strokeDasharray="4 4" />}
-        <path d={curve(peak)} fill="none" stroke="#2F5BFF" strokeWidth="2.5" />
+        <path d={curve(peak)} fill="none" stroke="#5B4BFF" strokeWidth="2.5" />
         <line x1="150" y1={peak} x2="150" y2={yR} stroke="#8C8F98" strokeDasharray="3 3" />
         <text x="104" y={(peak + yR) / 2} fontSize="10" fill="#5A5D66">Eₐ</text>
         <text x="22" y={yR - 6} fontSize="10" fill="#5A5D66">{lang === 'ru' ? 'реагенты' : 'reactants'}</text>

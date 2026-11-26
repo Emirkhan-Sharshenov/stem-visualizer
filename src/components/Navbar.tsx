@@ -49,8 +49,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header className="print:hidden sticky top-0 z-40 w-full bg-paper/95 border-b border-line">
         <div className="max-w-7xl mx-auto h-14 px-4 sm:px-6 flex items-center gap-4">
           <a href="#/" className="flex items-center gap-2.5 shrink-0" aria-label="STEM Visualizer">
-            <LogoMark size={26} />
-            <span className="hidden sm:block text-[15px] font-medium tracking-[-0.01em] text-ink">STEM Visualizer</span>
+            <LogoMark size={28} animate />
+            <span className="hidden sm:block font-serif text-[16px] font-extrabold tracking-[-0.03em] text-ink">STEM <span className="font-medium text-ink-2">Visualizer</span></span>
           </a>
 
           <nav className="hidden lg:flex items-center gap-1 ml-2">

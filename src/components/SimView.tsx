@@ -25,6 +25,7 @@ import { MomentLever } from './MomentLever';
 import { MomentCollision } from './MomentCollision';
 import { MomentInduction } from './MomentInduction';
 import { MomentRelativity } from './MomentRelativity';
+import { MomentKinematics } from './MomentKinematics';
 
 type Lang = 'ru' | 'en';
 
@@ -37,6 +38,7 @@ const PeriodicTable = lazy(() => import('./chem/PeriodicTable').then((m) => ({ d
 const MathGraph = lazy(() => import('./math/MathGraph'));
 const GeoBoard = lazy(() => import('./math/GeoBoard'));
 const Solid3D = lazy(() => import('./math/Solid3D'));
+const ProjectileLab = lazy(() => import('./projectile/ProjectileLab'));
 const ModelLab = lazy(() => import('./lab/ModelLab').then((m) => ({ default: m.ModelLab })));
 
 export interface SimViewProps {
@@ -106,6 +108,10 @@ const SimInner: React.FC<SimViewProps> = ({ sim, title, formula, lang, onLaunchS
     case 'moment_collision': return <MomentCollision lang={lang} />;
     case 'moment_induction': return <MomentInduction lang={lang} />;
     case 'moment_relativity': return <MomentRelativity lang={lang} />;
+    case 'projectile': return <ProjectileLab lang={lang} />;
+    case 'moment_kinematics': return <MomentKinematics lang={lang} mode="uniform" />;
+    case 'moment_kinematics_accel': return <MomentKinematics lang={lang} mode="accel" />;
+    case 'moment_kinematics_frames': return <MomentKinematics lang={lang} mode="frames" />;
     default: return null;
   }
 };

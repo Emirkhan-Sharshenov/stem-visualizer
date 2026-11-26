@@ -10,7 +10,7 @@ import { useScreenDetail } from '../../lib/pageContext';
 /* Graph plotter: type any formula in x, move the a, b, c sliders, see zeros, extrema and intersections. */
 
 type Lang = 'ru' | 'en';
-const COLORS = ['#2F5BFF', '#E5484D', '#30A46C'];
+const COLORS = ['#5B4BFF', '#E5484D', '#30A46C'];
 const PRESETS = ['a*x^2 + b*x + c', 'a*sin(b*x) + c', 'a/x', 'a*e^(b*x)', 'sqrt(x)', '|x|', 'ln(x)', 'x^3 - 3x', 'a*x + b', 'tg(x)'];
 const n = (x: number, d = 2) => (Math.abs(x) < 1e-9 ? '0' : (Math.round(x * 10 ** d) / 10 ** d).toString().replace('.', ','));
 

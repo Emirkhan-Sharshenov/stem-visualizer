@@ -1,287 +1,296 @@
 import { RangeSlider } from './ui/RangeSlider';
+import { SimShell } from './ui/SimShell';
 import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 import { fitCanvas } from '../lib/canvas';
-import { Zap, Play, Pause, RotateCcw } from 'lucide-react';
+import { approach, clamp01, drawStage, glow, pill, runStage, samplePolyline, STAGE, stepParticles, type Particle } from '../lib/stage';
 
 interface MomentElectrolysisProps {
   lang: 'ru' | 'en';
 }
+
+// the scene (canvas 800×380): a battery on top, a beaker of CuCl₂ solution, a cathode on the left and an anode on the right
+const BX0 = 150;
+const BX1 = 650;
+const SURF = 142; // the surface of the solution
+const BY1 = 350;
+const CATH = 236; // centre of the cathode (−)
+const ANOD = 564; // centre of the anode (+)
+const EW = 22;
+const E_TOP = 92;
+const E_BOT = 322;
+const U_DEC = 1.4; // decomposition voltage of CuCl₂, below it nothing happens
+const R_CELL = 2; // Ω
+const fmt = (x: number, d: number, ru: boolean) => (ru ? x.toFixed(d).replace('.', ',') : x.toFixed(d));
 
 interface Ion {
   x: number;
   y: number;
   vx: number;
   vy: number;
-  type: 'Cu' | 'Cl';
+  cu: boolean;
 }
 
 export const MomentElectrolysis: React.FC<MomentElectrolysisProps> = ({ lang }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [voltage, setVoltage] = useState<number>(6); // Volts
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [copperMassMg, setCopperMassMg] = useState<number>(0);
+  const [voltage, setVoltage] = useState(6);
+  const [playing, setPlaying] = useState(true);
+  const [resetKey, setResetKey] = useState(0);
+  const [shown, setShown] = useState({ I: 0, mg: 0, t: 0 });
+
+  const live = useRef({ voltage, playing, lang });
+  live.current = { voltage, playing, lang };
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
 
-    let animId: number;
+    const inBulk = (): [number, number] => [CATH + 40 + Math.random() * (ANOD - CATH - 80), SURF + 18 + Math.random() * (BY1 - SURF - 36)];
+    const ions: Ion[] = Array.from({ length: 36 }, (_, i) => {
+      const [x, y] = inBulk();
+      return { x, y, vx: 0, vy: 0, cu: i % 3 === 0 };
+    });
+    const bubbles: (Particle & { r: number })[] = [];
+    const flashes: Particle[] = [];
+    const deposits: number[] = [];
+    const wire = samplePolyline([[ANOD, E_TOP], [ANOD, 40], [430, 40], [370, 40], [CATH, 40], [CATH, E_TOP]]);
+    const s = { I: 0, mg: 0, time: 0, conc: 1, q: 0, report: 0 };
 
-    const { w, h } = fitCanvas(canvas, ctx);
-
-    // Beaker dimensions
-    const beakerX = 160;
-    const beakerY = 100;
-    const beakerW = w - 320;
-    const beakerH = 200;
-
-    // Electrodes
-    const cathodeX = beakerX + 60; // Left: Cathode (-)
-    const anodeX = beakerX + beakerW - 80; // Right: Anode (+)
-    const electrodeW = 20;
-    const electrodeTop = 60;
-    const electrodeBottom = beakerY + beakerH - 20;
-
-    // Generate ions
-    const ions: Ion[] = [];
-    for (let i = 0; i < 20; i++) {
-      ions.push({
-        x: beakerX + 30 + Math.random() * (beakerW - 60),
-        y: beakerY + 30 + Math.random() * (beakerH - 60),
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
-        type: i % 3 === 0 ? 'Cu' : 'Cl',
-      });
-    }
-
-    // Chlorine gas bubbles
-    const bubbles: { x: number; y: number; r: number }[] = [];
-
-    const render = () => {
-      animId = requestAnimationFrame(render);
-
-      ctx.fillStyle = '#111214';
-      ctx.fillRect(0, 0, w, h);
-
-      // 1. Draw External Circuit Wires & Battery at top
-      ctx.strokeStyle = '#64748b';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      // From cathode to battery (-)
-      ctx.moveTo(cathodeX + electrodeW / 2, electrodeTop);
-      ctx.lineTo(cathodeX + electrodeW / 2, 35);
-      ctx.lineTo(w / 2 - 30, 35);
-      // From anode to battery (+)
-      ctx.moveTo(anodeX + electrodeW / 2, electrodeTop);
-      ctx.lineTo(anodeX + electrodeW / 2, 35);
-      ctx.lineTo(w / 2 + 30, 35);
-      ctx.stroke();
-
-      // Battery in middle top
-      ctx.fillStyle = '#26282D';
-      ctx.strokeStyle = '#06b6d4';
-      ctx.lineWidth = 2;
-      ctx.fillRect(w / 2 - 30, 20, 60, 30);
-      ctx.strokeRect(w / 2 - 30, 20, 60, 30);
-
-      ctx.fillStyle = '#ef4444';
-      ctx.font = 'bold 12px monospace';
-      ctx.fillText('-', w / 2 - 20, 40);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillText('+', w / 2 + 12, 40);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '10px monospace';
-      ctx.fillText(`${voltage}V`, w / 2 - 10, 40);
-
-      // 2. Draw Beaker Solution (CuCl2 solution is light blue-green)
-      ctx.fillStyle = 'rgba(14, 116, 144, 0.35)';
-      ctx.fillRect(beakerX, beakerY + 20, beakerW, beakerH - 20);
-
-      // Glass Beaker outline
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(beakerX - 5, beakerY);
-      ctx.lineTo(beakerX, beakerY + beakerH);
-      ctx.lineTo(beakerX + beakerW, beakerY + beakerH);
-      ctx.lineTo(beakerX + beakerW + 5, beakerY);
-      ctx.stroke();
-
-      // 3. Draw Cathode (-) [Left - Graphite/Carbon rod]
-      ctx.fillStyle = '#34363C';
-      ctx.fillRect(cathodeX, electrodeTop, electrodeW, electrodeBottom - electrodeTop);
-
-      // Copper deposition layer on cathode (reddish metallic layer)
-      ctx.fillStyle = '#b45309';
-      ctx.fillRect(cathodeX - 4, beakerY + 20, 4, electrodeBottom - (beakerY + 20));
-      ctx.fillRect(cathodeX + electrodeW, beakerY + 20, 4, electrodeBottom - (beakerY + 20));
-
-      // 4. Draw Anode (+) [Right - Graphite rod]
-      ctx.fillStyle = '#34363C';
-      ctx.fillRect(anodeX, electrodeTop, electrodeW, electrodeBottom - electrodeTop);
-
-      // 5. Physics & Chemistry Update
-      if (isPlaying) {
-        // Drift field strength proportional to voltage
-        const driftSpeed = voltage * 0.15;
-
-        ions.forEach((ion) => {
-          // Brownian random motion
-          ion.x += ion.vx + (Math.random() - 0.5) * 0.5;
-          ion.y += ion.vy + (Math.random() - 0.5) * 0.5;
-
-          // Directed electric drift:
-          // Cu2+ (positive cation) drifts to Cathode (-) on left
-          if (ion.type === 'Cu') {
-            ion.x -= driftSpeed;
-            // When touches cathode, gets reduced and deposited
-            if (ion.x <= cathodeX + electrodeW + 4 && ion.y > beakerY + 20) {
-              ion.x = beakerX + 120 + Math.random() * (beakerW - 160);
-              ion.y = beakerY + 40 + Math.random() * (beakerH - 60);
-              setCopperMassMg((prev) => +(prev + 0.05).toFixed(2));
-            }
-          }
-          // Cl- (negative anion) drifts to Anode (+) on right
-          else {
-            ion.x += driftSpeed;
-            // When touches anode, gets oxidized to Cl2 gas
-            if (ion.x >= anodeX - 4 && ion.y > beakerY + 20) {
-              bubbles.push({ x: anodeX + Math.random() * electrodeW, y: ion.y, r: 3 + Math.random() * 3 });
-              ion.x = beakerX + 40 + Math.random() * (beakerW - 160);
-              ion.y = beakerY + 40 + Math.random() * (beakerH - 60);
-            }
-          }
-
-          // Boundary bounce inside beaker
-          if (ion.x < beakerX + 10) ion.x = beakerX + 15;
-          if (ion.x > beakerX + beakerW - 10) ion.x = beakerX + beakerW - 15;
-          if (ion.y < beakerY + 25) ion.y = beakerY + 30;
-          if (ion.y > beakerY + beakerH - 10) ion.y = beakerY + beakerH - 15;
-        });
-
-        // Bubbles rising up from anode
-        for (let i = bubbles.length - 1; i >= 0; i--) {
-          bubbles[i].y -= 2.0;
-          if (bubbles[i].y < beakerY + 15) {
-            bubbles.splice(i, 1);
-          }
-        }
+    return runStage(canvas, (dt, t, still) => {
+      const { w, h } = fitCanvas(canvas, ctx);
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const run = L.playing && !still;
+      const over = Math.max(0, L.voltage - U_DEC);
+      s.I = approach(s.I, over / R_CELL, dt, 0.3);
+      if (run) {
+        s.time += dt;
+        // Faraday: m = I·t·M / (z·F), copper M = 63.5 g/mol, z = 2
+        s.mg += ((s.I * dt * 63.5) / (2 * 96485)) * 1000;
+        s.q += s.I * 22 * dt;
+      }
+      s.report += dt;
+      if (s.report > 0.15) {
+        s.report = 0;
+        setShown({ I: s.I, mg: s.mg, t: s.time });
       }
 
-      // 6. Draw Ions
-      ions.forEach((ion) => {
-        if (ion.type === 'Cu') {
-          // Blue Cu2+ Cation
-          ctx.fillStyle = '#38bdf8';
-          ctx.beginPath();
-          ctx.arc(ion.x, ion.y, 7, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#0c4a6e';
-          ctx.font = 'bold 9px monospace';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('Cu²⁺', ion.x, ion.y);
-        } else {
-          // Green Cl- Anion
-          ctx.fillStyle = '#4ade80';
-          ctx.beginPath();
-          ctx.arc(ion.x, ion.y, 6, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#14532d';
-          ctx.font = 'bold 8px monospace';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('Cl⁻', ion.x, ion.y);
+      // ions: random thermal motion plus a drift in the field, Cu²⁺ to the cathode, Cl⁻ to the anode
+      if (run) {
+        const drift = 16 * over;
+        const rt = Math.sqrt(dt);
+        for (const ion of ions) {
+          ion.vx += (Math.random() - 0.5) * 260 * rt + (ion.cu ? -drift : drift) * 2.2 * dt;
+          ion.vy += (Math.random() - 0.5) * 260 * rt;
+          ion.vx *= 1 - 2.2 * dt;
+          ion.vy *= 1 - 2.2 * dt;
+          ion.x += ion.vx * dt;
+          ion.y += ion.vy * dt;
+          if (ion.y < SURF + 12) { ion.y = SURF + 12; ion.vy = Math.abs(ion.vy); }
+          if (ion.y > BY1 - 10) { ion.y = BY1 - 10; ion.vy = -Math.abs(ion.vy); }
+          const atCath = ion.x < CATH + EW / 2 + 7 && ion.y < E_BOT;
+          const atAnod = ion.x > ANOD - EW / 2 - 7 && ion.y < E_BOT;
+          if (over > 0 && ion.cu && atCath) {
+            // Cu²⁺ + 2e⁻ → Cu: it takes two electrons and sticks to the cathode
+            deposits.push(ion.y);
+            flashes.push({ x: CATH + EW / 2 + 3, y: ion.y, vx: 0, vy: 0, life: 0, max: 0.35, seed: 0 });
+            s.conc = Math.max(0.35, s.conc - 0.003);
+            [ion.x, ion.y] = inBulk();
+          } else if (over > 0 && !ion.cu && atAnod) {
+            // 2Cl⁻ − 2e⁻ → Cl₂: gas bubbles grow on the anode and rise
+            bubbles.push({ x: ANOD - EW / 2 - 5, y: ion.y, vx: 0, vy: -20, life: 0, max: 6, seed: Math.random() * 6.28, r: 2 + Math.random() * 2 });
+            flashes.push({ x: ANOD - EW / 2 - 3, y: ion.y, vx: 0, vy: 0, life: 0, max: 0.35, seed: 1 });
+            [ion.x, ion.y] = inBulk();
+          } else {
+            if (ion.x < CATH + EW / 2 + 6) { ion.x = CATH + EW / 2 + 6; ion.vx = Math.abs(ion.vx); }
+            if (ion.x > ANOD - EW / 2 - 6) { ion.x = ANOD - EW / 2 - 6; ion.vx = -Math.abs(ion.vx); }
+          }
         }
-      });
+        for (const b of bubbles) {
+          b.r = Math.min(7, b.r + 3 * dt);
+          b.vy -= 40 * dt;
+          b.x += Math.sin(b.seed + t * 5) * 12 * dt - 6 * dt;
+        }
+        stepParticles(bubbles, dt);
+        for (let i = bubbles.length - 1; i >= 0; i--) if (bubbles[i].y < SURF + 2) bubbles.splice(i, 1);
+        stepParticles(flashes, dt);
+      }
 
-      // 7. Draw Chlorine Bubbles
-      ctx.fillStyle = 'rgba(74, 222, 128, 0.7)';
-      bubbles.forEach((b) => {
+      drawStage(ctx, w, h, { x: (BX0 + BX1) / 2, y: 220 });
+
+      // wires and the battery, electrons running from the anode round to the cathode
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#20273A';
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.moveTo(CATH, E_TOP);
+      ctx.lineTo(CATH, 40);
+      ctx.lineTo(ANOD, 40);
+      ctx.lineTo(ANOD, E_TOP);
+      ctx.stroke();
+      const iGlow = clamp01(s.I / 4);
+      ctx.strokeStyle = `rgba(${Math.round(58 + 30 * iGlow)},${Math.round(69 + 130 * iGlow)},${Math.round(96 + 159 * iGlow)},0.9)`;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      if (s.I > 0.02) {
+        for (let k = 0; k < 18; k++) {
+          const idx = Math.floor(((k / 18) * wire.length + s.q) % wire.length);
+          const [ex, ey] = wire[idx];
+          if (ex > 362 && ex < 438) continue;
+          ctx.fillStyle = `rgba(130,220,255,${0.4 + 0.6 * iGlow})`;
+          ctx.beginPath();
+          ctx.arc(ex, ey, 2.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      {
+        const g = ctx.createLinearGradient(0, 24, 0, 56);
+        g.addColorStop(0, '#33446E');
+        g.addColorStop(1, '#18213A');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.roundRect(362, 24, 76, 32, 8);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(61,214,255,0.9)';
+        ctx.fillRect(362, 34, 76, 12);
+        ctx.fillStyle = '#06222C';
+        ctx.font = `700 11px ${STAGE.mono}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${fmt(L.voltage, 1, ru)} ${ru ? 'В' : 'V'}`, 400, 40.5);
+        ctx.fillStyle = STAGE.ink;
+        ctx.font = `700 14px ${STAGE.font}`;
+        ctx.fillText('−', 352, 40);
+        ctx.fillText('+', 448, 40);
+      }
+
+      // the solution: blue from Cu²⁺, paler as copper leaves it
+      const sol = ctx.createLinearGradient(0, SURF, 0, BY1);
+      sol.addColorStop(0, `rgba(40,150,220,${0.16 * s.conc + 0.04})`);
+      sol.addColorStop(1, `rgba(30,110,200,${0.3 * s.conc + 0.05})`);
+      ctx.fillStyle = sol;
+      ctx.fillRect(BX0, SURF, BX1 - BX0, BY1 - SURF);
+      ctx.strokeStyle = 'rgba(160,210,255,0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let x = BX0; x <= BX1; x += 8) {
+        const y = SURF + Math.sin(x * 0.05 + t * 1.6) * 1.2;
+        if (x === BX0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // electrodes: graphite rods; copper grows on the cathode
+      for (const [cx, label] of [[CATH, ru ? 'катод −' : 'cathode −'], [ANOD, ru ? 'анод +' : 'anode +']] as const) {
+        const g = ctx.createLinearGradient(cx - EW / 2, 0, cx + EW / 2, 0);
+        g.addColorStop(0, '#2B2F38');
+        g.addColorStop(0.45, '#5A606E');
+        g.addColorStop(1, '#22252D');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.roundRect(cx - EW / 2, E_TOP, EW, E_BOT - E_TOP, 4);
+        ctx.fill();
+        pill(ctx, cx, E_TOP - 22 + (cx === CATH ? 0 : 0), label, cx === CATH ? '#7FE3FF' : '#FFC46B');
+      }
+      const layer = Math.min(8, 1 + deposits.length * 0.03);
+      const cu = ctx.createLinearGradient(CATH + EW / 2, 0, CATH + EW / 2 + layer, 0);
+      cu.addColorStop(0, '#B8652F');
+      cu.addColorStop(0.5, '#F0A56A');
+      cu.addColorStop(1, '#C4733C');
+      ctx.fillStyle = cu;
+      ctx.fillRect(CATH + EW / 2, SURF + 4, layer, E_BOT - SURF - 4);
+      ctx.fillStyle = '#E08A4E';
+      for (const y of deposits.slice(-160)) {
+        ctx.beginPath();
+        ctx.arc(CATH + EW / 2 + layer, y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // ions
+      for (const ion of ions) {
+        const col = ion.cu ? ['#FFB37A', '#D9732F'] : ['#B8F27A', '#4FB33A'];
+        const g = ctx.createRadialGradient(ion.x - 2, ion.y - 2, 1, ion.x, ion.y, ion.cu ? 8 : 7);
+        g.addColorStop(0, col[0]);
+        g.addColorStop(1, col[1]);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(ion.x, ion.y, ion.cu ? 7.5 : 6.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0B0E18';
+        ctx.font = `800 8px ${STAGE.font}`;
+        ctx.fillText(ion.cu ? '2+' : '−', ion.x, ion.y + 0.5);
+      }
+
+      // Cl₂ bubbles and reaction flashes
+      for (const b of bubbles) {
+        ctx.strokeStyle = 'rgba(210,255,150,0.7)';
+        ctx.fillStyle = 'rgba(190,240,120,0.18)';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
         ctx.fill();
-      });
+        ctx.stroke();
+      }
+      for (const f of flashes) glow(ctx, f.x, f.y, 16, f.seed ? '200,255,140' : '255,200,140', 0.8 * (1 - f.life / f.max));
 
-      // 8. Explicit Labels on Canvas
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(lang === 'ru' ? 'КАТОД (-)' : 'CATHODE (-)', cathodeX + electrodeW / 2, electrodeTop - 12);
-      ctx.fillStyle = '#b45309';
-      ctx.font = '10px monospace';
-      ctx.fillText('Cu²⁺ + 2e⁻ → Cu⁰', cathodeX + electrodeW / 2, electrodeBottom + 18);
-      ctx.fillText(lang === 'ru' ? '(Осадок чистой меди)' : '(Copper Coating)', cathodeX + electrodeW / 2, electrodeBottom + 30);
+      // the glass
+      ctx.strokeStyle = 'rgba(200,220,255,0.35)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(BX0, 118);
+      ctx.lineTo(BX0, BY1);
+      ctx.lineTo(BX1, BY1);
+      ctx.lineTo(BX1, 118);
+      ctx.stroke();
 
-      ctx.fillStyle = '#4ade80';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText(lang === 'ru' ? 'АНОД (+)' : 'ANODE (+)', anodeX + electrodeW / 2, electrodeTop - 12);
-      ctx.font = '10px monospace';
-      ctx.fillText('2Cl⁻ - 2e⁻ → Cl₂↑', anodeX + electrodeW / 2, electrodeBottom + 18);
-      ctx.fillText(lang === 'ru' ? '(Пузырьки хлора)' : '(Chlorine Gas)', anodeX + electrodeW / 2, electrodeBottom + 30);
-    };
+      pill(ctx, (BX0 + BX1) / 2, BY1 + 16, over > 0 ? (ru ? 'Cu²⁺ + 2e⁻ → Cu      2Cl⁻ − 2e⁻ → Cl₂↑' : 'Cu²⁺ + 2e⁻ → Cu      2Cl⁻ − 2e⁻ → Cl₂↑') : ru ? `меньше ${fmt(U_DEC, 1, true)} В — раствор не разлагается` : `below ${U_DEC} V the solution does not decompose`, over > 0 ? STAGE.ink : '#FF8A9E');
+    });
+  }, [resetKey]);
 
-    render();
-
-    return () => cancelAnimationFrame(animId);
-  }, [voltage, isPlaying, lang]);
-
+  const ru = lang === 'ru';
   return (
-    <div className="flex flex-col gap-4 w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-400 font-mono font-bold border border-amber-800">
-              {lang === 'ru' ? '8–9 Класс • Химия' : 'Grade 8-9 • Chemistry'}
-            </span>
-            <span className="text-xs font-mono uppercase text-slate-400 font-bold">
-              {lang === 'ru' ? 'Электролиз расплавов и растворов солей' : 'Electrolysis & Redox at Electrodes'}
-            </span>
-          </div>
-          <h3 className="text-base font-bold text-slate-100 mt-1">
-            {lang === 'ru' ? 'Электролиз CuCl₂: как электрический ток выбивает чистый металл из раствора' : 'Electrolysis: Current Extracting Pure Copper from Salt Solution'}
-          </h3>
-        </div>
-
-        {/* Live Gauges */}
-        <div className="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
-          <div>
-            <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'НАПРЯЖЕНИЕ' : 'VOLTAGE'}</span>
-            <span className="font-bold text-cyan-400 text-sm">{voltage} V</span>
-          </div>
-          <div className="h-6 w-px bg-slate-800" />
-          <div>
-            <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'ОСАЖДЕНО МЕДИ' : 'DEPOSITED COPPER'}</span>
-            <span className="font-bold text-amber-400 text-sm">{copperMassMg.toFixed(2)} {lang === 'ru' ? 'мг' : 'mg'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Canvas */}
-      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={340} className="block w-full h-auto max-h-[480px] object-contain" />
-      </div>
-
-      {/* Voltage Slider */}
-      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-center gap-4">
-        <div className="flex-1 flex flex-col gap-1 w-full">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">{lang === 'ru' ? 'Напряжение источника тока:' : 'Electrolysis Voltage:'}</span>
-            <span className="font-mono text-cyan-400 font-bold">{voltage} V</span>
-          </div>
-          <RangeSlider value={voltage} onChange={(v) => setVoltage(v)} min={1} max={18} step={1} />
-          <span className="text-[10px] text-slate-500">
-            {lang === 'ru' ? 'Выше напряжение → мощнее электрическое поле → ионы Cu²⁺ и Cl⁻ мчатся к электродам быстрее!' : 'Higher voltage → stronger electric field → ions migrate to electrodes faster!'}
-          </span>
-        </div>
-
-        <Button variant="outline" size="sm" className="text-xs font-bold" onPress={() => setIsPlaying(!isPlaying)}>
-          {isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}
-        </Button>
-      </div>
-    </div>
+    <SimShell
+      badge={ru ? 'Химия · Физика' : 'Chemistry · Physics'}
+      formula="m = I·t·M / (z·F)"
+      title={ru ? 'Электролиз раствора CuCl₂: ток выделяет медь и хлор' : 'Electrolysis of CuCl₂ solution: current frees copper and chlorine'}
+      actions={
+        <>
+          <Button variant="outline" size="sm" isIconOnly aria-label={playing ? (ru ? 'Пауза' : 'Pause') : ru ? 'Пуск' : 'Play'} onPress={() => setPlaying(!playing)}>
+            {playing ? <Pause className="w-4 h-4" strokeWidth={2} /> : <Play className="w-4 h-4" strokeWidth={2} />}
+          </Button>
+          <Button variant="outline" size="sm" className="font-semibold" onPress={() => setResetKey((k) => k + 1)}>
+            <RotateCcw className="w-4 h-4" strokeWidth={2} />
+            {ru ? 'Заново' : 'Restart'}
+          </Button>
+        </>
+      }
+      readouts={[
+        { label: ru ? 'Напряжение' : 'Voltage', value: `${fmt(voltage, 1, ru)} ${ru ? 'В' : 'V'}`, color: '#22A8E0' },
+        { label: ru ? 'Ток' : 'Current', value: `${fmt(shown.I, 2, ru)} ${ru ? 'А' : 'A'}`, color: '#1A8F50' },
+        { label: ru ? 'Меди на катоде' : 'Copper on the cathode', value: `${fmt(shown.mg, 2, ru)} ${ru ? 'мг' : 'mg'}`, color: '#C46A2B' },
+        { label: ru ? 'Время' : 'Time', value: `${Math.floor(shown.t)} ${ru ? 'с' : 's'}` },
+      ]}
+      controls={[
+        {
+          label: ru ? 'Напряжение источника' : 'Source voltage',
+          value: `${fmt(voltage, 1, ru)} ${ru ? 'В' : 'V'}`,
+          color: '#22A8E0',
+          input: <RangeSlider value={voltage} onChange={(v) => setVoltage(v)} min={0} max={12} step={0.5} />,
+          hint: ru
+            ? 'Ниже 1,4 В ионы только бродят. Выше — Cu²⁺ плывут к катоду и оседают медью, Cl⁻ отдают электроны на аноде и уходят пузырьками хлора.'
+            : 'Below 1.4 V the ions only wander. Above it Cu²⁺ swim to the cathode and plate out as copper, while Cl⁻ give up electrons at the anode and leave as chlorine bubbles.',
+        },
+      ]}
+      insight={{
+        title: ru ? 'Закон Фарадея' : "Faraday's law",
+        text: ru
+          ? 'Масса меди растёт пропорционально току и времени: вдвое больше ток — вдвое быстрее растёт слой на катоде. А раствор при этом бледнеет: ионов Cu²⁺ в нём всё меньше.'
+          : 'The copper grows in proportion to current and time: double the current and the layer grows twice as fast. Meanwhile the solution pales as Cu²⁺ ions run out.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={380} className="block w-full h-auto" aria-label={ru ? 'Стакан с раствором хлорида меди, катод, анод и батарея' : 'A beaker of copper chloride solution with a cathode, an anode and a battery'} />
+    </SimShell>
   );
 };

@@ -73,7 +73,7 @@ export async function drawCard(d: CardData): Promise<Blob> {
   g.textBaseline = 'alphabetic';
   // brand
   roundRect(g, W / 2 - 48, 200, 96, 96, 26);
-  g.fillStyle = '#2F5BFF';
+  g.fillStyle = '#5B4BFF';
   g.fill();
   g.strokeStyle = '#fff';
   g.lineWidth = 7;
@@ -163,7 +163,7 @@ export async function drawCard(d: CardData): Promise<Blob> {
   }
   // footer link
   roundRect(g, 140, 1700, W - 280, 110, 55);
-  g.fillStyle = '#2F5BFF';
+  g.fillStyle = '#5B4BFF';
   g.fill();
   g.font = font(800, 46);
   g.fillStyle = '#fff';

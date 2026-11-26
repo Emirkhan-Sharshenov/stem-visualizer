@@ -1,273 +1,354 @@
 import { RangeSlider } from './ui/RangeSlider';
+import { SimShell } from './ui/SimShell';
 import { Button } from '@heroui/react';
 import React, { useEffect, useRef, useState } from 'react';
+import { Pause, Play } from 'lucide-react';
 import { fitCanvas } from '../lib/canvas';
-import { Play, Pause, RotateCcw, Flame, Snowflake, Wind, HelpCircle } from 'lucide-react';
+import { clamp01, drawStage, glow, mixRgb, pill, runStage, seeded, STAGE } from '../lib/stage';
 
 interface MomentStatesOfMatterProps {
   lang: 'ru' | 'en';
 }
 
+// the scene (canvas 800×380): a glass vessel on a heater on the left, the heating curve on the right
+const VX0 = 50;
+const VX1 = 510;
+const VY0 = 36;
+const VY1 = 330;
+const ROWS = 5;
+const COLS = 14;
+const SP = 30;
+// energy bookkeeping in "degrees": melting and boiling each take a fixed amount of heat while T stands still
+const MELT = 60;
+const BOIL = 100;
+const tempOf = (E: number) => (E < 0 ? E : E < MELT ? 0 : E < MELT + 100 ? E - MELT : E < MELT + 100 + BOIL ? 100 : E - MELT - BOIL);
+const energyOf = (T: number) => (T < 0 ? T : T <= 100 ? T + MELT : T + MELT + BOIL);
+
+interface Mol {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  ox: number;
+  oy: number;
+  a: number;
+  va: number;
+  meltAt: number;
+  boilAt: number;
+}
+
 export const MomentStatesOfMatter: React.FC<MomentStatesOfMatterProps> = ({ lang }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [temperature, setTemperature] = useState<number>(0); // -30 to 120 °C
-  const [timeScale, setTimeScale] = useState<number>(1.0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [heater, setHeater] = useState(-20);
+  const [playing, setPlaying] = useState(true);
+  const [shown, setShown] = useState({ T: -20, phase: 'solid' as 'solid' | 'melting' | 'liquid' | 'boiling' | 'gas' });
 
-  const stateType = temperature < 0 ? 'solid' : temperature <= 100 ? 'liquid' : 'gas';
+  const live = useRef({ heater, playing, lang });
+  live.current = { heater, playing, lang };
 
-  // Molecular ensemble state
-  const particlesRef = useRef<{
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    originX: number;
-    originY: number;
-    radius: number;
-  }[]>([]);
-
-  // Init grid of molecules
-  useEffect(() => {
-    const pts: any[] = [];
-    const rows = 6;
-    const cols = 12;
-    const startX = 110;
-    const startY = 120;
-    const spacingX = 35;
-    const spacingY = 32;
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const ox = startX + c * spacingX + (r % 2 === 1 ? spacingX * 0.5 : 0);
-        const oy = startY + r * spacingY;
-        pts.push({
-          x: ox,
-          y: oy,
-          vx: 0,
-          vy: 0,
-          originX: ox,
-          originY: oy,
-          radius: 7
-        });
-      }
-    }
-    particlesRef.current = pts;
-  }, []);
-
-  // Simulation loop
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
 
-    let animId: number;
+    // ice lattice at the bottom of the vessel; the top layers melt first
+    const mols: Mol[] = [];
+    const left = (VX0 + VX1) / 2 - ((COLS - 1) * SP) / 2;
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++) {
+        const i = mols.length;
+        const ox = left + c * SP + (r % 2 ? SP / 2 - 6 : 0);
+        const oy = VY1 - 14 - r * (SP * 0.86);
+        mols.push({ x: ox, y: oy, vx: 0, vy: 0, ox, oy, a: (c + r) % 2 ? 0.5 : -0.5, va: 0, meltAt: 0.55 * seeded(i) + 0.45 * (1 - (r + 1) / ROWS), boilAt: seeded(i, 7) });
+      }
+    // normalise thresholds to 0…1
+    const mMax = Math.max(...mols.map((m) => m.meltAt));
+    mols.forEach((m) => (m.meltAt /= mMax));
 
-    const render = () => {
-      animId = requestAnimationFrame(render);
+    const s = { E: energyOf(live.current.heater), hist: [] as number[], histClock: 0, report: 0 };
+
+    return runStage(canvas, (dt, _t, still) => {
       const { w, h } = fitCanvas(canvas, ctx);
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const run = L.playing && !still;
 
-      // Clear with dark chamber background
-      ctx.fillStyle = '#111214';
-      ctx.fillRect(0, 0, w, h);
+      // heat flows from the heater into the water, faster when the gap is bigger
+      const T0 = tempOf(s.E);
+      if (still) s.E = energyOf(L.heater);
+      else if (run) s.E += Math.max(-70, Math.min(70, 0.7 * (L.heater - T0))) * dt;
+      const T = tempOf(s.E);
+      const melt = clamp01(s.E / MELT);
+      const boil = clamp01((s.E - MELT - 100) / BOIL);
+      const phase = s.E < 0 ? 'solid' : s.E < MELT ? 'melting' : s.E < MELT + 100 ? 'liquid' : s.E < MELT + 100 + BOIL ? 'boiling' : 'gas';
 
-      // Draw container walls
-      ctx.strokeStyle = '#34363C';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(15, 15, w - 30, h - 30);
-
-      const pts = particlesRef.current;
-      const thermalSpeed = Math.max(0.4, Math.sqrt(Math.max(1, temperature + 40)) * 0.35);
-
-      if (isPlaying) {
-        pts.forEach((p) => {
-          if (temperature < 0) {
-            // Solid ice: harmonic oscillation around crystal lattice positions
-            const dx = p.originX - p.x;
-            const dy = p.originY - p.y;
-            p.vx += dx * 0.15 + (Math.random() - 0.5) * thermalSpeed * 0.3;
-            p.vy += dy * 0.15 + (Math.random() - 0.5) * thermalSpeed * 0.3;
-            p.vx *= 0.85;
-            p.vy *= 0.85;
-            p.x += p.vx * timeScale;
-            p.y += p.vy * timeScale;
-          } else if (temperature <= 100) {
-            // Liquid: gravity pull down, soft repulsion, flowing past
-            p.vy += 0.08; // gravity
-            p.vx += (Math.random() - 0.5) * thermalSpeed * 0.4;
-            p.vy += (Math.random() - 0.5) * thermalSpeed * 0.4;
-            p.vx *= 0.94;
-            p.vy *= 0.94;
-
-            p.x += p.vx * timeScale;
-            p.y += p.vy * timeScale;
-
-            // Liquid bounds
-            if (p.x < 30) { p.x = 30; p.vx *= -0.5; }
-            if (p.x > w - 30) { p.x = w - 30; p.vx *= -0.5; }
-            if (p.y > h - 30) { p.y = h - 30; p.vy *= -0.5; }
-            if (p.y < 120) { p.vy += 0.1; }
-          } else {
-            // Gas / Steam: high speed, isotropic expansion, bounces everywhere!
-            p.vx += (Math.random() - 0.5) * 0.6;
-            p.vy += (Math.random() - 0.5) * 0.6;
-            p.x += p.vx * thermalSpeed * 0.9 * timeScale;
-            p.y += p.vy * thermalSpeed * 0.9 * timeScale;
-
-            if (p.x < 25) { p.x = 25; p.vx *= -1; }
-            if (p.x > w - 25) { p.x = w - 25; p.vx *= -1; }
-            if (p.y < 25) { p.y = 25; p.vy *= -1; }
-            if (p.y > h - 25) { p.y = h - 25; p.vy *= -1; }
-          }
-        });
+      if (run) {
+        s.histClock += dt;
+        if (s.histClock > 0.2) {
+          s.histClock = 0;
+          s.hist.push(T);
+          if (s.hist.length > 110) s.hist.shift();
+        }
+      }
+      s.report += dt;
+      if (s.report > 0.15) {
+        s.report = 0;
+        setShown({ T, phase });
       }
 
-      // Draw hydrogen bond links when solid or liquid
-      if (temperature < 50) {
-        ctx.strokeStyle = temperature < 0 ? 'rgba(56, 189, 248, 0.4)' : 'rgba(56, 189, 248, 0.15)';
-        ctx.lineWidth = temperature < 0 ? 2 : 1;
-        for (let i = 0; i < pts.length; i++) {
-          for (let j = i + 1; j < pts.length; j++) {
-            const dist = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
-            if (dist < 42) {
-              ctx.beginPath();
-              ctx.moveTo(pts[i].x, pts[i].y);
-              ctx.lineTo(pts[j].x, pts[j].y);
-              ctx.stroke();
-            }
+      // physics: a solid springs round its lattice site, a liquid slides under gravity and sticks, a gas flies
+      const kick = Math.sqrt(Math.max(1, T + 45));
+      // random thermal kicks scale with √dt so the jiggle is the same at any frame rate
+      const rt = Math.sqrt(dt);
+      const mode = (m: Mol) => (m.boilAt < boil ? 2 : m.meltAt < melt ? 1 : 0);
+      if (run) {
+        for (const m of mols) {
+          const md = mode(m);
+          if (md === 0) {
+            m.vx += (220 * (m.ox - m.x) - 16 * m.vx) * dt + (Math.random() - 0.5) * kick * 120 * rt;
+            m.vy += (220 * (m.oy - m.y) - 16 * m.vy) * dt + (Math.random() - 0.5) * kick * 120 * rt;
+            m.va += (-m.va * 6 + (Math.random() - 0.5) * 4) * dt;
+          } else if (md === 1) {
+            m.vy += 260 * dt;
+            m.vx += (Math.random() - 0.5) * kick * 50 * rt;
+            m.vy += (Math.random() - 0.5) * kick * 50 * rt;
+            m.vx *= 1 - 3 * dt;
+            m.vy *= 1 - 3 * dt;
+            m.va += ((Math.random() - 0.5) * 30 - m.va * 2) * dt;
+          } else {
+            const sp = Math.hypot(m.vx, m.vy) || 1;
+            const want = 120 + 2.4 * (T + 40);
+            m.vx += (m.vx / sp) * (want - sp) * 1.5 * dt + (Math.random() - 0.5) * 320 * rt;
+            m.vy += (m.vy / sp) * (want - sp) * 1.5 * dt + (Math.random() - 0.5) * 320 * rt - 30 * dt;
+            m.va += ((Math.random() - 0.5) * 60 - m.va) * dt;
           }
         }
       }
 
-      // Draw molecules (Oxygen red + 2 small white Hydrogens for authentic H2O)
-      pts.forEach((p) => {
-        // Oxygen central atom
-        ctx.fillStyle = temperature < 0 ? '#38bdf8' : temperature <= 100 ? '#0284c7' : '#f97316';
+      // neighbours push apart when too close; solids and liquids also hold together (hydrogen bonds)
+      const bonds: [number, number, number][] = [];
+      for (let i = 0; i < mols.length; i++) {
+        const a = mols[i];
+        const ma = mode(a);
+        for (let j = i + 1; j < mols.length; j++) {
+          const b = mols[j];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 > 900) continue;
+          const d = Math.sqrt(d2) || 0.01;
+          const mb = mode(b);
+          if (run && d < 17) {
+            const f = (17 - d) * 70 * dt;
+            a.vx -= (dx / d) * f;
+            a.vy -= (dy / d) * f;
+            b.vx += (dx / d) * f;
+            b.vy += (dy / d) * f;
+          } else if (run && ma === 1 && mb === 1 && d < 28) {
+            const f = (d - 17) * 10 * dt;
+            a.vx += (dx / d) * f;
+            a.vy += (dy / d) * f;
+            b.vx -= (dx / d) * f;
+            b.vy -= (dy / d) * f;
+          }
+          if (ma < 2 && mb < 2 && d < 30) bonds.push([i, j, ma === 0 && mb === 0 ? 0.42 : 0.16 * (1 - (d - 17) / 13)]);
+        }
+      }
+      if (run) {
+        for (const m of mols) {
+          m.x += m.vx * dt;
+          m.y += m.vy * dt;
+          m.a += m.va * dt;
+          if (!Number.isFinite(m.x + m.y + m.vx + m.vy + m.a)) Object.assign(m, { x: m.ox, y: m.oy, vx: 0, vy: 0, a: 0, va: 0 });
+          const md = mode(m);
+          const bounce = md === 2 ? -1 : -0.4;
+          if (m.x < VX0 + 10) { m.x = VX0 + 10; m.vx *= bounce; }
+          if (m.x > VX1 - 10) { m.x = VX1 - 10; m.vx *= bounce; }
+          if (m.y > VY1 - 10) { m.y = VY1 - 10; m.vy *= bounce; }
+          if (m.y < VY0 + 10) { m.y = VY0 + 10; m.vy *= md === 2 ? -1 : 0; }
+        }
+      }
+
+      drawStage(ctx, w, h, { x: (VX0 + VX1) / 2, y: VY1 });
+
+      // the heater: glows red while heating, frosts blue while cooling
+      const push = L.heater - T;
+      const hot = clamp01(push / 60);
+      const cold = clamp01(-push / 60);
+      glow(ctx, (VX0 + VX1) / 2, VY1 + 30, 260, '255,110,40', 0.35 * hot);
+      glow(ctx, (VX0 + VX1) / 2, VY1 + 30, 260, '90,170,255', 0.3 * cold);
+      ctx.fillStyle = `rgb(${mixRgb(mixRgb([40, 46, 64], [255, 110, 40], hot).split(',').map(Number) as [number, number, number], [110, 180, 255], cold)})`;
+      ctx.beginPath();
+      ctx.roundRect(VX0 - 6, VY1 + 8, VX1 - VX0 + 12, 12, 6);
+      ctx.fill();
+
+      // water level tint and the glass
+      ctx.fillStyle = 'rgba(80,160,255,0.05)';
+      ctx.fillRect(VX0, VY0, VX1 - VX0, VY1 - VY0);
+      for (const [i, j, a] of bonds) {
+        ctx.strokeStyle = `rgba(120,200,255,${a})`;
+        ctx.lineWidth = a > 0.3 ? 1.6 : 1;
+        ctx.setLineDash([3, 3]);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(mols[i].x, mols[i].y);
+        ctx.lineTo(mols[j].x, mols[j].y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
 
-        // 2 Hydrogen ears
-        ctx.fillStyle = '#f1f5f9';
+      // molecules: an oxygen and two hydrogens at 104.5°, coloured by how fast they move
+      for (const m of mols) {
+        const sp = Math.hypot(m.vx, m.vy);
+        const heat = clamp01(sp / 420 + (T + 30) / 400);
+        const col = mixRgb([90, 170, 255], [255, 120, 60], heat);
+        const ha = 0.91;
+        for (const sgn of [-1, 1]) {
+          const hx = m.x + Math.cos(m.a + Math.PI / 2 + sgn * ha) * 9;
+          const hy = m.y + Math.sin(m.a + Math.PI / 2 + sgn * ha) * 9;
+          ctx.fillStyle = '#EEF2FB';
+          ctx.beginPath();
+          ctx.arc(hx, hy, 3.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        const g = ctx.createRadialGradient(m.x - 2.5, m.y - 2.5, 1, m.x, m.y, 8);
+        g.addColorStop(0, `rgb(${mixRgb([255, 255, 255], col.split(',').map(Number) as [number, number, number], 0.55)})`);
+        g.addColorStop(1, `rgb(${col})`);
+        ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(p.x - 5, p.y - 4, 3, 0, Math.PI * 2);
-        ctx.arc(p.x + 5, p.y - 4, 3, 0, Math.PI * 2);
+        ctx.arc(m.x, m.y, 7, 0, Math.PI * 2);
         ctx.fill();
-      });
-    };
+      }
 
-    animId = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animId);
-  }, [temperature, timeScale, isPlaying]);
+      // glass walls with a highlight
+      ctx.strokeStyle = 'rgba(200,220,255,0.35)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(VX0, VY0 - 6);
+      ctx.lineTo(VX0, VY1);
+      ctx.lineTo(VX1, VY1);
+      ctx.lineTo(VX1, VY0 - 6);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(VX0 + 8, VY0 + 10);
+      ctx.lineTo(VX0 + 8, VY1 - 40);
+      ctx.stroke();
 
+      const label = {
+        solid: ru ? 'лёд: молекулы дрожат на местах' : 'ice: molecules shake in place',
+        melting: ru ? 'плавится: T стоит на 0 °C' : 'melting: T stays at 0 °C',
+        liquid: ru ? 'вода: связи рвутся и возникают' : 'water: bonds break and re-form',
+        boiling: ru ? 'кипит: T стоит на 100 °C' : 'boiling: T stays at 100 °C',
+        gas: ru ? 'пар: молекулы летают свободно' : 'steam: molecules fly free',
+      }[phase];
+      pill(ctx, (VX0 + VX1) / 2, VY0 + 20, label, phase === 'melting' || phase === 'boiling' ? '#FFC46B' : STAGE.ink);
+
+      // the heating curve: temperature over the last ~20 s, with its two plateaus
+      {
+        const gx0 = 560;
+        const gx1 = 772;
+        const gy0 = 52;
+        const gy1 = 300;
+        const yOf = (v: number) => gy1 - ((v + 35) / 165) * (gy1 - gy0);
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.beginPath();
+        ctx.roundRect(gx0 - 14, gy0 - 30, gx1 - gx0 + 28, gy1 - gy0 + 62, 16);
+        ctx.fill();
+        ctx.fillStyle = STAGE.soft;
+        ctx.font = `600 12px ${STAGE.font}`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(ru ? 'Температура воды T(t)' : 'Water temperature T(t)', gx0, gy0 - 10);
+        ctx.setLineDash([4, 5]);
+        for (const v of [0, 100]) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(gx0, yOf(v));
+          ctx.lineTo(gx1, yOf(v));
+          ctx.stroke();
+          ctx.fillStyle = STAGE.soft;
+          ctx.font = `500 11px ${STAGE.mono}`;
+          ctx.fillText(`${v}°`, gx1 - 26, yOf(v) - 5);
+        }
+        ctx.setLineDash([]);
+        const hs = s.hist.length ? s.hist : [T];
+        ctx.strokeStyle = '#8B7CFF';
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        hs.forEach((v, i) => {
+          const x = gx1 - (hs.length - 1 - i) * ((gx1 - gx0) / 110);
+          if (i === 0) ctx.moveTo(x, yOf(v));
+          else ctx.lineTo(x, yOf(v));
+        });
+        ctx.stroke();
+        const lastY = yOf(hs[hs.length - 1]);
+        glow(ctx, gx1, lastY, 18, '139,124,255', 0.6);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(gx1, lastY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = STAGE.soft;
+        ctx.font = `500 11px ${STAGE.font}`;
+        ctx.fillText(ru ? 'время →' : 'time →', gx0, gy1 + 22);
+      }
+    });
+  }, []);
+
+  const ru = lang === 'ru';
+  const phaseName = {
+    solid: ru ? 'лёд' : 'ice',
+    melting: ru ? 'тает' : 'melting',
+    liquid: ru ? 'вода' : 'water',
+    boiling: ru ? 'кипит' : 'boiling',
+    gas: ru ? 'пар' : 'steam',
+  }[shown.phase];
+  const preset = (t: number, label: string) => (
+    <Button variant={Math.abs(heater - t) < 1 ? 'primary' : 'outline'} size="sm" className="font-semibold" onPress={() => setHeater(t)}>
+      {label}
+    </Button>
+  );
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full max-w-7xl mx-auto py-2">
-      {/* Simulation Stage */}
-      <div className="flex-1 flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        {/* Header Bar */}
-        <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              {temperature < 0 ? <Snowflake className="w-5 h-5" /> : temperature <= 100 ? <Flame className="w-5 h-5" /> : <Wind className="w-5 h-5" />}
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{lang === 'ru' ? 'Агрегатные состояния: Лёд → Вода → Пар' : 'States of Matter: Ice → Water → Steam'}</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
-                  {lang === 'ru' ? '7-8 Класс' : 'Grade 7-8'}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ru' ? 'Смотри, как плавятся водородные связи между молекулами H₂O' : 'Watch hydrogen bonds rupture as temperature crosses phase boundaries'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className={`text-xs font-semibold ${isPlaying ? 'text-indigo-400' : 'text-slate-300'}`} onPress={() => setIsPlaying(!isPlaying)}>
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              <span>{isPlaying ? (lang === 'ru' ? 'Пауза' : 'Pause') : (lang === 'ru' ? 'Пуск' : 'Play')}</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Phase State Indicators Bar */}
-        <div className="px-4 py-2 bg-slate-950/40 border-b border-slate-800/80 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            {[
-              { id: -20, label: lang === 'ru' ? 'Лёд (-20°C)' : 'Ice (-20°C)', active: stateType === 'solid' },
-              { id: 25, label: lang === 'ru' ? 'Вода (25°C)' : 'Water (25°C)', active: stateType === 'liquid' },
-              { id: 115, label: lang === 'ru' ? 'Пар (115°C)' : 'Steam (115°C)', active: stateType === 'gas' },
-            ].map((p, idx) => (
-              <Button variant={p.active ? 'primary' : 'secondary'} size="sm" className="font-bold" key={idx} onPress={() => setTemperature(p.id)}>
-                {p.label}
-              </Button>
-            ))}
-          </div>
-
-          <span className="font-mono text-cyan-400 font-bold text-sm">
-            {temperature}°C
-          </span>
-        </div>
-
-        {/* Canvas Display */}
-        <div className="lab-stage relative w-full flex items-center justify-center p-3">
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={380}
-            className="block w-full h-auto max-h-[480px] object-contain rounded-xl"
-          />
-
-          <div className="absolute bottom-6 left-6 bg-slate-950/90 border border-slate-800/90 backdrop-blur-md rounded-xl p-3 text-xs text-slate-300 max-w-sm shadow-xl flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-mono font-bold text-cyan-400">
-              {stateType === 'solid' && (lang === 'ru' ? 'ТВЕРДОЕ ТЕЛО (ЛЕД)' : 'SOLID (ICE)')}
-              {stateType === 'liquid' && (lang === 'ru' ? 'ЖИДКОСТЬ (ВОДА)' : 'LIQUID (WATER)')}
-              {stateType === 'gas' && (lang === 'ru' ? 'ГАЗ (ВОДЯНОЙ ПАР)' : 'GAS (STEAM)')}
-            </span>
-            <p className="text-[11px] text-slate-300 leading-tight">
-              {stateType === 'solid' && (lang === 'ru' ? 'Молекулы заперты в ячейках кристаллической решетки и только дрожат на месте.' : 'Molecules locked in crystal lattice positions, oscillating in place.')}
-              {stateType === 'liquid' && (lang === 'ru' ? 'Связи непрерывно рвутся и возникают вновь — молекулы текут и скользят друг по другу.' : 'Bonds continuously rupture and re-form, letting molecules slip past one another.')}
-              {stateType === 'gas' && (lang === 'ru' ? 'Энергия тепла полностью разорвала связи: молекулы со сверхзвуковой скоростью летают по всему объему!' : 'Thermal kinetic energy completely breaks intermolecular bonds: molecules fly freely!')}
-            </p>
-          </div>
-        </div>
-
-        {/* Temperature slider */}
-        <div className="p-4 bg-slate-950/70 border-t border-slate-800 text-xs">
-          <div className="flex justify-between text-slate-300 mb-1">
-            <span>{lang === 'ru' ? 'Температура нагревателя T (°C)' : 'Heater Temperature T (°C)'}</span>
-            <span className="font-mono text-cyan-400 font-bold">{temperature}°C</span>
-          </div>
-          <RangeSlider value={temperature} onChange={(v) => setTemperature(v)} min={-30} max={125} />
-        </div>
-      </div>
-
-      {/* Textbook Insight */}
-      <div className="w-full xl:w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <h3 className="font-bold text-slate-100 text-sm">
-              {lang === 'ru' ? 'Урок: Фазовые переходы' : 'Lesson: Phase Transitions'}
-            </h3>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80">
-            <div className="text-[10px] font-mono uppercase font-bold text-slate-400 mb-1">
-              {lang === 'ru' ? 'ГЛАВНАЯ ОШИБКА ШКОЛЬНИКОВ:' : 'COMMON STUDENT MISCONCEPTION:'}
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              {lang === 'ru'
-                ? '«Молекулы в паре горячие, а во льду холодные? Молекула H₂O расширяется?» НЕТ! Сама молекула H₂O в кипятке и во льду абсолютно одинакова. Меняется только расстояние и характер движения!'
-                : 'Molecules do not melt or shrink! An H₂O molecule in steam is identical to one in an iceberg. Only intermolecular bonding and velocities change.'}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SimShell
+      badge={ru ? '7–8 класс · Физика' : 'Grades 7–8 · Physics'}
+      formula={ru ? 'Q = λm,  Q = Lm' : 'Q = λm,  Q = Lm'}
+      title={ru ? 'Агрегатные состояния: лёд → вода → пар' : 'States of matter: ice → water → steam'}
+      actions={
+        <>
+          {preset(-20, ru ? 'Лёд −20°' : 'Ice −20°')}
+          {preset(40, ru ? 'Вода 40°' : 'Water 40°')}
+          {preset(120, ru ? 'Пар 120°' : 'Steam 120°')}
+          <Button variant="outline" size="sm" isIconOnly aria-label={playing ? (ru ? 'Пауза' : 'Pause') : ru ? 'Пуск' : 'Play'} onPress={() => setPlaying(!playing)}>
+            {playing ? <Pause className="w-4 h-4" strokeWidth={2} /> : <Play className="w-4 h-4" strokeWidth={2} />}
+          </Button>
+        </>
+      }
+      readouts={[
+        { label: ru ? 'Температура воды' : 'Water temperature', value: `${Math.round(shown.T)} °C`, color: shown.T < 0 ? '#22A8E0' : shown.T > 99 ? '#D9822B' : '#4A3BEB' },
+        { label: ru ? 'Нагреватель' : 'Heater', value: `${heater} °C`, color: heater > shown.T ? '#D9822B' : '#22A8E0' },
+        { label: ru ? 'Состояние' : 'State', value: phaseName, color: shown.phase === 'melting' || shown.phase === 'boiling' ? '#B7791F' : undefined },
+      ]}
+      controls={[
+        {
+          label: ru ? 'Температура нагревателя' : 'Heater temperature',
+          value: `${heater} °C`,
+          color: heater >= 0 ? '#D9822B' : '#22A8E0',
+          input: <RangeSlider value={heater} onChange={(v) => setHeater(v)} min={-30} max={130} />,
+          hint: ru
+            ? 'Тепло передаётся не сразу: следи за графиком. При 0 °C и 100 °C температура стоит, пока идёт переход — тепло уходит на разрыв связей.'
+            : 'Heat takes time to flow: watch the graph. At 0 °C and 100 °C the temperature stands still during the change: the heat goes into breaking bonds.',
+        },
+      ]}
+      insight={{
+        title: ru ? 'Частая ошибка' : 'Common mistake',
+        text: ru
+          ? 'Молекула H₂O во льду, в воде и в паре одна и та же. Меняется только то, как далеко молекулы друг от друга и как быстро они движутся.'
+          : 'An H₂O molecule is the same in ice, water and steam. Only how far apart the molecules are and how fast they move changes.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={380} className="block w-full h-auto" aria-label={ru ? 'Молекулы воды в сосуде на нагревателе и график температуры' : 'Water molecules in a vessel on a heater, and a temperature graph'} />
+    </SimShell>
   );
 };

@@ -45,18 +45,65 @@
   color: var(--sv-on-accent);
 }
 
-/* Logo mark: cube edges draw in on load */
-@keyframes draw-edge {
-  from { stroke-dashoffset: 40; }
-  to { stroke-dashoffset: 0; }
+/* Blocks rise into view once as they scroll in (components/ui/Reveal) */
+.reveal {
+  opacity: 0;
+  translate: 0 28px;
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), translate 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.logo-animate .logo-edge {
-  stroke-dasharray: 40;
-  animation: draw-edge 600ms ease-out both;
+.reveal.reveal-in { opacity: 1; translate: 0 0; }
+/* floating cards around a hero drift gently, out of phase */
+.float-card { animation: float-card 6s ease-in-out infinite; }
+@keyframes float-card {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; translate: none; transition: none; }
+  .float-card { animation: none; }
+}
+
+/* Logo mark, played once on load: the tile grows in, the three faces settle in from their own sides one after
+   another, then the corner block lifts out and reveals the cut. Hovering the logo lifts the corner again.
+   Curves: arrive 0.22,1,0.36,1 · travel 0.65,0,0.35,1 (the same ones the videos and simulations use). */
+.logo-mark .logo-tile,
+.logo-mark .logo-face,
+.logo-mark .logo-corner { transform-box: fill-box; transform-origin: center; }
+.logo-animate .logo-tile { animation: logo-tile 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.logo-animate .logo-face { animation: logo-face 560ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.logo-animate .logo-face-top { --from: 0px -9px; animation-delay: 140ms; }
+.logo-animate .logo-face-left { --from: -8px 5px; animation-delay: 210ms; }
+.logo-animate .logo-face-right { --from: 8px 5px; animation-delay: 280ms; }
+.logo-animate .logo-corner { animation: logo-corner 1300ms linear 200ms both; }
+@keyframes logo-tile {
+  from { opacity: 0; scale: 0.82; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes logo-face {
+  from { opacity: 0; translate: var(--from); }
+  to { opacity: 1; translate: 0 0; }
+}
+/* the corner arrives with the faces as part of a whole cube, rests a beat, then lifts away */
+@keyframes logo-corner {
+  0% { opacity: 0; translate: 0 -7px; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  34% { opacity: 1; translate: 0 0; }
+  54% { opacity: 1; translate: 0 0; animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  100% { opacity: 0; translate: 8px -16px; }
+}
+/* a hover nudges the corner back into view and away again */
+.logo:hover .logo-animate .logo-corner,
+a:hover > .logo-animate .logo-corner { animation: logo-peek 700ms cubic-bezier(0.65, 0, 0.35, 1) both; }
+@keyframes logo-peek {
+  0% { opacity: 0; translate: 8px -16px; }
+  45% { opacity: 1; translate: 0 0; }
+  100% { opacity: 0; translate: 8px -16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo-animate .logo-edge { animation: none; }
+  .logo-animate .logo-tile,
+  .logo-animate .logo-face,
+  .logo-animate .logo-corner { animation: none; }
+  .logo-animate .logo-corner { opacity: 0; }
 }
 
 /* === Light lab palette (generated) === */
@@ -251,138 +298,138 @@
 }
 
 .lab-light {
-  --color-slate-50: #0F1A2E;
-  --color-slate-100: #0F1A2E;
-  --color-slate-200: #1E2A40;
-  --color-slate-300: #3D4A62;
-  --color-slate-400: #55627A;
-  --color-slate-500: #7C889E;
-  --color-slate-600: #A3AEC2;
-  --color-slate-700: #C5CFDC;
-  --color-slate-800: #DCE3EC;
+  --color-slate-50: #0E1024;
+  --color-slate-100: #0E1024;
+  --color-slate-200: #1E2340;
+  --color-slate-300: #3A4062;
+  --color-slate-400: #4A5072;
+  --color-slate-500: #6B7290;
+  --color-slate-600: #A3A9C2;
+  --color-slate-700: #CDD1E0;
+  --color-slate-800: #E3E5EE;
   --color-slate-900: #FFFFFF;
-  --color-slate-950: #F7F9FC;
-  --color-gray-50: #0F1A2E;
-  --color-gray-100: #0F1A2E;
-  --color-gray-200: #1E2A40;
-  --color-gray-300: #3D4A62;
-  --color-gray-400: #55627A;
-  --color-gray-500: #7C889E;
-  --color-gray-600: #A3AEC2;
-  --color-gray-700: #C5CFDC;
-  --color-gray-800: #DCE3EC;
+  --color-slate-950: #F6F7FB;
+  --color-gray-50: #0E1024;
+  --color-gray-100: #0E1024;
+  --color-gray-200: #1E2340;
+  --color-gray-300: #3A4062;
+  --color-gray-400: #4A5072;
+  --color-gray-500: #6B7290;
+  --color-gray-600: #A3A9C2;
+  --color-gray-700: #CDD1E0;
+  --color-gray-800: #E3E5EE;
   --color-gray-900: #FFFFFF;
-  --color-gray-950: #F7F9FC;
-  --color-zinc-50: #0F1A2E;
-  --color-zinc-100: #0F1A2E;
-  --color-zinc-200: #1E2A40;
-  --color-zinc-300: #3D4A62;
-  --color-zinc-400: #55627A;
-  --color-zinc-500: #7C889E;
-  --color-zinc-600: #A3AEC2;
-  --color-zinc-700: #C5CFDC;
-  --color-zinc-800: #DCE3EC;
+  --color-gray-950: #F6F7FB;
+  --color-zinc-50: #0E1024;
+  --color-zinc-100: #0E1024;
+  --color-zinc-200: #1E2340;
+  --color-zinc-300: #3A4062;
+  --color-zinc-400: #4A5072;
+  --color-zinc-500: #6B7290;
+  --color-zinc-600: #A3A9C2;
+  --color-zinc-700: #CDD1E0;
+  --color-zinc-800: #E3E5EE;
   --color-zinc-900: #FFFFFF;
-  --color-zinc-950: #F7F9FC;
-  --color-neutral-50: #0F1A2E;
-  --color-neutral-100: #0F1A2E;
-  --color-neutral-200: #1E2A40;
-  --color-neutral-300: #3D4A62;
-  --color-neutral-400: #55627A;
-  --color-neutral-500: #7C889E;
-  --color-neutral-600: #A3AEC2;
-  --color-neutral-700: #C5CFDC;
-  --color-neutral-800: #DCE3EC;
+  --color-zinc-950: #F6F7FB;
+  --color-neutral-50: #0E1024;
+  --color-neutral-100: #0E1024;
+  --color-neutral-200: #1E2340;
+  --color-neutral-300: #3A4062;
+  --color-neutral-400: #4A5072;
+  --color-neutral-500: #6B7290;
+  --color-neutral-600: #A3A9C2;
+  --color-neutral-700: #CDD1E0;
+  --color-neutral-800: #E3E5EE;
   --color-neutral-900: #FFFFFF;
-  --color-neutral-950: #F7F9FC;
-  --color-stone-50: #0F1A2E;
-  --color-stone-100: #0F1A2E;
-  --color-stone-200: #1E2A40;
-  --color-stone-300: #3D4A62;
-  --color-stone-400: #55627A;
-  --color-stone-500: #7C889E;
-  --color-stone-600: #A3AEC2;
-  --color-stone-700: #C5CFDC;
-  --color-stone-800: #DCE3EC;
+  --color-neutral-950: #F6F7FB;
+  --color-stone-50: #0E1024;
+  --color-stone-100: #0E1024;
+  --color-stone-200: #1E2340;
+  --color-stone-300: #3A4062;
+  --color-stone-400: #4A5072;
+  --color-stone-500: #6B7290;
+  --color-stone-600: #A3A9C2;
+  --color-stone-700: #CDD1E0;
+  --color-stone-800: #E3E5EE;
   --color-stone-900: #FFFFFF;
-  --color-stone-950: #F7F9FC;
-  --color-cyan-50: #F3F5FF;
-  --color-cyan-100: #055A73;
-  --color-cyan-200: #055A73;
-  --color-cyan-300: #066E8D;
-  --color-cyan-400: #0784A8;
-  --color-cyan-500: #0784A8;
-  --color-cyan-600: #066E8D;
-  --color-cyan-700: #9DAEFF;
-  --color-cyan-800: #B9C3FF;
-  --color-cyan-900: #DDE3FF;
-  --color-cyan-950: #E3F5FA;
-  --color-indigo-50: #F3F5FF;
-  --color-indigo-100: #055A73;
-  --color-indigo-200: #055A73;
-  --color-indigo-300: #066E8D;
-  --color-indigo-400: #0784A8;
-  --color-indigo-500: #0784A8;
-  --color-indigo-600: #066E8D;
-  --color-indigo-700: #9DAEFF;
-  --color-indigo-800: #B9C3FF;
-  --color-indigo-900: #DDE3FF;
-  --color-indigo-950: #E3F5FA;
-  --color-sky-50: #F3F5FF;
-  --color-sky-100: #055A73;
-  --color-sky-200: #055A73;
-  --color-sky-300: #066E8D;
-  --color-sky-400: #0784A8;
-  --color-sky-500: #0784A8;
-  --color-sky-600: #066E8D;
-  --color-sky-700: #9DAEFF;
-  --color-sky-800: #B9C3FF;
-  --color-sky-900: #DDE3FF;
-  --color-sky-950: #E3F5FA;
-  --color-blue-50: #F3F5FF;
-  --color-blue-100: #055A73;
-  --color-blue-200: #055A73;
-  --color-blue-300: #066E8D;
-  --color-blue-400: #0784A8;
-  --color-blue-500: #0784A8;
-  --color-blue-600: #066E8D;
-  --color-blue-700: #9DAEFF;
-  --color-blue-800: #B9C3FF;
-  --color-blue-900: #DDE3FF;
-  --color-blue-950: #E3F5FA;
-  --color-purple-50: #F3F5FF;
-  --color-purple-100: #055A73;
-  --color-purple-200: #055A73;
-  --color-purple-300: #066E8D;
-  --color-purple-400: #0784A8;
-  --color-purple-500: #0784A8;
-  --color-purple-600: #066E8D;
-  --color-purple-700: #9DAEFF;
-  --color-purple-800: #B9C3FF;
-  --color-purple-900: #DDE3FF;
-  --color-purple-950: #E3F5FA;
-  --color-violet-50: #F3F5FF;
-  --color-violet-100: #055A73;
-  --color-violet-200: #055A73;
-  --color-violet-300: #066E8D;
-  --color-violet-400: #0784A8;
-  --color-violet-500: #0784A8;
-  --color-violet-600: #066E8D;
-  --color-violet-700: #9DAEFF;
-  --color-violet-800: #B9C3FF;
-  --color-violet-900: #DDE3FF;
-  --color-violet-950: #E3F5FA;
-  --color-fuchsia-50: #F3F5FF;
-  --color-fuchsia-100: #055A73;
-  --color-fuchsia-200: #055A73;
-  --color-fuchsia-300: #066E8D;
-  --color-fuchsia-400: #0784A8;
-  --color-fuchsia-500: #0784A8;
-  --color-fuchsia-600: #066E8D;
-  --color-fuchsia-700: #9DAEFF;
-  --color-fuchsia-800: #B9C3FF;
-  --color-fuchsia-900: #DDE3FF;
-  --color-fuchsia-950: #E3F5FA;
+  --color-stone-950: #F6F7FB;
+  --color-cyan-50: #F5F3FF;
+  --color-cyan-100: #3F31D9;
+  --color-cyan-200: #3F31D9;
+  --color-cyan-300: #4A3BEB;
+  --color-cyan-400: #5B4BFF;
+  --color-cyan-500: #5B4BFF;
+  --color-cyan-600: #4A3BEB;
+  --color-cyan-700: #A89EFF;
+  --color-cyan-800: #C9C2FF;
+  --color-cyan-900: #E2DEFF;
+  --color-cyan-950: #EEEBFF;
+  --color-indigo-50: #F5F3FF;
+  --color-indigo-100: #3F31D9;
+  --color-indigo-200: #3F31D9;
+  --color-indigo-300: #4A3BEB;
+  --color-indigo-400: #5B4BFF;
+  --color-indigo-500: #5B4BFF;
+  --color-indigo-600: #4A3BEB;
+  --color-indigo-700: #A89EFF;
+  --color-indigo-800: #C9C2FF;
+  --color-indigo-900: #E2DEFF;
+  --color-indigo-950: #EEEBFF;
+  --color-sky-50: #F5F3FF;
+  --color-sky-100: #3F31D9;
+  --color-sky-200: #3F31D9;
+  --color-sky-300: #4A3BEB;
+  --color-sky-400: #5B4BFF;
+  --color-sky-500: #5B4BFF;
+  --color-sky-600: #4A3BEB;
+  --color-sky-700: #A89EFF;
+  --color-sky-800: #C9C2FF;
+  --color-sky-900: #E2DEFF;
+  --color-sky-950: #EEEBFF;
+  --color-blue-50: #F5F3FF;
+  --color-blue-100: #3F31D9;
+  --color-blue-200: #3F31D9;
+  --color-blue-300: #4A3BEB;
+  --color-blue-400: #5B4BFF;
+  --color-blue-500: #5B4BFF;
+  --color-blue-600: #4A3BEB;
+  --color-blue-700: #A89EFF;
+  --color-blue-800: #C9C2FF;
+  --color-blue-900: #E2DEFF;
+  --color-blue-950: #EEEBFF;
+  --color-purple-50: #F5F3FF;
+  --color-purple-100: #3F31D9;
+  --color-purple-200: #3F31D9;
+  --color-purple-300: #4A3BEB;
+  --color-purple-400: #5B4BFF;
+  --color-purple-500: #5B4BFF;
+  --color-purple-600: #4A3BEB;
+  --color-purple-700: #A89EFF;
+  --color-purple-800: #C9C2FF;
+  --color-purple-900: #E2DEFF;
+  --color-purple-950: #EEEBFF;
+  --color-violet-50: #F5F3FF;
+  --color-violet-100: #3F31D9;
+  --color-violet-200: #3F31D9;
+  --color-violet-300: #4A3BEB;
+  --color-violet-400: #5B4BFF;
+  --color-violet-500: #5B4BFF;
+  --color-violet-600: #4A3BEB;
+  --color-violet-700: #A89EFF;
+  --color-violet-800: #C9C2FF;
+  --color-violet-900: #E2DEFF;
+  --color-violet-950: #EEEBFF;
+  --color-fuchsia-50: #F5F3FF;
+  --color-fuchsia-100: #3F31D9;
+  --color-fuchsia-200: #3F31D9;
+  --color-fuchsia-300: #4A3BEB;
+  --color-fuchsia-400: #5B4BFF;
+  --color-fuchsia-500: #5B4BFF;
+  --color-fuchsia-600: #4A3BEB;
+  --color-fuchsia-700: #A89EFF;
+  --color-fuchsia-800: #C9C2FF;
+  --color-fuchsia-900: #E2DEFF;
+  --color-fuchsia-950: #EEEBFF;
   --color-emerald-50: #F0FAF4;
   --color-emerald-100: #155A38;
   --color-emerald-200: #1A6A42;
@@ -756,9 +803,9 @@
 .lab-light [class*="bg-gradient-to-"]:not(.lab-stage *) { background-image: none; background-color: var(--color-accent); color: #fff; }
 
 /* Editorial headings inside labs */
-.lab-light :is(h2, h3):not(.lab-stage *) { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.01em; }
+.lab-light :is(h2, h3):not(.lab-stage *) { font-family: var(--font-serif); font-weight: 700; letter-spacing: -0.02em; }
 .lab-light h2.text-base:not(.lab-stage *) { font-size: 1.125rem; }
-.lab-light .lab-stage { border-radius: 12px; }
+.lab-light .lab-stage { border-radius: 16px; }
 
 /* === Motion: page and card entrances, answer feedback === */
 @keyframes page-in {
@@ -835,3 +882,16 @@
 /* light scrollbars inside light dialogs */
 .soft-scroll::-webkit-scrollbar-track, .soft-scroll *::-webkit-scrollbar-track { background: transparent; }
 .soft-scroll::-webkit-scrollbar-thumb, .soft-scroll *::-webkit-scrollbar-thumb { background: var(--sv-scroll); }
+
+/* === New identity across all pages === */
+/* headings in the display face are bold, as in the brand (an explicit weight class still wins) */
+@layer base {
+  :is(h1, h2, h3).font-serif { font-weight: 700; letter-spacing: -0.025em; }
+}
+/* the night theme: the old blue-grey panels of the labs take the brand's night tones */
+[data-theme="stem-lab-dark"] {
+  --color-slate-700: #2E3656;
+  --color-slate-800: #20263F;
+  --color-slate-900: #0F1222;
+  --color-slate-950: #0A0C17;
+}

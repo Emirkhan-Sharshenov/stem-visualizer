@@ -17,7 +17,7 @@ export const PHYSICS_9 = [
         ['Перемещение', 'Displacement', 'Вектор из начальной точки в конечную. Пробежал круг на стадионе — путь 400 м, перемещение 0.', 'The vector from start to finish. One lap of a track: distance 400 m, displacement 0.'],
         ['Проекция и координата', 'Projection and coordinate', 'Проекция вектора на ось — число со знаком. Координата меняется на величину проекции перемещения.', 'A vector’s projection on an axis is a signed number; the coordinate changes by the displacement’s projection.'],
       ],
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics' },
     },
     {
       id: 'p9-uniform',
@@ -31,7 +31,7 @@ export const PHYSICS_9 = [
         ['Графики', 'Graphs', 'x(t) — прямая с наклоном vₓ; vₓ(t) — горизонтальная прямая.', 'x(t) is a straight line with slope vₓ; vₓ(t) is horizontal.'],
       ],
       formula: 'x = x_0 + v_x t',
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics' },
     },
     {
       id: 'p9-accelerated',
@@ -47,7 +47,7 @@ export const PHYSICS_9 = [
         ['Графики v(t) и s(t)', 'Graphs v(t) and s(t)', 'v(t) — наклонная прямая, s(t) — парабола. Площадь под v(t) — перемещение.', 'v(t) is a sloped line, s(t) a parabola. The area under v(t) is displacement.'],
       ],
       formula: 's = v_0 t + \\frac{a t^2}{2}',
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'moment_kinematics_accel' },
     },
     {
       id: 'p9-relative',
@@ -89,7 +89,7 @@ export const PHYSICS_9 = [
         ['Бросок вверх', 'Throwing upward', 'Скорость уменьшается на 9,8 м/с каждую секунду, в верхней точке равна нулю. Время подъёма равно времени падения.', 'Speed falls by 9.8 m/s each second and is zero at the top. Time up equals time down.'],
       ],
       formula: 'h = \\frac{g t^2}{2}',
-      sim: { engine: 'kinematics_velocity' },
+      sim: { moment: 'projectile' },
     },
     {
       id: 'p9-gravitation',

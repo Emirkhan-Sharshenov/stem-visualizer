@@ -1,290 +1,199 @@
 import { RangeSlider } from './ui/RangeSlider';
+import { SimShell } from './ui/SimShell';
 import React, { useEffect, useRef, useState } from 'react';
 import { fitCanvas } from '../lib/canvas';
-import { ArrowDown, ArrowUp, RefreshCw, HelpCircle, Info } from 'lucide-react';
+import { approach, clamp01, drawStage, glow, pill, runStage, seeded, STAGE } from '../lib/stage';
 
 interface MomentPascalHydraulicsProps {
   lang: 'ru' | 'en';
 }
 
+// a hydraulic press (canvas 800×380): a narrow cylinder on the left, a wide one on the right, joined below
+const SX = 150; // centre of the small cylinder
+const LX = 560; // centre of the large one
+const BASE = 330; // the bottom of the cylinders
+const TOP0 = 230; // the resting level of both pistons
+const CAR_KG = 1200;
+const fmt = (x: number, d: number, ru: boolean) => (ru ? x.toFixed(d).replace('.', ',') : x.toFixed(d));
+
 export const MomentPascalHydraulics: React.FC<MomentPascalHydraulicsProps> = ({ lang }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [f1Force, setF1Force] = useState<number>(100); // Newtons applied by hand
-  const [areaRatio, setAreaRatio] = useState<number>(10); // S2 / S1 (10x force multiplier)
-  const [displacement, setDisplacement] = useState<number>(40); // px pushed down
-
-  const s1Area = 10; // cm2
-  const s2Area = s1Area * areaRatio; // cm2
-  const f2LiftForce = f1Force * areaRatio; // Newtons
-  const carMassKg = 1200;
-  const gravityWeight = carMassKg * 9.8; // ~11760 N
-
-  const pressureKPa = (f1Force / (s1Area * 0.0001)) / 1000; // kPa
+  const [force, setForce] = useState(150); // N on the small piston
+  const [ratio, setRatio] = useState(100); // S2 / S1
+  const live = useRef({ force, ratio, lang });
+  live.current = { force, ratio, lang };
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const s = { lift: 0, pulse: 0 };
 
-    const { w, h } = fitCanvas(canvas, ctx);
+    return runStage(canvas, (dt, t, still) => {
+      const { w, h } = fitCanvas(canvas, ctx);
+      const L = live.current;
+      const ru = L.lang === 'ru';
+      const S1 = 0.001; // m²
+      const S2 = S1 * L.ratio;
+      const p = L.force / S1; // Pa, the same everywhere in the liquid
+      const F2 = p * S2;
+      const weight = CAR_KG * 9.8;
+      // the car rises only while the big piston's force beats its weight; volume moves across: S1·Δh1 = S2·Δh2
+      const target = F2 > weight ? 50 : 0;
+      s.lift = approach(s.lift, target, dt, still ? 0.001 : 1.2);
+      const smallDrop = s.lift * L.ratio * 0.012; // drawn shrunk: the real small stroke is ratio times longer
+      if (!still) s.pulse += dt;
 
-    ctx.fillStyle = '#111214';
-    ctx.fillRect(0, 0, w, h);
+      drawStage(ctx, w, h, { x: 360, y: 240 });
+      const sw = 34;
+      const lw = 34 + Math.sqrt(L.ratio) * 14;
+      const sTop = TOP0 + Math.min(80, smallDrop);
+      const lTop = TOP0 - s.lift;
+      const pr = clamp01(p / 400000);
 
-    // Vessel dimensions
-    const groundY = h - 60;
-    const pipeHeight = 35;
+      // the liquid: one body, coloured by its pressure
+      const liquid = `rgba(${Math.round(60 + 140 * pr)},${Math.round(150 - 40 * pr)},${Math.round(255 - 60 * pr)},0.55)`;
+      ctx.fillStyle = liquid;
+      ctx.fillRect(SX - sw / 2, sTop, sw, BASE - sTop);
+      ctx.fillRect(LX - lw / 2, lTop, lw, BASE - lTop);
+      ctx.fillRect(SX - sw / 2, BASE - 30, LX - SX, 30);
+      // particles drifting through the pipe
+      for (let i = 0; i < 26; i++) {
+        const u = (seeded(i) + t * 0.05 * (s.lift > 1 && s.lift < 49 ? 4 : 0.6)) % 1;
+        const x = SX + u * (LX - SX);
+        const y = BASE - 8 - seeded(i, 2) * 18;
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath();
+        ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // cylinder walls
+      ctx.strokeStyle = 'rgba(210,220,255,0.55)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(SX - sw / 2, 60);
+      ctx.lineTo(SX - sw / 2, BASE);
+      ctx.lineTo(LX + lw / 2, BASE);
+      ctx.lineTo(LX + lw / 2, 60);
+      ctx.moveTo(SX + sw / 2, 60);
+      ctx.lineTo(SX + sw / 2, BASE - 30);
+      ctx.lineTo(LX - lw / 2, BASE - 30);
+      ctx.lineTo(LX - lw / 2, 60);
+      ctx.stroke();
 
-    // Cylinder 1 (Left - Narrow)
-    const c1X = 140;
-    const c1W = 60;
-    const c1Top = 80;
+      // Pascal: the same pressure pushes on every wall, the arrows all match
+      const al = 8 + pr * 22;
+      const beat = 0.6 + 0.4 * Math.sin(s.pulse * 5);
+      ctx.strokeStyle = `rgba(255,214,120,${0.4 + 0.5 * pr * beat})`;
+      ctx.lineWidth = 2;
+      const arrow = (x: number, y: number, dx: number, dy: number) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dx * al, y + dy * al);
+        ctx.stroke();
+      };
+      for (const y of [BASE - 60, BASE - 100]) {
+        if (y > sTop + 10) {
+          arrow(SX - sw / 2 + 4, y, -1, 0);
+          arrow(SX + sw / 2 - 4, y, 1, 0);
+        }
+        if (y > lTop + 10) {
+          arrow(LX - lw / 2 + 4, y, -1, 0);
+          arrow(LX + lw / 2 - 4, y, 1, 0);
+        }
+      }
+      for (let x = SX + 40; x < LX - lw / 2; x += 60) arrow(x, BASE - 4, 0, 1);
 
-    // Cylinder 2 (Right - Wide)
-    const c2X = w - 240;
-    const c2W = 160;
-    const c2Top = 80;
+      // pistons
+      const piston = (cx: number, top: number, wid: number) => {
+        const g = ctx.createLinearGradient(cx - wid / 2, 0, cx + wid / 2, 0);
+        g.addColorStop(0, '#6E7586');
+        g.addColorStop(0.5, '#DDE1EA');
+        g.addColorStop(1, '#5E6576');
+        ctx.fillStyle = g;
+        ctx.fillRect(cx - wid / 2 + 2, top - 14, wid - 4, 14);
+        ctx.fillRect(cx - 4, top - 60, 8, 46);
+      };
+      piston(SX, sTop, sw);
+      piston(LX, lTop, lw);
 
-    // Fluid levels
-    const h1Offset = displacement; // moves down
-    const h2Offset = displacement / areaRatio; // moves up by h1 / ratio
+      // the hand's force on the small piston
+      const fl = 20 + Math.min(70, L.force / 6);
+      ctx.strokeStyle = '#8B7CFF';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(SX, sTop - 60 - fl);
+      ctx.lineTo(SX, sTop - 66);
+      ctx.stroke();
+      ctx.fillStyle = '#8B7CFF';
+      ctx.beginPath();
+      ctx.moveTo(SX, sTop - 60);
+      ctx.lineTo(SX - 7, sTop - 70);
+      ctx.lineTo(SX + 7, sTop - 70);
+      ctx.closePath();
+      ctx.fill();
+      pill(ctx, SX + 30, sTop - 80, `F₁ = ${Math.round(L.force)} ${ru ? 'Н' : 'N'}`, '#B3A9FF', 'left');
 
-    const fluidY1 = 150 + h1Offset;
-    const fluidY2 = 190 - h2Offset;
+      // the car on the big piston
+      {
+        const cy = lTop - 60;
+        const cw = 150;
+        glow(ctx, LX, cy, 90, '95,221,255', F2 > weight ? 0.25 : 0);
+        ctx.fillStyle = '#5FDDFF';
+        ctx.beginPath();
+        ctx.roundRect(LX - cw / 2, cy - 30, cw, 30, 8);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(LX - cw / 4, cy - 52, cw / 2, 26, 8);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(11,14,24,0.6)';
+        ctx.fillRect(LX - cw / 4 + 8, cy - 46, cw / 2 - 16, 14);
+        ctx.fillStyle = '#1B1F2C';
+        for (const wx of [LX - cw / 3, LX + cw / 3]) {
+          ctx.beginPath();
+          ctx.arc(wx, cy, 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        pill(ctx, LX, cy - 74, `F₂ = ${Math.round(F2)} ${ru ? 'Н' : 'N'} · ${ru ? 'машина' : 'car'} ${Math.round(weight)} ${ru ? 'Н' : 'N'}`, F2 > weight ? '#6FE3A0' : '#FF8A9E');
+      }
 
-    // 1. Draw Liquid (Connected U-Tube)
-    ctx.fillStyle = '#0284c7';
-    ctx.beginPath();
-    // Start at liquid surface 1
-    ctx.moveTo(c1X, fluidY1);
-    ctx.lineTo(c1X + c1W, fluidY1);
-    ctx.lineTo(c1X + c1W, groundY - pipeHeight);
-    ctx.lineTo(c2X, groundY - pipeHeight);
-    ctx.lineTo(c2X, fluidY2);
-    ctx.lineTo(c2X + c2W, fluidY2);
-    ctx.lineTo(c2X + c2W, groundY);
-    ctx.lineTo(c1X, groundY);
-    ctx.closePath();
-    ctx.fill();
+      pill(ctx, 360, BASE + 30, `p = F₁/S₁ = ${fmt(p / 1000, 0, ru)} ${ru ? 'кПа — одинаково везде' : 'kPa — the same everywhere'}`, '#FFD678');
+    });
+  }, []);
 
-    // Liquid glowing surface waves
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(c1X, fluidY1);
-    ctx.lineTo(c1X + c1W, fluidY1);
-    ctx.moveTo(c2X, fluidY2);
-    ctx.lineTo(c2X + c2W, fluidY2);
-    ctx.stroke();
-
-    // 2. Draw Vessel Walls
-    ctx.strokeStyle = '#4A4D55';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    // Left tube left wall
-    ctx.moveTo(c1X, c1Top);
-    ctx.lineTo(c1X, groundY);
-    ctx.lineTo(c2X + c2W, groundY);
-    ctx.lineTo(c2X + c2W, c2Top);
-
-    // Inner tube walls
-    ctx.moveTo(c1X + c1W, c1Top);
-    ctx.lineTo(c1X + c1W, groundY - pipeHeight);
-    ctx.lineTo(c2X, groundY - pipeHeight);
-    ctx.lineTo(c2X, c2Top);
-    ctx.stroke();
-
-    // 3. Draw Small Piston 1 (Left)
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(c1X + 2, fluidY1 - 18, c1W - 4, 18);
-    // Piston Rod 1
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(c1X + c1W / 2 - 4, fluidY1 - 70, 8, 55);
-
-    // Downward Force Arrow F1
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(c1X + c1W / 2, fluidY1 - 95);
-    ctx.lineTo(c1X + c1W / 2, fluidY1 - 72);
-    ctx.stroke();
-    // Arrow head
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.moveTo(c1X + c1W / 2, fluidY1 - 65);
-    ctx.lineTo(c1X + c1W / 2 - 8, fluidY1 - 75);
-    ctx.lineTo(c1X + c1W / 2 + 8, fluidY1 - 75);
-    ctx.fill();
-
-    // 4. Draw Large Piston 2 (Right)
-    ctx.fillStyle = '#10b981';
-    ctx.fillRect(c2X + 2, fluidY2 - 22, c2W - 4, 22);
-    // Piston Rods 2
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(c2X + 30, fluidY2 - 50, 10, 30);
-    ctx.fillRect(c2X + c2W - 40, fluidY2 - 50, 10, 30);
-    // Platform
-    ctx.fillStyle = '#34363C';
-    ctx.fillRect(c2X - 10, fluidY2 - 60, c2W + 20, 12);
-
-    // Car on Platform
-    const carX = c2X + c2W / 2;
-    const carY = fluidY2 - 60;
-    // Car body
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.roundRect(carX - 60, carY - 26, 120, 26, [8, 8, 2, 2]);
-    ctx.fill();
-    // Car cabin
-    ctx.fillStyle = '#991b1b';
-    ctx.beginPath();
-    ctx.roundRect(carX - 35, carY - 48, 70, 24, [10, 10, 0, 0]);
-    ctx.fill();
-    // Car windows
-    ctx.fillStyle = '#bae6fd';
-    ctx.fillRect(carX - 28, carY - 44, 24, 16);
-    ctx.fillRect(carX + 4, carY - 44, 24, 16);
-    // Car wheels
-    ctx.fillStyle = '#17181B';
-    ctx.beginPath();
-    ctx.arc(carX - 40, carY, 10, 0, Math.PI * 2);
-    ctx.arc(carX + 40, carY, 10, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Upward Lift Force Arrow F2
-    ctx.strokeStyle = '#22c55e';
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(carX, carY + 30);
-    ctx.lineTo(carX, carY + 8);
-    ctx.stroke();
-    // Arrow head
-    ctx.fillStyle = '#22c55e';
-    ctx.beginPath();
-    ctx.moveTo(carX, carY);
-    ctx.lineTo(carX - 10, carY + 14);
-    ctx.lineTo(carX + 10, carY + 14);
-    ctx.fill();
-
-    // Pressure distribution lines in liquid (Pascal's principle)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    const midTubeY = groundY - pipeHeight / 2;
-    ctx.beginPath();
-    ctx.moveTo(c1X + c1W / 2, fluidY1);
-    ctx.lineTo(c1X + c1W / 2, midTubeY);
-    ctx.lineTo(c2X + c2W / 2, midTubeY);
-    ctx.lineTo(c2X + c2W / 2, fluidY2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Clear Labels on Canvas
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(lang === 'ru' ? 'МАЛЫЙ ПОРШЕНЬ' : 'SMALL PISTON', c1X + c1W / 2, fluidY1 - 105);
-    ctx.fillText(`S₁ = ${s1Area} ${lang === 'ru' ? 'см²' : 'cm²'}`, c1X + c1W / 2, fluidY1 - 120);
-
-    ctx.fillStyle = '#ef4444';
-    ctx.fillText(`F₁ = ${f1Force} ${lang === 'ru' ? 'Н' : 'N'}`, c1X + c1W / 2, fluidY1 + 35);
-
-    ctx.fillStyle = '#10b981';
-    ctx.fillText(lang === 'ru' ? 'БОЛЬШОЙ ПОРШЕНЬ' : 'LARGE PISTON', carX, carY - 60);
-    ctx.fillText(`S₂ = ${s2Area} ${lang === 'ru' ? 'см²' : 'cm²'} (${areaRatio}x)`, carX, carY - 75);
-
-    ctx.fillStyle = '#22c55e';
-    ctx.fillText(`F₂ = ${f2LiftForce.toFixed(0)} ${lang === 'ru' ? 'Н' : 'N'}`, carX, fluidY2 + 45);
-
-    // Liquid pressure badge
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 11px monospace';
-    ctx.fillText(
-      lang === 'ru'
-        ? `Давление p = ${pressureKPa.toFixed(1)} кПа (передаётся во все точки одинаково)`
-        : `Pressure p = ${pressureKPa.toFixed(1)} kPa (transmitted equally everywhere)`,
-      w / 2,
-      groundY + 22
-    );
-  }, [f1Force, areaRatio, displacement, lang]);
-
+  const ru = lang === 'ru';
+  const F2 = (force / 0.001) * 0.001 * ratio;
+  const weight = CAR_KG * 9.8;
+  const minF = Math.ceil(weight / ratio);
   return (
-    <div className="flex flex-col gap-4 w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-400 font-mono font-bold border border-cyan-800">
-              {lang === 'ru' ? '7 Класс • Физика' : 'Grade 7 • Physics'}
-            </span>
-            <span className="text-xs font-mono uppercase text-slate-400 font-bold">
-              {lang === 'ru' ? 'Закон Паскаля: p = F₁ / S₁ = F₂ / S₂' : "Pascal's Law: p = F₁ / S₁ = F₂ / S₂"}
-            </span>
-          </div>
-          <h3 className="text-base font-bold text-slate-100 mt-1">
-            {lang === 'ru' ? 'Гидравлический пресс: как поднять тяжелую машину силой одной руки' : 'Hydraulic Press: Lifting a Heavy Car with One Hand'}
-          </h3>
-        </div>
-
-        {/* Live Multiplier Badge */}
-        <div className="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
-          <div>
-            <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'ВЫИГРЫШ В СИЛЕ' : 'FORCE MULTIPLIER'}</span>
-            <span className="font-bold text-emerald-400 text-sm">{areaRatio}× {lang === 'ru' ? 'РАЗ' : ''}</span>
-          </div>
-          <div className="h-6 w-px bg-slate-800" />
-          <div>
-            <span className="text-[10px] text-slate-500 block">{lang === 'ru' ? 'СИЛА ПОДЪЕМА F₂' : 'LIFT FORCE F₂'}</span>
-            <span className="font-bold text-cyan-400 text-sm">{f2LiftForce.toFixed(0)} {lang === 'ru' ? 'Н' : 'N'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Canvas */}
-      <div className="lab-stage relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
-        <canvas ref={canvasRef} width={800} height={340} className="block w-full h-auto max-h-[480px] object-contain" />
-      </div>
-
-      {/* Interactive Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">{lang === 'ru' ? 'Сила нажатия рукой (F₁):' : 'Hand Push Force (F₁):'}</span>
-            <span className="font-mono text-amber-400 font-bold">{f1Force} {lang === 'ru' ? 'Н' : 'N'}</span>
-          </div>
-          <RangeSlider value={f1Force} onChange={(v) => setF1Force(v)} min={20} max={300} step={10} />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">{lang === 'ru' ? 'Отношение площадей (S₂ / S₁):' : 'Area Ratio (S₂ / S₁):'}</span>
-            <span className="font-mono text-emerald-400 font-bold">{areaRatio}×</span>
-          </div>
-          <RangeSlider value={areaRatio} onChange={(v) => setAreaRatio(v)} min={2} max={25} step={1} />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">{lang === 'ru' ? 'Ход малого поршня (h₁):' : 'Piston Stroke (h₁):'}</span>
-            <span className="font-mono text-cyan-400 font-bold">{displacement} {lang === 'ru' ? 'мм' : 'mm'}</span>
-          </div>
-          <RangeSlider value={displacement} onChange={(v) => setDisplacement(v)} min={5} max={70} step={2} />
-        </div>
-      </div>
-
-      {/* Golden Rule of Mechanics Callout */}
-      <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3 text-xs text-slate-300">
-        <Info className="w-5 h-5 text-cyan-400 shrink-0" />
-        <div>
-          <span className="font-bold text-cyan-300 mr-1.5">
-            {lang === 'ru' ? 'Золотое правило механики:' : 'Golden Rule of Mechanics:'}
-          </span>
-          {lang === 'ru'
-            ? `Выигрывая в силе в ${areaRatio} раз, мы ровно во столько же раз проигрываем в расстоянии! Чтобы поднять машину на 1 см, маленький поршень нужно вдавить на ${areaRatio} см.`
-            : `Gaining ${areaRatio}x in force means losing ${areaRatio}x in distance! To lift the car 1 cm, you must push the small piston down ${areaRatio} cm.`}
-        </div>
-      </div>
-    </div>
+    <SimShell
+      badge={ru ? '7 класс · Физика' : 'Grade 7 · Physics'}
+      formula="F₂ / F₁ = S₂ / S₁"
+      title={ru ? 'Гидравлический пресс: человек поднимает машину' : 'The hydraulic press: one person lifts a car'}
+      readouts={[
+        { label: ru ? 'Сила рукой' : 'Hand force', value: `${force} ${ru ? 'Н' : 'N'}`, color: '#6E54E0' },
+        { label: ru ? 'Сила на большом' : 'Force on the big piston', value: `${Math.round(F2)} ${ru ? 'Н' : 'N'}`, color: '#1E88C8' },
+        { label: ru ? 'Выигрыш в силе' : 'Force gain', value: `×${ratio}` },
+        { label: ru ? 'Нужно минимум' : 'Needed at least', value: `${minF} ${ru ? 'Н' : 'N'}`, color: F2 >= weight ? '#1A8F50' : '#D9534F' },
+      ]}
+      controls={[
+        { label: ru ? 'Сила на малый поршень F₁' : 'Force on the small piston F₁', value: `${force} ${ru ? 'Н' : 'N'}`, color: '#6E54E0', input: <RangeSlider value={force} onChange={setForce} min={10} max={400} step={10} /> },
+        {
+          label: ru ? 'Во сколько раз больше площадь S₂ / S₁' : 'Area ratio S₂ / S₁',
+          value: `×${ratio}`,
+          color: '#1E88C8',
+          input: <RangeSlider value={ratio} onChange={setRatio} min={10} max={200} step={10} />,
+          hint: ru ? 'Давление p = F/S передаётся во все стороны одинаково, поэтому на большой поршень действует во столько раз большая сила, во сколько больше его площадь.' : 'Pressure p = F/S passes equally in every direction, so the big piston feels as many times more force as its area is larger.',
+        },
+      ]}
+      insight={{
+        title: ru ? 'Где подвох' : 'The catch',
+        text: ru
+          ? 'Объём жидкости не меняется: если большой поршень поднялся на 1 см, малый опустился на целых S₂/S₁ сантиметров. Выигрываем в силе — проигрываем в расстоянии, работа та же.'
+          : 'The liquid’s volume stays the same: if the big piston rises 1 cm, the small one goes down S₂/S₁ cm. We gain in force and lose in distance; the work is the same.',
+      }}
+    >
+      <canvas ref={canvasRef} width={800} height={380} className="block w-full h-auto" aria-label={ru ? 'Гидравлический пресс поднимает машину' : 'A hydraulic press lifting a car'} />
+    </SimShell>
   );
 };

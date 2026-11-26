@@ -10,54 +10,57 @@
 
 :root,
 [data-theme="stem-lab"] {
-  --sv-paper: #F7F9FC;
+  --sv-paper: #F6F7FB;
   --sv-surface: #FFFFFF;
-  --sv-muted: #EEF2F7;
-  --sv-hover: #E4EAF2;
-  --sv-line: #DCE3EC;
-  --sv-line-strong: #C5CFDC;
-  --sv-ink: #0F1A2E;
-  --sv-ink-2: #55627A;
-  --sv-ink-3: #7C889E;
-  --sv-accent: #0784A8;
-  --sv-accent-hover: #066E8D;
-  --sv-accent-active: #055A73;
-  --sv-accent-soft: #E3F5FA;
+  --sv-muted: #F1F2F7;
+  --sv-hover: #E8EAF3;
+  --sv-line: #E3E5EE;
+  --sv-line-strong: #CDD1E0;
+  --sv-ink: #0E1024;
+  --sv-ink-2: #4A5072;
+  --sv-ink-3: #6B7290;
+  --sv-accent: #5B4BFF;
+  --sv-accent-hover: #4A3BEB;
+  --sv-accent-active: #3F31D9;
+  --sv-accent-soft: #EEEBFF;
   /* text on a filled accent button */
   --sv-on-accent: #FFFFFF;
-  --sv-stage: #0A1022;
-  --sv-stage-line: #1C2742;
-  --sv-lift-shadow: 0 12px 28px -14px rgba(15, 26, 46, 0.3);
-  --sv-scroll: #C5CFDC;
+  /* the second brand colour: the cut face of the cube */
+  --sv-cyan: #3DD6FF;
+  --sv-stage: #0E1024;
+  --sv-stage-line: #1F2640;
+  --sv-lift-shadow: 0 14px 32px -16px rgba(39, 31, 140, 0.32);
+  --sv-scroll: #CDD1E0;
 }
 
 [data-theme="stem-lab-dark"] {
-  --sv-paper: #070B16;
-  --sv-surface: #0F1729;
-  --sv-muted: #141E35;
-  --sv-hover: #1B2742;
-  --sv-line: #1F2B47;
-  --sv-line-strong: #2C3B5E;
-  --sv-ink: #DDE6FF;
-  --sv-ink-2: #9AA7C7;
-  --sv-ink-3: #74819F;
-  --sv-accent: #39E1FF;
-  --sv-accent-hover: #6FE9FF;
-  --sv-accent-active: #1FC8E8;
-  --sv-accent-soft: #0E2A3D;
-  --sv-on-accent: #04101E;
-  --sv-stage: #050912;
-  --sv-stage-line: #1A2440;
-  --sv-lift-shadow: 0 0 0 1px #2C3B5E, 0 14px 30px -12px rgba(57, 225, 255, 0.28);
-  --sv-scroll: #2C3B5E;
+  --sv-paper: #070912;
+  --sv-surface: #0F1222;
+  --sv-muted: #151A2E;
+  --sv-hover: #1C2240;
+  --sv-line: #20263F;
+  --sv-line-strong: #2E3656;
+  --sv-ink: #E8ECFA;
+  --sv-ink-2: #A3ABCB;
+  --sv-ink-3: #7D86A8;
+  --sv-accent: #8B7CFF;
+  --sv-accent-hover: #A397FF;
+  --sv-accent-active: #7565FF;
+  --sv-accent-soft: #1E1A45;
+  --sv-on-accent: #0B0820;
+  --sv-cyan: #3DD6FF;
+  --sv-stage: #05060B;
+  --sv-stage-line: #1A1F36;
+  --sv-lift-shadow: 0 0 0 1px #2E3656, 0 16px 34px -14px rgba(139, 124, 255, 0.35);
+  --sv-scroll: #2E3656;
 }
 
 /* fonts as real CSS variables (other rules below read them) */
 @theme {
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* display face for headings (the classes stay font-serif across the code) */
-  --font-serif: 'Unbounded', 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --font-serif: 'Onest', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
 }
 
 @theme inline {
