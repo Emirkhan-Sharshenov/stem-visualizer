@@ -125,6 +125,20 @@ export const OrtMain: React.FC<{ lang: Lang; plan: OrtRunPlan; onExit: () => voi
     // a subject test is filed like the other subject mocks, so the readiness card counts it
     if (subjectRun) progress.recordTest({ at: Date.now(), subject: results[0].id.slice(5), score: right, total, secs, section: 'ort' });
     else progress.recordTest({ at: Date.now(), subject: whole ? 'ort-main' : results[0].id, score: right, total, secs, section: whole ? 'ort-main' : 'ort-sec' });
+    if (!subjectRun) {
+      // the breakdown the exam plan reads: how each section and each kind of task went
+      const bySection: Record<string, { right: number; total: number }> = {};
+      const byDrill: Record<string, { right: number; total: number }> = {};
+      for (const r of results) {
+        bySection[r.id] = { right: r.right, total: r.qs.length };
+        r.qs.forEach((x, k) => {
+          const d = drillOf(x);
+          const cur = byDrill[d] ?? { right: 0, total: 0 };
+          byDrill[d] = { right: cur.right + (r.answers[k] === x.correct ? 1 : 0), total: cur.total + 1 };
+        });
+      }
+      progress.recordOrt({ at: Date.now(), whole, bySection, byDrill });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results]);
 

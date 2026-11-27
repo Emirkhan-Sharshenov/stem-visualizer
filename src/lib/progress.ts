@@ -13,6 +13,15 @@ export interface TestRecord {
   section?: string;
 }
 
+/** an ORT main-test run broken down by section and by kind of task, for the exam plan */
+export interface OrtBreakdown {
+  at: number;
+  /** all four sections in one sitting */
+  whole: boolean;
+  bySection: Record<string, { right: number; total: number }>;
+  byDrill: Record<string, { right: number; total: number }>;
+}
+
 export interface Progress {
   /** topics marked as understood (manually or by passing the topic quiz) */
   completed: Record<string, boolean>;
@@ -40,6 +49,8 @@ export interface Progress {
   marathonBest: number;
   /** best score in each game */
   games?: Record<string, number>;
+  /** ORT main-test runs by section and kind of task */
+  ort?: OrtBreakdown[];
   /** last change, used to merge with the cloud copy */
   updatedAt: number;
 }
@@ -131,6 +142,9 @@ export const progress = {
   },
   recordLab(key: string) {
     commit(withDay({ ...state, labs: { ...state.labs, [key]: (state.labs[key] ?? 0) + 1 } }));
+  },
+  recordOrt(b: OrtBreakdown) {
+    commit({ ...state, ort: [...(state.ort ?? []), b].slice(-60) });
   },
   recordTest(t: TestRecord) {
     commit(award(withDay({ ...state, tests: [...state.tests, t].slice(-100) }), t.score * XP.perTestAnswer, 'test'));
@@ -260,6 +274,7 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     problems[k] = !x || v.total > x.total ? v : x;
   });
   const tests = [...a.tests, ...b.tests.filter((t) => !a.tests.some((x) => x.at === t.at))].sort((x, y) => x.at - y.at).slice(-100);
+  const ort = [...(a.ort ?? []), ...(b.ort ?? []).filter((t) => !(a.ort ?? []).some((x) => x.at === t.at))].sort((x, y) => x.at - y.at).slice(-60);
   const mistakes = { ...(a.mistakes ?? {}) };
   Object.entries(b.mistakes ?? {}).forEach(([k, v]) => {
     if (!mistakes[k] || v.at > mistakes[k].at) mistakes[k] = v;
@@ -274,6 +289,7 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     daily,
     problems,
     tests,
+    ort,
     mistakes,
     xp: Math.max(a.xp ?? 0, b.xp ?? 0),
     marathonBest: Math.max(a.marathonBest ?? 0, b.marathonBest ?? 0),

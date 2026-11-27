@@ -9,6 +9,7 @@ import { progress, useProgress } from '../../lib/progress';
 import { usePlan } from '../../lib/plan';
 import { Quiz } from './Quiz';
 import { OrtReadiness } from './OrtReadiness';
+import { OrtPlan } from './OrtPlan';
 
 const OrtMainRun = lazy(() => import('./OrtMain'));
 const OrtTraining = lazy(() => import('./OrtMain').then((m) => ({ default: m.OrtTraining })));
@@ -132,6 +133,7 @@ export const OrtExam: React.FC<{ lang: Lang; onOpenTopic: (id: string) => void }
   return (
     <>
       <div className="flex flex-col gap-5">
+      {exam === 'ort' && <OrtPlan lang={lang} onDrill={openDrill} onSection={(id) => startMain([id])} onFull={() => startMain(ORT_SECTIONS.map((x) => x.id))} />}
       {plan.pro ? (
         <OrtReadiness lang={lang} onOpenTopic={onOpenTopic} />
       ) : (

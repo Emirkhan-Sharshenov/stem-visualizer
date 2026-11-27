@@ -274,7 +274,7 @@ export default function App({ lang, setLang }: AppProps) {
           window.scrollTo(0, 0);
         }}
         lang={lang}
-        onToggleLang={() => setLang(lang === 'ru' ? 'en' : 'ru')}
+        onToggleLang={() => setLang(lang)}
         onOpenSearch={() => setIsSearchOpen(true)}
         onToggleMentor={() => setIsMentorOpen(!isMentorOpen)}
       />

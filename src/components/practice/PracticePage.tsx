@@ -1,6 +1,6 @@
 import { Check as CheckBox } from '../ui/Check';
 import { Button } from '@heroui/react';
-import React, { lazy, Suspense, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Clock, Eye, Sparkles, X } from 'lucide-react';
 import { PREDICTIONS, Prediction } from '../../data/practice/predictions';
 import { progress, useProgress } from '../../lib/progress';
@@ -233,6 +233,12 @@ export const PracticePage: React.FC<{ lang: Lang; onOpenTopic: (id: string) => v
   const solved = Object.values(predictions).filter((x) => x.ok).length;
   const { mistakes } = useProgress();
   const dueCount = Object.values(mistakes ?? {}).filter((m) => m.due <= Date.now()).length;
+  // the ORT plan opens other tabs (the mistakes review) from its task list
+  useEffect(() => {
+    const open = (e: Event) => setTab((e as CustomEvent<Tab>).detail);
+    window.addEventListener('open-practice-tab', open);
+    return () => window.removeEventListener('open-practice-tab', open);
+  }, []);
 
   if (openId) {
     const idx = PREDICTIONS.findIndex((p) => p.id === openId);

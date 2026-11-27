@@ -1,5 +1,6 @@
 import {createRoot} from 'react-dom/client';
-import {lazy, Suspense, useState} from 'react';
+import {lazy, Suspense, useEffect, useState} from 'react';
+import {nextLang, readUiLang, setKyrgyz, type UiLang} from './lib/ky';
 import {Landing} from './pages/Landing';
 import {Auth} from './pages/Auth';
 import {Credits} from './pages/Credits';
@@ -25,27 +26,23 @@ completeAuthRedirect().then((r) => {
   window.dispatchEvent(new HashChangeEvent('hashchange'));
 });
 
-function readLang(): Lang {
-  try {
-    return localStorage.getItem('lang') === 'en' ? 'en' : 'ru';
-  } catch {
-    return 'ru';
-  }
-}
-
 function Root() {
   const route = useRoute();
-  const [lang, setLangState] = useState<Lang>(readLang);
-
-  const setLang = (next: Lang) => {
-    setLangState(next);
+  // Kyrgyz renders the Russian interface and translates it on the page (see lib/ky)
+  const [ui, setUi] = useState<UiLang>(readUiLang);
+  const lang: Lang = ui === 'en' ? 'en' : 'ru';
+  useEffect(() => setKyrgyz(ui === 'ky'), [ui]);
+  const toggleLang = () => {
+    const next = nextLang(ui);
     try {
       localStorage.setItem('lang', next);
     } catch {
       // storage unavailable (private mode); language just won't persist
     }
+    setUi(next);
   };
-  const toggleLang = () => setLang(lang === 'ru' ? 'en' : 'ru');
+  const setLang = toggleLang;
+
 
   if (route === 'app')
     return (
