@@ -5,6 +5,7 @@ import { useProgress } from '../../lib/progress';
 import { ORT_DRILLS, type OrtDrill } from '../../lib/ort/paper';
 import { ORT_MAX, ORT_SECTIONS, ORT_THRESHOLD, type OrtSectionId } from '../../lib/ort/sections';
 import { buildDay, localDay, ortPlan, predictionHistory, predictScore, sectionSkills, useOrtPlan, weekAhead, type OrtPlanSettings, type Phase, type PlanTask } from '../../lib/ortPlan';
+import { readUiLang } from '../../lib/ky';
 
 type Lang = 'ru' | 'en';
 
@@ -23,7 +24,7 @@ const DAY_KIND = {
   rest: { ru: 'Отдых', en: 'Rest', cls: 'bg-muted text-ink-2' },
   exam: { ru: 'ОРТ', en: 'ORT', cls: 'bg-ink text-surface' },
 } as const;
-const WD = { ru: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'], en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] };
+const WD = { ru: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'], ky: ['Жк', 'Дш', 'Шш', 'Шр', 'Бш', 'Жм', 'Иш'], en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] };
 
 const plural = (n: number, one: string, few: string, many: string) => {
   const a = Math.abs(n) % 100;
@@ -180,7 +181,7 @@ export const OrtPlan: React.FC<{
               const done = s.doneDays.includes(d.day);
               return (
                 <div key={d.day} className={`flex flex-col items-center gap-1 rounded-lg py-1.5 ${i === 0 ? 'ring-1 ring-accent' : ''}`}>
-                  <span className="text-[10px] uppercase text-ink-2">{WD[lang][d.weekday]}</span>
+                  <span className="text-[10px] uppercase text-ink-2">{(lang === 'ru' && readUiLang() === 'ky' ? WD.ky : WD[lang])[d.weekday]}</span>
                   <span className={`text-[10px] leading-none rounded-full px-1.5 py-1 w-full text-center truncate ${k.cls}`}>{done ? '✓' : L(k.ru, k.en)}</span>
                 </div>
               );

@@ -15,6 +15,7 @@ let loading: Promise<void> | null = null;
 const loadAuto = () =>
   (loading ??= import('../i18n/ky-auto.json').then((m) => {
     DICT = { ...(m.default as Record<string, string>), ...KY };
+    seen.clear();
   }));
 
 // text built at run time ("Опыт · Гипотеза", "7 класс", "понято 3 из 39") is translated piece by piece
@@ -75,8 +76,40 @@ function walk(root: Node) {
   }
 }
 
+/* Labels drawn on canvases (simulation stages, charts, certificates) never reach the DOM, so while Kyrgyz is on the
+   2D context's text calls translate their string first; measureText too, so layouts that size boxes by text fit. */
+type Ctx = CanvasRenderingContext2D;
+const P = CanvasRenderingContext2D.prototype;
+const native = { fillText: P.fillText, strokeText: P.strokeText, measureText: P.measureText };
+const seen = new Map<string, string>();
+const trCanvas = (s: unknown) => {
+  if (typeof s !== 'string') return s as string;
+  let v = seen.get(s);
+  if (v === undefined) {
+    v = tr(s) ?? s;
+    if (seen.size > 5000) seen.clear();
+    seen.set(s, v);
+  }
+  return v;
+};
+function patchCanvas(on: boolean) {
+  if (on) {
+    P.fillText = function (this: Ctx, t: string, x: number, y: number, w?: number) {
+      return w === undefined ? native.fillText.call(this, trCanvas(t), x, y) : native.fillText.call(this, trCanvas(t), x, y, w);
+    };
+    P.strokeText = function (this: Ctx, t: string, x: number, y: number, w?: number) {
+      return w === undefined ? native.strokeText.call(this, trCanvas(t), x, y) : native.strokeText.call(this, trCanvas(t), x, y, w);
+    };
+    P.measureText = function (this: Ctx, t: string) {
+      return native.measureText.call(this, trCanvas(t));
+    };
+  } else Object.assign(P, native);
+  seen.clear();
+}
+
 export function setKyrgyz(on: boolean) {
   document.documentElement.lang = on ? 'ky' : document.documentElement.lang === 'ky' ? 'ru' : document.documentElement.lang;
+  if (on !== !!observer) patchCanvas(on);
   if (on && !observer) {
     walk(document.body);
     loadAuto().then(() => observer && walk(document.body));
