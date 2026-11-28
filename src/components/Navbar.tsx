@@ -9,7 +9,7 @@ import { useIsAdmin } from '../lib/admin';
 import { Button } from '@heroui/react';
 import { useTheme } from '../lib/theme';
 import { usePlan } from '../lib/plan';
-import { langLabel } from '../lib/ky';
+import { LangSwitch } from './ui/LangSwitch';
 
 interface NavbarProps {
   currentMode: VisualMode;
@@ -91,10 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {lang === 'ru' ? 'Наставник' : 'Mentor'}
             </Button>
 
-            {/* one button that switches to the other language */}
-            <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-mono uppercase" aria-label="Язык · Тил · Language" onPress={() => onToggleLang()}>
-              {langLabel()}
-            </Button>
+            <LangSwitch className="hidden sm:inline-flex" />
 
             <ThemeSwitch lang={lang} />
             <AccountButton lang={lang} onSelect={onSelectMode} />

@@ -6,7 +6,7 @@ import { OrbitalStage, StageOrbital } from '../components/brand/OrbitalStage';
 import { Reveal } from '../components/ui/Reveal';
 import { landingCopy, Lang } from '../i18n/landing';
 import type { Route } from '../router';
-import { langLabel } from '../lib/ky';
+import { LangSwitch } from '../components/ui/LangSwitch';
 
 interface LandingProps {
   lang: Lang;
@@ -51,9 +51,7 @@ export const Landing: React.FC<LandingProps> = ({ lang, onToggleLang, onNavigate
             <a href="#pricing" className="hover:text-ink transition-colors">{t.nav.pricing}</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-xs font-mono" onPress={() => onToggleLang()}>
-              {langLabel()}
-            </Button>
+            <LangSwitch />
             <Button variant="ghost" size="sm" className="hidden sm:inline-flex text-sm font-semibold" onPress={() => onNavigate('login')}>
               {t.nav.login}
             </Button>

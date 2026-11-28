@@ -9,26 +9,55 @@ const ATTRS = ['placeholder', 'title', 'aria-label'] as const;
 const orig = new WeakMap<Node, string>();
 let observer: MutationObserver | null = null;
 let busy = false;
+// the hand-made lines first; the machine translation of everything else loads only when Kyrgyz is picked
+let DICT: Record<string, string> = KY;
+let loading: Promise<void> | null = null;
+const loadAuto = () =>
+  (loading ??= import('../i18n/ky-auto.json').then((m) => {
+    DICT = { ...(m.default as Record<string, string>), ...KY };
+  }));
 
+// text built at run time ("Опыт · Гипотеза", "7 класс", "понято 3 из 39") is translated piece by piece
+const PARTS = /(\s[·—–|/]\s|,\s|:\s|\s*\(|\)\s*|[+\-−]?\d+(?:[.,]\d+)*\s*%?)/;
 const tr = (s: string | null) => {
   if (!s) return null;
   const k = s.trim();
-  const v = k && KY[k];
-  return v ? s.replace(k, v) : null;
+  if (!k || !/[А-Яа-яЁё]/.test(k)) return null;
+  const v = DICT[k];
+  if (v) return s.replace(k, v);
+  let hit = false;
+  const out = k
+    .split(PARTS)
+    .map((p) => {
+      const t = p && DICT[p.trim()];
+      if (!t) return p;
+      hit = true;
+      return p.replace(p.trim(), t);
+    })
+    .join('');
+  return hit ? s.replace(k, out) : null;
 };
 
+// what the layer itself last wrote into a node, so its own change is never translated a second time
+const written = new WeakMap<Node, string>();
 function translateText(n: Text) {
+  if (written.get(n) === n.data) return;
   const v = tr(n.data);
   if (v && v !== n.data) {
     orig.set(n, n.data);
+    written.set(n, v);
     n.data = v;
   }
 }
 function translateEl(el: Element) {
   for (const a of ATTRS) {
-    const v = tr(el.getAttribute(a));
-    if (v) {
-      if (!el.hasAttribute(`data-ru-${a}`)) el.setAttribute(`data-ru-${a}`, el.getAttribute(a)!);
+    const cur = el.getAttribute(a);
+    // already ours: setting it again would fire the observer forever
+    if (cur === null || cur === el.getAttribute(`data-ky-${a}`)) continue;
+    const v = tr(cur);
+    if (v && v !== cur) {
+      el.setAttribute(`data-ru-${a}`, cur);
+      el.setAttribute(`data-ky-${a}`, v);
       el.setAttribute(a, v);
     }
   }
@@ -50,6 +79,7 @@ export function setKyrgyz(on: boolean) {
   document.documentElement.lang = on ? 'ky' : document.documentElement.lang === 'ky' ? 'ru' : document.documentElement.lang;
   if (on && !observer) {
     walk(document.body);
+    loadAuto().then(() => observer && walk(document.body));
     observer = new MutationObserver((ms) => {
       if (busy) return;
       busy = true;
@@ -73,6 +103,7 @@ export function setKyrgyz(on: boolean) {
     for (const a of ATTRS) document.querySelectorAll(`[data-ru-${a}]`).forEach((el) => {
       el.setAttribute(a, el.getAttribute(`data-ru-${a}`)!);
       el.removeAttribute(`data-ru-${a}`);
+      el.removeAttribute(`data-ky-${a}`);
     });
   }
 }
@@ -88,3 +119,4 @@ export function readUiLang(): UiLang {
   }
 }
 export const langLabel = () => ({ ru: 'КЫР', ky: 'EN', en: 'РУС' })[readUiLang()];
+export const setUiLang = (l: UiLang) => window.dispatchEvent(new CustomEvent<UiLang>('set-lang', { detail: l }));

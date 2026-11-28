@@ -1,8 +1,47 @@
 /* Kyrgyz for the interface, keyed by the exact Russian text on the page. Untranslated text stays Russian.
    Add lines here as screens get translated; check them with a native speaker before big releases. */
 export const KY: Record<string, string> = {
-  // navigation
+  // units stay as they are
+  'с': 'с',
+  'м': 'м',
+  'кг': 'кг',
+  'г': 'г',
+  'мг': 'мг',
+  'т': 'т',
+  'Н': 'Н',
+  'кН': 'кН',
+  'Дж': 'Дж',
+  'кДж': 'кДж',
+  'кВт': 'кВт',
+  'В': 'В',
+  'А': 'А',
+  'мА': 'мА',
+  'Ом': 'Ом',
+  'мин': 'мин',
+  'ч': 'ч',
+  'см': 'см',
+  'мм': 'мм',
+  'км': 'км',
+  'л': 'л',
+  'мл': 'мл',
+  'Па': 'Па',
+  'кПа': 'кПа',
+  'Гц': 'Гц',
+  'К': 'К',
+  'моль': 'моль',
+  'м/с': 'м/с',
+  'км/ч': 'км/ч',
+  'м/с²': 'м/с²',
+  // terms the machine translation gets wrong
+  'Введение': 'Киришүү',
+  'ЕГЭ': 'ЕГЭ',
+  'ОГЭ': 'ОГЭ',
+  'класс': 'класс',
+  'понято': 'түшүнүлдү',
+  'из': 'ичинен',
   'Учебник': 'Окуу китеби',
+
+  // navigation
   'Лаборатории': 'Лабораториялар',
   'Практикум': 'Практикум',
   'Рейтинг': 'Рейтинг',

@@ -7,7 +7,7 @@ import { OrbitalStage } from '../components/brand/OrbitalStage';
 import { authCopy } from '../i18n/auth';
 import type { Lang } from '../i18n/landing';
 import type { Route } from '../router';
-import { langLabel } from '../lib/ky';
+import { LangSwitch } from '../components/ui/LangSwitch';
 
 interface AuthProps {
   mode: 'login' | 'register';
@@ -169,9 +169,7 @@ export const Auth: React.FC<AuthProps> = ({ mode, lang, onToggleLang, onNavigate
             <Logo size={26} />
           </a>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="text-xs font-mono" onPress={() => onToggleLang()}>
-              {langLabel()}
-            </Button>
+            <LangSwitch />
             <Button variant="ghost" size="sm" className="text-sm" onPress={() => onNavigate('landing')}>
               <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
               {t.back}

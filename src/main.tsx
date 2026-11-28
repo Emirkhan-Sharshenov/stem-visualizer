@@ -31,9 +31,18 @@ function Root() {
   // Kyrgyz renders the Russian interface and translates it on the page (see lib/ky)
   const [ui, setUi] = useState<UiLang>(readUiLang);
   const lang: Lang = ui === 'en' ? 'en' : 'ru';
-  useEffect(() => setKyrgyz(ui === 'ky'), [ui]);
-  const toggleLang = () => {
-    const next = nextLang(ui);
+  useEffect(() => {
+    setKyrgyz(ui === 'ky');
+    document.documentElement.lang = ui;
+  }, [ui]);
+  // the language switch anywhere on the site sends the chosen language
+  useEffect(() => {
+    const on = (e: Event) => pick((e as CustomEvent<UiLang>).detail);
+    window.addEventListener('set-lang', on);
+    return () => window.removeEventListener('set-lang', on);
+  });
+  const toggleLang = () => pick(nextLang(ui));
+  const pick = (next: UiLang) => {
     try {
       localStorage.setItem('lang', next);
     } catch {

@@ -7,7 +7,7 @@ import { dayStreak, type Progress } from '../lib/progress';
 import { supabase } from '../lib/supabase';
 import { ChargeNote, CurrencySwitch } from '../components/pro/pricing';
 import { gradeName } from '../data/curriculum/index';
-import { langLabel } from '../lib/ky';
+import { LangSwitch } from '../components/ui/LangSwitch';
 
 interface Card {
   name: string | null;
@@ -110,7 +110,7 @@ export const Parent: React.FC<{ lang: Lang; onToggleLang: () => void }> = ({ lan
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <a href="#/" className="font-display text-sm tracking-wide text-ink">STEM Visualizer</a>
-          <Button size="sm" variant="ghost" onPress={onToggleLang}>{langLabel()}</Button>
+          <LangSwitch />
         </div>
 
         <header>
